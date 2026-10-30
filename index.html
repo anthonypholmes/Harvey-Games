@@ -1,4 +1,7 @@
+<!doctype html>
+<html lang="en-GB">
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Harvey's Number Splitter</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -273,6 +276,7 @@ button.ten:active { transform: scale(.94); }
   min-height: 84px; font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums;
   background: var(--card); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink);
 }
+.choices.wordy .choice { font-size: 24px; white-space: nowrap; }
 .choice:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
 .choice.faded, .chip.faded { opacity: .35; box-shadow: none; transform: translateY(3px); }
 .choice.right { background: var(--good-bg); border-color: var(--good); color: var(--good); }
@@ -393,6 +397,7 @@ input { -webkit-user-select: text; user-select: text; }
 .hold .lbl { position: relative; }
 
 .gate { display: grid; gap: 14px; }
+.gate-say { margin: 0; text-align: center; color: var(--ink-soft); font-size: 17px; }
 .gate .or { text-align: center; color: var(--ink-soft); font-weight: 600; font-size: 16px; }
 .gate-q { display: flex; gap: 10px; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; flex-wrap: wrap; }
 .gate-q .inp { width: 110px; font-size: 24px; text-align: center; }
@@ -441,6 +446,52 @@ input { -webkit-user-select: text; user-select: text; }
 .meter i { display: block; height: 100%; background: var(--sun); }
 .more { font-size: 16px; font-weight: 700; color: var(--ink-soft); }
 
+/* ---------- world hub ---------- */
+.hub-hero { display: grid; gap: 18px; padding: 4px 0 26px; }
+.hub-hero h1 { font-size: clamp(40px, 6.4vw, 68px); font-weight: 800; }
+.hub-hero h1 .name { color: var(--tens); }
+.hub-hero .home-buddy { margin-top: 0; }
+.worlds { display: grid; gap: 22px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 700px) { .worlds { grid-template-columns: minmax(0, 1fr); } }
+.world { text-align: left; padding: 20px 22px 18px; display: grid; gap: 8px; align-content: start; }
+.world:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--ink); }
+.world h3 { font-size: clamp(30px, 3.6vw, 38px); }
+.world .blurb { color: var(--ink-soft); font-size: 17px; }
+.world-pic { background: var(--paper); border: 2px solid var(--grid); border-radius: 14px; padding: 16px; display: grid; justify-items: center; align-content: center; gap: 10px; min-height: 250px; margin-top: 6px; }
+.world-pic .eq { font-size: 36px; }
+.world-prog { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 16px; color: var(--good); }
+.world-prog svg { width: 18px; height: 18px; }
+.world-intro { color: var(--ink-soft); font-size: 19px; margin: 4px 0 24px; max-width: 60ch; }
+.world-intro b { color: var(--ink); }
+.gs-sec h4 { margin: 6px 0 0; font-size: 16px; }
+
+/* ---------- number line ---------- */
+.nl { position: relative; padding: 118px 44px 26px; background: var(--paper); border: 2px solid var(--grid); border-radius: 16px; touch-action: none; -webkit-touch-callout: none; }
+.nl.can-drag { cursor: pointer; }
+.nl-track { position: relative; height: 62px; }
+.nl-bar { position: absolute; left: -26px; right: -26px; top: 0; height: 6px; margin-top: -3px; background: var(--ink); border-radius: 3px; }
+.nl-tick { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; pointer-events: none; }
+.nl-tick i { display: block; width: 3px; height: 18px; margin-top: -9px; background: var(--ink); border-radius: 2px; }
+.nl-tick.major i { width: 4px; height: 34px; margin-top: -17px; }
+.nl-lab { margin-top: 6px; font-weight: 700; font-size: 21px; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nl-tick.q .nl-lab { background: var(--sun); border: 2px solid var(--ink); border-radius: 8px; padding: 0 9px; }
+.nl.dense .nl-lab { font-size: 16px; }
+.nl-tick.zero .nl-lab { color: var(--tens); font-size: 24px; }
+.nl-tick.spot, .nl-pawn.spot, .nl-start.spot { position: absolute; }
+.nl-zone { position: absolute; top: -28px; height: 56px; transform: translateX(-50%); border-radius: 12px; pointer-events: none; }
+.nl-zone.soft { background: rgba(255, 200, 61, .42); }
+.nl-zone.guide { min-width: 30px; background: rgba(18, 138, 116, .22); outline: 3px solid var(--good); animation: zone .8s ease-in-out infinite alternate; }
+@keyframes zone { to { background: rgba(18, 138, 116, .45); } }
+.nl-start { position: absolute; top: 0; width: 24px; height: 24px; margin-top: -12px; transform: translateX(-50%); border-radius: 50%; background: var(--sun); border: 3px solid var(--ink); box-sizing: border-box; pointer-events: none; }
+.nl-pawn { position: absolute; top: -6px; width: 72px; transform: translate(-50%, -100%); display: grid; justify-items: center; pointer-events: none; transition: left .14s ease-out; z-index: 2; }
+.nl-pawn.dragging { transition: none; }
+.nl-pawn .dog { width: 72px; }
+.nl-pin { width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 13px solid var(--fur-dk); margin-top: -4px; }
+.nl-pawn.waiting { opacity: .75; animation: pawnbob .8s ease-in-out infinite alternate; }
+@keyframes pawnbob { to { transform: translate(-50%, calc(-100% - 7px)); } }
+.nl-val { position: absolute; bottom: 100%; margin-bottom: 2px; background: var(--good); color: #fff; font-weight: 700; font-size: 21px; border-radius: 10px; padding: 1px 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .nl { padding-left: 26px; padding-right: 26px; } .nl-lab { font-size: 16px; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -471,7 +522,7 @@ const STARTER_PRIZES = [
   [80, 'Choose a toy from Smyth’s Toys', 'Pick a toy at the toy shop.'],
 ].map(([cost, title, desc], i) => ({ id: 's' + i, cost, title, desc }));
 
-let save = { name: null, done: {}, bones: 0, log: {}, unlockAll: false, sound: true, readAloud: false, rewards: null, redeemed: [] };
+let save = { name: null, done: {}, bones: 0, log: {}, done2: {}, log2: {}, unlockAll: false, sound: true, readAloud: false, rewards: null, redeemed: [] };
 try { const raw = localStorage.getItem(STORE); if (raw) save = Object.assign(save, JSON.parse(raw)); } catch (e) {}
 if (save.stars) { // older version used stars: any star means the level was finished
   Object.keys(save.stars).forEach(k => { if (save.stars[k] > 0) save.done[k] = true; });
@@ -479,6 +530,7 @@ if (save.stars) { // older version used stars: any star means the level was fini
 }
 if (!Array.isArray(save.rewards)) save.rewards = STARTER_PRIZES.map(r => ({ ...r }));
 if (!Array.isArray(save.redeemed)) save.redeemed = [];
+if (save.w2v !== 2) { save.done2 = {}; save.log2 = {}; save.w2v = 2; } // World 2 was rebuilt for Year 2
 const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(save)); } catch (e) {} };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const NAME = () => save.name || 'Harvey';
@@ -668,9 +720,120 @@ function makeAdd(a, b) {
   };
 }
 
+/* ---------- World 2: number lines ----------
+   A number line question says what the line shows (line), where the answer is (target, tol)
+   and how Bonnie moves (snap). ask is one of:
+   place (drag Bonnie to a number), est (estimate on a sparse line), hop (start somewhere, hop),
+   read (Bonnie sits on a "?" tick: pick the number), jump (pick the step size).
+   Each level's make(type, k, easy) gives an easier line when easy is true: more labels,
+   extra helper ticks, or smaller hops. */
+const rd = (v, dp = 0) => +(+v).toFixed(dp);
+const fmtN = dp => v => (v < 0 ? '−' : '') + (dp ? Math.abs(v).toFixed(dp) : String(Math.abs(v)));
+const range = (a, b, s, dp = 0) => { const r = [], n = Math.round((b - a) / s); for (let i = 0; i <= n; i++) r.push(rd(a + i * s, dp)); return r; };
+// the right answer plus two believable wrong ones
+function pick3(t, cands, dp = 0) { const others = [...new Set(cands.map(c => rd(c, dp)))].filter(c => c !== t); return shuffle([t, ...shuffle(others).slice(0, 2)]); }
+const JUMPS = [1, 2, 5, 10, 50, 100];
+function jumpOpts(s) { const i = JUMPS.indexOf(s); return [JUMPS[i - 1], JUMPS[i + 1], JUMPS[i + 2]].filter(Boolean); }
+
+function lineQ(o) {
+  const dp = o.dp || 0, f = fmtN(dp), target = rd(o.target, dp);
+  const labels = o.labels.map(v => rd(v, dp));
+  const ref = o.mark ?? target;
+  const bench = o.bench ?? labels.filter(v => v !== ref).sort((a, b) => Math.abs(a - ref) - Math.abs(b - ref))[0];
+  const q = {
+    type: 'nl-' + o.ask, ask: o.ask, kind: ['read', 'jump', 'between'].includes(o.ask) ? 'choice' : 'line',
+    mode: null, showVisual: false, eq: null, places: [], boxes: 1,
+    line: { min: o.min, max: o.max, step: o.step, labels, majors: (o.majors || []).map(v => rd(v, dp)),
+      mark: o.mark ?? null, start: o.start ?? null, dense: !!o.dense, sitAt: o.sitAt ?? o.mark ?? null,
+      pawn: o.pawn !== undefined ? o.pawn : o.ask === 'jump' ? null : o.ask === 'read' ? 'sit' : 'drag' },
+    target, n: target, answer: [o.answer ?? target], cfmt: o.cfmt, back: !!o.back, tol: o.tol || 0, snap: o.snap || o.step, dp, fmt: f,
+    bench: rd(bench, dp), bracket: o.bracket || 0, interval: o.interval || 0, jump: o.jump, hop: o.hop,
+    key: `${o.ask}:${o.min}:${o.max}:${target}:${o.start ?? ''}`,
+  };
+  if (q.kind === 'choice') q.choices = o.choices.map(v => rd(v, dp));
+  q.prompt = o.prompt || { read: 'What number is Bonnie sitting on?', jump: 'How big is each jump?' }[o.ask] || `Where does ${f(target)} go?`;
+  q.tip = o.ask === 'est' ? 'Make your best guess. Close is good!'
+    : q.kind === 'line' ? 'Drag Bonnie along the line. Then tap <b>Check</b>.' : '';
+  return q;
+}
+
+const NL_LEVELS = [
+  { name: 'Full Tick Trails', blurb: 'Find the missing numbers', eg: '0 · 1 · 2 · ? · 4',
+    seq: ['read20', 'read50', 'place20', 'read20', 'read50', 'place20', 'read20', 'read50', 'place20'],
+    make(type, k, easy) {
+      if (type === 'read50' && !easy) { // 0 to 50 counting in 5s, one stone missing
+        const t = 5 * rand(1, 9);
+        return lineQ({ ask: 'read', min: 0, max: 50, step: 5, labels: range(0, 50, 5).filter(v => v !== t), mark: t, target: t, choices: pick3(t, [t - 5, t + 5, t + 1, t - 1]) });
+      }
+      const max = easy ? 10 : 20;
+      if (type === 'place20') { // every other number labelled; the target sits between two labels
+        const t = easy ? pick([1, 3, 5, 7, 9]) : 2 * rand(0, 9) + 1;
+        return lineQ({ ask: 'place', min: 0, max, step: 1, labels: range(0, max, 2), target: t, bracket: 2, dense: !easy });
+      }
+      const t = rand(1, max - 1);
+      return lineQ({ ask: 'read', min: 0, max, step: 1, labels: range(0, max, 1).filter(v => v !== t), mark: t, target: t, dense: !easy, choices: pick3(t, [t - 1, t + 1, t + 2, t - 2].filter(v => v >= 0)) });
+    } },
+  { name: 'Stepping Stones', blurb: 'Count on and back in 2s, 5s and 10s', eg: '10, 15, 20, ?',
+    seq: ['fwd', 'back', 'place', 'fwd', 'back', 'place', 'fwd', 'back', 'place'],
+    make(type, k, easy) {
+      const s = easy ? pick([10, 5]) : pick([2, 5, 10]);
+      const span = 10 * s, min = s === 2 ? rand(0, 8) * 10 : s === 5 ? pick([0, 50]) : 0, max = min + span;
+      const ends = [min, max];
+      if (type === 'place') {
+        const t = min + s * rand(3, 9);
+        return lineQ({ ask: 'place', min, max, step: s, labels: [...new Set([...ends, min + s, min + 2 * s])], target: t, interval: s, prompt: `Count on in ${s}s. Put Bonnie on ${t}.` });
+      }
+      const back = type === 'back';
+      const r = back ? min + s * rand(3, 10) : min + s * rand(0, 7);   // where the run of 3 shown stones starts
+      const run = [r, back ? r - s : r + s, back ? r - 2 * s : r + 2 * s], t = back ? r - 3 * s : r + 3 * s;
+      return lineQ({ ask: 'read', min, max, step: s, labels: [...new Set([...ends, ...run])].filter(v => v !== t), mark: t, target: t, interval: s, back,
+        prompt: `Count ${back ? 'back' : 'on'} in ${s}s. What number is Bonnie on?`,
+        choices: pick3(t, [t + s, t - s, t + 1, t - 1].filter(v => v >= 0 && v <= 100)) });
+    } },
+  { name: 'Midpoint Explorers', blurb: 'Guess where it goes on 0 to 100', eg: '0 · 50 · 100',
+    seq: ['est', 'est', 'est', 'est', 'est', 'est', 'est', 'est', 'est'],
+    make(type, k, easy) {
+      let t; do t = easy ? rand(0, 9) * 10 + 5 : rand(3, 97); while (t % 10 === 0);
+      return lineQ({ ask: 'est', min: 0, max: 100, step: easy ? 10 : 50, labels: [0, 50, 100], target: t, tol: easy ? 3 : 2, snap: 1, bracket: 10, bench: 50 });
+    } },
+  { name: 'Tens Boundaries', blurb: 'Which two tens is it between?', eg: '30 < 37 < 40',
+    seq: ['between', 'between', 'place', 'between', 'place', 'between', 'between', 'place', 'between'],
+    make(type, k, easy) {
+      let t; do t = rand(11, 99); while (t % 10 === 0 || (easy && t % 10 !== 5));
+      const lo = t - t % 10;
+      if (type === 'place') return lineQ({ ask: 'place', min: lo, max: lo + 10, step: 1, labels: easy ? [lo, lo + 5, lo + 10] : [lo, lo + 10], majors: [lo + 5], bench: lo + 5, target: t });
+      return lineQ({ ask: 'between', min: 0, max: 100, step: 10, labels: range(0, 100, 10), target: t, answer: lo,
+        pawn: 'sit', sitAt: t, cfmt: v => `${v} and ${v + 10}`, prompt: `Which two tens is ${t} between?`,
+        choices: pick3(lo, [lo - 10, lo + 10, lo + 20].filter(v => v >= 0 && v <= 90)) });
+    } },
+  { name: 'Froggy Jumps', blurb: 'Jump forward and back to add and take away', eg: '24 + 10 = 34',
+    seq: ['f1', 'f10', 'b1', 'f10', 'b10', 'f1', 'b10', 'f10', 'b1'],
+    make(type, k, easy) {
+      const fwd = type[0] === 'f', tens = type.slice(1) === '10';
+      let s, n, land;
+      for (;;) {
+        n = tens ? (easy ? 10 : pick([10, 10, 20])) : rand(2, easy ? 3 : 9);
+        s = rand(11, 89); land = fwd ? s + n : s - n;
+        if (land < 1 || land > 99) continue;
+        if (easy && !tens && Math.floor(s / 10) !== Math.floor(land / 10)) continue; // easy: no crossing a ten
+        break;
+      }
+      const lo = Math.floor(Math.min(s, land) / 10) * 10, hi = Math.max(lo + 10, Math.ceil(Math.max(s, land) / 10) * 10);
+      const dir = fwd ? 'forward' : 'back';
+      return lineQ({ ask: 'hop', min: lo, max: hi, step: 1, labels: range(lo, hi, easy ? 5 : 10), majors: range(lo, hi, 5),
+        target: land, start: s, hop: { s, k: n, dir }, prompt: `Start at ${s}. Jump ${dir} ${n}.` });
+    } },
+];
+
 // questions are made one at a time, so each one can follow learner.rung
 function questionFor(k) {
-  const lv = LEVELS[S.level], eased = learner.rung < 0;
+  const lv = WL()[S.level], eased = learner.rung < 0;
+  if (S.world === 2) {
+    let q, guard = 0;
+    do { q = lv.make(lv.seq[k], k, eased); guard++; } while (S.used.has(q.key) && guard < 60);
+    S.used.add(q.key); q.eased = eased;
+    return q;
+  }
   const type = eased && lv.easyType ? lv.easyType(lv.seq[k]) : lv.seq[k];
   const gen = eased ? lv.easy : lv.num;
   let n, key, guard = 0;
@@ -799,50 +962,74 @@ function speak(text) {
 const say = text => { if (save.sound || save.readAloud) speak(text); };
 
 /* ---------- home screen ---------- */
-const unlocked = i => save.unlockAll || i === 0 || !!save.done[i - 1];
+const doneOf = w => (w === 2 ? save.done2 : save.done);
+const unlocked = (i, w = 1) => save.unlockAll || i === 0 || !!doneOf(w)[i - 1];
 const TIER_NAMES = ['Solo', 'After a clue', 'Step by step', 'Guided taps'];
 
-function logTable() {
-  const rows = LEVELS.map((lv, i) => {
-    const l = save.log[i]; if (!l) return '';
+function logTable(levels = LEVELS, log = save.log) {
+  const rows = levels.map((lv, i) => {
+    const l = log[i]; if (!l) return '';
     return `<tr><td>${i + 1}. ${lv.name}</td>${l.tiers.map(n => `<td>${n}</td>`).join('')}<td>${l.eased ?? '–'}</td><td>${l.when}</td></tr>`;
   }).join('');
-  if (!rows) return `<p>Once ${nameH()} finishes a level, you will see here how each answer was reached: solo or with Bonnie’s help.</p>`;
-  return `<div class="log-wrap"><table class="log"><thead><tr><th>Level (last play)</th>${TIER_NAMES.map(t => `<th>${t}</th>`).join('')}<th>Made easier</th><th>When</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  if (!rows) return `<p>Nothing yet. Once ${nameH()} finishes a level here, you will see how each answer was reached.</p>`;
+  return `<div class="log-wrap"><table class="log"><thead><tr><th>Stop (last play)</th>${TIER_NAMES.map(t => `<th>${t}</th>`).join('')}<th>Made easier</th><th>When</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 const shopButton = (id, label) => `<button class="bones shop-btn" id="${id}" data-shop aria-label="Bone Shop: ${save.bones} bones">${BONE}<b>${save.bones}</b>${label ? '<span class="lbl">Bone Shop</span>' : ''}</button>`;
 
+/* home has a hub (pick a world) and one page per world (pick a level) */
+let homeView = 'hub';
+const WORLDS = {
+  1: { name: 'The Partitioning Park', tag: 'Splitting numbers', stop: 'Path', blurb: 'Split numbers into tens and ones, and more.', levels: LEVELS,
+    intro: '<b>Partitioning</b> means breaking a number into parts. Every digit tells you how many ones, tens, hundreds or thousands there are.' },
+  2: { name: 'The Stepping Stone River', tag: 'Number lines', stop: 'Stone', blurb: 'Hop Bonnie across the number line to 100.', levels: NL_LEVELS,
+    intro: 'A <b>number line</b> puts numbers in order. Drag Bonnie to the right spot, then tap Check.' },
+};
+function miniLine() {
+  let t = '';
+  for (let i = 0; i <= 10; i++) { const x = 20 + i * 36; t += `<line x1="${x}" x2="${x}" y1="${i % 5 ? 62 : 54}" y2="${i % 5 ? 78 : 86}" stroke="var(--ink)" stroke-width="${i % 5 ? 2.5 : 3.5}" stroke-linecap="round"/>`; if (i % 5 === 0) t += `<text x="${x}" y="112" text-anchor="middle" font-size="20" font-weight="700" fill="var(--ink)">${i * 10}</text>`; }
+  return `<svg viewBox="0 0 400 124" width="100%" style="max-width:360px" aria-hidden="true"><line x1="6" x2="394" y1="70" y2="70" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>${t}
+    <g transform="translate(272 70)"><path d="M-9 -14 L9 -14 L0 -2 Z" fill="var(--fur-dk)"/><g fill="var(--fur-dk)" transform="translate(-14 -46) scale(1.2)">${PAW.replace(/<\/?svg[^>]*>/g, '')}</g></g>
+    <text x="272" y="112" text-anchor="middle" font-size="20" font-weight="800" fill="var(--good)">70</text></svg>`;
+}
+
 function renderHome() {
-  const demoQ = { mode: 'blocks', places: [1, 0], counts: { 1: 4, 0: 7 }, inter: null };
-  $('#home').innerHTML = `
-    <div class="topbar home-top">
-      ${shopButton('home-shop', true)}
-      <button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button>
-    </div>
-    <div class="hero">
-      <div>
-        <h1>Hi <span class="name">${nameH()}</span>, let's split some numbers!</h1>
-        <p><b>Partitioning</b> means breaking a number into parts. Every digit tells you how many ones, tens, hundreds or thousands there are.</p>
+  const top = (back) => `<div class="topbar home-top">${back}${shopButton('home-shop', true)}<button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button></div>`;
+  if (homeView === 'hub') {
+    const demoQ = { mode: 'blocks', places: [1, 0], counts: { 1: 4, 0: 7 }, inter: null };
+    const pics = {
+      1: `<div class="visual" style="background:none;border:0;padding:0">${visualHTML(demoQ)}</div><div class="eq"><div class="eqline"><span class="num">${colorNum(47)}</span><span class="op">=</span><span class="d p1">40</span><span class="op">+</span><span class="d p0">7</span></div></div>`,
+      2: miniLine(),
+    };
+    $('#home').innerHTML = `${top('')}
+      <div class="hub-hero">
+        <h1>Hi <span class="name">${nameH()}</span>! Where shall we go?</h1>
         <div class="buddy home-buddy">
           <button class="dog" id="home-dog" data-mood="idle" aria-label="Pat Bonnie">${bonnieSVG()}</button>
           <div class="feedback help"><span>Woof! I'm <b>Bonnie</b>. Stuck? Tap <b>Ask Bonnie</b> and we'll do it together.</span></div>
         </div>
       </div>
-      <div class="card demo">
-        <div class="visual" style="background:none;border:0;padding:0">${visualHTML(demoQ)}</div>
-        <div class="eq"><div class="eqline"><span class="num">${colorNum(47)}</span><span class="op">=</span><span class="d p1">40</span><span class="op">+</span><span class="d p0">7</span></div></div>
-        <div class="demo-cap">4 tens and 7 ones make 47</div>
-      </div>
-    </div>
+      <div class="worlds">${[1, 2].map(w => {
+        const W = WORLDS[w], n = W.levels.filter((_, i) => doneOf(w)[i]).length;
+        return `<button class="card world" data-world="${w}">
+          <span class="lvl-num">${W.tag}</span><h3>${W.name}</h3><span class="blurb">${W.blurb}</span>
+          <div class="world-pic">${pics[w]}</div>
+          <span class="world-prog">${n ? `${ICON.tick} ${n} of ${W.levels.length} levels done` : `${W.levels.length} levels`}</span>
+        </button>`;
+      }).join('')}</div>`;
+    return;
+  }
+  const w = homeView, W = WORLDS[w];
+  $('#home').innerHTML = `${top(`<button class="icon-btn" id="hub-back" aria-label="All worlds">${ICON.back}</button><div class="where"><small>${W.tag}</small><b>${W.name}</b></div>`)}
+    <p class="world-intro">${W.intro}</p>
     <div class="levels-title"><h2>Pick a level</h2></div>
     <div class="levels">
-      ${LEVELS.map((lv, i) => {
-        const open = unlocked(i), done = !!save.done[i];
+      ${W.levels.map((lv, i) => {
+        const open = unlocked(i, w), done = !!doneOf(w)[i];
         const badge = !open ? `<span class="lock" aria-label="Locked">${ICON.lock}</span>`
           : done ? `<span class="done-chip">${ICON.tick} Done</span>` : '';
         return `<button class="card lvl${open ? '' : ' locked'}" data-level="${i}" ${open ? '' : 'aria-disabled="true"'}>
-          <div class="lvl-top"><span class="lvl-num">Level ${i + 1}</span>${badge}</div>
+          <div class="lvl-top"><span class="lvl-num">${W.stop} ${i + 1}</span>${badge}</div>
           <h3>${lv.name}</h3>
           <span class="blurb">${lv.blurb}</span>
           <span class="eg">${lv.eg}</span>
@@ -855,10 +1042,12 @@ $('#home').addEventListener('click', e => {
   const lvl = e.target.closest('[data-level]');
   if (lvl) {
     const i = +lvl.dataset.level;
-    if (!unlocked(i)) { sfx.soft(); return; }
-    sfx.tap(); startLevel(i); return;
+    if (!unlocked(i, homeView)) { sfx.soft(); return; }
+    sfx.tap(); startLevel(i, homeView); return;
   }
   const btn = e.target.closest('button'); if (!btn) return;
+  if (btn.dataset.world) { sfx.tap(); homeView = +btn.dataset.world; renderHome(); window.scrollTo(0, 0); return; }
+  if (btn.id === 'hub-back') { sfx.tap(); homeView = 'hub'; renderHome(); window.scrollTo(0, 0); return; }
   if (btn.hasAttribute('data-shop')) { sfx.tap(); return openShop(); }
   if (btn.id === 'gear') { sfx.tap(); return openGate(); }
   if (btn.id === 'home-dog') { sfx.woof(); setMood('happy'); clearTimeout(window.__pat); window.__pat = setTimeout(() => setMood('idle'), 1400); }
@@ -904,8 +1093,7 @@ function openGate() {
   openModal(`<div class="card sheet narrow" role="dialog" aria-label="For grown-ups">
     <div class="sheet-head"><h2>For grown-ups</h2>${closeBtn}</div>
     <div class="gate">
-      ${holdBtn('gate', 'Hold for Grown-Ups')}
-      <div class="or">or answer this</div>
+      <p class="gate-say">Answer this to open the grown-ups settings.</p>
       <form class="gate-q" id="gate-form" autocomplete="off"><label for="gate-in">${a} × ${b} =</label>
         <input class="inp" id="gate-in" inputmode="numeric" pattern="[0-9]*"><button class="btn small" type="submit">Go</button></form>
       <div class="gate-msg" id="gate-msg"></div>
@@ -932,7 +1120,7 @@ function openSettings() {
       <form class="gs-line" id="gs-name-form" autocomplete="off"><input class="inp" id="gs-name" maxlength="16" value="${nameH()}" aria-label="Player name">
         <button class="btn small" type="submit">Save name</button><span class="gs-ok" id="gs-name-ok"></span></form></section>
     <section class="gs-sec"><h3>Bones</h3>
-      <p>1 bone for every question finished, however it was solved, plus 3 per level. One play through all 8 levels gives 96. Asking Bonnie never costs anything.</p>
+      <p>1 bone for every question finished, however it was solved, plus 3 per level. A full play-through gives 88 in The Partitioning Park and 60 in The Stepping Stone River. Asking Bonnie never costs anything.</p>
       <form class="gs-line" id="gs-bones-form" autocomplete="off"><input class="inp num" id="gs-bones" value="${save.bones}" inputmode="numeric" pattern="[0-9]*" aria-label="Bone balance">
         <button class="btn small" type="submit">Set balance</button><button class="btn plain small" type="button" data-act="bones0">Reset to 0</button><span class="gs-ok" id="gs-bones-ok"></span></form></section>
     <section class="gs-sec"><h3>Real-life prizes</h3>
@@ -941,8 +1129,9 @@ function openSettings() {
       <div class="gs-line"><button class="btn small" type="button" data-act="add-rw">+ Add a prize</button></div></section>
     <section class="gs-sec"><h3>Prizes claimed</h3>${claimedHTML()}</section>
     <section class="gs-sec"><h3>How each answer was reached</h3>
-      <p>Counts from the last play of each level. Bonnie’s help goes in steps: a clue, then small questions, then glowing buttons. The final answer is always entered by ${nameH()}. <b>Made easier</b> counts questions the game quietly simplified after two answers in a row needed step-by-step help or guided taps. Two answers in a row solo or after a clue bring it back to normal.</p>
-      ${logTable()}</section>
+      <p>Counts from the last play of each level. Bonnie’s help goes in steps: a clue, then small questions, then glowing buttons. The final answer is always given by ${nameH()}: typed, tapped, or by dragging Bonnie. <b>Made easier</b> counts questions the game quietly simplified after two answers in a row needed step-by-step help or guided taps. Two answers in a row solo or after a clue bring it back to normal.</p>
+      <h4>${WORLDS[1].name}</h4>${logTable(LEVELS, save.log)}
+      <h4>${WORLDS[2].name}</h4>${logTable(NL_LEVELS, save.log2)}</section>
     <section class="gs-sec"><h3>Settings</h3>
       <div class="gu-row">
         <button class="toggle" type="button" data-tog="sound" aria-pressed="${save.sound}"><span class="sw"></span>Sound and Bonnie's voice</button>
@@ -1027,7 +1216,7 @@ modal.addEventListener('pointerdown', e => {
   h.classList.add('holding'); h.querySelector('.lbl').textContent = 'Keep holding…';
   hold = { el: h, t: setTimeout(() => {
     hold = null; h.classList.remove('holding'); sfx.good();
-    if (h.dataset.hold === 'gate') openSettings(); else redeem();
+    redeem();
   }, 3000) };
 });
 ['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, cancelHold));
@@ -1065,7 +1254,7 @@ modal.addEventListener('click', e => {
     $('#reset-slot').innerHTML = `<span class="confirm">Clear bones, levels and the log?<button class="btn small" type="button" data-act="reset-yes">Yes, clear</button><button class="btn plain small" type="button" data-act="reset-no">Keep</button></span>`;
     return;
   }
-  if (act === 'reset-yes') { Object.assign(save, { done: {}, bones: 0, log: {}, unlockAll: false, redeemed: [] }); persist(); return openSettings(); }
+  if (act === 'reset-yes') { Object.assign(save, { done: {}, bones: 0, log: {}, done2: {}, log2: {}, unlockAll: false, redeemed: [] }); persist(); return openSettings(); }
   if (act === 'reset-no') { $('#reset-slot').innerHTML = `<button class="btn plain small" type="button" data-act="reset">Reset progress</button>`; }
 });
 
@@ -1112,8 +1301,11 @@ const TEAM = () => ['You did it!', 'Great teamwork!', `Brilliant, ${NAME()}!`, '
 const NUDGE = ['Ooh, nearly!', 'Good try!', 'Let’s look together!'];
 let S = null;
 
-function startLevel(i) {
-  S = { level: i, qs: [], used: new Set(), total: LEVELS[i].seq.length, idx: 0, results: [], tiers: [], eased: 0 };
+// which world's levels the current game uses
+const WL = () => (S && S.world === 2 ? NL_LEVELS : LEVELS);
+function startLevel(i, world = 1) {
+  homeView = world;
+  S = { world, level: i, qs: [], used: new Set(), total: (world === 2 ? NL_LEVELS : LEVELS)[i].seq.length, idx: 0, results: [], tiers: [], eased: 0 };
   $('#home').hidden = true; $('#game').hidden = false;
   window.scrollTo(0, 0);
   showQ();
@@ -1132,6 +1324,7 @@ function showQ() {
   Object.assign(S, { q, values: Array(q.boxes || 1).fill(''), active: 0, locked: false, busy: false,
     tier: 0, steps: null, step: 0, solved: new Set(), tried: new Set(), cluePoint: null });
   if (q.inter === 'break') { q.counts = countsOf(q.n); q.broke = 0; }
+  S.pos = q.line ? (q.line.pawn === 'sit' ? q.line.sitAt : q.line.start) : null; S.zone = null;
   renderGame();
   if (save.readAloud) speak(q.prompt);
 }
@@ -1160,6 +1353,7 @@ function boxResults(vals) {
 
 /* ---------- Bonnie's help ---------- */
 function clueFor(q) {
+  if (q.line) return lineClue(q);
   const named = p => `${PL[p].colour} ${PL[p].name}`;
   switch (q.type) {
     case 'split': case 'missing': {
@@ -1180,6 +1374,7 @@ function clueFor(q) {
 }
 
 function stepsFor(q) {
+  if (q.line) return lineSteps(q);
   const st = [];
   const placeSteps = (v, b) => {
     const p = len(v) - 1, c = v / pow(p);
@@ -1216,6 +1411,7 @@ function stepsFor(q) {
   return st;
 }
 
+const glowMsg = () => (S.q.kind === 'line' ? 'Drag Bonnie into the green glow.' : 'Tap the glowing buttons.');
 // move one rung up the help ladder; source is 'ask' or 'wrong'
 function raise(source, lead) {
   const q = S.q;
@@ -1237,8 +1433,8 @@ function raise(source, lead) {
   } else {
     S.tier = 3; S.steps = null;
     renderControls();
-    feedback('help', `<span><span class="big">${lead || 'Follow the glow!'}</span>Tap the glowing buttons.</span>`);
-    say('Tap the glowing buttons.');
+    feedback('help', `<span><span class="big">${lead || 'Follow the glow!'}</span>${glowMsg()}</span>`);
+    say(glowMsg());
   }
   if (source === 'ask') sfx.woof(); else sfx.soft();
   updateAsk();
@@ -1257,10 +1453,11 @@ function finishSteps() {
   const q = S.q;
   if (q.kind === 'boxes' && !unsolvedBoxes().length) return win();
   if (q.kind === 'build' && buildTotal() === q.n) return win();
+  if (q.kind === 'line' && inTarget()) return win();
   // something still isn't right (he changed it while stepping): guide him the rest of the way
   S.tier = 3; S.steps = null; renderControls(); updateAsk();
-  feedback('help', `<span><span class="big">Nearly there!</span>Tap the glowing buttons.</span>`);
-  say('Tap the glowing buttons.');
+  feedback('help', `<span><span class="big">Nearly there!</span>${glowMsg()}</span>`);
+  say(glowMsg());
 }
 
 function chooseStep(i, btn) {
@@ -1276,6 +1473,7 @@ function chooseStep(i, btn) {
       S.values[st.fill.box] = String(val); S.solved.add(st.fill.box); paintBoxes();
       const b = $(`[data-t="box-${st.fill.box}"]`); if (b) { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
     }
+    if (st.fill && 'zone' in st.fill) { S.zone = st.fill.zone; paintLine(); }
     if (st.fill && 'count' in st.fill) { S.q.counts[st.fill.count] = val; redrawVisual(); }
     const q = S.q;
     setTimeout(() => { if (!S || S.q !== q || S.tier !== 2) return; S.busy = false; S.step++; setMood('help'); advanceSteps(); }, 800);
@@ -1293,6 +1491,7 @@ function chooseStep(i, btn) {
 function clearSpots() { $$('.spot').forEach(e => e.classList.remove('spot')); }
 function spot(t) { clearSpots(); const el = $(`#game [data-t="${t}"]`); if (el) el.classList.add('spot'); }
 function refreshSpots() {
+  paintLine();
   if (!S || S.locked) return clearSpots();
   if (S.tier === 3) return applyGuide();
   if (S.tier === 2 && S.steps && S.steps[S.step]) { const p = S.steps[S.step].point; return p ? spot(p) : clearSpots(); }
@@ -1303,6 +1502,7 @@ function refreshSpots() {
 function applyGuide() {
   const q = S.q;
   if (q.inter === 'break' && q.broke < q.k) return spot('rod');
+  if (q.kind === 'line') return spot(inTarget() ? 'key-check' : 'pawn');
   if (q.kind === 'choice') return spot(`choice-${q.answer[0]}`);
   if (q.kind === 'build') {
     for (const p of q.places) {
@@ -1319,6 +1519,138 @@ function applyGuide() {
   }
   spot('key-check');
 }
+
+/* ---------- number line: drawing, dragging, and Bonnie's help ---------- */
+const inTarget = () => S.pos != null && Math.abs(S.pos - S.q.target) <= S.q.tol + 1e-9;
+
+function lineHTML(q) {
+  const L = q.line, pct = v => (v - L.min) / (L.max - L.min) * 100;
+  const lab = new Set(L.labels.map(String)), maj = new Set([...L.labels, ...L.majors].map(String));
+  const ticks = range(L.min, L.max, L.step, q.dp).map(v => {
+    const k = String(v), isQ = L.mark !== null && v === L.mark;
+    const text = isQ ? '?' : lab.has(k) ? q.fmt(v) : '';
+    return `<div class="nl-tick${maj.has(k) || isQ ? ' major' : ''}${isQ ? ' q' : ''}${v === 0 && L.min < 0 ? ' zero' : ''}" style="left:${pct(v)}%" data-t="tick-${k}"><i></i>${text ? `<span class="nl-lab">${text}</span>` : ''}</div>`;
+  }).join('');
+  const start = L.start !== null ? `<div class="nl-start" style="left:${pct(L.start)}%" data-t="start"></div>` : '';
+  const pawn = L.pawn ? `<div class="nl-pawn" id="nl-pawn" data-t="pawn"><span class="nl-val" id="nl-val" hidden></span><div class="dog nl-dog" data-mood="idle">${bonnieSVG()}</div><div class="nl-pin"></div></div>` : '';
+  return `<div class="nl${L.pawn === 'drag' ? ' can-drag' : ''}${L.dense ? ' dense' : ''}" id="nl" data-t="line" aria-label="Number line from ${q.fmt(L.min)} to ${q.fmt(L.max)}">
+    <div class="nl-track"><div class="nl-bar"></div>
+      <div class="nl-zone soft" id="nl-zone" hidden></div><div class="nl-zone guide" id="nl-guide" hidden></div>
+      ${ticks}${start}${pawn}</div></div>`;
+}
+
+// keep the pawn, the yellow "between" zone and the green guide zone in step with the state
+function paintLine() {
+  const q = S && S.q; if (!q || !q.line || !$('#nl')) return;
+  const L = q.line, pct = v => (v - L.min) / (L.max - L.min) * 100;
+  const pawn = $('#nl-pawn');
+  if (pawn) {
+    pawn.style.left = pct(S.pos ?? L.min) + '%';
+    pawn.classList.toggle('waiting', S.pos == null && !S.locked);
+    const val = $('#nl-val');
+    val.hidden = !((S.locked && q.kind === 'line') || q.ask === 'between'); val.textContent = q.fmt(q.target);
+  }
+  const zone = (el, a, b) => { el.hidden = false; el.style.left = pct((a + b) / 2) + '%'; el.style.width = (pct(b) - pct(a)) + '%'; };
+  const z = $('#nl-zone'); if (S.zone && !S.locked && S.tier !== 3) zone(z, ...S.zone); else z.hidden = true;
+  const g = $('#nl-guide');
+  if (S.tier === 3 && q.kind === 'line' && !S.locked) { const h = Math.max(q.tol, q.snap / 2); zone(g, Math.max(L.min, q.target - h), Math.min(L.max, q.target + h)); }
+  else g.hidden = true;
+  if (S.locked && L.mark !== null) { const l = $('.nl-tick.q .nl-lab'); if (l) l.textContent = q.fmt(q.target); }
+}
+
+function lineClue(q) {
+  const f = q.fmt, t = q.target, B = q.bench;
+  if (q.ask === 'hop') {
+    const { s, k, dir } = q.hop, on = dir === 'forward';
+    return k % 10 === 0
+      ? { say: `${on ? 'Add' : 'Take away'} ${k / 10} ten${k > 10 ? 's' : ''}. Ones stay the same.`, point: 'start' }
+      : { say: `Start at ${f(s)}. Count ${on ? 'on' : 'back'} ${k}.`, point: 'start' };
+  }
+  if (q.ask === 'between') return { say: `Look at the tens next to ${f(t)}.`, point: `tick-${q.answer[0]}` };
+  if (q.ask === 'jump') return { say: `Count the jumps from 0 to ${f(q.jump.reach)}.`, point: `tick-${q.jump.reach}` };
+  if (q.interval) return q.ask === 'read'
+    ? { say: `Count ${q.back ? 'back' : 'on'} in ${f(q.interval)}s.`, point: `tick-${rd(q.back ? t + q.interval : t - q.interval)}` }
+    : { say: `Count on in ${f(q.interval)}s to ${f(t)}.`, point: `tick-${rd(q.line.min + q.interval)}` };
+  if (q.ask === 'read') return { say: `Count the ticks from ${f(B)}.`, point: `tick-${B}` };
+  return { say: `Find ${f(B)} first. ${f(t)} is ${t > B ? 'greater' : 'less'}.`, point: `tick-${B}` };
+}
+
+function lineSteps(q) {
+  const f = q.fmt, t = q.target, L = q.line, st = [];
+  const move = { say: `Now move Bonnie to ${f(t)}.`, point: 'pawn', action: inTarget, wait: 'Drag Bonnie on the line!' };
+  const jumpStep = s => ({ say: 'How big is each jump?', choices: pick3(s, jumpOpts(s)).map(f), answer: f(s) });
+  const finalPick = say => ({ say, choices: q.choices.map(f), answer: f(t), final: true });
+  if (q.ask === 'jump') {
+    const { n, reach } = q.jump;
+    if (n > 1) st.push({ say: `How many jumps from 0 to ${f(reach)}?`, point: `tick-${reach}`, choices: near(n).map(String), answer: String(n) });
+    st.push(finalPick(n > 1 ? `${n} jumps make ${f(reach)}. Each jump is…` : 'So each jump is…'));
+  } else if (q.ask === 'read') {
+    if (q.interval) st.push({ ...jumpStep(q.interval), say: `Count ${q.back ? 'back' : 'on'}. How big is each jump?` });
+    else st.push({ say: `Is Bonnie’s number bigger than ${f(q.bench)}?`, point: `tick-${q.bench}`, choices: ['Yes', 'No'], answer: t > q.bench ? 'Yes' : 'No', words: true });
+    st.push(finalPick('So Bonnie is on…'));
+  } else if (q.ask === 'between') {
+    const lo = q.answer[0];
+    st.push({ say: `How many tens are in ${f(t)}?`, choices: near(lo / 10).map(String), answer: String(lo / 10) });
+    st.push({ say: `So ${f(t)} is between…`, choices: q.choices.map(q.cfmt), answer: q.cfmt(lo), words: true, final: true });
+  } else if (q.ask === 'hop') {
+    const { s, k, dir } = q.hop, on = dir === 'forward', wrongWay = on ? s - k : s + k;
+    st.push({ say: `Jump ${dir}. Do the numbers get bigger or smaller?`, point: 'start', choices: ['Bigger', 'Smaller'], answer: on ? 'Bigger' : 'Smaller', words: true });
+    st.push({ say: `${f(s)} ${on ? '+' : '−'} ${k} = ?`, choices: pick3(t, [t - 1, t + 1, wrongWay, t + 10, t - 10].filter(v => v >= 0 && v <= 100)).map(f), answer: f(t) });
+    st.push(move);
+  } else if (q.interval) {
+    st.push(jumpStep(q.interval));
+    st.push({ ...move, say: `Count on in ${f(q.interval)}s to ${f(t)}.` });
+  } else {
+    if (q.bench !== t) st.push({ say: `Is ${f(t)} greater or less than ${f(q.bench)}?`, point: `tick-${q.bench}`, choices: ['Greater', 'Less'], answer: t > q.bench ? 'Greater' : 'Less', words: true });
+    const u = q.bracket;
+    if (u) {
+      const lo = rd(L.min + Math.floor(rd((t - L.min) / u, 6)) * u, q.dp);
+      if (rd(t - lo, q.dp) !== 0) {
+        const lab = x => `${f(x)} and ${f(rd(x + u, q.dp))}`;
+        const opts = [lo - u, lo, lo + u].map(x => rd(x, q.dp)).filter(x => x >= L.min - 1e-9 && x + u <= L.max + 1e-9);
+        st.push({ say: u === 10 ? 'Which two tens is it between?' : 'Which two numbers is it between?', choices: opts.map(lab), answer: lab(lo), words: true, fill: { zone: [lo, rd(lo + u, q.dp)] } });
+      }
+    }
+    st.push(move);
+  }
+  return st;
+}
+
+// dragging (or tapping) Bonnie along the line; she snaps to the nearest allowed value
+let dragId = null;
+function posFromX(x) {
+  const q = S.q, L = q.line, r = $('#nl .nl-track').getBoundingClientRect();
+  const fr = Math.max(0, Math.min(1, (x - r.left) / r.width));
+  const v = L.min + Math.round(fr * (L.max - L.min) / q.snap) * q.snap;
+  return rd(Math.max(L.min, Math.min(L.max, v)), q.dp);
+}
+function movePawn(v) {
+  if (v === S.pos) return;
+  S.pos = v; tone([880], .03, 'triangle', .04);
+  paintLine();
+  if (S.tier === 3) applyGuide();
+}
+// in the step card the last step is "move Bonnie": finishing the move finishes the step
+function afterMove() {
+  const st = S && !S.locked && S.tier === 2 && S.steps && S.steps[S.step];
+  if (!st || !st.action || !st.action()) return;
+  const q0 = S.q; setMood('happy');
+  setTimeout(() => { if (S && S.q === q0 && S.tier === 2 && !S.locked && st.action()) { S.step++; advanceSteps(); } }, 450);
+}
+$('#game').addEventListener('pointerdown', e => {
+  const nl = e.target.closest('#nl');
+  if (!nl || !S || S.locked || S.q.kind !== 'line') return;
+  e.preventDefault(); dragId = e.pointerId;
+  try { nl.setPointerCapture(e.pointerId); } catch (err) {}
+  $('#nl-pawn').classList.add('dragging');
+  movePawn(posFromX(e.clientX));
+});
+document.addEventListener('pointermove', e => { if (dragId !== null && e.pointerId === dragId && S && !S.locked) movePawn(posFromX(e.clientX)); });
+['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, e => {
+  if (dragId === null || e.pointerId !== dragId) return;
+  dragId = null; const p = $('#nl-pawn'); if (p) p.classList.remove('dragging');
+  afterMove();
+}));
 
 /* ---------- drawing the game ---------- */
 function eqHTML(q) {
@@ -1341,14 +1673,14 @@ function eqHTML(q) {
 
 
 function renderGame() {
-  const q = S.q, lv = LEVELS[S.level];
+  const q = S.q, lv = WL()[S.level];
   const dots = lv.seq.map((_, i) => `<i class="${S.results[i] || ''}${i === S.idx ? ' now' : ''}"></i>`).join('');
   const hello = S.idx === 0 ? `Woof! Let’s go, ${nameH()}!`
-    : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
+    : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
   $('#game').innerHTML = `
     <div class="topbar">
       <button class="icon-btn" id="back" aria-label="Back to levels">${ICON.back}</button>
-      <div class="where"><small>Level ${S.level + 1} · Question ${Math.min(S.idx + 1, S.total)} of ${S.total}</small><b>${lv.name}</b></div>
+      <div class="where"><small>${WORLDS[S.world].stop} ${S.level + 1} · Question ${Math.min(S.idx + 1, S.total)} of ${S.total}</small><b>${lv.name}</b></div>
       <div class="dots" aria-hidden="true">${dots}</div>
       ${shopButton('bones', false)}
       <button class="icon-btn${save.sound ? '' : ' off'}" id="snd" aria-label="Sound ${save.sound ? 'on' : 'off'}">${ICON.sound}</button>
@@ -1361,6 +1693,7 @@ function renderGame() {
         </div>
         ${q.tip ? `<div class="tip">${q.tip}</div>` : ''}
         ${eqHTML(q)}
+        ${q.line ? lineHTML(q) : ''}
         ${q.mode ? `<div class="visual" id="visual" data-t="visual" ${q.showVisual ? '' : 'hidden'}>${visualHTML(q)}</div>` : ''}
         ${q.inter === 'break' ? `<div class="vis-tools"><button class="btn plain small" id="putback">Put the tens back</button></div>` : ''}
       </div>
@@ -1384,7 +1717,7 @@ function renderControls() {
     el.innerHTML = `<div class="card stepcard">
       <div class="step-dots" aria-label="Step ${S.step + 1} of ${S.steps.length}">${S.steps.map((_, i) => `<i class="${i < S.step ? 'past' : i === S.step ? 'now' : ''}"></i>`).join('')}</div>
       <div class="step-say">${st.say}</div>
-      ${st.action ? `<div class="step-wait">${PAW} Tap it up there!</div>`
+      ${st.action ? `<div class="step-wait">${PAW} ${st.wait || 'Tap it up there!'}</div>`
         : `<div class="chips">${st.choices.map((c, i) => `<button class="chip${st.words ? ' word' : ''}" data-chip="${i}">${c}</button>`).join('')}</div>`}
     </div>`;
   } else if (q.kind === 'boxes') {
@@ -1395,7 +1728,7 @@ function renderControls() {
       <button class="key check" data-key="check" data-t="key-check">Check</button>
     </div>`;
   } else if (q.kind === 'choice') {
-    el.innerHTML = `<div class="choices">${q.choices.map(c => `<button class="choice${S.tried.has(c) ? ' faded' : ''}" data-choice="${c}" data-t="choice-${c}" ${S.tried.has(c) ? 'disabled' : ''}>${c}</button>`).join('')}</div>`;
+    el.innerHTML = `<div class="choices${q.cfmt ? ' wordy' : ''}">${q.choices.map(c => `<button class="choice${S.tried.has(c) ? ' faded' : ''}" data-choice="${c}" data-t="choice-${c}" ${S.tried.has(c) ? 'disabled' : ''}>${q.cfmt ? q.cfmt(c) : q.fmt ? q.fmt(c) : c}</button>`).join('')}</div>`;
   } else {
     el.innerHTML = `<div class="actions"><button class="btn" data-key="check" data-t="key-check">Check</button></div>`;
   }
@@ -1445,6 +1778,15 @@ function press(key) {
 
 function onCheck() {
   const q = S.q;
+  if (q.kind === 'line') {
+    if (S.pos == null || S.pos === q.line.start) {
+      feedback('info', '<span>Drag Bonnie along the line first.</span>');
+      if (S.tier !== 3) spot('pawn');
+      return;
+    }
+    if (inTarget()) return win();
+    return raise('wrong');
+  }
   if (q.kind === 'boxes') {
     const empty = unsolvedBoxes().find(i => S.values[i] === '');
     if (empty !== undefined) {
@@ -1483,6 +1825,8 @@ function choose(val, btn) {
 function win() {
   if (S.locked) return;
   S.locked = true; clearSpots();
+  if (S.q.kind === 'line') S.pos = S.q.target; // slide Bonnie onto the exact spot
+  paintLine();
   S.results[S.idx] = 'good'; S.tiers.push(S.tier); noteOutcome(S.tier);
   S.values.forEach((_, i) => S.solved.add(i)); paintBoxes();
   save.bones++; persist(); bumpBones();
@@ -1508,31 +1852,31 @@ function next() {
 
 const BONUS = 3;
 function finish() {
-  const i = S.level, earned = S.total + BONUS;
-  save.bones += BONUS; save.done[i] = true;
+  const i = S.level, earned = S.total + BONUS, w2 = S.world === 2;
+  save.bones += BONUS; (w2 ? save.done2 : save.done)[i] = true;
   const tiers = [0, 0, 0, 0]; S.tiers.forEach(t => tiers[t]++);
-  save.log[i] = { tiers, eased: S.eased, when: today() };
+  (w2 ? save.log2 : save.log)[i] = { tiers, eased: S.eased, when: today() };
   persist();
   S.idx = S.total - 1; renderGame(); S.locked = true;
   $$('#game button').forEach(b => b.disabled = true);
-  const hasNext = i + 1 < LEVELS.length;
+  const hasNext = i + 1 < WL().length;
   const msg = `Bonnie is so proud of you, ${NAME()}!`;
   $('#overlay').innerHTML = `<div class="card done" role="dialog" aria-label="Level complete">
       <div class="dog" data-mood="happy">${bonnieSVG()}</div>
-      <h2>Level ${i + 1} done!</h2>
+      <h2>${esc(WL()[i].name)} done!</h2>
       <div class="bone-row" aria-label="${earned} bones">${Array.from({ length: earned }, (_, k) => `<span style="animation-delay:${k * 0.08}s">${BONE}</span>`).join('')}</div>
       <p><b>+${earned} bones!</b> ${esc(msg)}</p>
       <div class="row">
-        ${hasNext ? `<button class="btn" id="d-next">Level ${i + 2}: ${LEVELS[i + 1].name}</button>` : ''}
+        ${hasNext ? `<button class="btn" id="d-next">Next: ${WL()[i + 1].name}</button>` : ''}
         <button class="btn plain" id="d-shop">${BONE} Bone Shop</button>
         <button class="btn plain" id="d-again">Play again</button>
         <button class="btn plain" id="d-home">All levels</button>
       </div>
-      ${hasNext ? '' : '<p>You finished every level. You are a partitioning champion!</p>'}
+      ${hasNext ? '' : `<p>You finished every level. You are a ${S.world === 2 ? 'number line' : 'partitioning'} champion!</p>`}
     </div>`;
   $('#overlay').hidden = false;
   sfx.win(); setTimeout(sfx.woof, 800); confetti();
-  say(`Level done! You got ${earned} bones. ${msg}`);
+  say(`${WL()[i].name} done! You got ${earned} bones. ${msg}`);
 }
 
 $('#overlay').addEventListener('click', e => {
@@ -1540,8 +1884,9 @@ $('#overlay').addEventListener('click', e => {
   if (id === 'd-shop') { sfx.tap(); return openShop(); }
   const i = S ? S.level : 0;
   $('#overlay').hidden = true;
-  if (id === 'd-next') startLevel(i + 1);
-  if (id === 'd-again') startLevel(i);
+  const w = S ? S.world : 1;
+  if (id === 'd-next') startLevel(i + 1, w);
+  if (id === 'd-again') startLevel(i, w);
   if (id === 'd-home') goHome();
 });
 
@@ -1584,6 +1929,12 @@ $('#game').addEventListener('click', e => {
 
 document.addEventListener('keydown', e => {
   if (!S || $('#game').hidden || !modal.hidden) return;
+  if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && S.q.kind === 'line' && !S.locked) {
+    e.preventDefault();
+    const q = S.q, L = q.line, d = e.key === 'ArrowRight' ? q.snap : -q.snap;
+    movePawn(rd(Math.max(L.min, Math.min(L.max, (S.pos ?? L.min) + d)), q.dp)); afterMove();
+    return;
+  }
   if (/^[0-9]$/.test(e.key)) press(e.key);
   else if (e.key === 'Backspace') press('del');
   else if (e.key === 'Enter') press('check');
