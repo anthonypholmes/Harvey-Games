@@ -2,7 +2,7 @@
 <html lang="en-GB">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Harvey's Number Splitter</title>
+<title>Harvey's Meadow Maths</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -627,7 +627,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
 'use strict';
 
 /* ---------- saved progress (this iPad only) ---------- */
-const STORE = 'harvey-splitter-v1';
+const STORE = '-splitter-v1';
 // starter prizes, sized for the 96 bones one play through all 8 levels gives
 const STARTER_PRIZES = [
   [10, 'Choose what’s for dinner', 'You pick the meal tonight.'],
@@ -648,7 +648,7 @@ if (!Array.isArray(save.redeemed)) save.redeemed = [];
 if (save.w2v !== 2) { save.done2 = {}; save.log2 = {}; save.w2v = 2; } // World 2 was rebuilt for Year 2
 const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(save)); } catch (e) {} };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const NAME = () => save.name || 'Harvey';
+const NAME = () => save.name || '';
 const nameH = () => esc(NAME());
 const today = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
@@ -753,7 +753,7 @@ function distractors(n) {
 
 /* ---------- questions ----------
    Each question says what it shows (eq, visual) and what counts as right (answer).
-   Help is worked out from the question when Harvey needs it: clueFor() and stepsFor(). */
+   Help is worked out from the question when they need it: clueFor() and stepsFor(). */
 function makeQ(type, n, lv) {
   if (type === 'add') return makeAdd(n[0], n[1]);
   const L = len(n), c = countsOf(n);
