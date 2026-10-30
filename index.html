@@ -458,7 +458,7 @@ input { -webkit-user-select: text; user-select: text; }
 .world:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--ink); }
 .world h3 { font-size: clamp(30px, 3.6vw, 38px); }
 .world .blurb { color: var(--ink-soft); font-size: 17px; }
-.world-pic { background: var(--paper); border: 2px solid var(--grid); border-radius: 14px; padding: 16px; display: grid; justify-items: center; align-content: center; gap: 10px; min-height: 250px; margin-top: 6px; }
+.world-pic { background: var(--paper); border: 2px solid var(--grid); border-radius: 14px; padding: 16px; display: grid; justify-items: center; align-content: center; gap: 10px; min-height: 210px; margin-top: 6px; }
 .world-pic .eq { font-size: 36px; }
 .world-prog { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 16px; color: var(--good); }
 .world-prog svg { width: 18px; height: 18px; }
@@ -607,6 +607,47 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
   100% { transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--rot)); opacity: 0; }
 }
 
+/* ---------- Worlds 3 and 4: pictures ---------- */
+.gvis { flex-direction: column; align-items: center; gap: 14px; --cell: 36px; }
+.gv-row { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+.gi { display: inline-grid; place-items: center; width: 26px; height: 26px; }
+.gi .bone { width: 26px; height: 26px; }
+.gi .apple, .gv-cell .apple { width: 100%; height: 100%; }
+.gv-box { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-content: center; padding: 12px; min-width: 70px; min-height: 64px; max-width: 160px; font: inherit; color: inherit; transition: transform .1s; }
+button.gv-box { cursor: pointer; }
+button.gv-box:active { transform: scale(.96); }
+.gv-plate { width: 132px; height: 132px; max-width: none; border-radius: 50%; background: radial-gradient(circle, #fff 58%, #F3E7D3 59%, #fff 72%); border: 2px solid var(--edge); box-shadow: 0 6px 12px -8px rgba(120, 85, 45, .5); }
+.gv-bowl { width: 128px; min-height: 84px; max-width: none; border-radius: 14px 14px 64px 64px; background: linear-gradient(#DDEBF8, #A9CBEA); border: 2px solid #5B88B5; padding-top: 14px; padding-bottom: 18px; }
+.gv-basket { width: 128px; min-height: 70px; max-width: none; border-radius: 10px 10px 26px 26px; background: repeating-linear-gradient(45deg, #DDB173 0 6px, #C9944F 6px 12px); border: 2px solid var(--wood-dk); }
+.gv-lily { width: 138px; height: 138px; max-width: none; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #A6DAA0, #66AE62); border: 2px solid #3E7E3E; }
+.gv-box.fair { box-shadow: 0 0 0 4px rgba(63, 139, 92, .45), 0 0 18px rgba(63, 139, 92, .5); animation: fair .5s ease-out; }
+@keyframes fair { 40% { transform: scale(1.06); } }
+.gv-pile { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; padding: 10px 14px; min-height: 30px; max-width: 420px; border: 2px dashed var(--edge); border-radius: 16px; background: #fff; }
+.gv-empty { font-weight: 700; color: var(--good); padding: 2px 6px; }
+.gv-tools { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.gv-tools .btn svg, .gvis > .btn svg { width: 20px; height: 20px; }
+.gv-cap { font-family: var(--f-display); font-weight: 600; font-size: 22px; color: var(--ink); }
+.gv-cap.good { color: var(--good); }
+.gv-array { display: grid; gap: 6px; padding: 14px; border-radius: 18px; background: radial-gradient(circle at 50% 30%, #E8F3DC, #CFE5BD); border: 2px solid #A9CC92; transition: transform .55s cubic-bezier(.4, 0, .2, 1); }
+.gv-array .gi { width: var(--cell); height: var(--cell); }
+.gv-array.turning { transform: rotate(90deg); }
+.gv-grid { display: grid; grid-template-columns: repeat(10, minmax(0, 42px)); gap: 5px; padding: 12px; border-radius: 18px; background: radial-gradient(circle at 50% 30%, #EEF6E4, #D7EAC6); border: 2px solid #A9CC92; touch-action: none; max-width: 100%; }
+.gv-cell { aspect-ratio: 1; border-radius: 50%; border: 2px dashed #B9CFA3; background: rgba(255, 255, 255, .7); display: grid; place-items: center; padding: 3px; cursor: pointer; }
+.gv-cell.on { border: 2px solid #8DB874; background: #fff; }
+.gv-cell.spot { position: relative; }
+.gv-shapes .shape { width: 120px; height: 120px; }
+.gv-shape .shape { width: 170px; height: 170px; display: block; }
+.choice .shape { width: 78px; height: 78px; display: block; margin: 0 auto; }
+.chip .shape { width: 58px; height: 58px; display: block; margin: 0 auto; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font-weight: 700; vertical-align: middle; }
+.frac i { font-style: normal; padding: 0 6px; }
+.frac i:first-child { border-bottom: 3px solid currentColor; padding-bottom: 2px; }
+.frac i:last-child { padding-top: 2px; }
+.mini .gv-box { width: 92px; min-height: 60px; padding: 8px; }
+.mini .gv-bowl { padding-top: 10px; }
+.mini.gv-array, .mini .gv-array { --cell: 30px; }
+@media (max-width: 560px) { .gvis { --cell: 26px; } .gv-plate, .gv-bowl, .gv-basket { width: 104px; } .gv-plate { height: 104px; } .gv-lily { width: 112px; height: 112px; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -627,7 +668,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
 'use strict';
 
 /* ---------- saved progress (this iPad only) ---------- */
-const STORE = '-splitter-v1';
+const STORE = 'harvey-splitter-v1';
 // starter prizes, sized for the 96 bones one play through all 8 levels gives
 const STARTER_PRIZES = [
   [10, 'Choose what’s for dinner', 'You pick the meal tonight.'],
@@ -637,7 +678,7 @@ const STARTER_PRIZES = [
   [80, 'Choose a toy from Smyth’s Toys', 'Pick a toy at the toy shop.'],
 ].map(([cost, title, desc], i) => ({ id: 's' + i, cost, title, desc }));
 
-let save = { name: null, done: {}, bones: 0, log: {}, done2: {}, log2: {}, unlockAll: false, sound: true, readAloud: false, rewards: null, redeemed: [] };
+let save = { name: null, done: {}, bones: 0, log: {}, done2: {}, log2: {}, done3: {}, log3: {}, done4: {}, log4: {}, unlockAll: false, sound: true, readAloud: false, rewards: null, redeemed: [] };
 try { const raw = localStorage.getItem(STORE); if (raw) save = Object.assign(save, JSON.parse(raw)); } catch (e) {}
 if (save.stars) { // older version used stars: any star means the level was finished
   Object.keys(save.stars).forEach(k => { if (save.stars[k] > 0) save.done[k] = true; });
@@ -648,7 +689,7 @@ if (!Array.isArray(save.redeemed)) save.redeemed = [];
 if (save.w2v !== 2) { save.done2 = {}; save.log2 = {}; save.w2v = 2; } // World 2 was rebuilt for Year 2
 const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(save)); } catch (e) {} };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const NAME = () => save.name || '';
+const NAME = () => save.name || 'Harvey';
 const nameH = () => esc(NAME());
 const today = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
@@ -753,7 +794,7 @@ function distractors(n) {
 
 /* ---------- questions ----------
    Each question says what it shows (eq, visual) and what counts as right (answer).
-   Help is worked out from the question when they need it: clueFor() and stepsFor(). */
+   Help is worked out from the question when Harvey needs it: clueFor() and stepsFor(). */
 function makeQ(type, n, lv) {
   if (type === 'add') return makeAdd(n[0], n[1]);
   const L = len(n), c = countsOf(n);
@@ -940,10 +981,341 @@ const NL_LEVELS = [
     } },
 ];
 
+/* ---------- Worlds 3 and 4: The Array Orchard and The Sharing Pond ----------
+   These questions are mostly 'boxes' (type the answer on the keypad) with a picture
+   (q.vis) that Harvey can play with: plates, an apple array he can turn, an orchard grid
+   he grows by tapping, bowls he shares bones into, baskets he fills.
+   Each question carries its own clue (gclue) and step card (gsteps). */
+const APPLE = '<svg class="apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5c0-2.2 1-3.6 2.6-4.2" stroke="#6b4f3a" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="15.8" cy="5.2" rx="2.8" ry="1.4" fill="#5FA35A" transform="rotate(-25 15.8 5.2)"/><circle cx="12" cy="14.5" r="7.6" fill="#E2574C" stroke="#9E2F27" stroke-width="1.4"/><ellipse cx="9" cy="11.6" rx="1.8" ry="2.4" fill="#fff" opacity=".45"/></svg>';
+const itemSVG = k => (k === 'apple' ? APPLE : BONE);
+const sum = a => a.reduce((x, y) => x + y, 0);
+const frac = (n, d) => `<span class="frac"><i>${n}</i><i>${d}</i></span>`;
+
+function gq(o) {
+  const q = {
+    type: 'g-' + o.t, kind: o.kind || 'boxes', mode: null, places: [], tip: o.tip || '',
+    eq: o.eq || null, prompt: o.prompt, answer: o.answer, boxes: o.answer.length,
+    vis: o.vis || null, showVisual: o.show !== false, choices: o.choices, cfmt: o.cfmt,
+    gclue: o.clue, key: o.key || o.prompt + JSON.stringify(o.answer), n: o.answer[0],
+  };
+  q.gsteps = o.steps ? () => o.steps(q) : null;
+  return q;
+}
+// the last step card: pick the answer and it drops into the box
+const fillStep = (say, ans, cands, box = 0) => ({ say, choices: pick3(ans, cands.filter(v => v >= 0 && v !== ans)), answer: ans, fill: { box } });
+const shareDone = v => sum(v.bowls) === v.N && v.bowls.every(b => b === v.bowls[0]);
+const gridOk = v => v.r === v.tr && v.c === v.tc;
+
+/* --- shapes cut into parts (for quarters and halves) --- */
+function wedge(a0, a1) {
+  const p = a => [50 + 40 * Math.sin(a * Math.PI / 180), 50 - 40 * Math.cos(a * Math.PI / 180)].map(n => n.toFixed(1)).join(' ');
+  return `M50 50 L${p(a0)} A40 40 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${p(a1)} Z`;
+}
+const SHAPES = {
+  sq4: [[10, 10, 40, 40], [50, 10, 40, 40], [50, 50, 40, 40], [10, 50, 40, 40]],
+  strip4: [[10, 10, 20, 80], [30, 10, 20, 80], [50, 10, 20, 80], [70, 10, 20, 80]],
+  sq4bad: [[10, 10, 26, 30], [36, 10, 54, 30], [36, 40, 54, 50], [10, 40, 26, 50]],
+  rect3: [[8, 25, 28, 50], [36, 25, 28, 50], [64, 25, 28, 50]],
+  rect2: [[10, 25, 40, 50], [50, 25, 40, 50]],
+  ci4: [0, 90, 180, 270, 360], ci4bad: [0, 60, 200, 250, 360], ci2: [0, 180, 360], ci3: [0, 120, 240, 360],
+};
+function shapeSVG(kind, shade = 0) {
+  const s = SHAPES[kind], fill = i => (i < shade ? 'var(--sun)' : '#fff');
+  const parts = kind.startsWith('ci')
+    ? s.slice(0, -1).map((a, i) => `<path d="${wedge(a, s[i + 1])}" fill="${fill(i)}"/>`)
+    : s.map(([x, y, w, h], i) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill(i)}"/>`);
+  return `<svg class="shape" viewBox="0 0 100 100" aria-hidden="true"><g stroke="var(--ink)" stroke-width="3" stroke-linejoin="round">${parts.join('')}</g></svg>`;
+}
+
+/* --- drawing the picture --- */
+function gvisInner(q) {
+  const v = q.vis, it = itemSVG(v.item);
+  const many = n => Array.from({ length: n }, () => `<span class="gi">${it}</span>`).join('');
+  const box = (n, extra = '', tag = 'div', attrs = '') => `<${tag} class="gv-box gv-${v.box}${extra}"${attrs}>${many(n)}</${tag}>`;
+  switch (v.type) {
+    case 'groups':
+      return `<div class="gv-row">${Array.from({ length: v.g }, () => box(v.n)).join('')}</div>`;
+    case 'array': {
+      const r = v.turned ? v.c : v.r, c = v.turned ? v.r : v.c;
+      return `<div class="gv-array" id="gv-array" style="grid-template-columns:repeat(${c}, var(--cell))">${many(r * c)}</div>
+        ${v.label ? `<div class="gv-cap">${r} row${r > 1 ? 's' : ''} of ${c}</div>` : ''}
+        ${v.turn ? `<button class="btn small plain" data-g="turn" data-t="g-turn">${ICON.turn} Turn the tree</button>` : ''}`;
+    }
+    case 'grid': {
+      let cells = '';
+      for (let i = 1; i <= 5; i++) for (let j = 1; j <= 10; j++) {
+        const on = i <= v.r && j <= v.c;
+        cells += `<span class="gv-cell${on ? ' on' : ''}" data-cell="${i}-${j}" data-t="cell-${i}-${j}">${on ? it : ''}</span>`;
+      }
+      return `<div class="gv-grid" id="gv-grid">${cells}</div><div class="gv-cap" id="gv-cap">${gridCap(v)}</div>`;
+    }
+    case 'share': {
+      const pile = v.N - sum(v.bowls), fair = pile === 0 && shareDone(v);
+      return `<div class="gv-pile">${pile ? many(pile) : '<span class="gv-empty">All shared out!</span>'}</div>
+        <div class="gv-row">${v.bowls.map((b, i) => box(b, fair ? ' fair' : '', 'button', ` type="button" data-g-bowl="${i}" aria-label="${v.box === 'lily' ? 'Lily pad' : 'Bowl'} ${i + 1}"`)).join('')}</div>
+        <div class="gv-tools"><button class="btn small" type="button" data-g="each" data-t="g-each">One each</button><button class="btn small plain" type="button" data-g="reset">Start again</button></div>
+        ${fair ? '<div class="gv-cap good">Fair share! Every one has the same.</div>' : ''}`;
+    }
+    case 'group': {
+      const pile = v.N - v.baskets * v.s;
+      return `<div class="gv-pile">${pile ? many(pile) : '<span class="gv-empty">None left!</span>'}</div>
+        <div class="gv-row">${Array.from({ length: v.baskets }, () => box(v.s)).join('')}</div>
+        <div class="gv-tools"><button class="btn small" type="button" data-g="fill" data-t="g-fill" ${pile < v.s ? 'disabled' : ''}>Fill a basket</button><button class="btn small plain" type="button" data-g="reset">Start again</button></div>`;
+    }
+    case 'shape': return `<div class="gv-shape">${shapeSVG(v.shape, v.shade)}</div>`;
+    case 'shapes': return `<div class="gv-row gv-shapes">${v.list.map(k => shapeSVG(k, 0)).join('')}</div>`;
+  }
+  return '';
+}
+const gridCap = v => (v.r ? `${v.r} row${v.r > 1 ? 's' : ''} of ${v.c} = ${v.r * v.c}` : 'Tap a square to grow the orchard');
+function redrawG() { const el = $('#visual'); if (el && S.q.vis) el.innerHTML = gvisInner(S.q); refreshSpots(); }
+// the orchard grid is repainted in place so a drag keeps going smoothly
+function paintGrid() {
+  const v = S.q.vis, it = itemSVG(v.item);
+  $$('#game #gv-grid [data-cell]').forEach(c => {
+    const [i, j] = c.dataset.cell.split('-').map(Number), on = i <= v.r && j <= v.c;
+    if (c.classList.contains('on') !== on) { c.classList.toggle('on', on); c.innerHTML = on ? it : ''; }
+  });
+  $('#game #gv-cap').textContent = gridCap(v);
+}
+
+/* --- World 3: The Array Orchard --- */
+const AO_LEVELS = [
+  { name: 'Bone Groups', blurb: 'Equal groups and adding again', eg: '5 + 5 + 5 = 15',
+    seq: ['add', 'add', 'groups', 'add', 'each', 'add', 'groups', 'add', 'each'],
+    make(type, k, easy) {
+      const g = rand(2, easy ? 3 : 5), n = easy ? pick([2, 5]) : pick([2, 3, 4, 5, 10]), p = g * n;
+      const vis = { type: 'groups', g, n, box: 'plate', item: 'bone' };
+      if (type === 'groups') return gq({ t: 'groups', prompt: 'How many plates?', eq: [{ box: 0 }, { text: 'groups of' }, { num: n }, '=', { num: p }], answer: [g], vis,
+        clue: { say: 'Count the plates.', point: 'visual' },
+        steps: () => [fillStep(`Each plate has ${n}. How many plates?`, g, near(g))] });
+      if (type === 'each') return gq({ t: 'each', prompt: 'How many bones on each plate?', eq: [{ num: g }, { text: 'groups of' }, { box: 0 }, '=', { num: p }], answer: [n], vis,
+        clue: { say: 'Count the bones on one plate.', point: 'visual' },
+        steps: () => [fillStep('Look at one plate. How many bones?', n, near(n))] });
+      const eq = []; for (let i = 0; i < g; i++) { if (i) eq.push('+'); eq.push({ num: n }); } eq.push('=', { box: 0 });
+      return gq({ t: 'add', prompt: `${g} plates with ${n} bones on each. How many bones?`, eq, answer: [p], vis,
+        clue: { say: `Count in ${n}s, once for each plate.`, point: 'visual' },
+        steps: () => [
+          { say: 'How many plates?', point: 'visual', choices: near(g), answer: g },
+          { say: 'How many bones on each plate?', choices: near(n), answer: n },
+          fillStep(`${g} lots of ${n} makes…`, p, [p - n, p + n, g + n]),
+        ] });
+    } },
+  { name: 'Grid Builder', blurb: 'Build rows and columns', eg: '4 rows of 2',
+    seq: ['build', 'count', 'build', 'build', 'count', 'build', 'count', 'build', 'build'],
+    make(type, k, easy) {
+      let r, c; do { r = rand(2, easy ? 3 : 5); c = rand(2, easy ? 5 : 10); } while (r === c);
+      const p = r * c;
+      if (type === 'count') return gq({ t: 'count', prompt: 'How many apples?', eq: [{ num: r }, '×', { num: c }, '=', { box: 0 }], answer: [p],
+        vis: { type: 'array', r, c, item: 'apple', label: true },
+        clue: { say: `Count in ${c}s, one row at a time.`, point: 'visual' },
+        steps: () => [
+          { say: 'How many rows?', point: 'visual', choices: near(r), answer: r },
+          { say: 'How many apples in each row?', choices: near(c), answer: c },
+          fillStep(`${r} rows of ${c} makes…`, p, [p - c, p + c, r + c]),
+        ] });
+      return gq({ t: 'build', kind: 'grid', prompt: `Make ${r} rows of ${c}.`, answer: [p], tip: 'Tap or drag across the squares to grow the orchard.',
+        vis: { type: 'grid', r: 0, c: 0, tr: r, tc: c, item: 'apple' }, key: `build${r}x${c}`,
+        clue: { say: `${r} rows going down, ${c} going across.`, point: 'visual' },
+        steps: q => [
+          { say: `How many rows going down?`, point: 'visual', choices: near(r), answer: r },
+          { say: 'How many apples in each row?', choices: near(c), answer: c },
+          { say: 'Tap the glowing square.', point: `cell-${r}-${c}`, action: () => gridOk(q.vis), wait: 'Tap the glowing square up there!' },
+        ] });
+    } },
+  { name: 'The Swapping Tree', blurb: 'Turn it round: same answer', eg: '3 × 4 = 4 × 3',
+    seq: ['swap', 'swapm', 'swap', 'swap', 'swapm', 'swap', 'swapm', 'swap', 'swap'],
+    make(type, k, easy) {
+      let a, b; do { a = rand(2, easy ? 3 : 5); b = rand(2, easy ? 5 : 10); } while (a === b);
+      const p = a * b, vis = { type: 'array', r: a, c: b, item: 'apple', label: true, turn: true, turned: false };
+      const turnStep = q => ({ say: 'Tap “Turn the tree”.', point: 'g-turn', action: () => q.vis.turned, wait: 'Tap the button up there!' });
+      if (type === 'swapm') return gq({ t: 'swapm', prompt: 'Fill the gap.', answer: [a], vis,
+        eq: [{ num: a }, '×', { num: b }, '=', { num: p }, '\n', { num: b }, '×', { box: 0 }, '=', { num: p }],
+        clue: { say: 'Same numbers, just swapped round.', point: 'g-turn' },
+        steps: q => [turnStep(q), fillStep(`${b} rows of how many?`, a, near(a))] });
+      return gq({ t: 'swap', prompt: `Turn the tree! What is ${b} × ${a}?`, answer: [p], vis,
+        eq: [{ num: a }, '×', { num: b }, '=', { num: p }, '\n', { num: b }, '×', { num: a }, '=', { box: 0 }],
+        clue: { say: 'Turning the tree keeps every apple.', point: 'g-turn' },
+        steps: q => [turnStep(q), { say: 'Did any apples fall off?', choices: ['Yes', 'No'], answer: 'No', words: true },
+          fillStep(`So ${b} × ${a} is…`, p, [p - a, p + b, a + b])] });
+    } },
+  { name: 'Times Tables Harvest', blurb: 'The 2, 5 and 10 times tables', eg: '5 × 4 = 20',
+    seq: ['fact', 'fact', 'miss', 'fact', 'fact', 'miss', 'fact', 'fact', 'miss'],
+    make(type, k, easy) {
+      const t = easy ? pick([10, 2]) : pick([2, 5, 10]), m = rand(easy ? 1 : 2, easy ? 5 : 10), p = t * m;
+      const vis = { type: 'groups', g: m, n: t, box: 'basket', item: 'apple' };
+      const counts = Array.from({ length: Math.min(m, 3) }, (_, i) => t * (i + 1)).join(', ');
+      if (type === 'miss') return gq({ t: 'miss', prompt: 'Fill the gap.', eq: [{ num: t }, '×', { box: 0 }, '=', { num: p }], answer: [m], vis, show: false,
+        clue: { say: `Count in ${t}s until you reach ${p}.`, point: 'visual' },
+        steps: () => [fillStep(`Count in ${t}s: ${counts}… How many ${t}s make ${p}?`, m, near(m))] });
+      const [x, y] = Math.random() < .5 ? [m, t] : [t, m];
+      return gq({ t: 'fact', prompt: `Harvest time! What is ${x} × ${y}?`, eq: [{ num: x }, '×', { num: y }, '=', { box: 0 }], answer: [p], vis, show: false,
+        clue: { say: `Count in ${t}s, ${m} times.`, point: 'visual' },
+        steps: () => [
+          { say: 'Which times table is it?', choices: ['2s', '5s', '10s'], answer: `${t}s`, words: true },
+          fillStep(`Count in ${t}s: ${counts}… ${m} lots of ${t} makes…`, p, [p - t, p + t, m + t]),
+        ] });
+    } },
+  { name: 'Word Problems', blurb: 'Groups in little stories', eg: '4 plates of 3 bones',
+    seq: ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w'],
+    make(type, k, easy) {
+      const g = rand(2, easy ? 3 : 5), n = easy ? pick([2, 5, 10]) : pick([2, 3, 4, 5, 10]), p = g * n, N = NAME();
+      const [story, box, it, word] = pick([
+        [`${N} has ${g} plates with ${n} bones on each. How many bones altogether?`, 'plate', 'bone', 'bones'],
+        [`Bonnie buries ${n} bones in each of ${g} holes. How many bones is that?`, 'plate', 'bone', 'bones'],
+        [`There are ${g} trees with ${n} apples on each. How many apples?`, 'basket', 'apple', 'apples'],
+        [`${N} puts ${n} apples in each of ${g} baskets. How many apples?`, 'basket', 'apple', 'apples'],
+        [`Bonnie has ${g} bowls with ${n} treats in each. How many treats?`, 'bowl', 'bone', 'treats'],
+        [`Can you help Bonnie count? ${N} has ${g} bags of ${n} bones.`, 'basket', 'bone', 'bones'],
+      ]);
+      return gq({ t: 'w', prompt: story, eq: [{ box: 0 }, { text: word }], answer: [p], vis: { type: 'groups', g, n, box, item: it }, show: false,
+        clue: { say: 'How many groups? How many in each?', point: 'visual' },
+        steps: () => [
+          { say: 'How many groups are there?', point: 'visual', choices: near(g), answer: g },
+          { say: 'How many in each group?', choices: near(n), answer: n },
+          fillStep(`${g} groups of ${n} makes…`, p, [p - n, p + n, g + n]),
+        ] });
+    } },
+];
+
+/* --- World 4: The Sharing Pond --- */
+const shareAct = q => ({ say: 'Tap “One each” until the pile is empty.', point: 'g-each', action: () => shareDone(q.vis), wait: 'Share them out up there!' });
+const shareSteps = (q, ask, ans) => [shareAct(q), fillStep(ask, ans, near(ans))];
+const SP_LEVELS = [
+  { name: 'Equal Sharing', blurb: 'Share bones fairly between bowls', eg: '12 ÷ 3 = 4',
+    seq: ['share', 'share', 'share', 'share', 'share', 'share', 'share', 'share', 'share'],
+    make(type, k, easy) {
+      const bowls = easy ? 2 : pick([2, 3, 4, 5, 10]), each = rand(2, easy ? 5 : bowls === 10 ? 3 : 5), N = bowls * each;
+      const prompt = pick([`Share ${N} bones equally between ${bowls} bowls.`, `Can you help Bonnie share ${N} bones between ${bowls} bowls?`, `${NAME()} shares ${N} bones between ${bowls} bowls. How many in each?`]);
+      return gq({ t: 'share', prompt, eq: [{ num: N }, '÷', { num: bowls }, '=', { box: 0 }, { text: 'each' }], answer: [each], tip: 'Tap a bowl to drop a bone in.',
+        vis: { type: 'share', N, bowls: Array(bowls).fill(0), box: 'bowl', item: 'bone' },
+        clue: { say: 'Give every bowl one, then again.', point: 'g-each' },
+        steps: q => shareSteps(q, 'How many bones in each bowl?', each) });
+    } },
+  { name: 'Grouping', blurb: 'How many baskets of 2, 5 or 10?', eg: '20 ÷ 5 = 4',
+    seq: ['group', 'group', 'group', 'group', 'group', 'group', 'group', 'group', 'group'],
+    make(type, k, easy) {
+      const s = easy ? pick([5, 10]) : pick([2, 5, 10]), m = rand(2, s === 10 ? 3 : easy ? 3 : 6), N = s * m;
+      return gq({ t: 'group', prompt: `${N} bones. Put ${s} in each basket. How many baskets?`, eq: [{ num: N }, '÷', { num: s }, '=', { box: 0 }, { text: 'baskets' }], answer: [m],
+        tip: 'Tap “Fill a basket”.', vis: { type: 'group', N, s, baskets: 0, box: 'basket', item: 'bone' },
+        clue: { say: `Fill baskets of ${s} until none are left.`, point: 'g-fill' },
+        steps: q => [
+          { say: 'Tap “Fill a basket” until the pile is empty.', point: 'g-fill', action: () => q.vis.baskets * s === N, wait: 'Fill the baskets up there!' },
+          fillStep('How many baskets?', m, near(m)),
+        ] });
+    } },
+  { name: 'Half a Pond', blurb: 'Halves of amounts', eg: 'Half of 10 is 5',
+    seq: ['half', 'half', 'halfsum', 'half', 'half', 'halfsum', 'half', 'half', 'halfsum'],
+    make(type, k, easy) {
+      const h = rand(easy ? 1 : 2, easy ? 5 : 10), N = 2 * h;
+      const vis = { type: 'share', N, bowls: [0, 0], box: 'lily', item: 'bone' };
+      const clue = { say: 'Share them between the two lily pads.', point: 'g-each' };
+      if (type === 'halfsum') return gq({ t: 'halfsum', prompt: `Split ${N} into two equal halves.`, eq: [{ num: N }, '=', { box: 0 }, '+', { box: 1 }], answer: [h, h], vis, clue,
+        steps: q => [shareAct(q), fillStep('How many on one lily pad?', h, near(h), 0), fillStep('And on the other one?', h, near(h), 1)] });
+      return gq({ t: 'half', prompt: `What is half of ${N}?`, eq: [{ text: 'Half of' }, { num: N }, { text: 'is' }, { box: 0 }], answer: [h], vis, clue,
+        steps: q => shareSteps(q, 'How many on each lily pad?', h) });
+    } },
+  { name: 'Quarter Splitting', blurb: 'Quarters of shapes and amounts', eg: 'A quarter of 12 is 3',
+    seq: ['qamount', 'qshape', 'qamount', 'qfrac', 'qamount', 'qshape', 'qfrac', 'qamount', 'qshape'],
+    make(type, k, easy) {
+      if (type === 'qshape') {
+        const good = pick(['sq4', 'ci4', 'strip4']);
+        const bad = easy ? shuffle(['rect3', 'ci2', 'rect2']).slice(0, 2) : [good === 'ci4' ? 'ci4bad' : 'sq4bad', pick(['rect3', 'ci3'])];
+        const opts = shuffle([good, ...bad]), ans = opts.indexOf(good), cfmt = i => shapeSVG(opts[i], 0);
+        return gq({ t: 'qshape', kind: 'choice', prompt: 'Which shape is cut into quarters?', answer: [ans], choices: [0, 1, 2], cfmt, key: 'qshape' + opts.join(),
+          vis: { type: 'shapes', list: opts },
+          clue: { say: 'Quarters are 4 pieces, all the same size.' },
+          steps: () => [
+            { say: 'How many pieces make quarters?', choices: [2, 3, 4], answer: 4 },
+            { say: 'Which one has 4 pieces the same size?', choices: [0, 1, 2].map(cfmt), answer: cfmt(ans), final: true, words: true },
+          ] });
+      }
+      if (type === 'qfrac') {
+        const [shape, d, sh] = pick(easy ? [['ci2', 2, 1], ['rect2', 2, 1], ['sq4', 4, 1]] : [['ci2', 2, 1], ['rect2', 2, 1], ['sq4', 4, 1], ['ci4', 4, 1], ['ci4', 4, 3], ['strip4', 4, 3], ['sq4', 4, 3]]);
+        const labels = [frac(1, 2), frac(1, 4), frac(3, 4)], ans = labels.indexOf(frac(sh, d));
+        return gq({ t: 'qfrac', kind: 'choice', prompt: 'What fraction is shaded?', answer: [ans], choices: [0, 1, 2], cfmt: i => labels[i],
+          vis: { type: 'shape', shape, shade: sh }, key: `qfrac${shape}${sh}`,
+          clue: { say: 'Count all the pieces. Then the shaded ones.', point: 'visual' },
+          steps: () => [
+            { say: 'How many equal pieces?', point: 'visual', choices: [2, 3, 4], answer: d },
+            { say: 'How many are shaded?', choices: near(sh), answer: sh },
+            { say: `${sh} out of ${d} pieces is…`, choices: labels, answer: labels[ans], final: true, words: true },
+          ] });
+      }
+      const e = rand(1, easy ? 2 : 5), N = 4 * e;
+      return gq({ t: 'qamount', prompt: `What is a quarter of ${N}?`, eq: [{ text: 'A quarter of' }, { num: N }, { text: 'is' }, { box: 0 }], answer: [e],
+        vis: { type: 'share', N, bowls: [0, 0, 0, 0], box: 'lily', item: 'bone' },
+        clue: { say: 'Share them between the four lily pads.', point: 'g-each' },
+        steps: q => shareSteps(q, 'How many on each lily pad?', e) });
+    } },
+  { name: 'Inverse Check', blurb: 'Times and sharing are a team', eg: '3 × 4 = 12, so 12 ÷ 3 = 4',
+    seq: ['m2d', 'm2d', 'd2m', 'm2d', 'd2m', 'm2d', 'm2d', 'd2m', 'm2d'],
+    make(type, k, easy) {
+      const t = easy ? pick([2, 10]) : pick([2, 5, 10, 3, 4]), m = rand(2, easy || t < 5 ? 5 : 10), p = t * m;
+      const vis = { type: 'array', r: m, c: t, item: 'apple', label: true };
+      const same = { say: 'Are the same three numbers in both lines?', choices: ['Yes', 'No'], answer: 'Yes', words: true };
+      if (type === 'd2m') return gq({ t: 'd2m', prompt: 'Use the sharing fact to help.', answer: [p], vis, show: false,
+        eq: [{ num: p }, '÷', { num: t }, '=', { num: m }, '\n', { num: m }, '×', { num: t }, '=', { box: 0 }],
+        clue: { say: 'The same three numbers work both ways.', point: 'line-0' },
+        steps: () => [same, fillStep(`${m} lots of ${t} makes…`, p, [p - t, p + t, m + t])] });
+      return gq({ t: 'm2d', prompt: 'Use the times fact to help.', answer: [m], vis, show: false,
+        eq: [{ num: m }, '×', { num: t }, '=', { num: p }, '\n', { num: p }, '÷', { num: t }, '=', { box: 0 }],
+        clue: { say: 'The same three numbers work both ways.', point: 'line-0' },
+        steps: () => [same, fillStep(`How many ${t}s make ${p}?`, m, near(m))] });
+    } },
+];
+
+// playing with the pictures (sharing, filling baskets, turning the tree)
+function gAction(b) {
+  const q = S.q, v = q.vis; if (!v || S.locked) return;
+  if (b.dataset.g === 'turn') {
+    const a = $('#game #gv-array'); if (a) a.classList.add('turning');
+    tone([520, 660, 780], .07, 'triangle', .08);
+    setTimeout(() => { if (S && S.q === q) { v.turned = !v.turned; redrawG(); afterMove(); } }, 560);
+    return;
+  }
+  if (b.dataset.gBowl !== undefined) {
+    if (sum(v.bowls) < v.N) { v.bowls[+b.dataset.gBowl]++; sfx.tap(); } else sfx.soft();
+  } else if (b.dataset.g === 'each') {
+    for (let i = 0; i < v.bowls.length && sum(v.bowls) < v.N; i++) v.bowls[i]++;
+    tone([600, 760], .05, 'triangle', .08);
+  } else if (b.dataset.g === 'fill') {
+    if (v.N - v.baskets * v.s >= v.s) { v.baskets++; tone([600, 760], .05, 'triangle', .08); }
+  } else if (b.dataset.g === 'reset') {
+    if (v.bowls) v.bowls.fill(0); if ('baskets' in v) v.baskets = 0; sfx.tap();
+  }
+  redrawG();
+  if (v.type === 'share' && shareDone(v)) tone([523, 659, 784], .08, 'triangle', .1);
+  afterMove();
+}
+// growing the orchard grid: tap a square, or drag across
+let gridDrag = null;
+function setGridFrom(el) {
+  const v = S.q.vis, [r, c] = el.dataset.cell.split('-').map(Number);
+  if (r === v.r && c === v.c) return;
+  v.r = r; v.c = c; tone([700 + r * 40 + c * 10], .03, 'triangle', .04);
+  paintGrid();
+  if (S.tier === 3) applyGuide();
+}
+$('#game').addEventListener('pointerdown', e => {
+  const cell = e.target.closest('[data-cell]');
+  if (!cell || !S || S.locked || S.q.kind !== 'grid') return;
+  e.preventDefault(); gridDrag = e.pointerId; setGridFrom(cell);
+});
+document.addEventListener('pointermove', e => {
+  if (gridDrag === null || e.pointerId !== gridDrag || !S || S.locked) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const cell = el && el.closest('#gv-grid [data-cell]'); if (cell) setGridFrom(cell);
+});
+['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, e => {
+  if (gridDrag === null || e.pointerId !== gridDrag) return;
+  gridDrag = null; afterMove();
+}));
+
 // questions are made one at a time, so each one can follow learner.rung
 function questionFor(k) {
   const lv = WL()[S.level], eased = learner.rung < 0;
-  if (S.world === 2) {
+  if (S.world !== 1) {
     let q, guard = 0;
     do { q = lv.make(lv.seq[k], k, eased); guard++; } while (S.used.has(q.key) && guard < 60);
     S.used.add(q.key); q.eased = eased;
@@ -1002,6 +1374,7 @@ const ICON = {
   sound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor"/><circle cx="16.5" cy="16" r="2.5" fill="currentColor"/></svg>',
   lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor" stroke="none" opacity=".25"/><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 017 0v2.5"/></svg>',
   del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11v14H9l-6-7z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></svg>',
+  turn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.3-5.6"/><path d="M20 4v4.5h-4.5"/></svg>',
   tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
@@ -1113,7 +1486,8 @@ function speak(text) {
 const say = text => { if (save.sound || save.readAloud) speak(text); };
 
 /* ---------- home screen ---------- */
-const doneOf = w => (w === 2 ? save.done2 : save.done);
+const doneOf = w => (w === 1 ? save.done : save['done' + w]);
+const logOf = w => (w === 1 ? save.log : save['log' + w]);
 const unlocked = (i, w = 1) => save.unlockAll || i === 0 || !!doneOf(w)[i - 1];
 const TIER_NAMES = ['Solo', 'After a clue', 'Step by step', 'Guided taps'];
 
@@ -1135,6 +1509,10 @@ const WORLDS = {
     intro: '<b>Partitioning</b> means breaking a number into parts. Every digit tells you how many ones, tens, hundreds or thousands there are.' },
   2: { name: 'The Stepping Stone River', tag: 'Number lines', stop: 'Stone', blurb: 'Hop Bonnie across the number line to 100.', levels: NL_LEVELS,
     intro: 'A <b>number line</b> puts numbers in order. Drag Bonnie to the right spot, then tap Check.' },
+  3: { name: 'The Array Orchard', tag: 'Groups and times', stop: 'Tree', blurb: 'Equal groups, rows of apples and times tables.', levels: AO_LEVELS,
+    intro: 'In the orchard, apples grow in <b>equal groups</b> and <b>rows</b>. Count them in 2s, 5s and 10s.' },
+  4: { name: 'The Sharing Pond', tag: 'Sharing and fractions', stop: 'Lily pad', blurb: 'Share fairly, make halves and quarters.', levels: SP_LEVELS,
+    intro: '<b>Sharing</b> means everyone gets the same. Drop bones into bowls until it is fair.' },
 };
 function miniLine() {
   let t = '';
@@ -1145,12 +1523,14 @@ function miniLine() {
 }
 
 function renderHome() {
-  const top = (back) => `<div class="topbar home-top">${back || `<div class="where"><b>${nameH()}’s Meadow Maths</b></div>`}${shopButton('home-shop', true)}<button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button></div>`;
+  const top = (back) => `<div class="topbar home-top">${back || `<div class="where"><b>Harvey’s Meadow Maths</b></div>`}${shopButton('home-shop', true)}<button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button></div>`;
   if (homeView === 'hub') {
     const demoQ = { mode: 'blocks', places: [1, 0], counts: { 1: 4, 0: 7 }, inter: null };
     const pics = {
       1: `<div class="visual" style="background:none;border:0;padding:0">${visualHTML(demoQ)}</div><div class="eq"><div class="eqline"><span class="num">${colorNum(47)}</span><span class="op">=</span><span class="d p1">40</span><span class="op">+</span><span class="d p0">7</span></div></div>`,
       2: miniLine(),
+      3: `<div class="gvis" style="display:flex"><div class="gv-array" style="grid-template-columns:repeat(4, 30px)">${Array.from({ length: 12 }, () => `<span class="gi" style="width:30px;height:30px">${APPLE}</span>`).join('')}</div><div class="gv-cap">3 rows of 4</div></div>`,
+      4: `<div class="gvis mini" style="display:flex"><div class="gv-row">${[0, 1, 2].map(() => `<div class="gv-box gv-bowl">${BONE.replace('class="bone"', 'class="bone" style="width:24px;height:24px"').repeat(2)}</div>`).join('')}</div><div class="gv-cap">6 shared by 3 is 2 each</div></div>`,
     };
     $('#home').innerHTML = `${top('')}
       <div class="hub-hero">
@@ -1160,7 +1540,7 @@ function renderHome() {
           <div class="feedback help"><span>Woof! I'm <b>Bonnie</b>. Stuck? Tap <b>Ask Bonnie</b> and we'll do it together.</span></div>
         </div>
       </div>
-      <div class="worlds">${[1, 2].map(w => {
+      <div class="worlds">${[1, 2, 3, 4].map(w => {
         const W = WORLDS[w], n = W.levels.filter((_, i) => doneOf(w)[i]).length;
         return `<button class="card world" data-world="${w}">
           <span class="lvl-num">${W.tag}</span><h3>${W.name}</h3><span class="blurb">${W.blurb}</span>
@@ -1222,7 +1602,7 @@ $('#welcome').addEventListener('submit', e => {
   save.name = v || 'Harvey'; persist();
   $('#welcome').hidden = true; $('#home').hidden = false;
   renderHome(); window.scrollTo(0, 0);
-  sfx.woof(); say(`Hi ${NAME()}! Let’s go on a number adventure!`);
+  sfx.woof(); say(`Hi ${NAME()}! Let’s split some numbers!`);
 });
 
 /* ---------- pop-up sheets (grown-ups gate, settings, bone shop) ---------- */
@@ -1271,7 +1651,7 @@ function openSettings() {
       <form class="gs-line" id="gs-name-form" autocomplete="off"><input class="inp" id="gs-name" maxlength="16" value="${nameH()}" aria-label="Player name">
         <button class="btn small" type="submit">Save name</button><span class="gs-ok" id="gs-name-ok"></span></form></section>
     <section class="gs-sec"><h3>Bones</h3>
-      <p>1 bone for every question finished, however it was solved, plus 3 per level. A full play-through gives 88 in The Partitioning Park and 60 in The Stepping Stone River. Asking Bonnie never costs anything.</p>
+      <p>1 bone for every question finished, however it was solved, plus 3 per level. A full play-through gives 88 in The Partitioning Park and 60 in each of the other three worlds. Asking Bonnie never costs anything.</p>
       <form class="gs-line" id="gs-bones-form" autocomplete="off"><input class="inp num" id="gs-bones" value="${save.bones}" inputmode="numeric" pattern="[0-9]*" aria-label="Bone balance">
         <button class="btn small" type="submit">Set balance</button><button class="btn plain small" type="button" data-act="bones0">Reset to 0</button><span class="gs-ok" id="gs-bones-ok"></span></form></section>
     <section class="gs-sec"><h3>Real-life prizes</h3>
@@ -1282,7 +1662,9 @@ function openSettings() {
     <section class="gs-sec"><h3>How each answer was reached</h3>
       <p>Counts from the last play of each level. Bonnie’s help goes in steps: a clue, then small questions, then glowing buttons. The final answer is always given by ${nameH()}: typed, tapped, or by dragging Bonnie. <b>Made easier</b> counts questions the game quietly simplified after two answers in a row needed step-by-step help or guided taps. Two answers in a row solo or after a clue bring it back to normal.</p>
       <h4>${WORLDS[1].name}</h4>${logTable(LEVELS, save.log)}
-      <h4>${WORLDS[2].name}</h4>${logTable(NL_LEVELS, save.log2)}</section>
+      <h4>${WORLDS[2].name}</h4>${logTable(NL_LEVELS, save.log2)}
+      <h4>${WORLDS[3].name}</h4>${logTable(AO_LEVELS, save.log3)}
+      <h4>${WORLDS[4].name}</h4>${logTable(SP_LEVELS, save.log4)}</section>
     <section class="gs-sec"><h3>Settings</h3>
       <div class="gu-row">
         <button class="toggle" type="button" data-tog="sound" aria-pressed="${save.sound}"><span class="sw"></span>Sound and Bonnie's voice</button>
@@ -1405,7 +1787,7 @@ modal.addEventListener('click', e => {
     $('#reset-slot').innerHTML = `<span class="confirm">Clear bones, levels and the log?<button class="btn small" type="button" data-act="reset-yes">Yes, clear</button><button class="btn plain small" type="button" data-act="reset-no">Keep</button></span>`;
     return;
   }
-  if (act === 'reset-yes') { Object.assign(save, { done: {}, bones: 0, log: {}, done2: {}, log2: {}, unlockAll: false, redeemed: [] }); persist(); return openSettings(); }
+  if (act === 'reset-yes') { Object.assign(save, { done: {}, bones: 0, log: {}, done2: {}, log2: {}, done3: {}, log3: {}, done4: {}, log4: {}, unlockAll: false, redeemed: [] }); persist(); return openSettings(); }
   if (act === 'reset-no') { $('#reset-slot').innerHTML = `<button class="btn plain small" type="button" data-act="reset">Reset progress</button>`; }
 });
 
@@ -1447,16 +1829,17 @@ modal.addEventListener('submit', e => {
    S.tier is the help ladder for the current question:
    0 = on his own · 1 = clue (Bonnie points) · 2 = step card (small questions) · 3 = glowing buttons.
    Getting one wrong and tapping "Ask Bonnie" both move one rung up. Nothing is ever lost. */
-const PRAISE = () => [`Brilliant, ${NAME()}!`, 'Spot on!', 'You got it!', 'Super work!', `Nailed it, ${NAME()}!`, 'Amazing!', 'Top marks!', `Well done, ${NAME()}!`];
+const PRAISE = () => [`Brilliant, ${NAME()}!`, 'Spot on!', 'You got it!', 'Super splitting!', `Nailed it, ${NAME()}!`, 'Amazing!', 'Top marks!', `Well done, ${NAME()}!`];
 const TEAM = () => ['You did it!', 'Great teamwork!', `Brilliant, ${NAME()}!`, 'You worked it out!'];
 const NUDGE = ['Ooh, nearly!', 'Good try!', 'Let’s look together!'];
 let S = null;
 
 // which world's levels the current game uses
-const WL = () => (S && S.world === 2 ? NL_LEVELS : LEVELS);
+const LEVELS_OF = w => ({ 1: LEVELS, 2: NL_LEVELS, 3: AO_LEVELS, 4: SP_LEVELS })[w];
+const WL = () => LEVELS_OF(S ? S.world : 1);
 function startLevel(i, world = 1) {
   homeView = world;
-  S = { world, level: i, qs: [], used: new Set(), total: (world === 2 ? NL_LEVELS : LEVELS)[i].seq.length, idx: 0, results: [], tiers: [], eased: 0 };
+  S = { world, level: i, qs: [], used: new Set(), total: LEVELS_OF(world)[i].seq.length, idx: 0, results: [], tiers: [], eased: 0 };
   $('#home').hidden = true; $('#game').hidden = false;
   window.scrollTo(0, 0);
   showQ();
@@ -1505,6 +1888,7 @@ function boxResults(vals) {
 /* ---------- Bonnie's help ---------- */
 function clueFor(q) {
   if (q.line) return lineClue(q);
+  if (q.gclue) return q.gclue;
   const named = p => `${PL[p].colour} ${PL[p].name}`;
   switch (q.type) {
     case 'split': case 'missing': {
@@ -1526,6 +1910,7 @@ function clueFor(q) {
 
 function stepsFor(q) {
   if (q.line) return lineSteps(q);
+  if (q.gsteps) return q.gsteps();
   const st = [];
   const placeSteps = (v, b) => {
     const p = len(v) - 1, c = v / pow(p);
@@ -1605,6 +1990,7 @@ function finishSteps() {
   if (q.kind === 'boxes' && !unsolvedBoxes().length) return win();
   if (q.kind === 'build' && buildTotal() === q.n) return win();
   if (q.kind === 'line' && inTarget()) return win();
+  if (q.kind === 'grid' && gridOk(q.vis)) return win();
   // something still isn't right (he changed it while stepping): guide him the rest of the way
   S.tier = 3; S.steps = null; renderControls(); updateAsk();
   feedback('help', `<span><span class="big">Nearly there!</span>${glowMsg()}</span>`);
@@ -1654,6 +2040,7 @@ function applyGuide() {
   const q = S.q;
   if (q.inter === 'break' && q.broke < q.k) return spot('rod');
   if (q.kind === 'line') return spot(inTarget() ? 'key-check' : 'pawn');
+  if (q.kind === 'grid') return spot(gridOk(q.vis) ? 'key-check' : `cell-${q.vis.tr}-${q.vis.tc}`);
   if (q.kind === 'choice') return spot(`choice-${q.answer[0]}`);
   if (q.kind === 'build') {
     for (const p of q.places) {
@@ -1827,7 +2214,7 @@ function renderGame() {
   const q = S.q, lv = WL()[S.level];
   const dots = lv.seq.map((_, i) => `<i class="${S.results[i] || ''}${i === S.idx ? ' now' : ''}"></i>`).join('');
   const hello = S.idx === 0 ? `Woof! Let’s go, ${nameH()}!`
-    : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
+    : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
   $('#game').innerHTML = `
     <div class="topbar">
       <button class="icon-btn" id="back" aria-label="Back to levels">${ICON.back}</button>
@@ -1845,6 +2232,7 @@ function renderGame() {
         ${q.tip ? `<div class="tip">${q.tip}</div>` : ''}
         ${eqHTML(q)}
         ${q.line ? lineHTML(q) : ''}
+        ${q.vis ? `<div class="visual gvis" id="visual" data-t="visual" ${q.showVisual ? '' : 'hidden'}>${gvisInner(q)}</div>` : ''}
         ${q.mode ? `<div class="visual" id="visual" data-t="visual" ${q.showVisual ? '' : 'hidden'}>${visualHTML(q)}</div>` : ''}
         ${q.inter === 'break' ? `<div class="vis-tools"><button class="btn plain small" id="putback">Put the tens back</button></div>` : ''}
       </div>
@@ -1929,6 +2317,11 @@ function press(key) {
 
 function onCheck() {
   const q = S.q;
+  if (q.kind === 'grid') {
+    if (!q.vis.r) { feedback('info', '<span>Tap a square to grow the orchard.</span>'); return; }
+    if (gridOk(q.vis)) return win();
+    return raise('wrong', `You made ${q.vis.r} rows of ${q.vis.c}.`);
+  }
   if (q.kind === 'line') {
     if (S.pos == null || S.pos === q.line.start) {
       feedback('info', '<span>Drag Bonnie along the line first.</span>');
@@ -2017,10 +2410,10 @@ function next() {
 
 const BONUS = 3;
 function finish() {
-  const i = S.level, earned = S.total + BONUS, w2 = S.world === 2;
-  save.bones += BONUS; (w2 ? save.done2 : save.done)[i] = true;
+  const i = S.level, earned = S.total + BONUS;
+  save.bones += BONUS; doneOf(S.world)[i] = true;
   const tiers = [0, 0, 0, 0]; S.tiers.forEach(t => tiers[t]++);
-  (w2 ? save.log2 : save.log)[i] = { tiers, eased: S.eased, when: today() };
+  logOf(S.world)[i] = { tiers, eased: S.eased, when: today() };
   persist();
   S.idx = S.total - 1; renderGame(); S.locked = true;
   $$('#game button').forEach(b => b.disabled = true);
@@ -2037,7 +2430,7 @@ function finish() {
         <button class="btn plain" id="d-again">Play again</button>
         <button class="btn plain" id="d-home">All levels</button>
       </div>
-      ${hasNext ? '' : `<p>You finished every level. You are a ${S.world === 2 ? 'number line' : 'partitioning'} champion!</p>`}
+      ${hasNext ? '' : `<p>You finished every stop in ${WORLDS[S.world].name}. What a champion!</p>`}
     </div>`;
   $('#overlay').hidden = false;
   sfx.win(); setTimeout(sfx.woof, 800); confetti();
@@ -2058,6 +2451,7 @@ $('#overlay').addEventListener('click', e => {
 $('#game').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || !S) return;
   if (b.id === 'back') { sfx.tap(); return goHome(); }
+  if (b.dataset.g || b.dataset.gBowl !== undefined) return gAction(b);
   if (b.hasAttribute('data-shop')) { sfx.tap(); return openShop(); }
   if (b.id === 'snd') { save.sound = !save.sound; persist(); b.classList.toggle('off', !save.sound); b.setAttribute('aria-label', `Sound ${save.sound ? 'on' : 'off'}`); sfx.tap(); return; }
   if (b.id === 'say') return speak(S.q.prompt);

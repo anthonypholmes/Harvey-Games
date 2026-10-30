@@ -1,11 +1,15 @@
-# Harvey's Number Splitter
+# Harvey's Meadow Maths
 
 A Year 2 (Key Stage 1) maths game for iPad, built for Harvey with help from Bonnie, the family's brown cockapoo.
 
-Two worlds:
+Four worlds:
 
 - **The Partitioning Park:** splitting numbers into tens and ones (for example 47 = 40 + 7), with base-ten blocks and counters.
 - **The Stepping Stone River:** number lines from 0 to 100. Harvey drags Bonnie along the line to find numbers.
+- **The Array Orchard:** equal groups, rows of apples and the 2, 5 and 10 times tables.
+- **The Sharing Pond:** sharing fairly, grouping, halves and quarters.
+
+The player's name (set on first launch, or in the grown-ups panel) is used throughout Bonnie's dialogue and the story questions. The game's title stays "Harvey's Meadow Maths".
 
 The game is designed around resilience. There are no timers, no lives and no red "wrong" screens. Asking Bonnie for help never costs anything.
 
@@ -38,6 +42,26 @@ The first time it opens, Bonnie asks for the player's name.
 | 4 | Tens Boundaries | Which two tens a number sits between |
 | 5 | Froggy Jumps | Adding and taking away ones and tens by jumping along the line |
 
+### The Array Orchard (5 trees)
+
+| | Tree | What it practises |
+|---|---|---|
+| 1 | Bone Groups | Equal groups as repeated addition (5 + 5 + 5) |
+| 2 | Grid Builder | Tap or drag to grow rows and columns of apples (up to 5 × 10) |
+| 3 | The Swapping Tree | Turning the array shows 3 × 4 = 4 × 3 |
+| 4 | Times Tables Harvest | 2, 5 and 10 times tables, with skip-counting help |
+| 5 | Word Problems | Little stories with groups, using the player's name |
+
+### The Sharing Pond (5 lily pads)
+
+| | Lily pad | What it practises |
+|---|---|---|
+| 1 | Equal Sharing | Tapping bones into bowls until the share is fair (12 ÷ 3) |
+| 2 | Grouping | Filling baskets of 2, 5 or 10 to see how many fit |
+| 3 | Half a Pond | Halves of amounts, shared between two lily pads |
+| 4 | Quarter Splitting | Quarters of amounts and shapes, and naming ½, ¼ and ¾ |
+| 5 | Inverse Check | Using a times fact to solve a sharing fact, and back again |
+
 ## How Bonnie helps
 
 The **Ask Bonnie** button, or a wrong answer, moves one step up a help ladder:
@@ -53,7 +77,7 @@ The game also adjusts the difficulty quietly. After two answers in a row that ne
 ## Bones and the Bone Shop
 
 - Harvey earns **1 bone for every question finished** (however it was solved) and **3 bonus bones per level**.
-- A full play-through gives 88 bones in the Park and 60 in the River.
+- A full play-through gives 88 bones in the Park and 60 in each of the other three worlds.
 - The **Bone Shop** button lists real-life prizes. When he has enough bones he taps **Redeem**, and a grown-up holds a button for 3 seconds to say yes.
 
 ## For grown-ups
