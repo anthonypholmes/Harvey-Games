@@ -1145,7 +1145,7 @@ function miniLine() {
 }
 
 function renderHome() {
-  const top = (back) => `<div class="topbar home-top">${back || `<div class="where"><b>${nameH()}’s Number Splitter</b></div>`}${shopButton('home-shop', true)}<button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button></div>`;
+  const top = (back) => `<div class="topbar home-top">${back || `<div class="where"><b>${nameH()}’s Meadow Maths</b></div>`}${shopButton('home-shop', true)}<button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button></div>`;
   if (homeView === 'hub') {
     const demoQ = { mode: 'blocks', places: [1, 0], counts: { 1: 4, 0: 7 }, inter: null };
     const pics = {
@@ -1222,7 +1222,7 @@ $('#welcome').addEventListener('submit', e => {
   save.name = v || 'Harvey'; persist();
   $('#welcome').hidden = true; $('#home').hidden = false;
   renderHome(); window.scrollTo(0, 0);
-  sfx.woof(); say(`Hi ${NAME()}! Let’s split some numbers!`);
+  sfx.woof(); say(`Hi ${NAME()}! Let’s go on a number adventure!`);
 });
 
 /* ---------- pop-up sheets (grown-ups gate, settings, bone shop) ---------- */
@@ -1447,7 +1447,7 @@ modal.addEventListener('submit', e => {
    S.tier is the help ladder for the current question:
    0 = on his own · 1 = clue (Bonnie points) · 2 = step card (small questions) · 3 = glowing buttons.
    Getting one wrong and tapping "Ask Bonnie" both move one rung up. Nothing is ever lost. */
-const PRAISE = () => [`Brilliant, ${NAME()}!`, 'Spot on!', 'You got it!', 'Super splitting!', `Nailed it, ${NAME()}!`, 'Amazing!', 'Top marks!', `Well done, ${NAME()}!`];
+const PRAISE = () => [`Brilliant, ${NAME()}!`, 'Spot on!', 'You got it!', 'Super work!', `Nailed it, ${NAME()}!`, 'Amazing!', 'Top marks!', `Well done, ${NAME()}!`];
 const TEAM = () => ['You did it!', 'Great teamwork!', `Brilliant, ${NAME()}!`, 'You worked it out!'];
 const NUDGE = ['Ooh, nearly!', 'Good try!', 'Let’s look together!'];
 let S = null;
