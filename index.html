@@ -7,7 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grandstander:wght@700;800&family=Lexend:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap">
+<meta name="theme-color" content="#FDFBF7">
 <style>
 /* Layout: a maths exercise book. Squared paper ground, chunky "sticker" cards,
    and one colour per place value used everywhere (blocks, digits, labels). */
@@ -492,6 +493,120 @@ input { -webkit-user-select: text; user-select: text; }
 .nl-val { position: absolute; bottom: 100%; margin-bottom: 2px; background: var(--good); color: #fff; font-weight: 700; font-size: 21px; border-radius: 10px; padding: 1px 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 @media (max-width: 560px) { .nl { padding-left: 26px; padding-right: 26px; } .nl-lab { font-size: 16px; } }
 
+/* ---------- cozy storybook theme ----------
+   Warm parchment, rounded type, soft cards, a wooden toolbar. Overrides the base styles above. */
+:root {
+  --paper: #FDFBF7;
+  --grid: #EFE5D3;
+  --edge: #EADFCB;
+  --ink: #3E2F27;
+  --ink-soft: #7A6A5E;
+  --card: #FFFFFF;
+  --sun: #F4C25B;  --sun-soft: #FDF1D3;
+  --tens: #3B7FC4; --tens-dk: #245A91;
+  --good: #3F8B5C; --good-bg: #E4F2E7;
+  --wood: #A8743F; --wood-dk: #7A4F27; --wood-lt: #C99560; --cream: #FFF8EC;
+  --soft-shadow: 0 2px 0 rgba(120, 85, 45, .06), 0 12px 28px -10px rgba(120, 85, 45, .28);
+  --f-display: 'Fredoka', 'Nunito', 'Chalkboard SE', system-ui, sans-serif;
+  --f-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+body {
+  background-color: var(--paper);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .33 0 0 0 0 .2 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(1100px 620px at 8% -8%, rgba(255, 213, 150, .38), transparent 62%),
+    radial-gradient(900px 700px at 108% 18%, rgba(176, 214, 170, .30), transparent 60%),
+    radial-gradient(900px 640px at 40% 112%, rgba(166, 204, 236, .30), transparent 60%);
+  background-size: 220px 220px, auto, auto, auto;
+  background-attachment: scroll, fixed, fixed, fixed;
+}
+h1, h2, h3 { font-weight: 700; letter-spacing: 0; }
+.eq, .key, .choice, .chip, .box, .nl-lab, .bones, .cost, .lvl .eg, .step, .ctr, .nl-val, .glabel b, .prompt, .step-say, .feedback .big {
+  font-family: var(--f-display);
+}
+.prompt { font-weight: 600; }
+
+/* soft parchment cards */
+.card { border: 2px solid var(--edge); border-radius: 20px; box-shadow: var(--soft-shadow); }
+.lvl, .world, .prize { transition: transform .12s ease, box-shadow .12s ease; }
+.lvl:active, .world:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(120, 85, 45, .08), 0 6px 14px -8px rgba(120, 85, 45, .3); }
+.lvl.locked { border-color: var(--edge); box-shadow: none; }
+.prize { box-shadow: var(--soft-shadow); }
+.stepcard { border: 2px solid var(--fur-lt); box-shadow: 0 12px 26px -12px rgba(116, 71, 42, .45); }
+.visual, .nl, .world-pic { border-radius: 18px; border-color: var(--grid); }
+.overlay, .modal { background: rgba(62, 47, 39, .42); }
+
+/* tactile buttons: rounded, warm edge, a 2px press */
+.btn, .key, .choice, .chip, .step, .icon-btn, .toggle { border-width: 2px; border-radius: 16px; }
+.btn, .key, .choice, .chip { box-shadow: 0 4px 0 var(--ink); }
+.btn:active, .key:active, .choice:active, .chip:active, .step:active, .icon-btn:active, .shop-btn:active {
+  transform: translateY(2px); box-shadow: 0 2px 0 var(--ink);
+}
+.ask, .ask:active { border-color: var(--fur-dk); }
+.ask:active { box-shadow: 0 2px 0 var(--fur-dk); }
+.key.check, .btn:not(.plain):not(.ask) { background: linear-gradient(180deg, #F8D27A, var(--sun)); }
+.box { border-radius: 16px; }
+
+/* wooden toolbar HUD */
+.topbar {
+  padding: 10px 14px; border-radius: 20px; color: var(--cream);
+  border: 2px solid var(--wood-dk);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(0, 0, 0, .06)),
+    repeating-linear-gradient(92deg, rgba(60, 30, 5, .06) 0 2px, transparent 2px 9px, rgba(255, 230, 190, .05) 9px 12px, transparent 12px 23px),
+    linear-gradient(180deg, var(--wood-lt), var(--wood));
+  box-shadow: inset 0 2px 0 rgba(255, 240, 210, .35), 0 8px 18px -8px rgba(90, 55, 20, .55);
+}
+.topbar .where small { color: rgba(255, 248, 236, .82); }
+.topbar .where b { color: var(--cream); text-shadow: 0 1px 0 rgba(60, 30, 5, .35); font-family: var(--f-display); }
+.topbar .icon-btn { background: var(--cream); border-color: var(--wood-dk); box-shadow: 0 3px 0 var(--wood-dk); color: var(--ink); }
+.topbar .icon-btn:active { box-shadow: 0 1px 0 var(--wood-dk); }
+.topbar .gear { opacity: .75; }
+.dots i { border-color: var(--cream); background: rgba(255, 248, 236, .25); }
+.dots i.good { background: #7CC48F; }
+.dots i.now { box-shadow: 0 0 0 3px var(--sun); }
+
+.topbar.home-top { margin-bottom: 26px; }
+
+/* the glowing bone counter: gently pulses, and bounces when bones are added */
+.bones.shop-btn {
+  border: 2px solid var(--wood-dk); color: var(--ink);
+  background: radial-gradient(circle at 30% 30%, #FFF6DF, var(--bone));
+  box-shadow: 0 3px 0 var(--wood-dk), 0 0 0 3px rgba(255, 214, 120, .45), 0 0 18px rgba(255, 200, 90, .55);
+  animation: boneglow 2.6s ease-in-out infinite alternate;
+}
+.shop-btn .lbl { border-left-color: rgba(62, 47, 39, .2); }
+.bones.shop-btn.bump { animation: bonebump .65s cubic-bezier(.3, 1.6, .5, 1), boneglow 2.6s ease-in-out infinite alternate; }
+@keyframes boneglow { to { box-shadow: 0 3px 0 var(--wood-dk), 0 0 0 4px rgba(255, 214, 120, .6), 0 0 28px rgba(255, 200, 90, .85); } }
+@keyframes bonebump {
+  0% { transform: none; }
+  30% { transform: translateY(-9px) scale(1.18) rotate(-5deg); }
+  60% { transform: translateY(0) scale(.95); }
+  80% { transform: scale(1.04); }
+  100% { transform: none; }
+}
+
+/* Bonnie's speech bubbles float gently, with a tail pointing at her */
+.feedback { border-radius: 20px; border-width: 2px; box-shadow: 0 8px 20px -12px rgba(120, 85, 45, .4); }
+.buddy .feedback, .shop-dog .feedback { animation: float 3.4s ease-in-out infinite; }
+.buddy .feedback::before { width: 14px; height: 14px; left: -9px; }
+.shop-dog .feedback { position: relative; }
+.shop-dog .feedback::after {
+  content: ""; position: absolute; left: 50%; bottom: -9px; width: 14px; height: 14px; margin-left: -7px;
+  background: inherit; border-right: inherit; border-bottom: inherit; transform: rotate(45deg);
+}
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+/* victory: glowing bones burst out of the answer */
+.burst { position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none; z-index: 30; }
+.burst span { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; filter: drop-shadow(0 0 6px rgba(255, 196, 80, .95)); animation: burst .95s cubic-bezier(.15, .75, .3, 1) forwards; }
+.burst .bone { width: 100%; height: 100%; }
+@keyframes burst {
+  0% { transform: translate(0, 0) scale(.3) rotate(0deg); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--rot)); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -939,23 +1054,59 @@ function tone(freqs, dur = .12, type = 'sine', vol = .15) {
     });
   } catch (e) {}
 }
+// a few short, filtered noise clicks: bones rattling in a bowl
+function rattle() {
+  if (!save.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const t0 = actx.currentTime + .03;
+    for (let i = 0; i < 6; i++) {
+      const t = t0 + i * .05 + Math.random() * .02, n = Math.floor(actx.sampleRate * .035);
+      const buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0);
+      for (let j = 0; j < n; j++) d[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / n, 3);
+      const src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain();
+      src.buffer = buf; bp.type = 'bandpass'; bp.frequency.value = 1600 + Math.random() * 1600; bp.Q.value = 5;
+      g.gain.value = .32 - i * .03;
+      src.connect(bp); bp.connect(g); g.connect(actx.destination); src.start(t);
+    }
+  } catch (e) {}
+}
 const sfx = {
+  chime: () => tone([880, 1175, 1568], .08, 'sine', .09),
+  rattle,
   tap: () => tone([700], .04, 'triangle', .05),
   good: () => tone([523, 659, 784], .09, 'triangle', .16),
   soft: () => tone([440, 392], .1, 'sine', .06),
   win: () => tone([523, 659, 784, 1047, 784, 1047], .11, 'triangle', .15),
   woof: () => { tone([260, 190], .07, 'sawtooth', .05); setTimeout(() => tone([280, 200], .07, 'sawtooth', .05), 200); },
 };
+// Bonnie's voice: the most natural British English voice the device has.
+// Enhanced/premium/natural voices score highest; novelty and compact voices are avoided.
+let bonnieVoice = null;
+function pickVoice() {
+  const vs = (window.speechSynthesis && window.speechSynthesis.getVoices()) || [];
+  const score = v => (/en[-_]GB/i.test(v.lang) ? 20 : /^en/i.test(v.lang) ? 4 : -50)
+    + (/Google UK English Female/i.test(v.name) ? 8 : 0)
+    + (/(Premium|Enhanced|Natural|Neural)/i.test(v.name) ? 6 : 0)
+    + (/(Serena|Kate|Stephanie|Martha|Libby|Sonia|Female)/i.test(v.name) ? 3 : 0)
+    - (/(Compact|eSpeak|Novelty|Bad News|Bells|Bubbles|Jester|Whisper|Zarvox|Trinoids|Albert|Cellos|Organ)/i.test(v.name) ? 40 : 0);
+  return vs.slice().sort((a, b) => score(b) - score(a))[0] || null;
+}
+try { if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => { bonnieVoice = pickVoice(); }; } catch (e) {}
+const canSpeak = () => !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
 function speak(text) {
+  if (!canSpeak()) { sfx.chime(); return; }   // no speech on this device: a cheerful chime instead
   try {
-    const s = window.speechSynthesis; if (!s) return;
+    const s = window.speechSynthesis;
     s.cancel();
     const u = new SpeechSynthesisUtterance(text.replace(/−/g, 'minus'));
-    const v = s.getVoices().find(v => /en[-_]GB/i.test(v.lang));
-    if (v) u.voice = v;
-    u.lang = 'en-GB'; u.rate = .92;
+    const v = bonnieVoice || (bonnieVoice = pickVoice());
+    if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+    u.rate = .9; u.pitch = 1.1;
+    u.onerror = e => { if (e.error !== 'interrupted' && e.error !== 'canceled') sfx.chime(); };
     s.speak(u);
-  } catch (e) {}
+  } catch (e) { sfx.chime(); }
 }
 
 // Bonnie talks out loud whenever sound is on (or read-aloud is on)
@@ -994,7 +1145,7 @@ function miniLine() {
 }
 
 function renderHome() {
-  const top = (back) => `<div class="topbar home-top">${back}${shopButton('home-shop', true)}<button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button></div>`;
+  const top = (back) => `<div class="topbar home-top">${back || `<div class="where"><b>${nameH()}’s Number Splitter</b></div>`}${shopButton('home-shop', true)}<button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button></div>`;
   if (homeView === 'hub') {
     const demoQ = { mode: 'blocks', places: [1, 0], counts: { 1: 4, 0: 7 }, inter: null };
     const pics = {
@@ -1833,8 +1984,22 @@ function win() {
   updateAsk();
   const msg = S.tier === 0 ? pick(PRAISE()) : pick(TEAM());
   feedback('good', `<span><span class="big">${esc(msg)}</span>${BONE} +1 bone</span>`);
-  sfx.good(); say(msg);
+  sfx.good(); setTimeout(sfx.rattle, 140); say(msg);
+  boneBurst($('#nl-pawn') || $('#game .eq') || $('#game .stage'));
   setTimeout(next, 1800);
+}
+
+// glowing bones fly out from where the answer was
+function boneBurst(el) {
+  if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const r = el.getBoundingClientRect(), b = document.createElement('div');
+  b.className = 'burst'; b.style.left = (r.left + r.width / 2) + 'px'; b.style.top = (r.top + r.height / 2) + 'px';
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 + Math.random() * .4, d = 70 + Math.random() * 60;
+    b.insertAdjacentHTML('beforeend', `<span style="--dx:${(Math.cos(a) * d).toFixed(0)}px;--dy:${(Math.sin(a) * d - 30).toFixed(0)}px;--rot:${rand(-200, 200)}deg;animation-delay:${(Math.random() * .08).toFixed(2)}s">${BONE}</span>`);
+  }
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), 1300);
 }
 
 function bumpBones() {

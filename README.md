@@ -107,5 +107,5 @@ git push
 ## Technical notes
 
 - A single HTML file with plain JavaScript. There is nothing to install or build.
-- The only outside requests are the two Google Fonts (Grandstander and Lexend). The game still works without them, using fallback fonts.
-- Speech uses the iPad's built-in voice (British English where available).
+- The only outside requests are the two Google Fonts (Fredoka and Nunito). The game still works without them, using fallback fonts.
+- Bonnie's voice uses the device's built-in speech. The game picks the most natural British English voice available, preferring enhanced or premium ones. On an iPad you can download a better voice in **Settings → Accessibility → Spoken Content → Voices → English → (UK voices)**. If speech isn't available, Bonnie plays a short chime instead.
