@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v3';
+const CACHE_VERSION = 'meadow-club-v4';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -88,7 +88,9 @@ async function precacheFonts() {
 async function networkFirst(req, cacheName = CACHE_VERSION, homeFallback = true) {
   const cache = await caches.open(cacheName);
   try {
-    const res = await withTimeout(fetch(req), NETWORK_TIMEOUT_MS);
+    // no-cache: always ask the server if there's a newer copy (GitHub Pages otherwise lets the
+    // browser reuse a page for 10 minutes, so one page can be new and another old)
+    const res = await withTimeout(fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }), NETWORK_TIMEOUT_MS);
     if (res && res.ok) cache.put(req, res.clone());
     return res;
   } catch (e) {
