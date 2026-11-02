@@ -345,6 +345,7 @@ h1,h2,h3{margin:0;font-weight:700}
   <main id="screen"></main>
 </div>
 
+<script src="bonnie-voice.js"></script>
 <script>
 /* =========================================================
    CONFIG — match these to your maths app so bones, hats,
@@ -473,132 +474,12 @@ const sfx = {
 };
 
 /* =========================================================
-   SPEECH (British English Web Speech API)
+   SPEECH — Bonnie's voice is in bonnie-voice.js (recorded clips when
+   there are some, otherwise the device's British English voice)
    ========================================================= */
-let VOICE = null, currentUtter = null;
-function pickVoice() {
-  if (!('speechSynthesis' in window)) return;
-  const vs = speechSynthesis.getVoices();
-  const gb = vs.filter(v => /en[-_]GB/i.test(v.lang));
-  VOICE = gb.find(v => /Serena|Kate|Martha|Stephanie|Libby|Sonia|Female|Google UK English Female/i.test(v.name))
-       || gb[0] || vs.find(v => /^en/i.test(v.lang)) || null;
-}
-if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function say(text, opts = {}) {
-  hush();
-  const plan = clipPlan(String(text));
-  if (plan) { const token = clipToken; playClips(plan, opts, token); return { clip: true }; }
-  return speakDevice(text, opts);
-}
-function speakDevice(text, opts = {}) {
-  if (!('speechSynthesis' in window)) { opts.onend && setTimeout(opts.onend, 300); return null; }
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-GB'; if (VOICE) u.voice = VOICE;
-  u.rate = opts.rate || S.settings.voiceRate || .9; u.pitch = opts.pitch || 1.1;
-  if (opts.onboundary) u.onboundary = opts.onboundary;
-  if (opts.onend) u.onend = opts.onend;
-  currentUtter = u; // keep a reference (Chrome can drop it otherwise)
-  speechSynthesis.speak(u);
-  return u;
-}
-function hush() { stopClips(); if ('speechSynthesis' in window) speechSynthesis.cancel(); }
-
-/* ---------- Recorded voice (optional) ----------
-   tools/make-voice.mjs makes ElevenLabs clips and lists them in audio/manifest.json.
-   Each line is cut into short pieces (sentences, "..." pauses and the child's name).
-   When every piece of a line has a clip, Bonnie plays the clips; otherwise she uses
-   the device voice for the whole line. Keep cleanPiece/voicePieces/pieceKey in step
-   with the generator, which runs this same code. */
-const AUDIO_CACHE = 'meadow-club-audio-v1'; // must match sw.js
-let VOICE_PACK = null, clipToken = 0, clipNodes = [];
-const clipBufs = new Map(); // file -> decoded AudioBuffer (small, most-recent-first cache)
-const voiceMissing = new Set(); // pieces with no clip (for checking a voice pack)
-function cleanPiece(s) {
-  return String(s).replace(/[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}️‍]/gu, '')
-    .replace(/\s+/g, ' ').replace(/^[\s.,;:!?…—–-]+/, '').replace(/(\.\.\.|…|\s)+$/, '')
-    .replace(/([.!?])[.!?]+$/, (m, a) => m[m.length - 1]).trim();
-}
-const hasWords = s => /[\p{L}\p{N}]/u.test(s);
-function pieceKey(s) { // FNV-1a 32-bit hash of the cleaned piece
-  let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
-  return h.toString(16).padStart(8, '0');
-}
-/* Cut text into pieces: [{raw, start, name}]. raw pieces keep their spacing so offsets add up. */
-function voicePieces(text, name = S.childName) {
-  const out = [], low = text.toLowerCase(), nm = String(name || '').toLowerCase();
-  const isL = c => !!c && /\p{L}/u.test(c);
-  const cutText = (chunk, base) => { let pos = 0;
-    chunk.replace(/(\.\.\.|…|[.!?]+["'”’)]*)(\s+|$)/g, '$1$2\u0001').split('\u0001').forEach(raw => {
-      if (raw) out.push({ raw, start: base + pos, name: false }); pos += raw.length; }); };
-  let from = 0;
-  if (nm) for (let i = low.indexOf(nm); i >= 0; i = low.indexOf(nm, i + 1)) {
-    if (i < from || isL(text[i - 1]) || isL(text[i + nm.length])) continue;
-    cutText(text.slice(from, i), from); out.push({ raw: text.slice(i, i + nm.length), start: i, name: true }); from = i + nm.length;
-  }
-  cutText(text.slice(from), from);
-  return out;
-}
-function clipPlan(text) {
-  const a = VOICE_PACK && ac();
-  if (!a || (a.state !== 'running' && !(navigator.userActivation && navigator.userActivation.hasBeenActive))) return null;
-  const plan = [];
-  for (const p of voicePieces(text)) {
-    const clean = cleanPiece(p.raw); if (!hasWords(clean)) continue;
-    const file = p.name ? VOICE_PACK.names && VOICE_PACK.names[clean.toLowerCase()] : VOICE_PACK.clips[pieceKey(clean)];
-    if (!file) { if (!p.name) voiceMissing.add(clean); return null; }
-    const pause = /(\.\.\.|…)\s*$/.test(p.raw) ? .35 : /[.!?]["'”’)]*\s*$/.test(p.raw) ? .14 : .03;
-    plan.push({ ...p, file: 'audio/' + file, pause });
-  }
-  return plan.length ? plan : null;
-}
-function stopClips() { clipToken++; clipNodes.forEach(n => { try { n.stop(); } catch (e) {} }); clipNodes = []; }
-async function clipBuffer(file) {
-  if (clipBufs.has(file)) { const b = clipBufs.get(file); clipBufs.delete(file); clipBufs.set(file, b); return b; }
-  const res = await fetch(file); if (!res.ok) throw new Error('clip ' + res.status);
-  const data = await res.arrayBuffer();
-  const buf = await new Promise((ok, bad) => { const p = AC.decodeAudioData(data, ok, bad); if (p && p.then) p.then(ok, bad); });
-  clipBufs.set(file, buf); if (clipBufs.size > 80) clipBufs.delete(clipBufs.keys().next().value);
-  return buf;
-}
-async function playClips(plan, opts, token) {
-  let bufs;
-  try { bufs = await Promise.all(plan.map(p => clipBuffer(p.file))); }
-  catch (e) { if (token === clipToken) speakDevice(plan.map(p => p.raw).join(''), opts); return; }
-  if (token !== clipToken) return;
-  const a = ac(), slow = (opts.rate || 1) < .8 ? 1.6 : 1, t0 = a.currentTime + .04;
-  let t = t0;
-  plan.forEach((p, k) => {
-    const src = a.createBufferSource(); src.buffer = bufs[k]; src.connect(a.destination); src.start(t); clipNodes.push(src);
-    if (opts.onboundary) { // spread word highlights across the clip, for the story read-along
-      const words = [...p.raw.matchAll(/\S+/g)], len = p.raw.length || 1, d = bufs[k].duration;
-      words.forEach(m => { const at = (t - a.currentTime + d * m.index / len) * 1000;
-        setTimeout(() => { if (token === clipToken) opts.onboundary({ name: 'word', charIndex: p.start + m.index }); }, Math.max(0, at)); });
-    }
-    t += bufs[k].duration + p.pause * slow;
-  });
-  setTimeout(() => { if (token === clipToken) { clipNodes = []; opts.onend && opts.onend(); } }, (t - a.currentTime) * 1000);
-}
-async function loadVoicePack() {
-  try {
-    const res = await fetch('audio/manifest.json', { cache: 'no-cache' }); if (!res.ok) return;
-    const m = await res.json(); if (!m || !m.clips) return;
-    VOICE_PACK = m;
-    setTimeout(saveVoiceForOffline, 4000);
-  } catch (e) {}
-}
-/* Save every clip into the offline cache in the background, a few at a time. */
-async function saveVoiceForOffline() {
-  if (!VOICE_PACK || !('caches' in window) || navigator.onLine === false) return;
-  try {
-    const cache = await caches.open(AUDIO_CACHE);
-    const files = [...new Set([...Object.values(VOICE_PACK.clips), ...Object.values(VOICE_PACK.names || {})])].map(f => 'audio/' + f);
-    let k = 0;
-    const worker = async () => { while (k < files.length) { const f = files[k++];
-      try { if (!(await cache.match(f))) { const r = await fetch(f); if (r.ok) await cache.put(f, r); } } catch (e) {} } };
-    await Promise.all([worker(), worker(), worker(), worker()]);
-  } catch (e) {}
-}
+Object.assign(BonnieVoice, { getName: () => S.childName, getAudio: ac, getRate: () => S.settings.voiceRate || .9 });
+const say = (text, opts) => BonnieVoice.say(text, opts);
+const hush = () => BonnieVoice.hush();
 /* Phoneme approximations for sound buttons. Long vowels use letter names (A = "ay"). */
 const PH = { a: 'ah', b: 'buh', c: 'kuh', d: 'duh', e: 'eh', f: 'fff', g: 'guh', h: 'huh', i: 'ih', j: 'juh', k: 'kuh', l: 'lll', m: 'mmm', n: 'nnn', o: 'o', p: 'puh', q: 'kwuh', r: 'rrr', s: 'sss', t: 'tuh', u: 'uh', v: 'vvv', w: 'wuh', x: 'ks', y: 'yuh', z: 'zzz',
   sh: 'shh', ch: 'chuh', th: 'thh', ng: 'ng', ck: 'kuh', sc: 'sss', ai: 'A', ay: 'A', ee: 'E', ea: 'E', igh: 'I', ie: 'I', oa: 'O' };
@@ -991,7 +872,8 @@ function bubble(text, speak = true) {
   b.innerHTML = text; animate(b, 'pop', 350);
   if (speak) say(b.textContent);
 }
-function later(fn, ms) { const g = G, i = G && G.i; setTimeout(() => { if (G && G === g && G.i === i && !G.busy) fn(); }, ms); }
+/* Run fn after ms, once Bonnie has finished talking, if the same question is still on screen. */
+function later(fn, ms) { const g = G, i = G && G.i; setTimeout(() => BonnieVoice.whenQuiet(() => { if (G && G === g && G.i === i && !G.busy) fn(); }), ms); }
 function nextItem() {
   if (G.i >= G.items.length) return finishLevel();
   Object.assign(G, { tier: 0, hintBone: false, helpedNow: false, busy: false, hints: [] });
@@ -1033,8 +915,9 @@ function onCorrect(el, sayFirst = '') {
   const praise = G.helpedNow ? fmt("Well done for watching and learning, {N}!") : fmt(rand(PRAISE));
   bubble(praise, false);
   say((sayFirst ? sayFirst + '! ' : '') + praise);
-  const round = G;
-  setTimeout(() => { if (G !== round) return; G.i++; nextItem(); }, 2300);
+  // move on once Bonnie has finished her well-done (and at least 1.6s, so the stars can be enjoyed)
+  const round = G, t0 = Date.now();
+  BonnieVoice.whenQuiet(() => setTimeout(() => { if (G !== round) return; G.i++; nextItem(); }, Math.max(500, 1600 - (Date.now() - t0))));
 }
 function onWrong(msg) {
   G.mistakes++; streak = 0; renderHud(); sfx.wrong();
@@ -1159,15 +1042,14 @@ function playPhonics(item) {
       let t = tiles.find(t => t.g === parts[i] && !slot.includes(t.id));
       if (!t) { const k = parts.findIndex((p, k) => slot[k] != null && tiles[slot[k]].g === parts[i] && p !== parts[i]); t = tiles[slot[k]]; slot[k] = null; }
       lock[i] = true; slot[i] = t.id; draw(i); $$('#row .slot')[i].classList.add('glow');
-      if (slot.every(s => s != null)) setTimeout(check, 900);
+      if (slot.every(s => s != null)) later(check, 600);
       return `I've sniffed out a letter for you: <b>${esc(parts[i])}</b>. Can you do the rest?`;
     },
     () => {
       slot.fill(null); const used = new Set();
       parts.forEach((p, i) => { const t = tiles.find(t => t.g === p && !used.has(t.id)); used.add(t.id); slot[i] = t.id; });
       lock.fill(true); draw(); $$('#row .slot').forEach(s => s.classList.add('glow'));
-      later(() => say(`${segmented()}... ${item.word}`, { rate: .65 }), 1800);
-      setTimeout(check, 3600);
+      later(check, 600); // well-done then sounds it out: segmented... word
       return `Watch me build it: <b>${esc(parts.join(' '))}</b> makes <b>${esc(item.word)}</b>!`;
     },
   ];
@@ -1499,8 +1381,8 @@ function parentScreen() {
         <label><input type="checkbox" id="pSfx" ${S.settings.sfx ? 'checked' : ''}> Sound effects (shared with Meadow Maths)</label>
         <label>Reading speed <input type="range" id="pRate" min="0.6" max="1.2" step="0.05" value="${S.settings.voiceRate}"> <span id="rateVal">${S.settings.voiceRate}</span>
           <button class="btn small ghost" id="testVoice">Test voice</button></label>
-        <p class="note">Voice: ${VOICE ? esc(VOICE.name + ' (' + VOICE.lang + ')') : 'default'} — a British English voice is chosen when your device has one.</p>
-        <p class="note">${VOICE_PACK ? `Recorded Bonnie voice: on (${Object.keys(VOICE_PACK.clips).length} clips${VOICE_PACK.names && VOICE_PACK.names[S.childName.toLowerCase()] ? '' : ` — no clip for the name “${esc(S.childName)}” yet, so lines with the name use the device voice`}). Reading speed only changes the device voice.` : 'Recorded Bonnie voice: not set up (see README).'}</p></section>
+        <p class="note">Voice: ${BonnieVoice.device ? esc(BonnieVoice.device.name + ' (' + BonnieVoice.device.lang + ')') : 'default'} — a British English voice is chosen when your device has one.</p>
+        <p class="note">${BonnieVoice.pack ? `Recorded Bonnie voice: on (${Object.keys(BonnieVoice.pack.clips).length} clips${BonnieVoice.pack.names && BonnieVoice.pack.names[S.childName.toLowerCase()] ? '' : ` — no clip for the name “${esc(S.childName)}” yet, so lines with the name use the device voice`}). Reading speed only changes the device voice.` : 'Recorded Bonnie voice: not set up (see README).'}</p></section>
       <section><h3>Progress</h3>
         <label><input type="checkbox" id="pUnlock" ${S.settings.unlockAll ? 'checked' : ''}> Unlock all English levels</label>
         ${WORLDS.map((w, i) => `<div class="note">${w.icon} ${w.name}: ⭐ ${worldStars(i)} / 15</div>`).join('')}
@@ -1606,7 +1488,7 @@ $('#shopBtn').onclick = () => { sfx.pop(); shopScreen(); };
 $('#frog').addEventListener('click', e => { const f = e.currentTarget; f.classList.remove('boing'); void f.offsetWidth; f.classList.add('boing'); sfx.ribbit(); hearts(f, '💚', 2); });
 document.addEventListener('pointerdown', () => ac(), { once: true });
 if (!S.nameSet) location.replace('index.html'); // no name yet: the Clubhouse asks for it
-else { applyTheme(); renderHud(); homeScreen(); loadVoicePack(); }
+else { applyTheme(); renderHud(); homeScreen(); BonnieVoice.load(); }
 }
 </script>
 </body>

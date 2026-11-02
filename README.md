@@ -161,9 +161,9 @@ This means:
 - Clearing Safari's website data, or browsing in a Private tab, starts afresh.
 - Updating the game file keeps progress, as long as the page address stays the same.
 
-## Bonnie's recorded voice (Meadow Words)
+## Bonnie's recorded voice (Clubhouse and Meadow Words)
 
-Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the device's built-in voice. The clips are made once on a computer and uploaded with the games, so the iPad never needs the ElevenLabs key, and they work offline.
+The Clubhouse and Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the device's built-in voice. Bonnie is currently voiced by **Shelley** (voice ID `4CrZuIW9am7gYAxgo2Af`). Both pages share the player in `bonnie-voice.js`. The clips are made once on a computer and uploaded with the games, so the iPad never needs the ElevenLabs key, and they work offline.
 
 **Making the clips** (needs [Node.js](https://nodejs.org) 20 or newer):
 
@@ -183,14 +183,14 @@ Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the devi
 4. Check the size first. This uses no credits:
 
    ```bash
-   npm run voice:check -- --names "Harvey"
+   npm run voice:check
    ```
 
    The full set is about 35,000 characters. With the default `eleven_v4` model that used about 14,000 credits (November 2026), because ElevenLabs charges fewer credits than characters for it. Re-runs after small edits cost only the new lines.
 5. Make 20 clips, then listen to them in `audio/clips/`:
 
    ```bash
-   npm run voice -- --voice VOICE_ID --names "Harvey" --limit 20
+   npm run voice -- --voice VOICE_ID --limit 20
    ```
 
    Run the same command without `--limit 20` to finish. If it stops part way, run it again and it carries on.
@@ -198,10 +198,11 @@ Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the devi
 
 **How it works:** each line is cut into short pieces (sentences, the "…" pauses in sounding out, and the player's name), and each piece has its own clip. When every piece of a line has a clip, Bonnie uses them; otherwise she says that line with the device voice. So:
 
-- The player's name needs its own clip: list every name in `--names`. Lines with a name that isn't recorded use the device voice.
+- The player's name needs its own clip. `tools/names.txt` lists the names to record: about 100 popular names for children born 2019–20, plus Harvey, Rex, Samantha and Anthony. Add a name on its own line and run the script again; each name costs only a few credits. Lines with a name that isn't recorded use the device voice.
 - Prizes a grown-up adds or renames use the device voice until the script is run again.
 - After editing the words in the game, run the script again. It only makes the new lines and removes clips that are no longer used. Changing the voice ID or model remakes everything.
 - The reading speed setting only changes the device voice.
+- Some letter sounds came out as letter names ("lll" was read as "L, L, L"), so the script sends ElevenLabs a different spelling for those (`SAY_AS` in `tools/make-voice.mjs`). The device voice still uses the game's own spelling.
 - Letter sounds such as "buh" and "sss" are hard for any computer voice. To use your own recording, replace that clip's file in `audio/clips/` (keep the name). `audio/manifest.json` lists the words in each clip under `texts`. The script won't overwrite it unless the voice changes.
 - Never put the API key in the games or commit it. The script only reads it from `.env.local` (through `npm run voice`) or the environment.
 

@@ -18,7 +18,7 @@
  *
  * Optional env: ELEVENLABS_MODEL (default eleven_v4).
  *
- * It runs the game's own code to list every line Bonnie can say, cuts lines into the same pieces the game
+ * It runs the Clubhouse's and Meadow Words' own code to list every line Bonnie can say, cuts lines into the same pieces the game
  * uses, and only makes clips that are not already in audio/manifest.json, so re-running after editing the
  * game costs only the new lines. Changing the voice or model remakes everything.
  */
@@ -28,7 +28,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const GAME = path.join(ROOT, 'meadow-words.html');
+const NAMES_FILE = path.join(ROOT, 'tools', 'names.txt');
 const AUDIO = path.join(ROOT, 'audio');
 const MANIFEST = path.join(AUDIO, 'manifest.json');
 const NAME_TOKEN = 'Qqchildnameqq'; // stands in for the child's name while listing lines
@@ -37,7 +37,17 @@ const args = process.argv.slice(2);
 const opt = n => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
 const DRY = args.includes('--dry-run');
 const LIMIT = opt('--limit') ? Math.max(0, parseInt(opt('--limit'), 10)) : Infinity;
-const NAMES = (opt('--names') || '').split(',').map(s => s.trim()).filter(Boolean);
+// Names: everything in tools/names.txt (one per line, # for notes) plus any given with --names.
+const NAMES = [...new Set([
+  ...(fs.existsSync(NAMES_FILE) ? fs.readFileSync(NAMES_FILE, 'utf8').split('\n').map(l => l.replace(/#.*/, '').trim()) : []),
+  ...(opt('--names') || '').split(','),
+].map(s => s.trim()).filter(Boolean))];
+
+/* Letter sounds that ElevenLabs reads as letter names ("lll" -> "L, L, L") or too faintly get a
+   different spelling when recorded. The game still says the left-hand text with the device voice.
+   Checked with ElevenLabs speech-to-text, November 2026. */
+const SAY_AS = { lll: 'Lllll...', vvv: 'vvvv.', mmm: 'Mmm...', nnn: 'Nnn...', rrr: 'rrrr.', zzz: 'zzzz.', ks: 'kss' };
+const sayAs = text => SAY_AS[text] || text;
 const KEY = process.env.ELEVENLABS_API_KEY;
 const VOICE = opt('--voice') || process.env.ELEVENLABS_VOICE_ID;
 const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_v4';
@@ -64,40 +74,47 @@ if (args.includes('--list-voices')) {
   process.exit(0);
 }
 
-/* ---------- 1. Run the game's script to get its lines and its piece-cutting code ---------- */
-function loadGame() {
-  const html = fs.readFileSync(GAME, 'utf8');
-  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-  const main = scripts.find(s => s.includes('const CONFIG'));
-  if (!main) throw new Error('Could not find the game script in meadow-words.html');
-  const noop = () => {};
-  const el = new Proxy({}, { get: () => noop });
+/* ---------- 1. Run the pages' own code to get their lines and the piece-cutting code ---------- */
+function loadPages() {
+  // A stand-in for the browser: any DOM call quietly does nothing.
+  const dud = new Proxy(function () {}, {
+    get: (t, k) => (k === Symbol.toPrimitive ? () => '' : k === Symbol.iterator ? [][Symbol.iterator].bind([]) : dud),
+    set: () => true, apply: () => dud, construct: () => dud,
+  });
   const ctx = {
     console, setTimeout, clearTimeout, setInterval, clearInterval,
     __VOICE_LINES_ONLY__: true,
-    navigator: {}, location: {},
+    navigator: {}, location: {}, document: dud, addEventListener: () => {},
     localStorage: {
       getItem: k => (k === 'harvey-splitter-v1' ? JSON.stringify({ name: NAME_TOKEN }) : null),
-      setItem: noop, removeItem: noop,
+      setItem: () => {}, removeItem: () => {},
     },
-    matchMedia: () => ({ matches: false, addEventListener: noop }),
-    document: { querySelector: () => null, querySelectorAll: () => [], addEventListener: noop, createElement: () => el, body: { dataset: {}, appendChild: noop } },
-    addEventListener: noop,
+    matchMedia: () => ({ matches: false, addEventListener: () => {} }),
   };
   ctx.window = ctx;
   vm.createContext(ctx);
-  vm.runInContext(main, ctx, { filename: 'meadow-words.html' });
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'bonnie-voice.js'), 'utf8'), ctx, { filename: 'bonnie-voice.js' });
+  const run = (file, fn) => { // each page runs in its own copy so their names don't clash
+    const c = vm.createContext({ ...ctx }); c.window = c;
+    vm.runInContext(fs.readFileSync(path.join(ROOT, 'bonnie-voice.js'), 'utf8'), c);
+    const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    const main = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('const CONFIG'));
+    if (!main) throw new Error(`Could not find the main script in ${file}`);
+    vm.runInContext(main, c, { filename: file });
+    return vm.runInContext(`${fn}()`, c);
+  };
+  const call = (f, ...a) => vm.runInContext(`BonnieVoice.${f}(${a.map(x => JSON.stringify(x)).join(',')})`, ctx);
   return {
-    lines: vm.runInContext('allSpokenLines()', ctx),
-    pieces: (text, name) => vm.runInContext(`voicePieces(${JSON.stringify(text)}, ${JSON.stringify(name)})`, ctx),
-    clean: s => vm.runInContext(`cleanPiece(${JSON.stringify(s)})`, ctx),
-    key: s => vm.runInContext(`pieceKey(${JSON.stringify(s)})`, ctx),
+    lines: [...run('meadow-words.html', 'allSpokenLines'), ...run('index.html', 'clubhouseLines')],
+    pieces: (text, name) => call('pieces', text, name),
+    clean: s => call('cleanPiece', s),
+    key: s => call('pieceKey', s),
     hasWords: s => /[\p{L}\p{N}]/u.test(s),
   };
 }
 
 /* ---------- 2. Work out which clips are needed ---------- */
-const game = loadGame();
+const game = loadPages();
 const wanted = new Map(); // key -> text
 let collisions = 0;
 for (const line of game.lines) {
@@ -116,15 +133,15 @@ let manifest = { voice: VOICE || null, model: MODEL, clips: {}, names: {}, texts
 if (fs.existsSync(MANIFEST)) {
   try { manifest = { ...manifest, ...JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) }; } catch (e) { console.warn('! audio/manifest.json unreadable; starting fresh'); }
 }
-manifest.texts = manifest.texts || {}; manifest.names = manifest.names || {};
+manifest.texts = manifest.texts || {}; manifest.names = manifest.names || {}; manifest.said = manifest.said || {};
 if (!DRY && (manifest.voice !== VOICE || manifest.model !== MODEL)) {
   if (Object.keys(manifest.clips).length) console.log('Voice or model changed: making every clip again.');
-  manifest = { voice: VOICE, model: MODEL, clips: {}, names: {}, texts: {} };
+  manifest = { voice: VOICE, model: MODEL, clips: {}, names: {}, texts: {}, said: {} };
 }
 const exists = f => f && fs.existsSync(path.join(AUDIO, f));
-const todo = [...wanted].filter(([k, t]) => !(exists(manifest.clips[k]) && manifest.texts[k] === t));
+const todo = [...wanted].filter(([k, t]) => !(exists(manifest.clips[k]) && manifest.texts[k] === t && (manifest.said[k] || t) === sayAs(t)));
 const namesTodo = NAMES.filter(n => !exists(manifest.names[n.toLowerCase()]));
-const chars = todo.reduce((a, [, t]) => a + t.length, 0) + namesTodo.reduce((a, n) => a + n.length, 0);
+const chars = todo.reduce((a, [, t]) => a + sayAs(t).length, 0) + namesTodo.reduce((a, n) => a + n.length, 0);
 
 console.log(`Lines: ${game.lines.length}  ·  pieces: ${wanted.size}  ·  new clips needed: ${todo.length + namesTodo.length}  ·  characters: ${chars}`);
 if (DRY) {
@@ -164,15 +181,17 @@ try {
   }
   for (const [k, text] of todo) {
     if (made >= LIMIT) break;
-    const file = `clips/${k}-${tag}.mp3`;
-    fs.writeFileSync(path.join(AUDIO, file), await tts(text));
+    // a different spelling gets a different file name, so devices don't keep playing an old saved copy
+    const file = `clips/${k}-${tag}${sayAs(text) !== text ? '-' + game.key(sayAs(text)).slice(0, 4) : ''}.mp3`;
+    fs.writeFileSync(path.join(AUDIO, file), await tts(sayAs(text)));
     manifest.clips[k] = file; manifest.texts[k] = text; made++;
+    if (sayAs(text) !== text) manifest.said[k] = sayAs(text); else delete manifest.said[k];
     console.log(`  ${String(made).padStart(4)}  ${text.length > 70 ? text.slice(0, 67) + '…' : text}`);
     if (made % 25 === 0) saveManifest();
   }
 } finally {
   // Drop clips for lines the game no longer says, and their files.
-  for (const k of Object.keys(manifest.clips)) if (!wanted.has(k)) { delete manifest.clips[k]; delete manifest.texts[k]; }
+  for (const k of Object.keys(manifest.clips)) if (!wanted.has(k)) { delete manifest.clips[k]; delete manifest.texts[k]; delete manifest.said[k]; }
   const keep = new Set([...Object.values(manifest.clips), ...Object.values(manifest.names)]);
   for (const dir of ['clips', 'names']) for (const f of fs.readdirSync(path.join(AUDIO, dir))) {
     if (f.endsWith('.mp3') && !keep.has(`${dir}/${f}`)) fs.unlinkSync(path.join(AUDIO, dir, f));

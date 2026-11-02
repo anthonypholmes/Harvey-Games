@@ -189,6 +189,7 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
   <p class="note">Spend your bones in the Bone Shop inside any game.</p>
 </div>
 
+<script src="bonnie-voice.js"></script>
 <script>
 /* =========================================================
    CONFIG — edit the game links to match your file names.
@@ -259,23 +260,18 @@ function bonnieSVG(hat) {
 
 /* ---------- sound & speech ---------- */
 let AC = null;
+function ac() { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) {} return AC; }
 function tone(f, d = .1, type = 'sine', vol = .15, delay = 0) {
-  if (!soundOn) return;
-  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) { return; }
+  if (!soundOn || !ac()) return;
   const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
   o.type = type; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.001, t + d);
   o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + .02);
 }
 const giggle = () => [800, 1000, 850, 1100, 900].forEach((f, i) => tone(f, .07, 'sine', .12, i * .08));
 const coinUp = () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .12, 'square', .06, i * .06));
-let VOICE = null, utter = null;
-function pickVoice() { const vs = speechSynthesis.getVoices(), gb = vs.filter(v => /en[-_]GB/i.test(v.lang));
-  VOICE = gb.find(v => /Serena|Kate|Martha|Stephanie|Libby|Sonia|Female/i.test(v.name)) || gb[0] || null; }
-if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function say(text, pitch = 1.1) {
-  if (!soundOn || !('speechSynthesis' in window)) return;
-  speechSynthesis.cancel(); utter = new SpeechSynthesisUtterance(text); utter.lang = 'en-GB'; if (VOICE) utter.voice = VOICE; utter.rate = .92; utter.pitch = pitch; speechSynthesis.speak(utter);
-}
+// Bonnie's voice is in bonnie-voice.js: recorded clips when there are some, otherwise the device's British voice.
+Object.assign(BonnieVoice, { getName: () => S.childName, getAudio: ac, enabled: () => soundOn, getRate: () => .92 });
+function say(text, pitch = 1.1) { BonnieVoice.say(text, { pitch }); }
 function hearts(el, emoji = '💖', n = 4) {
   const r = el.getBoundingClientRect();
   for (let i = 0; i < n; i++) { const h = document.createElement('div'); h.className = 'heart'; h.textContent = emoji;
@@ -330,19 +326,30 @@ function render() {
   }).join('');
   document.querySelectorAll('a.cab').forEach(a => a.addEventListener('click', e => {
     e.preventDefault(); coinUp(); say(`Let's play ${a.dataset.name}!`);
-    setTimeout(() => { location.href = a.getAttribute('href'); }, 650);
+    // open the game once Bonnie has finished speaking (but never wait more than 3 seconds)
+    let gone = false; const go = () => { if (!gone) { gone = true; location.href = a.getAttribute('href'); } };
+    setTimeout(() => BonnieVoice.whenQuiet(go), 650); setTimeout(go, 3000);
   }));
 }
 function greet() {
   if (!S.hasName || editingName) {
-    const t = S.hasName ? 'Ooh, a new name? Type it in the box!' : "Woof! I'm Bonnie. Welcome to the Meadow Clubhouse! What's your name?";
+    const t = S.hasName ? LINES.newName : LINES.askName;
     document.getElementById('say').textContent = t; return t;
   }
-  const n = S.childName;
-  const lines = S.bones > 0
-    ? [`Welcome back, ${n}! You've got ${S.bones} bones in the bowl. Which game shall we play?`, `Woof! Hi ${n}! Pick a game and let's earn more bones!`]
-    : [`Hello ${n}! Welcome to the Meadow Clubhouse! Pick a game to start earning bones.`, `Woof! Hi ${n}! Shall we play some maths or some words today?`];
-  const t = rand(lines); document.getElementById('say').textContent = t; return t;
+  const t = fmtN(rand(S.bones > 0 ? LINES.greetBones : LINES.greetStart)); document.getElementById('say').textContent = t; return t;
+}
+const fmtN = s => s.replaceAll('{N}', S.childName);
+/* Everything Bonnie says here. tools/make-voice.mjs reads clubhouseLines() to make recorded clips. */
+const LINES = {
+  askName: "Woof! I'm Bonnie. Welcome to the Meadow Clubhouse! What's your name?",
+  newName: 'Ooh, a new name? Type it in the box!',
+  hello: 'Hi {N}! Welcome to your Meadow Clubhouse! Pick a game to play.',
+  greetBones: ['Welcome back, {N}! Look at all the bones in your bowl! Which game shall we play?', "Woof! Hi {N}! Pick a game and let's earn more bones!"],
+  greetStart: ['Hello {N}! Welcome to the Meadow Clubhouse! Pick a game to start earning bones.', 'Woof! Hi {N}! Shall we play some maths or some words today?'],
+};
+function clubhouseLines() {
+  return [LINES.askName, LINES.newName, LINES.hello, ...LINES.greetBones, ...LINES.greetStart, ...TICKLES,
+    ...CONFIG.GAMES.filter(g => g.href && !g.soon).map(g => `Let's play ${g.name}!`)].map(fmtN);
 }
 const TICKLES = ['Hee hee! That tickles!', 'Ha ha! Stop it, {N}!', 'Woof woof! Giggle!', 'Ooh, my ears are ticklish!'];
 
@@ -362,12 +369,14 @@ document.getElementById('nameCard').addEventListener('submit', e => {
   const v = document.getElementById('nameIn').value.trim().replace(/\s+/g, ' ').slice(0, 16);
   if (!v) { document.getElementById('nameMsg').textContent = 'Type your name first! 🐾'; document.getElementById('nameIn').focus(); return; }
   saveName(v); editingName = false; render(); coinUp();
-  const t = `Hi ${v}! Welcome to your Meadow Clubhouse! Pick a game to play.`;
+  const t = fmtN(LINES.hello);
   document.getElementById('say').textContent = t; say(t);
 });
 document.getElementById('nameCancel').addEventListener('click', () => { editingName = false; render(); greet(); });
 document.getElementById('changeName').addEventListener('click', openNameCard);
 
+if (!window.__VOICE_LINES_ONLY__) {
+BonnieVoice.load();
 render();
 const firstLine = greet();
 if (!S.hasName) setTimeout(() => document.getElementById('nameIn').focus(), 100);
@@ -384,12 +393,13 @@ document.getElementById('frog').addEventListener('click', e => {
 });
 document.getElementById('soundBtn').addEventListener('click', () => {
   soundOn = !soundOn; try { localStorage.setItem('meadowClubhouse_sound', soundOn ? '1' : '0'); } catch (e) {}
-  if (!soundOn && 'speechSynthesis' in window) speechSynthesis.cancel();
+  if (!soundOn) BonnieVoice.hush();
   render(); if (soundOn) say(firstLine);
 });
 // keep the bone count fresh when coming back from a game or another tab
 window.addEventListener('storage', e => { if (e.key === CONFIG.SHARED_KEY) { const old = S.bones; render(); if (S.bones !== old) document.getElementById('boneChip').classList.add('bump'); } });
 window.addEventListener('pageshow', e => { if (e.persisted) { render(); greet(); } });
+}
 </script>
 </body>
 </html>

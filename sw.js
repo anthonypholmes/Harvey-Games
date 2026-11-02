@@ -1,6 +1,6 @@
 /* Meadow Clubhouse service worker — lets the games run offline.
  *
- * Pages: network first, so a newly uploaded game shows up straight away
+ * Pages and scripts: network first, so a newly uploaded game shows up straight away
  *   when online; the saved copy is used when offline (or the network is slow).
  * Everything else (icons, fonts): cache first, then network.
  * Bonnie's recorded voice (audio/): clips are cache first in their own cache, which
@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v2';
+const CACHE_VERSION = 'meadow-club-v3';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -17,6 +17,7 @@ const CORE_ASSETS = [
   './index.html',
   './meadow-maths.html',
   './meadow-words.html',
+  './bonnie-voice.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -63,7 +64,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  const isPage = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
+  const isPage = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html') || url.pathname.endsWith('.js');
   event.respondWith(isPage ? networkFirst(req) : cacheFirst(req, CACHE_VERSION));
 });
 
