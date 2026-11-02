@@ -2,11 +2,14 @@
 # Run `npm run voice -- --voice <voice-id>` after adding names (each one costs only a few credits).
 # Popular names for children born 2019-2020 in England and Wales (ONS), plus family requests.
 
-# Family requests
-Harvey
-Rex
-Samantha
-Anthony
+# Family requests. A * records every sentence with that name in one go, so it sounds most
+# natural (about 160 clips per name, roughly 2,000 credits). Other names are joined in.
+*Harvey
+*Rex
+*Samantha
+*Anthony
+*Alaya
+*Rory
 
 # Boys
 Oliver
@@ -46,7 +49,6 @@ Logan
 Joseph
 Mason
 Hugo
-Rory
 Sebastian
 Elijah
 Louie

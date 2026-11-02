@@ -21,7 +21,11 @@
   };
   const AUDIO_CACHE = 'meadow-club-audio-v1'; // must match sw.js
   const hasSpeech = () => typeof speechSynthesis !== 'undefined';
-  let token = 0, nodes = [], speaking = false, waiters = [], safety = null, utter = null;
+  let token = 0, nodes = [], speaking = false, waiters = [], safety = null, utter = null, pending = null;
+  if (typeof document !== 'undefined') document.addEventListener('pointerdown', () => {
+    const p = pending; pending = null; V.getAudio(); // unlocks sound
+    if (p) setTimeout(() => V.say(p[0], p[1]), 0);   // a tap that makes Bonnie speak will talk over this, which is fine
+  }, { capture: true, once: true });
   const bufs = new Map(); // file -> decoded AudioBuffer (small, most-recent-first cache)
 
   /* ---------- device voice ---------- */
@@ -41,31 +45,50 @@
     let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
     return h.toString(16).padStart(8, '0');
   };
+  const isL = c => !!c && /\p{L}/u.test(c);
+  /* Where the name appears as a whole word: [index, ...] */
+  const nameAt = (text, name) => {
+    const low = text.toLowerCase(), nm = String(name || '').toLowerCase(), at = [];
+    if (nm) for (let i = low.indexOf(nm); i >= 0; i = low.indexOf(nm, i + 1)) {
+      if ((at.length && i < at[at.length - 1] + nm.length) || isL(text[i - 1]) || isL(text[i + nm.length])) continue;
+      at.push(i);
+    }
+    return at;
+  };
+  const cutInto = (out, chunk, base) => { let pos = 0;
+    chunk.replace(/(\.\.\.|…|[.!?]+["'”’)]*)(\s+|$)/g, '$1$2\u0001').split('\u0001').forEach(raw => {
+      if (raw) out.push({ raw, start: base + pos, name: false }); pos += raw.length; }); };
+  /* Sentences and "..." pauses, without splitting out the name. [{raw, start}] */
+  V.sentences = text => { const out = []; cutInto(out, text, 0); return out; };
+  /* A sentence with the name swapped for {N} (used to find whole-sentence recordings of a name). */
+  V.template = (clean, name) => { let s = clean; nameAt(clean, name).reverse().forEach(i => { s = s.slice(0, i) + '{N}' + s.slice(i + String(name).length); }); return s; };
   /* Pieces: sentences, "..." pauses and the child's name. [{raw, start, name}]; raw keeps spacing so offsets add up. */
   V.pieces = (text, name = V.getName()) => {
-    const out = [], low = text.toLowerCase(), nm = String(name || '').toLowerCase();
-    const isL = c => !!c && /\p{L}/u.test(c);
-    const cut = (chunk, base) => { let pos = 0;
-      chunk.replace(/(\.\.\.|…|[.!?]+["'”’)]*)(\s+|$)/g, '$1$2\u0001').split('\u0001').forEach(raw => {
-        if (raw) out.push({ raw, start: base + pos, name: false }); pos += raw.length; }); };
+    const out = [], nm = String(name || '');
     let from = 0;
-    if (nm) for (let i = low.indexOf(nm); i >= 0; i = low.indexOf(nm, i + 1)) {
-      if (i < from || isL(text[i - 1]) || isL(text[i + nm.length])) continue;
-      cut(text.slice(from, i), from); out.push({ raw: text.slice(i, i + nm.length), start: i, name: true }); from = i + nm.length;
-    }
-    cut(text.slice(from), from);
+    for (const i of nameAt(text, nm)) { cutInto(out, text.slice(from, i), from); out.push({ raw: text.slice(i, i + nm.length), start: i, name: true }); from = i + nm.length; }
+    cutInto(out, text.slice(from), from);
     return out;
   };
+  const pauseAfter = raw => /(\.\.\.|…)\s*$/.test(raw) ? .4 : /[.!?]["'”’)]*\s*$/.test(raw) ? .25 : /[,;:—–]\s*$/.test(raw) ? .12 : .04;
   function plan(text) {
     const a = V.pack && V.getAudio();
     if (!a || (a.state !== 'running' && !(navigator.userActivation && navigator.userActivation.hasBeenActive))) return null;
-    const out = [];
-    for (const p of V.pieces(text)) {
-      const clean = V.cleanPiece(p.raw); if (!V.hasWords(clean)) continue;
-      const file = p.name ? V.pack.names && V.pack.names[clean.toLowerCase()] : V.pack.clips[V.pieceKey(clean)];
-      if (!file) { if (!p.name) V.missing.add(clean); return null; }
-      const pause = /(\.\.\.|…)\s*$/.test(p.raw) ? .35 : /[.!?]["'”’)]*\s*$/.test(p.raw) ? .14 : .03;
-      out.push({ ...p, file: 'audio/' + file, pause });
+    const out = [], name = V.getName(), whole = V.pack.whole && V.pack.whole[String(name).toLowerCase()];
+    for (const s of V.sentences(text)) {
+      // A sentence with the name in it may be recorded whole for this name (sounds most natural)
+      let group = null;
+      if (whole && nameAt(s.raw, name).length) {
+        const f = whole[V.pieceKey(V.template(V.cleanPiece(s.raw), name))];
+        if (f) group = [{ raw: s.raw, start: s.start, name: false, file: f }];
+      }
+      for (const p of group || V.pieces(s.raw, name).map(p => ({ ...p, start: p.start + s.start }))) {
+        const clean = V.cleanPiece(p.raw);
+        if (!V.hasWords(clean)) { if (out.length) out[out.length - 1].pause = Math.max(out[out.length - 1].pause, pauseAfter(p.raw)); continue; }
+        const file = p.file || (p.name ? V.pack.names && V.pack.names[clean.toLowerCase()] : V.pack.clips[V.pieceKey(clean)]);
+        if (!file) { if (!p.name) V.missing.add(clean); return null; }
+        out.push({ ...p, file: 'audio/' + file, pause: pauseAfter(p.raw) });
+      }
     }
     return out.length ? out : null;
   }
@@ -94,6 +117,8 @@
   V.say = (text, opts = {}) => {
     cut();
     text = String(text);
+    // Browsers keep a new page silent until it's tapped: remember the line and say it on the first tap.
+    pending = navigator.userActivation && !navigator.userActivation.hasBeenActive ? [text, opts] : null;
     const t = token;
     if (!V.enabled()) { setTimeout(() => { opts.onend && opts.onend(); }, 0); return null; }
     speaking = true;
@@ -119,8 +144,20 @@
     const res = await fetch(file); if (!res.ok) throw new Error('clip ' + res.status);
     const data = await res.arrayBuffer(), a = V.getAudio();
     const buf = await new Promise((ok, bad) => { const pr = a.decodeAudioData(data, ok, bad); if (pr && pr.then) pr.then(ok, bad); });
-    bufs.set(file, buf); if (bufs.size > 80) bufs.delete(bufs.keys().next().value);
-    return buf;
+    const clip = trim(buf);
+    bufs.set(file, clip); if (bufs.size > 80) bufs.delete(bufs.keys().next().value);
+    return clip;
+  }
+  /* Skip the quiet bit at each end of a recording, so pieces join up without gaps. */
+  function trim(buf) {
+    const d = buf.getChannelData(0), n = d.length; let peak = 0;
+    for (let i = 0; i < n; i += 4) peak = Math.max(peak, Math.abs(d[i]));
+    const th = Math.max(.003, peak * .04);
+    let a = 0, b = n - 1;
+    while (a < n && Math.abs(d[a]) < th) a++;
+    while (b > a && Math.abs(d[b]) < th) b--;
+    const r = buf.sampleRate, from = Math.max(0, a / r - .02), to = Math.min(buf.duration, b / r + .04);
+    return to - from > Math.max(.12, buf.duration * .25) ? { buf, from, dur: to - from } : { buf, from: 0, dur: buf.duration };
   }
   async function playClips(p, opts, t) {
     let list;
@@ -130,14 +167,14 @@
     const a = V.getAudio(), slow = (opts.rate || 1) < .8 ? 1.6 : 1;
     let at = a.currentTime + .04;
     p.forEach((x, k) => {
-      const src = a.createBufferSource(); src.buffer = list[k]; src.connect(a.destination); src.start(at); nodes.push(src);
+      const c = list[k], src = a.createBufferSource(); src.buffer = c.buf; src.connect(a.destination); src.start(at, c.from, c.dur); nodes.push(src);
       if (opts.onboundary) { // spread word highlights across the clip (story read-along)
-        const len = x.raw.length || 1, d = list[k].duration;
+        const len = x.raw.length || 1, d = c.dur;
         [...x.raw.matchAll(/\S+/g)].forEach(m => setTimeout(() => {
           if (t === token) opts.onboundary({ name: 'word', charIndex: x.start + m.index });
         }, Math.max(0, (at - a.currentTime + d * m.index / len) * 1000)));
       }
-      at += list[k].duration + x.pause * slow;
+      at += c.dur + x.pause * slow;
     });
     clearTimeout(safety);
     safety = setTimeout(() => finished(t, opts.onend), (at - a.currentTime) * 1000 + 3000);
@@ -158,7 +195,7 @@
     if (!V.pack || typeof caches === 'undefined' || navigator.onLine === false) return;
     try {
       const cache = await caches.open(AUDIO_CACHE);
-      const files = [...new Set([...Object.values(V.pack.clips), ...Object.values(V.pack.names || {})])].map(f => 'audio/' + f);
+      const files = [...new Set([...Object.values(V.pack.clips), ...Object.values(V.pack.names || {}), ...Object.values(V.pack.whole || {}).flatMap(Object.values)])].map(f => 'audio/' + f);
       let k = 0;
       const worker = async () => { while (k < files.length) { const f = files[k++];
         try { if (!(await cache.match(f))) { const r = await fetch(f); if (r.ok) await cache.put(f, r); } } catch (e) {} } };

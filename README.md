@@ -114,7 +114,7 @@ The game also adjusts the difficulty quietly. After two answers in a row that ne
 - **3 bonus bones** for finishing a level.
 - So a level gives roughly 12 to 30 bones, usually 20 to 30.
 
-The **Bone Shop** has three tabs:
+The **Bone Shop** can be opened from the Clubhouse (the **Bone Shop** button under the games, or at the top), or from inside either game. It has three tabs:
 
 - **Real prizes:** set by grown-ups, shown in tiers. When he has enough bones he taps **Redeem**, and a grown-up holds a button for 3 seconds to say yes.
 - **Bonnie's hats:** Pirate Eyepatch (50), Party Hat (75), Wizard Hat (150), Crown (300). Bonnie wears the chosen hat everywhere, even on the number line.
@@ -199,7 +199,8 @@ The Clubhouse and Meadow Words can play a recorded ElevenLabs voice for Bonnie i
 **How it works:** each line is cut into short pieces (sentences, the "…" pauses in sounding out, and the player's name), and each piece has its own clip. When every piece of a line has a clip, Bonnie uses them; otherwise she says that line with the device voice. So:
 
 - The player's name needs its own clip. `tools/names.txt` lists the names to record: about 100 popular names for children born 2019–20, plus Harvey, Rex, Samantha and Anthony. Add a name on its own line and run the script again; each name costs only a few credits. Lines with a name that isn't recorded use the device voice.
-- Prizes a grown-up adds or renames use the device voice until the script is run again.
+- Names marked with `*` in `tools/names.txt` (Harvey, Rex, Samantha, Anthony, Alaya and Rory) have every sentence containing their name recorded in one go, so there's no join around the name. That's about 52 sentences, or roughly 1,500 characters, per name. Other names are joined in, with the quiet ends of each clip trimmed so the joins are short.
+- Prizes a grown-up adds or renames can't be recorded in advance. For those, Bonnie says "Hooray! Go and tell your grown-up what you unlocked!" in the recorded voice, and the prize name is shown on screen.
 - After editing the words in the game, run the script again. It only makes the new lines and removes clips that are no longer used. Changing the voice ID or model remakes everything.
 - The reading speed setting only changes the device voice.
 - Some letter sounds came out as letter names ("lll" was read as "L, L, L"), so the script sends ElevenLabs a different spelling for those (`SAY_AS` in `tools/make-voice.mjs`). The device voice still uses the game's own spelling.

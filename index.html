@@ -102,6 +102,11 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
 .name-card input:focus{outline:none;border-color:var(--accent)}
 .name-msg{margin:0;min-height:1.3em;color:var(--berry);font-weight:600}
 .name-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+.shop-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:inherit;cursor:pointer}
+.shop-btn{display:flex;align-items:center;justify-content:center;gap:12px;margin:26px auto 0;max-width:560px;padding:16px 22px;border-radius:20px;
+  font-size:1.45rem;font-weight:700;color:#fff;text-decoration:none;background:var(--berry);box-shadow:0 6px 0 #A63C4C}
+.shop-btn small{font-size:.95rem;font-weight:600;opacity:.92}
+.shop-btn:active{transform:translateY(4px);box-shadow:none}
 .play-btn{flex:1;max-width:420px;padding:16px;border-radius:18px;font-size:1.5rem;font-weight:700;color:#fff;background:var(--leaf);box-shadow:0 6px 0 var(--leaf-dark)}
 .play-btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--leaf-dark)}
 .note{text-align:center;color:var(--on-bg);opacity:.8;font-size:.9rem;margin-top:14px}
@@ -151,6 +156,7 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
 
 <div class="wrap">
   <div class="top">
+    <a class="chip shop-link" href="meadow-words.html#shop" data-shop>🛍️ Bone Shop</a>
     <div class="chip" id="boneChip" title="Bones in Bonnie's bone bowl">🦴 <span id="boneNum">0</span></div>
   </div>
 
@@ -181,12 +187,13 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
   </form>
 
   <main class="cabinets" id="cabinets"></main>
+  <a class="shop-btn" id="shopBig" href="meadow-words.html#shop" data-shop>🛍️ Bonnie's Bone Shop <small>hats, themes &amp; real prizes</small></a>
 
   <div class="foot">
     <button class="btn" id="soundBtn">🔊 Sound: on</button>
     <button class="btn" id="changeName">✏️ Change name</button>
   </div>
-  <p class="note">Spend your bones in the Bone Shop inside any game.</p>
+  <p class="note">Spend your bones on hats, themes and real prizes in Bonnie's Bone Shop.</p>
 </div>
 
 <script src="bonnie-voice.js"></script>
@@ -304,6 +311,7 @@ function render() {
   const asking = !S.hasName || editingName;
   document.getElementById('nameCard').hidden = !asking;
   document.getElementById('cabinets').hidden = asking;
+  document.querySelectorAll('[data-shop]').forEach(a => { a.hidden = asking; });
   document.getElementById('changeName').hidden = asking || !S.hasName;
   document.getElementById('nameCancel').hidden = !S.hasName;
   document.getElementById('nameLabel').textContent = S.hasName ? 'What’s your new name?' : 'What’s your name?';
@@ -324,12 +332,13 @@ function render() {
     return g.soon || !g.href ? `<div class="cab soon">${inner}</div>`
                              : `<a class="cab" href="${esc(g.href)}" data-name="${esc(g.name)}">${inner}</a>`;
   }).join('');
-  document.querySelectorAll('a.cab').forEach(a => a.addEventListener('click', e => {
-    e.preventDefault(); coinUp(); say(`Let's play ${a.dataset.name}!`);
-    // open the game once Bonnie has finished speaking (but never wait more than 3 seconds)
-    let gone = false; const go = () => { if (!gone) { gone = true; location.href = a.getAttribute('href'); } };
-    setTimeout(() => BonnieVoice.whenQuiet(go), 650); setTimeout(go, 3000);
-  }));
+  document.querySelectorAll('a.cab').forEach(a => a.addEventListener('click', e => { e.preventDefault(); goTo(a.getAttribute('href'), `Let's play ${a.dataset.name}!`); }));
+}
+/* Say a line, then open the page once Bonnie has finished (but never wait more than 3 seconds). */
+function goTo(href, line) {
+  coinUp(); say(line);
+  let gone = false; const go = () => { if (!gone) { gone = true; location.href = href; } };
+  setTimeout(() => BonnieVoice.whenQuiet(go), 650); setTimeout(go, 3000);
 }
 function greet() {
   if (!S.hasName || editingName) {
@@ -345,10 +354,11 @@ const LINES = {
   newName: 'Ooh, a new name? Type it in the box!',
   hello: 'Hi {N}! Welcome to your Meadow Clubhouse! Pick a game to play.',
   greetBones: ['Welcome back, {N}! Look at all the bones in your bowl! Which game shall we play?', "Woof! Hi {N}! Pick a game and let's earn more bones!"],
+  shop: "Let's go shopping!",
   greetStart: ['Hello {N}! Welcome to the Meadow Clubhouse! Pick a game to start earning bones.', 'Woof! Hi {N}! Shall we play some maths or some words today?'],
 };
 function clubhouseLines() {
-  return [LINES.askName, LINES.newName, LINES.hello, ...LINES.greetBones, ...LINES.greetStart, ...TICKLES,
+  return [LINES.askName, LINES.newName, LINES.hello, LINES.shop, ...LINES.greetBones, ...LINES.greetStart, ...TICKLES,
     ...CONFIG.GAMES.filter(g => g.href && !g.soon).map(g => `Let's play ${g.name}!`)].map(fmtN);
 }
 const TICKLES = ['Hee hee! That tickles!', 'Ha ha! Stop it, {N}!', 'Woof woof! Giggle!', 'Ooh, my ears are ticklish!'];
@@ -374,6 +384,7 @@ document.getElementById('nameCard').addEventListener('submit', e => {
 });
 document.getElementById('nameCancel').addEventListener('click', () => { editingName = false; render(); greet(); });
 document.getElementById('changeName').addEventListener('click', openNameCard);
+document.querySelectorAll('[data-shop]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); goTo(a.getAttribute('href'), LINES.shop); }));
 
 if (!window.__VOICE_LINES_ONLY__) {
 BonnieVoice.load();
@@ -381,7 +392,7 @@ render();
 const firstLine = greet();
 if (!S.hasName) setTimeout(() => document.getElementById('nameIn').focus(), 100);
 // Browsers only allow speech after the first tap, so Bonnie says hello then (unless the tap was on Bonnie or a game).
-document.addEventListener('pointerdown', e => { if (!e.target.closest('#bonnie, a.cab, #soundBtn, #nameCard, #changeName')) say(document.getElementById('say').textContent); }, { once: true });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#bonnie, a.cab, [data-shop], #soundBtn, #nameCard, #changeName')) say(document.getElementById('say').textContent); }, { once: true });
 document.getElementById('bonnie').addEventListener('click', e => {
   const b = e.currentTarget; b.classList.remove('giggle'); void b.offsetWidth; b.classList.add('giggle');
   giggle(); hearts(b);

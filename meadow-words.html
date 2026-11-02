@@ -484,6 +484,8 @@ const hush = () => BonnieVoice.hush();
 const PH = { a: 'ah', b: 'buh', c: 'kuh', d: 'duh', e: 'eh', f: 'fff', g: 'guh', h: 'huh', i: 'ih', j: 'juh', k: 'kuh', l: 'lll', m: 'mmm', n: 'nnn', o: 'o', p: 'puh', q: 'kwuh', r: 'rrr', s: 'sss', t: 'tuh', u: 'uh', v: 'vvv', w: 'wuh', x: 'ks', y: 'yuh', z: 'zzz',
   sh: 'shh', ch: 'chuh', th: 'thh', ng: 'ng', ck: 'kuh', sc: 'sss', ai: 'A', ay: 'A', ee: 'E', ea: 'E', igh: 'I', ie: 'I', oa: 'O' };
 const LONG = { a: 'A', e: 'E', i: 'I', o: 'O', u: 'U' };
+/* The e in a split digraph (a-e, i-e...) has no sound of its own, so Bonnie names it instead. */
+const MAGIC_E = 'magic e', MAGIC_E_TIP = 'Magic e! It makes the vowel say its name!';
 
 /* =========================================================
    CURRICULUM DATA
@@ -801,7 +803,7 @@ function homeScreen() {
   const hb = $('#homeBonnie');
   hb.onclick = () => { const t = tickle(hb); $('#homeSay').textContent = t; say(t, { pitch: 1.4 }); };
   $$('.world-card').forEach(b => b.onclick = () => { sfx.pop(); worldScreen(+b.dataset.w); });
-  $('#goShop').onclick = shopScreen; $('#goParent').onclick = parentGate;
+  $('#goShop').onclick = () => shopScreen({ welcome: true }); $('#goParent').onclick = parentGate;
   setTimeout(() => say(greet), 250);
 }
 
@@ -962,7 +964,7 @@ function playPhonics(item) {
   const tiles = order.map((g, id) => ({ id, g }));
   const slot = Array(n).fill(null), lock = Array(n).fill(false);
   const soundOf = (g, i) => (i === vIdx || i === eIdx) ? LONG[parts[vIdx]] : (PH[g] || g);
-  const segmented = () => parts.map((g, i) => i === eIdx ? null : soundOf(g, i)).filter(Boolean).join('... ');
+  const segmented = () => parts.map((g, i) => i === eIdx ? MAGIC_E : soundOf(g, i)).join('... ');
   const clue = item.clue ? esc(fmt(item.clue)).replace('___', '<span class="gap">&nbsp;?&nbsp;</span>') : 'Build the word!';
 
   const area = $('#area');
@@ -980,7 +982,7 @@ function playPhonics(item) {
   $('#blend').onclick = () => {
     const filled = parts.map((_, i) => slot[i] != null ? soundOf(tiles[slot[i]].g, i) : null);
     if (filled.every(x => x == null)) { bubble('Put some letters in first, then we can blend them!'); return; }
-    const seq = filled.filter((x, i) => x && i !== eIdx).join('... ');
+    const seq = filled.map((x, i) => x && i === eIdx ? MAGIC_E : x).filter(Boolean).join('... ');
     const complete = parts.every((p, i) => slot[i] != null && tiles[slot[i]].g === p);
     say(seq + (complete ? '... ' + item.word : ''), { rate: .7 });
   };
@@ -1010,7 +1012,7 @@ function playPhonics(item) {
       if (slot[i] == null) { animate(b, 'say', 300); bubble('Put a letter here first, then tap me!', false); return; }
       const g = tiles[slot[i]].g; animate(b, 'say', 400);
       if (L.split && (i === vIdx || i === eIdx)) { $$('#row .sb').filter(x => +x.dataset.i === vIdx || +x.dataset.i === eIdx).forEach(x => animate(x, 'say', 400)); }
-      say(soundOf(g, i), { rate: .75 });
+      say(i === eIdx ? MAGIC_E_TIP : soundOf(g, i), { rate: .75 });
     });
     if (L.split) requestAnimationFrame(() => {
       const arc = $('#arc'), sbs = $$('#row .sb'); if (!arc || !sbs[vIdx]) return;
@@ -1275,8 +1277,15 @@ function modal(inner, onAction) {
 /* =========================================================
    BONE SHOP
    ========================================================= */
-let shopTab = 'hats';
-function shopScreen() {
+let shopTab = 'hats', shopFromClub = false;
+const SHOP_LINES = {
+  welcome: 'Welcome to my shop, {N}! Bones from Meadow Maths and Meadow Words all go in the same bone bowl.',
+  theme: "Ooh, it's beautiful! Thank you, {N}!",
+  grownUp: 'Get a grown-up! They need to say yes.',
+  prize: 'Hooray, {N}! Go and tell your grown-up what you unlocked!', // for prizes with no recording
+};
+/* opts.welcome: Bonnie says hello (when arriving, not when the shop redraws after a purchase). */
+function shopScreen(opts = {}) {
   G = null; S = loadShared();
   const tabs = { hats: '🎩 Bonnie\'s Hats', themes: '🎨 Themes', prizes: '🎁 Real Prizes' };
   let body = '';
@@ -1298,19 +1307,20 @@ function shopScreen() {
   show(`
     <div class="card" style="padding:20px">
       <div class="map-head">
-        <button class="icon-btn" id="back">← Home</button>
+        <button class="icon-btn" id="back">${shopFromClub ? '← Clubhouse' : '← Home'}</button>
         <h2>🛍️ Bonnie's Bone Shop</h2>
         <div class="chip bones" style="margin-left:auto">🦴 ${S.bones}</div>
       </div>
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         ${bonnieHTML('', 'shopBonnie')}
-        <p style="font-family:var(--font-read);font-size:1.2rem;flex:1;min-width:200px" id="shopSay">${esc(fmt("Welcome to my shop, {N}! Bones from Meadow Maths and Meadow Words all go in the same bone bowl."))}</p>
+        <p style="font-family:var(--font-read);font-size:1.2rem;flex:1;min-width:200px" id="shopSay">${esc(fmt(SHOP_LINES.welcome))}</p>
       </div>
       <div class="tabs">${Object.entries(tabs).map(([k, v]) => `<button class="tab ${shopTab === k ? 'on' : ''}" data-tab="${k}">${v}</button>`).join('')}</div>
       ${shopTab === 'prizes' ? '<p class="note">Real prizes are set by your grown-up. When you swap, a grown-up says yes!</p>' : ''}
       <div class="shop-grid">${body}</div>
     </div>`);
-  $('#back').onclick = homeScreen;
+  $('#back').onclick = () => { if (shopFromClub) location.href = 'index.html'; else homeScreen(); };
+  if (opts.welcome) setTimeout(() => say(fmt(SHOP_LINES.welcome)), 250);
   const sb = $('#shopBonnie'); sb.onclick = () => { const t = tickle(sb); $('#shopSay').textContent = t; say(t, { pitch: 1.4 }); };
   $$('[data-tab]').forEach(b => b.onclick = () => { shopTab = b.dataset.tab; sfx.pop(); shopScreen(); });
   $$('[data-hat]').forEach(b => b.onclick = () => { mutate(s => s.hat = b.dataset.hat); sfx.pop(); shopScreen(); setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); say('Do I look smart?'); }, 50); });
@@ -1323,7 +1333,8 @@ function shopScreen() {
   $$('[data-buytheme]').forEach(b => b.onclick = () => { const t = THEMES.find(x => x.id === b.dataset.buytheme);
     if (S.bones < t.cost) return;
     mutate(s => { s.bones -= t.cost; s.ownedThemes.push(t.id); s.theme = t.id; s.redemptions.push({ title: 'Theme: ' + t.name, cost: t.cost, when: todayGB() }); });
-    applyTheme(); sfx.fanfare(); confetti(20); shopScreen(); });
+    applyTheme(); sfx.fanfare(); confetti(20); shopScreen();
+    setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); say(fmt(SHOP_LINES.theme)); }, 50); });
   $$('[data-prize]').forEach(b => b.onclick = () => { const p = S.prizes.find(x => x.id === b.dataset.prize); if (!p) return;
     modal(`<div style="font-size:3.5rem">${p.emoji}</div><h2>Get a grown-up!</h2><p>Swap <b>${p.cost} bones</b> for <b>${esc(p.title)}</b>?</p><p class="note">Grown-up: tap yes to agree.</p>
       <div class="btns"><button class="btn berry" data-a="yes">Grown-up: yes!</button><button class="btn ghost" data-a="no">Not now</button></div>`, a => {
@@ -1331,8 +1342,10 @@ function shopScreen() {
       S = loadShared(); if (S.bones < p.cost) return;
       mutate(s => { s.bones -= p.cost; s.redemptions.push({ title: p.title, cost: p.cost, when: todayGB() }); });
       sfx.fanfare(); confetti(30); shopScreen();
-      setTimeout(() => { const m = fmt(`Hooray, {N}! Tell your grown-up you unlocked: ${p.title}!`); $('#shopSay').textContent = m; say(m); }, 50);
-    }); });
+      setTimeout(() => { const m = fmt(`Hooray, {N}! Tell your grown-up you unlocked: ${p.title}!`); $('#shopSay').textContent = m;
+        say(BonnieVoice.hasClips(m) ? m : fmt(SHOP_LINES.prize)); }, 50); // prizes a grown-up added have no recording
+    });
+    say(SHOP_LINES.grownUp); });
 }
 
 /* =========================================================
@@ -1420,7 +1433,7 @@ function allSpokenLines() {
   const hint = (tier, html) => add(text(`<b>${HINT_TIERS[tier]}</b> ${html}`));
   add(...TICKLES, ...GREETS, ...PRAISE, ...OOPS, ...Object.values(FINISH_MSGS), ...Object.values(SENT_PROMPTS), ...Object.values(STORY_TIPS));
   add('Finish the level before to unlock this one!', 'Well done for watching and learning, {N}!', text("I've shown you the answer, {N}! Now you have a go. 🐾"),
-    'Do I look smart?', 'Hello {N}! I am Bonnie. Shall we read together?');
+    'Do I look smart?', 'Hello {N}! I am Bonnie. Shall we read together?', MAGIC_E_TIP, ...Object.values(SHOP_LINES));
   HATS.filter(h => h.cost > 0).forEach(h => add(`Thank you {N}! I love my ${h.name}!`));
   STARTER_PRIZES.forEach(p => add(`Hooray, {N}! Tell your grown-up you unlocked: ${p.title}!`));
   // World 1 — phonics
@@ -1431,7 +1444,7 @@ function allSpokenLines() {
     const soundOf = (g, i) => (i === vIdx || i === eIdx) ? LONG[parts[vIdx]] : (PH[g] || g);
     [...L.pool, ...parts, ...(item.extra || [])].forEach(g => add(PH[g] || g));
     if (L.split) add(LONG[parts[vIdx]]);
-    const seg = parts.map((g, i) => i === eIdx ? null : soundOf(g, i)).filter(Boolean).join('... ');
+    const seg = parts.map((g, i) => i === eIdx ? MAGIC_E : soundOf(g, i)).join('... ');
     add(item.word, `Listen... ${seg}... ${item.word}`, `${seg}... ${item.word}!`);
     hint(0, `Say it slowly with me: <b>${esc(item.word)}</b>. How many sounds can you hear?`); hint(1, esc(L.tip));
     parts.forEach(p => hint(2, `I've sniffed out a letter for you: <b>${esc(p)}</b>. Can you do the rest?`));
@@ -1483,12 +1496,16 @@ function allSpokenLines() {
    BOOT
    ========================================================= */
 if (!window.__VOICE_LINES_ONLY__) {
-$('#homeLink').onclick = () => homeScreen();
-$('#shopBtn').onclick = () => { sfx.pop(); shopScreen(); };
+$('#homeLink').onclick = () => { shopFromClub = false; homeScreen(); };
+$('#shopBtn').onclick = () => { sfx.pop(); shopScreen({ welcome: true }); };
 $('#frog').addEventListener('click', e => { const f = e.currentTarget; f.classList.remove('boing'); void f.offsetWidth; f.classList.add('boing'); sfx.ribbit(); hearts(f, '💚', 2); });
 document.addEventListener('pointerdown', () => ac(), { once: true });
 if (!S.nameSet) location.replace('index.html'); // no name yet: the Clubhouse asks for it
-else { applyTheme(); renderHud(); homeScreen(); BonnieVoice.load(); }
+else {
+  applyTheme(); renderHud(); BonnieVoice.load();
+  // meadow-words.html#shop opens the Bone Shop straight away (the Clubhouse links here)
+  if (location.hash === '#shop') { shopFromClub = true; shopScreen({ welcome: true }); } else homeScreen();
+}
 }
 </script>
 </body>
