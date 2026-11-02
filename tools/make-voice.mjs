@@ -2,15 +2,21 @@
 /*
  * Make Bonnie's recorded voice for Meadow Words with ElevenLabs.
  *
- *   ELEVENLABS_API_KEY=... ELEVENLABS_VOICE_ID=... node tools/make-voice.mjs --names "Harvey"
+ *   npm install                                          (once, adds the ElevenLabs SDK)
+ *   npm run voice -- --list-voices                       (see the voices on your account)
+ *   npm run voice -- --voice <voice-id> --names "Harvey" --limit 20
+ *
+ * `npm run voice` loads the API key from .env.local (made by `npx @elevenlabs/cli onboard init`,
+ * kept off GitHub by .gitignore). The key is only read from the environment; never put it in the games.
  *
  * Options:
+ *   --voice <id>          the ElevenLabs voice to use (or set ELEVENLABS_VOICE_ID)
  *   --names "Harvey,Sam"  child names to record (lines with a name only use clips when it is recorded)
+ *   --list-voices         list the voices on your account and stop
  *   --dry-run             count lines and characters, no API key needed, nothing written
  *   --limit 20            make at most this many new clips (handy for trying a voice cheaply)
  *
- * Env: ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID, optional ELEVENLABS_MODEL (default eleven_multilingual_v2).
- * The key is only read from the environment; never put it in the games or the repo.
+ * Optional env: ELEVENLABS_MODEL (default eleven_v4).
  *
  * It runs the game's own code to list every line Bonnie can say, cuts lines into the same pieces the game
  * uses, and only makes clips that are not already in audio/manifest.json, so re-running after editing the
@@ -33,9 +39,30 @@ const DRY = args.includes('--dry-run');
 const LIMIT = opt('--limit') ? Math.max(0, parseInt(opt('--limit'), 10)) : Infinity;
 const NAMES = (opt('--names') || '').split(',').map(s => s.trim()).filter(Boolean);
 const KEY = process.env.ELEVENLABS_API_KEY;
-const VOICE = process.env.ELEVENLABS_VOICE_ID;
-const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2';
-const VOICE_SETTINGS = { stability: 0.5, similarity_boost: 0.75, style: 0.3, use_speaker_boost: true };
+const VOICE = opt('--voice') || process.env.ELEVENLABS_VOICE_ID;
+const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_v4';
+// Eleven v4 only takes stability and similarity; older models also take style and speaker boost.
+const VOICE_SETTINGS = MODEL.startsWith('eleven_v4')
+  ? { stability: 0.5, similarityBoost: 0.75 }
+  : { stability: 0.5, similarityBoost: 0.75, style: 0.3, useSpeakerBoost: true };
+
+async function elevenLabs() {
+  if (!KEY) { console.error('No ELEVENLABS_API_KEY. Run with `npm run voice -- ...` so .env.local is loaded.'); process.exit(1); }
+  let mod;
+  try { mod = await import('@elevenlabs/elevenlabs-js'); }
+  catch (e) { console.error('The ElevenLabs SDK is not installed yet. Run `npm install` in this folder first.'); process.exit(1); }
+  return new mod.ElevenLabsClient({ maxRetries: 5 }); // the SDK reads ELEVENLABS_API_KEY itself
+}
+
+if (args.includes('--list-voices')) {
+  const client = await elevenLabs();
+  const { voices } = await client.voices.getAll();
+  for (const v of voices) {
+    const l = v.labels || {};
+    console.log(`${v.voiceId}  ${v.name}${[l.gender, l.accent, l.age, l.descriptive || l.description].filter(Boolean).length ? '  (' + [l.gender, l.accent, l.age, l.descriptive || l.description].filter(Boolean).join(', ') + ')' : ''}`);
+  }
+  process.exit(0);
+}
 
 /* ---------- 1. Run the game's script to get its lines and its piece-cutting code ---------- */
 function loadGame() {
@@ -105,7 +132,8 @@ if (DRY) {
   console.log(`(A full set from scratch is about ${all} characters.) Dry run: nothing made.`);
   process.exit(0);
 }
-if (!KEY || !VOICE) { console.error('Set ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID first (or use --dry-run).'); process.exit(1); }
+if (!VOICE) { console.error('Choose a voice with --voice <id> (see --list-voices), or use --dry-run.'); process.exit(1); }
+const client = await elevenLabs();
 
 /* ---------- 3. Make the clips ---------- */
 const tag = VOICE.slice(0, 6).toLowerCase();
@@ -116,20 +144,13 @@ const saveManifest = () => {
   manifest.made = new Date().toISOString();
   fs.writeFileSync(MANIFEST, JSON.stringify(manifest, null, 1) + '\n');
 };
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function tts(text) {
-  for (let attempt = 1; ; attempt++) {
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(VOICE)}?output_format=mp3_44100_64`, {
-      method: 'POST',
-      headers: { 'xi-api-key': KEY, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
-      body: JSON.stringify({ text, model_id: MODEL, voice_settings: VOICE_SETTINGS }),
-    });
-    if (res.ok) return Buffer.from(await res.arrayBuffer());
-    const body = await res.text().catch(() => '');
-    if ((res.status === 429 || res.status >= 500) && attempt < 6) { await sleep(1500 * attempt); continue; }
-    throw new Error(`ElevenLabs said ${res.status}: ${body.slice(0, 300)}`);
-  }
+  const audio = await client.textToSpeech.convert(VOICE, {
+    text, modelId: MODEL, outputFormat: 'mp3_44100_64', voiceSettings: VOICE_SETTINGS,
+    ...(MODEL.startsWith('eleven_multilingual_v2') ? {} : { languageCode: 'en' }),
+  });
+  return Buffer.from(await new Response(audio).arrayBuffer()); // convert() gives a web stream
 }
 
 let made = 0;

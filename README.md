@@ -167,22 +167,34 @@ Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the devi
 
 **Making the clips** (needs [Node.js](https://nodejs.org) 20 or newer):
 
-1. In ElevenLabs, pick a voice (a warm British one suits Bonnie) and copy its **Voice ID**. Create an **API key** under your profile.
-2. In a terminal, in the repository folder, check the size first. This uses no credits:
+1. Connect ElevenLabs once. This signs you in and saves an API key in `.env.local`, which `.gitignore` keeps off GitHub:
 
    ```bash
-   node tools/make-voice.mjs --dry-run --names "Harvey"
+   npx -y @elevenlabs/cli@latest onboard init
    ```
 
-   The full set is about 35,000 characters. Starter plans include 30,000 a month, so it may take two months or a bigger plan. A cheaper model halves the cost: add `ELEVENLABS_MODEL=eleven_flash_v2_5` in front of the command below.
-3. Try a few clips first, listen to them in `audio/clips/`, then make the rest:
+2. Install the ElevenLabs SDK (once): `npm install`
+3. See the voices on your account, and copy the ID of the one you want for Bonnie:
 
    ```bash
-   ELEVENLABS_API_KEY=your-key ELEVENLABS_VOICE_ID=your-voice-id node tools/make-voice.mjs --names "Harvey" --limit 20
+   npm run voice -- --list-voices
    ```
 
-   Run the same command without `--limit 20` to finish. If it stops part way, run it again; it carries on where it left off.
-4. Upload the new `audio` folder with GitHub Desktop (or **Add file → Upload files**).
+4. Check the size first. This uses no credits:
+
+   ```bash
+   npm run voice:check -- --names "Harvey"
+   ```
+
+   The full set is about 35,000 characters. Starter plans include 30,000 a month, so it may take two months or a bigger plan. A cheaper model costs less: put `ELEVENLABS_MODEL=eleven_flash_v2_5` in front of the next command.
+5. Make 20 clips, then listen to them in `audio/clips/`:
+
+   ```bash
+   npm run voice -- --voice VOICE_ID --names "Harvey" --limit 20
+   ```
+
+   Run the same command without `--limit 20` to finish. If it stops part way, run it again and it carries on.
+6. Upload the new `audio` folder with GitHub Desktop (or **Add file → Upload files**).
 
 **How it works:** each line is cut into short pieces (sentences, the "…" pauses in sounding out, and the player's name), and each piece has its own clip. When every piece of a line has a clip, Bonnie uses them; otherwise she says that line with the device voice. So:
 
@@ -191,7 +203,7 @@ Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the devi
 - After editing the words in the game, run the script again. It only makes the new lines and removes clips that are no longer used. Changing the voice ID or model remakes everything.
 - The reading speed setting only changes the device voice.
 - Letter sounds such as "buh" and "sss" are hard for any computer voice. To use your own recording, replace that clip's file in `audio/clips/` (keep the name). `audio/manifest.json` lists the words in each clip under `texts`. The script won't overwrite it unless the voice changes.
-- Never put the API key in the games or commit it. The script only reads it from the command line.
+- Never put the API key in the games or commit it. The script only reads it from `.env.local` (through `npm run voice`) or the environment.
 
 The grown-ups page shows whether the recorded voice is on and whether the name has a clip. When online, Meadow Words saves all the clips on the device in the background (about 1,300 small files, roughly 15 MB), so the voice also works offline.
 

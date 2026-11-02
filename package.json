@@ -1,0 +1,13 @@
+{
+  "name": "harvey-games",
+  "private": true,
+  "description": "Tools for Harvey's Meadow Clubhouse. The games themselves need no build step.",
+  "type": "module",
+  "scripts": {
+    "voice": "node --env-file=.env.local tools/make-voice.mjs",
+    "voice:check": "node tools/make-voice.mjs --dry-run"
+  },
+  "devDependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.75.0"
+  }
+}

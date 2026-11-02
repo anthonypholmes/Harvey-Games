@@ -1,0 +1,9 @@
+# Secret keys (ElevenLabs etc.) — never upload
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# Tools
+node_modules/
