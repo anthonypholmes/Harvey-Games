@@ -205,7 +205,7 @@ Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the devi
 - Letter sounds such as "buh" and "sss" are hard for any computer voice. To use your own recording, replace that clip's file in `audio/clips/` (keep the name). `audio/manifest.json` lists the words in each clip under `texts`. The script won't overwrite it unless the voice changes.
 - Never put the API key in the games or commit it. The script only reads it from `.env.local` (through `npm run voice`) or the environment.
 
-The grown-ups page shows whether the recorded voice is on and whether the name has a clip. When online, Meadow Words saves all the clips on the device in the background (about 1,300 small files, roughly 15 MB), so the voice also works offline.
+The grown-ups page shows whether the recorded voice is on and whether the name has a clip. When online, Meadow Words saves all the clips on the device in the background (about 1,300 small files, about 30 MB), so the voice also works offline.
 
 ## Hosting with GitHub Pages
 
