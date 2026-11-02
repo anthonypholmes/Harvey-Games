@@ -1,3 +1,17 @@
+# Harvey's Meadow Clubhouse
+
+An arcade home page linking Harvey's learning games. Bones earned in any game go into one shared bone bowl.
+
+| File | What it is |
+| --- | --- |
+| `index.html` | **Harvey's Meadow Clubhouse**, the home page. Shows the bone total and links to each game. |
+| `meadow-maths.html` | **Harvey's Meadow Maths** (described below). |
+| `meadow-words.html` | **Harvey's Meadow Words**: Year 2 English, with Phonics Forest, Tricky Word Trail, Sentence Meadow and Bonnie's Story Nook. |
+
+Every game has a 🏠 button that goes back to the Clubhouse. All games share one save (`harvey-splitter-v1` in `localStorage`): bones, the player's name, Bonnie's hats, themes, the real-life prize list and the record of bones spent. Each game keeps its own level progress. Meadow Words stores its stars in `meadowWords_english_v1`.
+
+To add another game, add an entry to the `GAMES` list in the `CONFIG` block at the top of the script in `index.html`.
+
 # Harvey's Meadow Maths
 
 A Year 2 (Key Stage 1) maths game for iPad, built for Harvey with help from Bonnie, the family's brown cockapoo.
@@ -15,7 +29,7 @@ The game is designed around resilience. There are no timers, no lives and no red
 
 ## Playing it
 
-Open `index.html` in Safari on the iPad. To make it feel like an app, tap **Share → Add to Home Screen**.
+Open `index.html` (the Clubhouse) in Safari on the iPad and pick a game. To make it feel like an app, tap **Share → Add to Home Screen**.
 
 The first time it opens, Bonnie asks for the player's name.
 
@@ -135,19 +149,19 @@ This means:
 
 ## Hosting with GitHub Pages
 
-1. Make sure the game file in the repository is called `index.html`.
+1. Make sure the Clubhouse page in the repository is called `index.html`, with `meadow-maths.html` and `meadow-words.html` next to it.
 2. In the repository, go to **Settings → Pages**.
 3. Under **Build and deployment**, choose **Deploy from a branch**, pick `main` and `/ (root)`, then **Save**.
-4. After a minute the game is live at `https://<your-username>.github.io/<repository-name>/`.
+4. After a minute the Clubhouse is live at `https://<your-username>.github.io/<repository-name>/`, or at the custom domain in `CNAME`.
 
 ## Updating the game
 
-The whole game is one file, `index.html`, so updating it means replacing that file.
+Each page is a single file, so updating a game means replacing that file (`meadow-maths.html`, `meadow-words.html` or the Clubhouse's `index.html`).
 
 **On github.com (easiest):**
 
 1. Open the repository and click **Add file → Upload files**.
-2. Drag in the new `index.html`. It replaces the old one.
+2. Drag in the new file. It replaces the old one with the same name.
 3. Add a short note such as "Add Froggy Jumps" and click **Commit changes**.
 
 GitHub Pages updates itself within a minute or two. On the iPad, pull down to refresh.
@@ -155,13 +169,13 @@ GitHub Pages updates itself within a minute or two. On the iPad, pull down to re
 **From a computer with Git:**
 
 ```bash
-git add index.html README.md
+git add index.html meadow-maths.html meadow-words.html README.md
 git commit -m "Describe the change"
 git push
 ```
 
 ## Technical notes
 
-- A single HTML file with plain JavaScript. There is nothing to install or build.
+- Each page is a single HTML file with plain JavaScript. There is nothing to install or build.
 - The only outside requests are the two Google Fonts (Fredoka and Nunito). The game still works without them, using fallback fonts.
 - Bonnie's voice uses the device's built-in speech. The game picks the most natural British English voice available, preferring enhanced or premium ones. On an iPad you can download a better voice in **Settings → Accessibility → Spoken Content → Voices → English → (UK voices)**. If speech isn't available, Bonnie plays a short chime instead.
