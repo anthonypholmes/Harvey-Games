@@ -161,6 +161,40 @@ This means:
 - Clearing Safari's website data, or browsing in a Private tab, starts afresh.
 - Updating the game file keeps progress, as long as the page address stays the same.
 
+## Bonnie's recorded voice (Meadow Words)
+
+Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the device's built-in voice. The clips are made once on a computer and uploaded with the games, so the iPad never needs the ElevenLabs key, and they work offline.
+
+**Making the clips** (needs [Node.js](https://nodejs.org) 20 or newer):
+
+1. In ElevenLabs, pick a voice (a warm British one suits Bonnie) and copy its **Voice ID**. Create an **API key** under your profile.
+2. In a terminal, in the repository folder, check the size first. This uses no credits:
+
+   ```bash
+   node tools/make-voice.mjs --dry-run --names "Harvey"
+   ```
+
+   The full set is about 35,000 characters. Starter plans include 30,000 a month, so it may take two months or a bigger plan. A cheaper model halves the cost: add `ELEVENLABS_MODEL=eleven_flash_v2_5` in front of the command below.
+3. Try a few clips first, listen to them in `audio/clips/`, then make the rest:
+
+   ```bash
+   ELEVENLABS_API_KEY=your-key ELEVENLABS_VOICE_ID=your-voice-id node tools/make-voice.mjs --names "Harvey" --limit 20
+   ```
+
+   Run the same command without `--limit 20` to finish. If it stops part way, run it again; it carries on where it left off.
+4. Upload the new `audio` folder with GitHub Desktop (or **Add file → Upload files**).
+
+**How it works:** each line is cut into short pieces (sentences, the "…" pauses in sounding out, and the player's name), and each piece has its own clip. When every piece of a line has a clip, Bonnie uses them; otherwise she says that line with the device voice. So:
+
+- The player's name needs its own clip: list every name in `--names`. Lines with a name that isn't recorded use the device voice.
+- Prizes a grown-up adds or renames use the device voice until the script is run again.
+- After editing the words in the game, run the script again. It only makes the new lines and removes clips that are no longer used. Changing the voice ID or model remakes everything.
+- The reading speed setting only changes the device voice.
+- Letter sounds such as "buh" and "sss" are hard for any computer voice. To use your own recording, replace that clip's file in `audio/clips/` (keep the name). `audio/manifest.json` lists the words in each clip under `texts`. The script won't overwrite it unless the voice changes.
+- Never put the API key in the games or commit it. The script only reads it from the command line.
+
+The grown-ups page shows whether the recorded voice is on and whether the name has a clip. When online, Meadow Words saves all the clips on the device in the background (about 1,300 small files, roughly 15 MB), so the voice also works offline.
+
 ## Hosting with GitHub Pages
 
 1. Make sure the Clubhouse page in the repository is called `index.html`, with `meadow-maths.html` and `meadow-words.html` next to it.
@@ -170,7 +204,7 @@ This means:
 
 ## Updating the game
 
-When you add a new page or rename a file, also add it to `CORE_ASSETS` in `sw.js` and change `CACHE_VERSION` (for example to `meadow-club-v2`), so the offline copy picks it up. If you change the Google Fonts `<link>` on any page, update `FONT_CSS` in `sw.js` to match. Simply editing an existing game file needs no change to `sw.js`.
+When you add a new page or rename a file, also add it to `CORE_ASSETS` in `sw.js` and change `CACHE_VERSION` (for example to `meadow-club-v3`), so the offline copy picks it up. If you change the Google Fonts `<link>` on any page, update `FONT_CSS` in `sw.js` to match. Simply editing an existing game file needs no change to `sw.js`.
 
 
 Each page is a single file, so updating a game means replacing that file (`meadow-maths.html`, `meadow-words.html` or the Clubhouse's `index.html`).
@@ -195,4 +229,4 @@ git push
 
 - Each page is a single HTML file with plain JavaScript. There is nothing to install or build.
 - The only outside requests are the two Google Fonts (Fredoka and Nunito). The game still works without them, using fallback fonts.
-- Bonnie's voice uses the device's built-in speech. The game picks the most natural British English voice available, preferring enhanced or premium ones. On an iPad you can download a better voice in **Settings → Accessibility → Spoken Content → Voices → English → (UK voices)**. If speech isn't available, Bonnie plays a short chime instead.
+- Bonnie's voice uses the device's built-in speech, or recorded clips in Meadow Words (see above). The game picks the most natural British English voice available, preferring enhanced or premium ones. On an iPad you can download a better voice in **Settings → Accessibility → Spoken Content → Voices → English → (UK voices)**. If speech isn't available, Bonnie plays a short chime instead.

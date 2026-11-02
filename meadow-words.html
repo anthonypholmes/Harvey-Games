@@ -485,6 +485,12 @@ function pickVoice() {
 }
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 function say(text, opts = {}) {
+  hush();
+  const plan = clipPlan(String(text));
+  if (plan) { const token = clipToken; playClips(plan, opts, token); return { clip: true }; }
+  return speakDevice(text, opts);
+}
+function speakDevice(text, opts = {}) {
   if (!('speechSynthesis' in window)) { opts.onend && setTimeout(opts.onend, 300); return null; }
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -495,6 +501,103 @@ function say(text, opts = {}) {
   currentUtter = u; // keep a reference (Chrome can drop it otherwise)
   speechSynthesis.speak(u);
   return u;
+}
+function hush() { stopClips(); if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+
+/* ---------- Recorded voice (optional) ----------
+   tools/make-voice.mjs makes ElevenLabs clips and lists them in audio/manifest.json.
+   Each line is cut into short pieces (sentences, "..." pauses and the child's name).
+   When every piece of a line has a clip, Bonnie plays the clips; otherwise she uses
+   the device voice for the whole line. Keep cleanPiece/voicePieces/pieceKey in step
+   with the generator, which runs this same code. */
+const AUDIO_CACHE = 'meadow-club-audio-v1'; // must match sw.js
+let VOICE_PACK = null, clipToken = 0, clipNodes = [];
+const clipBufs = new Map(); // file -> decoded AudioBuffer (small, most-recent-first cache)
+const voiceMissing = new Set(); // pieces with no clip (for checking a voice pack)
+function cleanPiece(s) {
+  return String(s).replace(/[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}️‍]/gu, '')
+    .replace(/\s+/g, ' ').replace(/^[\s.,;:!?…—–-]+/, '').replace(/(\.\.\.|…|\s)+$/, '')
+    .replace(/([.!?])[.!?]+$/, (m, a) => m[m.length - 1]).trim();
+}
+const hasWords = s => /[\p{L}\p{N}]/u.test(s);
+function pieceKey(s) { // FNV-1a 32-bit hash of the cleaned piece
+  let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16).padStart(8, '0');
+}
+/* Cut text into pieces: [{raw, start, name}]. raw pieces keep their spacing so offsets add up. */
+function voicePieces(text, name = S.childName) {
+  const out = [], low = text.toLowerCase(), nm = String(name || '').toLowerCase();
+  const isL = c => !!c && /\p{L}/u.test(c);
+  const cutText = (chunk, base) => { let pos = 0;
+    chunk.replace(/(\.\.\.|…|[.!?]+["'”’)]*)(\s+|$)/g, '$1$2\u0001').split('\u0001').forEach(raw => {
+      if (raw) out.push({ raw, start: base + pos, name: false }); pos += raw.length; }); };
+  let from = 0;
+  if (nm) for (let i = low.indexOf(nm); i >= 0; i = low.indexOf(nm, i + 1)) {
+    if (i < from || isL(text[i - 1]) || isL(text[i + nm.length])) continue;
+    cutText(text.slice(from, i), from); out.push({ raw: text.slice(i, i + nm.length), start: i, name: true }); from = i + nm.length;
+  }
+  cutText(text.slice(from), from);
+  return out;
+}
+function clipPlan(text) {
+  const a = VOICE_PACK && ac();
+  if (!a || (a.state !== 'running' && !(navigator.userActivation && navigator.userActivation.hasBeenActive))) return null;
+  const plan = [];
+  for (const p of voicePieces(text)) {
+    const clean = cleanPiece(p.raw); if (!hasWords(clean)) continue;
+    const file = p.name ? VOICE_PACK.names && VOICE_PACK.names[clean.toLowerCase()] : VOICE_PACK.clips[pieceKey(clean)];
+    if (!file) { if (!p.name) voiceMissing.add(clean); return null; }
+    const pause = /(\.\.\.|…)\s*$/.test(p.raw) ? .35 : /[.!?]["'”’)]*\s*$/.test(p.raw) ? .14 : .03;
+    plan.push({ ...p, file: 'audio/' + file, pause });
+  }
+  return plan.length ? plan : null;
+}
+function stopClips() { clipToken++; clipNodes.forEach(n => { try { n.stop(); } catch (e) {} }); clipNodes = []; }
+async function clipBuffer(file) {
+  if (clipBufs.has(file)) { const b = clipBufs.get(file); clipBufs.delete(file); clipBufs.set(file, b); return b; }
+  const res = await fetch(file); if (!res.ok) throw new Error('clip ' + res.status);
+  const data = await res.arrayBuffer();
+  const buf = await new Promise((ok, bad) => { const p = AC.decodeAudioData(data, ok, bad); if (p && p.then) p.then(ok, bad); });
+  clipBufs.set(file, buf); if (clipBufs.size > 80) clipBufs.delete(clipBufs.keys().next().value);
+  return buf;
+}
+async function playClips(plan, opts, token) {
+  let bufs;
+  try { bufs = await Promise.all(plan.map(p => clipBuffer(p.file))); }
+  catch (e) { if (token === clipToken) speakDevice(plan.map(p => p.raw).join(''), opts); return; }
+  if (token !== clipToken) return;
+  const a = ac(), slow = (opts.rate || 1) < .8 ? 1.6 : 1, t0 = a.currentTime + .04;
+  let t = t0;
+  plan.forEach((p, k) => {
+    const src = a.createBufferSource(); src.buffer = bufs[k]; src.connect(a.destination); src.start(t); clipNodes.push(src);
+    if (opts.onboundary) { // spread word highlights across the clip, for the story read-along
+      const words = [...p.raw.matchAll(/\S+/g)], len = p.raw.length || 1, d = bufs[k].duration;
+      words.forEach(m => { const at = (t - a.currentTime + d * m.index / len) * 1000;
+        setTimeout(() => { if (token === clipToken) opts.onboundary({ name: 'word', charIndex: p.start + m.index }); }, Math.max(0, at)); });
+    }
+    t += bufs[k].duration + p.pause * slow;
+  });
+  setTimeout(() => { if (token === clipToken) { clipNodes = []; opts.onend && opts.onend(); } }, (t - a.currentTime) * 1000);
+}
+async function loadVoicePack() {
+  try {
+    const res = await fetch('audio/manifest.json', { cache: 'no-cache' }); if (!res.ok) return;
+    const m = await res.json(); if (!m || !m.clips) return;
+    VOICE_PACK = m;
+    setTimeout(saveVoiceForOffline, 4000);
+  } catch (e) {}
+}
+/* Save every clip into the offline cache in the background, a few at a time. */
+async function saveVoiceForOffline() {
+  if (!VOICE_PACK || !('caches' in window) || navigator.onLine === false) return;
+  try {
+    const cache = await caches.open(AUDIO_CACHE);
+    const files = [...new Set([...Object.values(VOICE_PACK.clips), ...Object.values(VOICE_PACK.names || {})])].map(f => 'audio/' + f);
+    let k = 0;
+    const worker = async () => { while (k < files.length) { const f = files[k++];
+      try { if (!(await cache.match(f))) { const r = await fetch(f); if (r.ok) await cache.put(f, r); } } catch (e) {} } };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+  } catch (e) {}
 }
 /* Phoneme approximations for sound buttons. Long vowels use letter names (A = "ay"). */
 const PH = { a: 'ah', b: 'buh', c: 'kuh', d: 'duh', e: 'eh', f: 'fff', g: 'guh', h: 'huh', i: 'ih', j: 'juh', k: 'kuh', l: 'lll', m: 'mmm', n: 'nnn', o: 'o', p: 'puh', q: 'kwuh', r: 'rrr', s: 'sss', t: 'tuh', u: 'uh', v: 'vvv', w: 'wuh', x: 'ks', y: 'yuh', z: 'zzz',
@@ -783,13 +886,14 @@ function draggable(el, { onTap, onDrop, dropSel }) {
    ROUTING / SCREENS
    ========================================================= */
 let G = null; // current game round
-function show(html) { speechSynthesis && speechSynthesis.cancel && speechSynthesis.cancel(); const s = $('#screen'); s.innerHTML = html; window.scrollTo(0, 0); return s; }
+function show(html) { hush(); const s = $('#screen'); s.innerHTML = html; window.scrollTo(0, 0); return s; }
 function worldStars(w) { return P['w' + w].stars.reduce((a, b) => a + b, 0); }
 function levelUnlocked(w, l) { return S.settings.unlockAll || l === 0 || P['w' + w].stars[l - 1] > 0; }
 
+const GREETS = ["Hello {N}! Shall we go on a word adventure?", "Woof! Hi {N}! Pick a world to explore!", "Hi {N}! I've hidden some words in the meadow. Let's find them!"];
 function homeScreen() {
   G = null;
-  const greet = fmt(rand(["Hello {N}! Shall we go on a word adventure?", "Woof! Hi {N}! Pick a world to explore!", "Hi {N}! I've hidden some words in the meadow. Let's find them!"]));
+  const greet = fmt(rand(GREETS));
   show(`
     <div class="card hero">
       ${bonnieHTML('big', 'homeBonnie')}
@@ -850,6 +954,9 @@ function worldScreen(w) {
    GAME ENGINE (shared by all worlds)
    ========================================================= */
 const PRAISE = ["Pawsome, {N}!", "Woof! Brilliant!", "You're a word wizard, {N}!", "Tail-waggingly good!", "Super job, {N}!", "Bone-tastic!", "Wow! Clever clogs!"];
+const HINT_TIERS = ['Sniff Clue', 'Scout Tip!', 'Paw Help', 'Watch Me!'];
+const FINISH_MSGS = { 3: "WOW, {N}! Three stars! You're a superstar!", 2: "Brilliant work, {N}! Two shiny stars!", 1: "You did it, {N}! Every try makes you stronger!" };
+const SENT_PROMPTS = { caps: 'Tap the words that need a capital letter!', punct: 'Which punctuation mark goes at the end?', order: 'Drag the words into the right order, then add the end mark!', all: 'Order the words, tap Aa for capitals, then add the end mark!' };
 const OOPS = ["Nearly! Have another sniff.", "Ooh, so close! Try again.", "That's okay — mistakes help our brains grow!", "Not quite. You can do it, {N}!"];
 
 function startLevel(w, l) {
@@ -900,7 +1007,7 @@ function askBonnie() {
   if (G.tier >= 4) { bubble(fmt("I've shown you the answer, {N}! Now you have a go. 🐾")); return; }
   G.tier++;
   const fn = G.hints[G.tier - 1];
-  const tierName = ['Sniff Clue', 'Scout Tip!', 'Paw Help', 'Watch Me!'][G.tier - 1];
+  const tierName = HINT_TIERS[G.tier - 1];
   const txt = fn ? fn() : '';
   if (G.tier === 4) G.helpedNow = true;
   bubble(`<b>${tierName}</b> ${txt}`);
@@ -943,7 +1050,7 @@ function finishLevel() {
   addBones(bonus, $('#area'), 'level bonus!');
   confetti(); sfx.fanfare();
   const hasNext = l < 4;
-  const msg = fmt(stars === 3 ? "WOW, {N}! Three stars! You're a superstar!" : stars === 2 ? "Brilliant work, {N}! Two shiny stars!" : "You did it, {N}! Every try makes you stronger!");
+  const msg = fmt(FINISH_MSGS[stars]);
   modal(`
     ${bonnieHTML('', 'endBonnie')}
     <h2>Level complete!</h2>
@@ -1133,7 +1240,7 @@ function playSentence(raw) {
   if (bankOrder.join() === tokens.map(t => t.id).join()) bankOrder.reverse();
 
   const correctText = words.map((w, i) => show1(w, needsCap(w, i))).join(' ') + raw.p;
-  const prompts = { caps: 'Tap the words that need a capital letter!', punct: 'Which punctuation mark goes at the end?', order: 'Drag the words into the right order, then add the end mark!', all: 'Order the words, tap Aa for capitals, then add the end mark!' };
+  const prompts = SENT_PROMPTS;
   const area = $('#area');
   area.innerHTML = `
     <p class="mode-tip" style="font-size:1.3rem;color:var(--ink)">🌼 ${prompts[mode]}</p>
@@ -1392,7 +1499,8 @@ function parentScreen() {
         <label><input type="checkbox" id="pSfx" ${S.settings.sfx ? 'checked' : ''}> Sound effects (shared with Meadow Maths)</label>
         <label>Reading speed <input type="range" id="pRate" min="0.6" max="1.2" step="0.05" value="${S.settings.voiceRate}"> <span id="rateVal">${S.settings.voiceRate}</span>
           <button class="btn small ghost" id="testVoice">Test voice</button></label>
-        <p class="note">Voice: ${VOICE ? esc(VOICE.name + ' (' + VOICE.lang + ')') : 'default'} — a British English voice is chosen when your device has one.</p></section>
+        <p class="note">Voice: ${VOICE ? esc(VOICE.name + ' (' + VOICE.lang + ')') : 'default'} — a British English voice is chosen when your device has one.</p>
+        <p class="note">${VOICE_PACK ? `Recorded Bonnie voice: on (${Object.keys(VOICE_PACK.clips).length} clips${VOICE_PACK.names && VOICE_PACK.names[S.childName.toLowerCase()] ? '' : ` — no clip for the name “${esc(S.childName)}” yet, so lines with the name use the device voice`}). Reading speed only changes the device voice.` : 'Recorded Bonnie voice: not set up (see README).'}</p></section>
       <section><h3>Progress</h3>
         <label><input type="checkbox" id="pUnlock" ${S.settings.unlockAll ? 'checked' : ''}> Unlock all English levels</label>
         ${WORLDS.map((w, i) => `<div class="note">${w.icon} ${w.name}: ⭐ ${worldStars(i)} / 15</div>`).join('')}
@@ -1419,14 +1527,87 @@ function parentScreen() {
 }
 
 /* =========================================================
+   EVERY LINE BONNIE CAN SAY — used by tools/make-voice.mjs to
+   make recorded clips. Keep in step with the game text above;
+   anything missed simply falls back to the device voice.
+   ========================================================= */
+function allSpokenLines() {
+  const out = new Set(), add = (...xs) => xs.forEach(x => out.add(fmt(x)));
+  const text = h => String(h).replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&'); // what bubble() reads (textContent)
+  const hint = (tier, html) => add(text(`<b>${HINT_TIERS[tier]}</b> ${html}`));
+  add(...TICKLES, ...GREETS, ...PRAISE, ...OOPS, ...Object.values(FINISH_MSGS), ...Object.values(SENT_PROMPTS), ...Object.values(STORY_TIPS));
+  add('Finish the level before to unlock this one!', 'Well done for watching and learning, {N}!', text("I've shown you the answer, {N}! Now you have a go. 🐾"),
+    'Do I look smart?', 'Hello {N}! I am Bonnie. Shall we read together?');
+  HATS.filter(h => h.cost > 0).forEach(h => add(`Thank you {N}! I love my ${h.name}!`));
+  STARTER_PRIZES.forEach(p => add(`Hooray, {N}! Tell your grown-up you unlocked: ${p.title}!`));
+  // World 1 — phonics
+  add('Put some letters in first, then we can blend them!', 'So close, {N}! Just one letter needs swapping.');
+  hint(2, 'You have all the letters — tap Blend it!');
+  PHONICS.forEach(L => L.items.forEach(item => {
+    const parts = item.parts, n = parts.length, vIdx = L.split ? n - 3 : -1, eIdx = L.split ? n - 1 : -1;
+    const soundOf = (g, i) => (i === vIdx || i === eIdx) ? LONG[parts[vIdx]] : (PH[g] || g);
+    [...L.pool, ...parts, ...(item.extra || [])].forEach(g => add(PH[g] || g));
+    if (L.split) add(LONG[parts[vIdx]]);
+    const seg = parts.map((g, i) => i === eIdx ? null : soundOf(g, i)).filter(Boolean).join('... ');
+    add(item.word, `Listen... ${seg}... ${item.word}`, `${seg}... ${item.word}!`);
+    hint(0, `Say it slowly with me: <b>${esc(item.word)}</b>. How many sounds can you hear?`); hint(1, esc(L.tip));
+    parts.forEach(p => hint(2, `I've sniffed out a letter for you: <b>${esc(p)}</b>. Can you do the rest?`));
+    hint(3, `Watch me build it: <b>${esc(parts.join(' '))}</b> makes <b>${esc(item.word)}</b>!`);
+  }));
+  // World 2 — tricky words
+  TRICKY.forEach(L => L.items.forEach(item => {
+    const sentence = fmt(item.sentence), atStart = sentence.startsWith('___'), full = sentence.replace('___', item.word);
+    const answer = atStart ? cap1(item.word) : item.word, letters = item.word.split('').join(', ');
+    add(`Find the word: ${item.word}. ${full}`, `${item.word}. ${full}`, `${item.word}... ${letters}!`, `${item.word}. ${letters}`);
+    item.wrong.forEach(o => add(text(fmt(`Hmm, "${esc(atStart ? cap1(o) : o)}" isn't quite right. Look carefully at each letter!`))));
+    hint(0, `Listen carefully: <b>${esc(item.word)}</b>. Which signpost looks right?`); hint(1, esc(item.tip));
+    hint(2, "Sniff sniff! I've knocked over one wrong signpost for you.");
+    hint(3, `This is how we spell it: <b>${esc(answer)}</b>. Tap the shiny sign!`);
+  }));
+  // World 3 — sentences
+  add(text('Use all the words first! 🐾'), "Don't forget the punctuation mark at the end!", "Hmm, read it out loud. Does it make sense? Try a different order.",
+    "Is this sentence asking something? Have another look at the end mark.", "This sentence shows surprise or excitement! Which end mark shows that?",
+    "This sentence is telling us something. Which end mark fits?");
+  hint(0, 'Listen to how the sentence sounds. Does your voice go up at the end?');
+  hint(2, 'Your capitals look great! Tap Check.'); hint(2, "I've taken away one punctuation mark that doesn't fit.");
+  SENTENCES.forEach(L => { hint(1, esc(L.tip)); L.items.forEach(raw => {
+    const words = fmt(raw.w).toLowerCase().split(' ');
+    const proper = [...raw.proper.map(x => fmt(x).toLowerCase()), 'i'];
+    const needsCap = (w, pos) => pos === 0 || proper.includes(w);
+    const correctText = words.map((w, i) => needsCap(w, i) ? cap1(w) : w).join(' ') + raw.p;
+    add(correctText);
+    [words, ...raw.alts.map(a => fmt(a).toLowerCase().split(' '))].forEach(a => add(a.join(' ') + raw.p + '!'));
+    words.forEach(w => { add(text(`Check your capital letters! Does "<b>${esc(w)}</b>" need one?`), text(`"<b>${esc(cap1(w))}</b>" doesn't need a capital letter here.`));
+      hint(2, `Look at the word that's glowing: <b>${esc(w)}</b>. Does it need a capital?`); });
+    hint(2, `I've put the first word in for you: <b>${esc(cap1(words[0]))}</b>. What comes next?`);
+    hint(3, `Here's my sentence: <b>${esc(correctText)}</b> Tap Check when you've read it!`);
+  }); });
+  // World 4 — stories
+  add("Not quite! Let's look back at the story.");
+  hint(0, "Let's read the story again together. Listen carefully!");
+  hint(2, "I've highlighted a clue in the story and taken away one wrong answer!");
+  Object.values(STORY_TIPS).forEach(t => hint(1, esc(t)));
+  STORIES.forEach(L => L.items.forEach(item => {
+    const story = fmt(item.story), answer = fmt(item.answer), q = fmt(item.q), spoken = story.replace('___', '...');
+    add(spoken + ' ... ' + q, (item.type === 'rhyme' ? story.replace('___', answer) : answer) + '!');
+    if (item.type === 'rhyme') item.wrong.map(fmt).forEach(o => add(text(`Does "<b>${esc(o)}</b>" rhyme? Say them together and listen!`)));
+    hint(3, `The answer is <b>${esc(answer)}</b>. See the clue in green? Tap the shiny answer!`);
+  }));
+  return [...out];
+}
+
+/* =========================================================
    BOOT
    ========================================================= */
+if (!window.__VOICE_LINES_ONLY__) {
 $('#homeLink').onclick = () => homeScreen();
 $('#shopBtn').onclick = () => { sfx.pop(); shopScreen(); };
 $('#frog').addEventListener('click', e => { const f = e.currentTarget; f.classList.remove('boing'); void f.offsetWidth; f.classList.add('boing'); sfx.ribbit(); hearts(f, '💚', 2); });
 document.addEventListener('pointerdown', () => ac(), { once: true });
 if (!S.nameSet) location.replace('index.html'); // no name yet: the Clubhouse asks for it
-else { applyTheme(); renderHud(); homeScreen(); }
+else { applyTheme(); renderHud(); homeScreen(); loadVoicePack(); }
+}
 </script>
 </body>
 </html>

@@ -3,11 +3,15 @@
  * Pages: network first, so a newly uploaded game shows up straight away
  *   when online; the saved copy is used when offline (or the network is slow).
  * Everything else (icons, fonts): cache first, then network.
+ * Bonnie's recorded voice (audio/): clips are cache first in their own cache, which
+ *   survives updates; audio/manifest.json is network first so new clips are found.
+ *   Meadow Words saves every clip in the background, so the voice works offline too.
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v1';
+const CACHE_VERSION = 'meadow-club-v2';
 const FONT_CACHE = 'meadow-club-fonts-v1';
+const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -37,7 +41,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE_VERSION && k !== FONT_CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => ![CACHE_VERSION, FONT_CACHE, AUDIO_CACHE].includes(k)).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -53,6 +57,11 @@ self.addEventListener('fetch', event => {
     return;
   }
   if (url.origin !== self.location.origin) return;
+
+  if (url.pathname.includes('/audio/')) {
+    event.respondWith(url.pathname.endsWith('/manifest.json') ? networkFirst(req, AUDIO_CACHE, false) : cacheFirst(req, AUDIO_CACHE));
+    return;
+  }
 
   const isPage = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
   event.respondWith(isPage ? networkFirst(req) : cacheFirst(req, CACHE_VERSION));
@@ -75,8 +84,8 @@ async function precacheFonts() {
   }));
 }
 
-async function networkFirst(req) {
-  const cache = await caches.open(CACHE_VERSION);
+async function networkFirst(req, cacheName = CACHE_VERSION, homeFallback = true) {
+  const cache = await caches.open(cacheName);
   try {
     const res = await withTimeout(fetch(req), NETWORK_TIMEOUT_MS);
     if (res && res.ok) cache.put(req, res.clone());
@@ -84,14 +93,14 @@ async function networkFirst(req) {
   } catch (e) {
     const cached = await cache.match(req, { ignoreSearch: true });
     // Unknown page while offline: show the Clubhouse rather than an error.
-    return cached || (await cache.match('./index.html')) || Response.error();
+    return cached || (homeFallback && (await cache.match('./index.html'))) || Response.error();
   }
 }
 
 async function cacheFirst(req, cacheName) {
   const cache = await caches.open(cacheName);
   // Fonts: ignore Vary so a copy saved at install still matches the page's own request.
-  const cached = await cache.match(req, cacheName === CACHE_VERSION ? { ignoreSearch: true } : { ignoreVary: true });
+  const cached = await cache.match(req, cacheName === FONT_CACHE ? { ignoreVary: true } : { ignoreSearch: true });
   if (cached) return cached;
   try {
     const res = await fetch(req);
