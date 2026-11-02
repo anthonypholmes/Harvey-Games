@@ -72,13 +72,43 @@ The **Ask Bonnie** button, or a wrong answer, moves one step up a help ladder:
 
 Harvey always gives the final answer himself.
 
+Asking for help is framed as a superpower. Each Ask pops up a **Scout Tip!** badge, and the first one in a question earns a **+1 Scout bone** when it's solved. Bonnie plays a silly sidekick: her clues come with lines like "Bonnie's tail got in the way!", and on the step-by-step card she sometimes makes a funny wrong guess ("Is it… 100?!") so Harvey can put her right.
+
 The game also adjusts the difficulty quietly. After two answers in a row that needed step-by-step or guided help, the next questions get easier, for example smaller numbers or extra labels. After two answers in a row done solo or with just a clue, it goes back to normal. Nothing on screen shows this.
 
 ## Bones and the Bone Shop
 
-- Harvey earns **1 bone for every question finished** (however it was solved) and **3 bonus bones per level**.
-- A full play-through gives 88 bones in the Park and 60 in each of the other three worlds.
-- The **Bone Shop** button lists real-life prizes. When he has enough bones he taps **Redeem**, and a grown-up holds a button for 3 seconds to say yes.
+- **1 bone** for every question finished, however it was solved.
+- **+1 Scout bone** if he asked Bonnie for help on that question.
+- **Streak:** after 3 right in a row, each question is worth **2 bones** ("Bone Multiplier Active!"). Asking Bonnie doesn't break a streak; a wrong answer quietly starts it again.
+- **3 bonus bones** for finishing a level.
+- So a level gives roughly 12 to 30 bones, usually 20 to 30.
+
+The **Bone Shop** has three tabs:
+
+- **Real prizes:** set by grown-ups, shown in tiers. When he has enough bones he taps **Redeem**, and a grown-up holds a button for 3 seconds to say yes.
+- **Bonnie's hats:** Pirate Eyepatch (50), Party Hat (75), Wizard Hat (150), Crown (300). Bonnie wears the chosen hat everywhere, even on the number line.
+- **Meadow themes:** Daytime Meadow (free), Sunset Trail (100), Spooky Moonlit Night (250), Winter Snow (400).
+
+The starter real-life prizes (you can edit, delete or add your own in the grown-ups panel):
+
+| Tier | Prizes |
+|---|---|
+| Little treats | Pick tonight's dinner side (30), Stay up 10 minutes late (40), Choose the car radio station (50) |
+| Small prizes | 15 minutes extra gaming time (100), Pick the dessert (120), 30 minutes later bedtime (150) |
+| Medium prizes | Corner shop treat (300), Pick Friday movie night (400), Pokémon or LEGO card pack (500) |
+| Big goals | Trip to the bowling alley (1,000), Small LEGO set (1,200), Special weekend outing (1,500) |
+
+If the original five starter prizes were never edited, the game swaps in this list automatically. If you had edited them, your list is kept; the grown-ups panel has a **Use the starter prize list** button to switch over.
+
+Hats and themes are bought once and kept. He can swap between the ones he owns for free. Purchases appear in the grown-ups list of prizes claimed.
+
+## Little extras
+
+- A correct answer shakes the card a little, sends glowing bones and the answer's numbers popping out, and plays a bone rattle.
+- Each level has a short story banner above the question, such as "Help Bonnie dig up her buried bone at 45!".
+- After 5 seconds without a tap, a butterfly or frog wanders across, or Bonnie wiggles her ears.
+- Tapping Bonnie tickles her.
 
 ## For grown-ups
 

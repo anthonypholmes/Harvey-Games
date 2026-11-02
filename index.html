@@ -648,6 +648,103 @@ button.gv-box:active { transform: scale(.96); }
 .mini.gv-array, .mini .gv-array { --cell: 30px; }
 @media (max-width: 560px) { .gvis { --cell: 26px; } .gv-plate, .gv-bowl, .gv-basket { width: 104px; } .gv-plate { height: 104px; } .gv-lily { width: 112px; height: 112px; } }
 
+/* ---------- game juice ---------- */
+.dog { position: relative; }
+.dog .ear-l, .dog .ear-r { transform-box: view-box; }
+.dog .ear-l { transform-origin: 33px 40px; }
+.dog .ear-r { transform-origin: 87px 40px; }
+.dog.earwiggle .ear-l { animation: earl .18s ease-in-out 6 alternate; }
+.dog.earwiggle .ear-r { animation: earr .18s ease-in-out 6 alternate; }
+@keyframes earl { to { transform: rotate(14deg); } }
+@keyframes earr { to { transform: rotate(-14deg); } }
+.dog.tickled svg { animation: tickle .1s ease-in-out 8 alternate; }
+@keyframes tickle { from { transform: rotate(-7deg); } to { transform: rotate(7deg) translateY(-3px); } }
+.tickle-pop { position: absolute; left: 50%; top: -16px; transform: translateX(-50%); white-space: nowrap; background: #fff; border: 2px solid var(--fur); border-radius: 999px; padding: 2px 10px; font-family: var(--f-display); font-weight: 700; font-size: 16px; color: var(--fur-dk); animation: tpop 1.2s ease-out forwards; pointer-events: none; z-index: 3; }
+@keyframes tpop { 0% { opacity: 0; transform: translate(-50%, 8px) scale(.6); } 20% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -16px); } }
+
+.helper { position: relative; }
+.scout-pop { position: absolute; right: 6px; top: -10px; display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; background: linear-gradient(180deg, #FFE7A3, var(--sun)); border: 2px solid var(--wood-dk); color: var(--ink); box-shadow: 0 8px 18px -8px rgba(120, 85, 45, .7); font-family: var(--f-display); z-index: 5; pointer-events: none; animation: scout 1.8s cubic-bezier(.3, 1.5, .5, 1) forwards; }
+.scout-pop svg { width: 22px; height: 22px; color: var(--fur-dk); }
+.scout-pop b { font-size: 20px; }
+.scout-pop small { font-size: 14px; font-weight: 700; }
+@keyframes scout { 0% { opacity: 0; transform: translateY(20px) scale(.5) rotate(-8deg); } 18% { opacity: 1; transform: translateY(0) scale(1.1) rotate(3deg); } 30% { transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-24px); } }
+.ask-bonus { display: inline-flex; align-items: center; gap: 1px; margin-left: 6px; padding: 0 8px 0 4px; border-radius: 999px; background: var(--sun); border: 2px solid var(--wood-dk); font-size: 15px; font-family: var(--f-display); }
+.ask-bonus .bone { width: 18px; height: 18px; }
+
+.stage.shake { animation: shake .38s cubic-bezier(.36, .07, .19, .97); }
+@keyframes shake { 15% { transform: translate(-5px, 1px) rotate(-.5deg); } 35% { transform: translate(5px, -1px) rotate(.5deg); } 55% { transform: translate(-3px, 0); } 75% { transform: translate(2px, 0); } 100% { transform: none; } }
+.numpop { position: fixed; z-index: 31; pointer-events: none; font-family: var(--f-display); font-weight: 700; font-size: 36px; text-shadow: 0 2px 0 #fff, 0 0 10px rgba(255, 255, 255, .9); transform: translate(-50%, -50%); opacity: 0; animation: numpop 1.25s cubic-bezier(.2, .8, .3, 1) forwards; }
+@keyframes numpop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.35); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); } }
+
+.streak { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 8px; border-radius: 999px; background: rgba(255, 248, 236, .95); border: 2px solid var(--wood-dk); color: var(--ink); font-family: var(--f-display); font-size: 16px; animation: pop .35s ease-out; }
+.streak .bone { width: 20px; height: 20px; }
+.streak i { font-style: normal; font-weight: 700; color: #fff; background: #E0672E; border-radius: 999px; padding: 0 8px; }
+.streak.hot { box-shadow: 0 0 0 3px rgba(255, 170, 80, .5), 0 0 16px rgba(255, 140, 60, .7); animation: streakhot 1.2s ease-in-out infinite alternate; }
+@keyframes streakhot { to { box-shadow: 0 0 0 4px rgba(255, 170, 80, .75), 0 0 26px rgba(255, 140, 60, .95); } }
+.toast { position: fixed; left: 50%; top: 16%; z-index: 32; display: grid; justify-items: center; gap: 2px; padding: 14px 30px; border-radius: 24px; background: linear-gradient(180deg, #FFE7A3, var(--sun)); border: 3px solid var(--wood-dk); box-shadow: 0 18px 36px -12px rgba(120, 85, 45, .7); font-family: var(--f-display); color: var(--ink); text-align: center; pointer-events: none; transform: translateX(-50%); animation: toast 2.3s cubic-bezier(.3, 1.5, .5, 1) forwards; }
+.toast b { font-size: 36px; }
+.toast small { font-size: 19px; font-weight: 700; }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, -20px) scale(.6); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); } 25% { transform: translate(-50%, 0) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -14px); } }
+
+.quest { display: flex; align-items: center; gap: 8px; margin: -4px 0 -6px; padding: 6px 12px; border-radius: 12px; background: var(--sun-soft); border: 2px dashed #E8C774; color: var(--wood-dk); font-weight: 700; font-size: 16px; line-height: 1.3; }
+.quest svg { width: 22px; height: 22px; flex: none; color: var(--fur-dk); }
+
+.critter { position: fixed; left: 0; z-index: 15; pointer-events: none; }
+.critter.butterfly { animation: fly 9s linear forwards; }
+.critter.frog { top: auto; bottom: 10px; animation: fly 8s linear forwards; }
+.critter.rtl { animation-name: flyback; }
+.critter.rtl svg { transform: scaleX(-1); }
+@keyframes fly { from { transform: translateX(-70px); } to { transform: translateX(calc(100vw + 70px)); } }
+@keyframes flyback { from { transform: translateX(calc(100vw + 70px)); } to { transform: translateX(-70px); } }
+.critter .bob { animation: bfbob 1.3s ease-in-out infinite alternate; }
+@keyframes bfbob { from { transform: translateY(-16px) rotate(-6deg); } to { transform: translateY(16px) rotate(6deg); } }
+.critter .wing { transform-box: fill-box; animation: flap .16s ease-in-out infinite alternate; }
+.critter .wl { transform-origin: right center; }
+.critter .wr { transform-origin: left center; }
+@keyframes flap { to { transform: scaleX(.25); } }
+.critter .hop { animation: hop .66s ease-out infinite; }
+@keyframes hop { 0%, 100% { transform: translateY(0) scaleY(.9); } 45% { transform: translateY(-40px) scaleY(1.05); } }
+
+/* shop tabs and cosmetics */
+.prizes .tier { font-size: 18px; color: var(--wood-dk); margin: 8px 0 -4px; }
+.prizes .tier:first-child { margin-top: 0; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tab { font: inherit; font-family: var(--f-display); font-weight: 600; font-size: 18px; padding: 8px 18px; border-radius: 999px; border: 2px solid var(--edge); background: #fff; color: var(--ink-soft); cursor: pointer; }
+.tab.on { background: var(--sun); border-color: var(--wood-dk); color: var(--ink); box-shadow: 0 3px 0 var(--wood-dk); }
+.prizes.cos-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.cos { justify-items: center; text-align: center; }
+.cos .prize-foot { justify-content: center; }
+.cos .prize-foot .btn { margin-left: 0; }
+.cos .meter { flex: 1 1 50px; }
+.cos-dog { width: 104px; margin-top: 18px; }
+.swatch { width: 100%; height: 90px; border-radius: 14px; border: 2px solid var(--edge); }
+.swatch.big { width: 220px; height: 130px; }
+.swatch.t-day { background: radial-gradient(circle at 80% 25%, #FFF3B0 0 12%, transparent 13%), linear-gradient(#BFE3FF, #F4FBE9 70%, #A9D88F 71%); }
+.swatch.t-sunset { background: radial-gradient(circle at 70% 70%, #FFD27A 0 14%, transparent 15%), linear-gradient(#F7A07B, #F6C28B 55%, #9A7FB8); }
+.swatch.t-snow { background: radial-gradient(circle at 20% 30%, #fff 0 3%, transparent 4%), radial-gradient(circle at 60% 20%, #fff 0 2%, transparent 3%), radial-gradient(circle at 80% 50%, #fff 0 3%, transparent 4%), linear-gradient(#C9DFF2, #EEF6FC 65%, #fff); }
+.swatch.t-night { background: radial-gradient(circle at 75% 30%, #FFF6D5 0 10%, transparent 11%), radial-gradient(circle at 25% 25%, #fff 0 1.2%, transparent 2%), radial-gradient(circle at 45% 50%, #fff 0 1.2%, transparent 2%), radial-gradient(circle at 15% 65%, #fff 0 1%, transparent 2%), linear-gradient(#1E2340, #3A3F6B); }
+
+/* meadow themes */
+#sky { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+#app { position: relative; z-index: 1; }
+html[data-theme="sunset"] body { background-color: #FFF1E6; background-image: radial-gradient(900px 600px at 85% 105%, rgba(255, 190, 110, .55), transparent 65%), radial-gradient(1000px 650px at 0% 0%, rgba(247, 150, 140, .35), transparent 60%), radial-gradient(800px 600px at 100% 0%, rgba(170, 130, 200, .28), transparent 60%); }
+html[data-theme="night"] body { background-color: #1C2140; background-image: radial-gradient(700px 500px at 85% 0%, rgba(120, 130, 200, .35), transparent 60%), radial-gradient(900px 700px at 0% 100%, rgba(60, 40, 110, .45), transparent 60%); }
+html[data-theme="night"] :is(.hub-hero h1, .world-intro, .levels-title h2) { color: #F3EEDF; }
+html[data-theme="night"] .world-intro b { color: #fff; }
+html[data-theme="night"] .hub-hero h1 .name { color: #FFD66B; }
+html[data-theme="snow"] body { background-color: #EEF5FB; background-image: radial-gradient(900px 600px at 10% 0%, rgba(180, 212, 240, .6), transparent 60%), radial-gradient(800px 600px at 100% 100%, rgba(255, 255, 255, .9), transparent 60%); }
+#sky .moon { position: absolute; right: 8%; top: 9%; width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #FFFBEA, #F2E3A6); box-shadow: 0 0 40px 12px rgba(255, 240, 180, .35); }
+#sky .star { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; animation: twinkle 2.4s ease-in-out infinite alternate; }
+@keyframes twinkle { from { opacity: .2; } to { opacity: 1; } }
+#sky .flake { position: absolute; top: -12px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(120, 160, 200, .7); animation: snow linear infinite; }
+@keyframes snow { to { transform: translate(30px, 105vh); } }
+#sky .sun { position: absolute; right: -60px; bottom: -90px; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 210, 120, .8), rgba(255, 170, 90, .25) 60%, transparent 70%); }
+#sky .cloud { position: absolute; left: -220px; width: 180px; height: 52px; border-radius: 999px; background: rgba(255, 255, 255, .8); animation: drift 80s linear infinite; }
+#sky .cloud::before { content: ""; position: absolute; left: 34px; top: -26px; width: 78px; height: 62px; border-radius: 50%; background: inherit; }
+#sky .c1 { top: 14%; }
+#sky .c2 { top: 34%; width: 140px; animation-delay: -40s; }
+@keyframes drift { to { transform: translateX(calc(100vw + 440px)); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -670,22 +767,40 @@ button.gv-box:active { transform: scale(.96); }
 /* ---------- saved progress (this iPad only) ---------- */
 const STORE = 'harvey-splitter-v1';
 // starter prizes, sized for the 96 bones one play through all 8 levels gives
+// starter prizes in four tiers, sized for roughly 20–30 bones per level
 const STARTER_PRIZES = [
-  [10, 'Choose what’s for dinner', 'You pick the meal tonight.'],
-  [20, '30 extra minutes of tablet before bed', 'Extra tablet time tonight.'],
-  [35, 'Stay up for 30 minutes extra before bedtime', 'Half an hour later to bed.'],
-  [50, 'Special trip out for hot chocolate and cake', 'A treat trip out together.'],
-  [80, 'Choose a toy from Smyth’s Toys', 'Pick a toy at the toy shop.'],
-].map(([cost, title, desc], i) => ({ id: 's' + i, cost, title, desc }));
+  [30, 'Pick tonight’s dinner side', 'Chips, peas, beans… you choose!'],
+  [40, 'Stay up 10 minutes late', 'Ten extra minutes before bed.'],
+  [50, 'Choose the car radio station', 'You’re the DJ on the next drive.'],
+  [100, '15 minutes extra gaming time', 'A bit more game time.'],
+  [120, 'Pick the dessert', 'You choose pudding tonight.'],
+  [150, '30 minutes later bedtime', 'Half an hour later to bed.'],
+  [300, 'Corner shop treat', 'Pick a treat at the corner shop.'],
+  [400, 'Pick Friday movie night', 'You choose the family film.'],
+  [500, 'Pokémon or LEGO card pack', 'A pack of cards of your choice.'],
+  [1000, 'Trip to the bowling alley', 'A family bowling trip.'],
+  [1200, 'Small LEGO set', 'Choose a small LEGO set.'],
+  [1500, 'Special weekend outing', 'A big day out together.'],
+].map(([cost, title, desc], i) => ({ id: 't' + i, cost, title, desc }));
+// the first starter list (before the economy was rebalanced), used to spot an untouched old list
+const OLD_STARTER = ['10Choose what’s for dinner', '2030 extra minutes of tablet before bed', '35Stay up for 30 minutes extra before bedtime', '50Special trip out for hot chocolate and cake', '80Choose a toy from Smyth’s Toys'];
+const PRIZE_TIERS = [[0, 'Little treats'], [100, 'Small prizes'], [300, 'Medium prizes'], [1000, 'Big goals']];
+const tierOf = cost => PRIZE_TIERS.filter(([min]) => cost >= min).pop()[1];
 
-let save = { name: null, done: {}, bones: 0, log: {}, done2: {}, log2: {}, done3: {}, log3: {}, done4: {}, log4: {}, unlockAll: false, sound: true, readAloud: false, rewards: null, redeemed: [] };
+let save = { name: null, done: {}, bones: 0, log: {}, done2: {}, log2: {}, done3: {}, log3: {}, done4: {}, log4: {}, unlockAll: false, sound: true, readAloud: false, rewards: null, redeemed: [], owned: null, hat: null, theme: 'day' };
 try { const raw = localStorage.getItem(STORE); if (raw) save = Object.assign(save, JSON.parse(raw)); } catch (e) {}
 if (save.stars) { // older version used stars: any star means the level was finished
   Object.keys(save.stars).forEach(k => { if (save.stars[k] > 0) save.done[k] = true; });
   delete save.stars;
 }
 if (!Array.isArray(save.rewards)) save.rewards = STARTER_PRIZES.map(r => ({ ...r }));
+// if the grown-ups never changed the old starter prizes, swap in the new tiers; edited lists are left alone
+if (save.rewards.length === OLD_STARTER.length && save.rewards.every((r, i) => r.cost + r.title === OLD_STARTER[i])) {
+  save.rewards = STARTER_PRIZES.map(r => ({ ...r }));
+  try { localStorage.setItem(STORE, JSON.stringify(save)); } catch (e) {}
+}
 if (!Array.isArray(save.redeemed)) save.redeemed = [];
+if (!save.owned) save.owned = { hats: [], themes: ['day'] };
 if (save.w2v !== 2) { save.done2 = {}; save.log2 = {}; save.w2v = 2; } // World 2 was rebuilt for Year 2
 const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(save)); } catch (e) {} };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1388,13 +1503,13 @@ function curls(cx, cy, R, n, r) {
 }
 const ear = (x, dir) => [[0, 42, 10], [dir * 3, 53, 10], [dir * 1, 64, 9.5], [dir * 4, 74, 8.5], [dir * 1, 82, 7]]
   .map(([dx, y, r]) => `<circle cx="${x + dx}" cy="${y}" r="${r}"/>`).join('');
-function bonnieSVG() {
+function bonnieSVG(hat = save.hat) {
   return `<svg viewBox="0 0 120 124" aria-hidden="true">
     <g class="tail"><path d="M86 100 q20 -4 20 -24" fill="none" stroke="var(--fur-dk)" stroke-width="10" stroke-linecap="round"/>${`<g fill="var(--fur-dk)">${curls(106, 74, 5, 5, 5)}</g>`}</g>
     <g fill="var(--fur)"><ellipse cx="60" cy="102" rx="31" ry="19"/>${curls(60, 102, 22, 12, 7)}</g>
     <g fill="var(--fur-lt)" opacity=".55">${curls(60, 104, 10, 6, 4)}</g>
     <g class="head">
-      <g fill="var(--fur-dk)">${ear(33, -1)}${ear(87, 1)}</g>
+      <g fill="var(--fur-dk)"><g class="ear-l">${ear(33, -1)}</g><g class="ear-r">${ear(87, 1)}</g></g>
       <g fill="var(--fur)"><circle cx="60" cy="52" r="25"/>${curls(60, 50, 23, 14, 7.5)}</g>
       <g fill="var(--fur-lt)" opacity=".6">${curls(60, 30, 7, 6, 4.5)}</g>
       <ellipse cx="60" cy="66" rx="16" ry="12.5" fill="var(--fur-lt)"/>
@@ -1402,6 +1517,7 @@ function bonnieSVG() {
       <ellipse class="tongue" cx="60" cy="75" rx="4.6" ry="6.5" fill="#ef7b8f"/>
       <ellipse cx="60" cy="61" rx="5.8" ry="4.2" fill="#24160e"/><ellipse cx="58.2" cy="59.8" rx="1.6" ry="1" fill="#6b5446"/>
       <path d="M60 65.2v4M52.5 68.6q7.5 5.4 15 0" stroke="#24160e" stroke-width="2" fill="none" stroke-linecap="round"/>
+      ${hatSVG(hat)}
     </g>
   </svg>`;
 }
@@ -1536,7 +1652,7 @@ function renderHome() {
       <div class="hub-hero">
         <h1>Hi <span class="name">${nameH()}</span>! Where shall we go?</h1>
         <div class="buddy home-buddy">
-          <button class="dog" id="home-dog" data-mood="idle" aria-label="Pat Bonnie">${bonnieSVG()}</button>
+          <button class="dog" id="home-dog" data-mood="idle" aria-label="Tickle Bonnie">${bonnieSVG()}</button>
           <div class="feedback help"><span>Woof! I'm <b>Bonnie</b>. Stuck? Tap <b>Ask Bonnie</b> and we'll do it together.</span></div>
         </div>
       </div>
@@ -1581,7 +1697,7 @@ $('#home').addEventListener('click', e => {
   if (btn.id === 'hub-back') { sfx.tap(); homeView = 'hub'; renderHome(); window.scrollTo(0, 0); return; }
   if (btn.hasAttribute('data-shop')) { sfx.tap(); return openShop(); }
   if (btn.id === 'gear') { sfx.tap(); return openGate(); }
-  if (btn.id === 'home-dog') { sfx.woof(); setMood('happy'); clearTimeout(window.__pat); window.__pat = setTimeout(() => setMood('idle'), 1400); }
+  if (btn.id === 'home-dog') tickle(btn);
 });
 
 /* ---------- welcome: ask for the player's name once ---------- */
@@ -1651,13 +1767,14 @@ function openSettings() {
       <form class="gs-line" id="gs-name-form" autocomplete="off"><input class="inp" id="gs-name" maxlength="16" value="${nameH()}" aria-label="Player name">
         <button class="btn small" type="submit">Save name</button><span class="gs-ok" id="gs-name-ok"></span></form></section>
     <section class="gs-sec"><h3>Bones</h3>
-      <p>1 bone for every question finished, however it was solved, plus 3 per level. A full play-through gives 88 in The Partitioning Park and 60 in each of the other three worlds. Asking Bonnie never costs anything.</p>
+      <p>1 bone for every question finished, however it was solved. Asking Bonnie for help adds a +1 Scout bone. After 3 right in a row (asking Bonnie doesn't break the run), each question gives 2 bones until a wrong answer. Plus 3 per level. So a level gives about 12 to 30 bones, usually 20 to 30. The starter prizes come in four tiers: little treats (30–50), small prizes (100–150), medium prizes (300–500) and big goals (1,000–1,500). Hats and themes in the Bone Shop also cost bones and appear under Prizes claimed.</p>
       <form class="gs-line" id="gs-bones-form" autocomplete="off"><input class="inp num" id="gs-bones" value="${save.bones}" inputmode="numeric" pattern="[0-9]*" aria-label="Bone balance">
         <button class="btn small" type="submit">Set balance</button><button class="btn plain small" type="button" data-act="bones0">Reset to 0</button><span class="gs-ok" id="gs-bones-ok"></span></form></section>
     <section class="gs-sec"><h3>Real-life prizes</h3>
       <p>These show in the Bone Shop. Changes save as you type. Claiming a prize needs a grown-up to hold a button for 3 seconds.</p>
       <div class="rw-list" id="rw-list">${save.rewards.map(rewardRow).join('')}</div>
-      <div class="gs-line"><button class="btn small" type="button" data-act="add-rw">+ Add a prize</button></div></section>
+      <div class="gs-line"><button class="btn small" type="button" data-act="add-rw">+ Add a prize</button>
+        <span id="starter-slot"><button class="btn plain small" type="button" data-act="starter">Use the starter prize list</button></span></div></section>
     <section class="gs-sec"><h3>Prizes claimed</h3>${claimedHTML()}</section>
     <section class="gs-sec"><h3>How each answer was reached</h3>
       <p>Counts from the last play of each level. Bonnie’s help goes in steps: a clue, then small questions, then glowing buttons. The final answer is always given by ${nameH()}: typed, tapped, or by dragging Bonnie. <b>Made easier</b> counts questions the game quietly simplified after two answers in a row needed step-by-step help or guided taps. Two answers in a row solo or after a clue bring it back to normal.</p>
@@ -1676,31 +1793,6 @@ function openSettings() {
 }
 
 /* ---------- the Bone Shop (child-facing) ---------- */
-function openShop() {
-  const list = save.rewards.slice().sort((a, b) => a.cost - b.cost);
-  const nextUp = list.find(r => r.cost > save.bones);
-  const canAny = list.some(r => r.cost <= save.bones);
-  const line = !list.length ? 'No prizes yet. Ask a grown-up to add some!'
-    : canAny ? 'You can pick a prize!' : `${nextUp.cost - save.bones} more for ${nextUp.title}.`;
-  openModal(`<div class="card sheet" role="dialog" aria-label="Bone Shop">
-    <div class="sheet-head"><h2>Bone Shop</h2>${closeBtn}</div>
-    <div class="shop">
-      <div class="shop-dog">
-        <div class="feedback help"><span class="big">${BONE}${save.bones}</span><span>${esc(line)}</span></div>
-        <div class="dog" data-mood="${canAny ? 'happy' : 'idle'}">${bonnieSVG()}</div>
-      </div>
-      <div class="prizes">${list.map(r => {
-        const ok = save.bones >= r.cost, pct = Math.min(100, Math.round(save.bones / r.cost * 100));
-        return `<div class="card prize${ok ? ' can' : ''}">
-          <h3>${esc(r.title)}</h3>${r.desc ? `<p>${esc(r.desc)}</p>` : ''}
-          <div class="prize-foot"><span class="cost">${BONE}${r.cost}</span>
-            ${ok ? `<button class="btn" type="button" data-redeem="${r.id}">Redeem</button>`
-              : `<span class="meter" aria-hidden="true"><i style="width:${pct}%"></i></span><span class="more">${r.cost - save.bones} more</span>`}
-          </div></div>`;
-      }).join('')}</div>
-    </div></div>`);
-  say(`You have ${save.bones} bones! ${line}`);
-}
 
 function openConfirm(id) {
   const r = save.rewards.find(x => x.id === id);
@@ -1761,6 +1853,10 @@ modal.addEventListener('click', e => {
   const act = b.dataset.act;
   if (act === 'close') { sfx.tap(); return closeModal(); }
   if (act === 'shop') { sfx.tap(); return openShop(); }
+  if (b.dataset.tab) { sfx.tap(); return openShop(b.dataset.tab); }
+  if (b.dataset.buy) { sfx.tap(); const [t, id] = b.dataset.buy.split(':'); return openBuy(t, id); }
+  if (b.dataset.use !== undefined) { const [t, id] = b.dataset.use.split(':'); return useCos(t, id); }
+  if (act === 'buy-yes') return buyCos();
   if (b.dataset.redeem) { sfx.tap(); return openConfirm(b.dataset.redeem); }
   if (b.dataset.tog) {
     const k = b.dataset.tog; save[k] = !save[k]; persist();
@@ -1770,6 +1866,12 @@ modal.addEventListener('click', e => {
     return;
   }
   if (act === 'bones0') { save.bones = 0; persist(); $('#gs-bones').value = 0; $('#gs-bones-ok').textContent = 'Saved'; return; }
+  if (act === 'starter') {
+    $('#starter-slot').innerHTML = `<span class="confirm">Replace all prizes with the 12 starter prizes?<button class="btn small" type="button" data-act="starter-yes">Yes, replace</button><button class="btn plain small" type="button" data-act="starter-no">Keep mine</button></span>`;
+    return;
+  }
+  if (act === 'starter-yes') { save.rewards = STARTER_PRIZES.map(r => ({ ...r })); persist(); return openSettings(); }
+  if (act === 'starter-no') { $('#starter-slot').innerHTML = `<button class="btn plain small" type="button" data-act="starter">Use the starter prize list</button>`; return; }
   if (act === 'add-rw') {
     const r = { id: 'r' + Date.now().toString(36), title: 'New prize', desc: '', cost: 10 };
     save.rewards.push(r); persist();
@@ -1839,7 +1941,7 @@ const LEVELS_OF = w => ({ 1: LEVELS, 2: NL_LEVELS, 3: AO_LEVELS, 4: SP_LEVELS })
 const WL = () => LEVELS_OF(S ? S.world : 1);
 function startLevel(i, world = 1) {
   homeView = world;
-  S = { world, level: i, qs: [], used: new Set(), total: LEVELS_OF(world)[i].seq.length, idx: 0, results: [], tiers: [], eased: 0 };
+  S = { world, level: i, qs: [], used: new Set(), total: LEVELS_OF(world)[i].seq.length, idx: 0, results: [], tiers: [], eased: 0, earned: 0 };
   $('#home').hidden = true; $('#game').hidden = false;
   window.scrollTo(0, 0);
   showQ();
@@ -1856,7 +1958,7 @@ function showQ() {
   const q = S.qs[S.idx] = questionFor(S.idx);
   if (q.eased) S.eased++;
   Object.assign(S, { q, values: Array(q.boxes || 1).fill(''), active: 0, locked: false, busy: false,
-    tier: 0, steps: null, step: 0, solved: new Set(), tried: new Set(), cluePoint: null });
+    tier: 0, steps: null, step: 0, solved: new Set(), tried: new Set(), cluePoint: null, asked: false });
   if (q.inter === 'break') { q.counts = countsOf(q.n); q.broke = 0; }
   S.pos = q.line ? (q.line.pawn === 'sit' ? q.line.sitAt : q.line.start) : null; S.zone = null;
   renderGame();
@@ -1957,22 +2059,23 @@ function raise(source, lead) {
     S.tier = 1;
     const c = clueFor(q);
     S.cluePoint = c.point;
-    feedback('help', `<span><span class="big">${lead || 'Here’s a clue!'}</span>${c.say}</span>`);
+    feedback('help', `<span><span class="big">${lead || pick(SCOUT_LEADS)}</span>${c.say}</span>`);
     say(c.say);
     renderControls();
   } else if (S.tier === 1) {
     S.tier = 2;
     S.steps = stepsFor(q); S.step = 0;
     if (!S.steps.length) { updateAsk(); return finishSteps(); }
-    feedback('help', `<span><span class="big">${lead || 'Let’s do it together!'}</span>One little step at a time.</span>`);
+    feedback('help', `<span><span class="big">${lead || pick(TEAM_LEADS)}</span>One little step at a time.</span>`);
     advanceSteps();
   } else {
     S.tier = 3; S.steps = null;
     renderControls();
-    feedback('help', `<span><span class="big">${lead || 'Follow the glow!'}</span>${glowMsg()}</span>`);
+    feedback('help', `<span><span class="big">${lead || pick(['Follow the glow!', 'Bonnie guessed a million! Oops!', 'Bonnie’s paws are pointing!'])}</span>${glowMsg()}</span>`);
     say(glowMsg());
   }
-  if (source === 'ask') sfx.woof(); else sfx.soft();
+  if (source === 'ask') { sfx.woof(); scoutTip(!S.asked); S.asked = true; }
+  else { sfx.soft(); if (streak) { streak = 0; paintStreak(); } }
   updateAsk();
 }
 
@@ -1982,7 +2085,12 @@ function advanceSteps() {
   if (st.action && st.action()) { S.step++; return advanceSteps(); }
   renderControls();
   if (S.step > 0) feedback('help', `<span><span class="big">${pick(['Yes!', 'That’s it!', 'Good!'])}</span>Next little step.</span>`);
-  say(st.say);
+  // sometimes Bonnie makes a silly guess, so he gets to put her right
+  if (!st.action && !st.words && st.choices && /^-?\d+$/.test(String(st.answer)) && Math.random() < .35) {
+    const n = +st.answer, silly = pick([n * 10, 100, 1000, n + 50, 99].filter(x => x !== n && !st.choices.map(String).includes(String(x))));
+    feedback('help', `<span><span class="big">Bonnie guesses… ${silly}?!</span>Silly Bonnie! You show her.</span>`);
+    say(`Is it ${silly}?! Oops, silly me. ${st.say}`);
+  } else say(st.say);
 }
 
 function finishSteps() {
@@ -2220,11 +2328,13 @@ function renderGame() {
       <button class="icon-btn" id="back" aria-label="Back to levels">${ICON.back}</button>
       <div class="where"><small>${WORLDS[S.world].stop} ${S.level + 1} · Question ${Math.min(S.idx + 1, S.total)} of ${S.total}</small><b>${lv.name}</b></div>
       <div class="dots" aria-hidden="true">${dots}</div>
+      <div class="streak" id="streak" hidden></div>
       ${shopButton('bones', false)}
       <button class="icon-btn${save.sound ? '' : ' off'}" id="snd" aria-label="Sound ${save.sound ? 'on' : 'off'}">${ICON.sound}</button>
     </div>
     <div class="play">
       <div class="card stage">
+        ${questFor(q) ? `<div class="quest">${PAW}<span>${esc(questFor(q))}</span></div>` : ''}
         <div class="prompt-row">
           <div class="prompt">${q.prompt}</div>
           <button class="icon-btn" id="say" aria-label="Read the question out loud">${ICON.speak}</button>
@@ -2238,14 +2348,14 @@ function renderGame() {
       </div>
       <div class="side">
         <div class="helper">
-          <div class="buddy"><div class="dog" id="dog" data-mood="idle">${bonnieSVG()}</div>
+          <div class="buddy"><button class="dog" id="dog" type="button" data-mood="idle" aria-label="Tickle Bonnie">${bonnieSVG()}</button>
             <div class="feedback" id="fb" role="status" aria-live="polite">${hello}</div></div>
           <button class="btn ask" id="ask"></button>
         </div>
         <div id="controls"></div>
       </div>
     </div>`;
-  renderControls(); paintBoxes(); updateAsk();
+  renderControls(); paintBoxes(); updateAsk(); paintStreak();
 }
 
 function renderControls() {
@@ -2277,7 +2387,7 @@ function renderControls() {
 function updateAsk() {
   const b = $('#ask'); if (!b) return;
   const label = ['Ask Bonnie for help', 'Show me step by step', 'Show me where to tap', 'Ask Bonnie again'][S.tier];
-  b.innerHTML = `${PAW} ${label}`;
+  b.innerHTML = `${PAW} ${label}${!S.asked && !S.locked ? `<span class="ask-bonus">+1${BONE}</span>` : ''}`;
   b.disabled = S.locked;
 }
 
@@ -2373,12 +2483,18 @@ function win() {
   paintLine();
   S.results[S.idx] = 'good'; S.tiers.push(S.tier); noteOutcome(S.tier);
   S.values.forEach((_, i) => S.solved.add(i)); paintBoxes();
-  save.bones++; persist(); bumpBones();
+  streak++;
+  const mult = streak >= MULT_AT ? 2 : 1, scout = S.asked ? 1 : 0, got = mult + scout;
+  save.bones += got; S.earned += got; persist(); bumpBones();
   updateAsk();
   const msg = S.tier === 0 ? pick(PRAISE()) : pick(TEAM());
-  feedback('good', `<span><span class="big">${esc(msg)}</span>${BONE} +1 bone</span>`);
+  feedback('good', `<span><span class="big">${esc(msg)}</span>${BONE} +${mult} bone${mult > 1 ? 's (streak ×2)' : ''}${scout ? ' · +1 Scout bone' : ''}</span>`);
   sfx.good(); setTimeout(sfx.rattle, 140); say(msg);
-  boneBurst($('#nl-pawn') || $('#game .eq') || $('#game .stage'));
+  const origin = $('#nl-pawn') || $('#game .eq') || $('#game .stage');
+  boneBurst(origin); shake($('#game .stage'));
+  numPop(origin, [...(S.q.kind === 'boxes' ? S.values.filter(Boolean) : S.q.kind === 'line' ? [S.q.fmt(S.q.target)] : []), `+${got}`]);
+  paintStreak();
+  if (streak === MULT_AT) { toast(`${MULT_AT} in a row!`, 'Bone Multiplier Active!'); tone([660, 880, 1100, 1320], .07, 'triangle', .12); }
   setTimeout(next, 1800);
 }
 
@@ -2410,7 +2526,7 @@ function next() {
 
 const BONUS = 3;
 function finish() {
-  const i = S.level, earned = S.total + BONUS;
+  const i = S.level, earned = S.earned + BONUS;
   save.bones += BONUS; doneOf(S.world)[i] = true;
   const tiers = [0, 0, 0, 0]; S.tiers.forEach(t => tiers[t]++);
   logOf(S.world)[i] = { tiers, eased: S.eased, when: today() };
@@ -2451,6 +2567,7 @@ $('#overlay').addEventListener('click', e => {
 $('#game').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || !S) return;
   if (b.id === 'back') { sfx.tap(); return goHome(); }
+  if (b.id === 'dog') return tickle(b);
   if (b.dataset.g || b.dataset.gBowl !== undefined) return gAction(b);
   if (b.hasAttribute('data-shop')) { sfx.tap(); return openShop(); }
   if (b.id === 'snd') { save.sound = !save.sound; persist(); b.classList.toggle('off', !save.sound); b.setAttribute('aria-label', `Sound ${save.sound ? 'on' : 'off'}`); sfx.tap(); return; }
@@ -2499,6 +2616,202 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'Enter') press('check');
 });
 
+/* ---------- game juice: Scout Tips, streaks, pops, critters, quests, cosmetics ---------- */
+const SCOUT_LEADS = ['Bonnie sniffed out a clue!', 'Bonnie’s tail got in the way!', 'Woof! Bonnie’s nose found something!', 'Bonnie dug up a clue!'];
+const TEAM_LEADS = ['Team Bonnie, go!', 'Bonnie needs your help!', 'Let’s do it together!'];
+const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// streak: questions in a row without a wrong answer (asking Bonnie never breaks it).
+// From MULT_AT in a row, each question is worth 2 bones. A wrong answer quietly restarts it.
+let streak = 0;
+const MULT_AT = 3;
+function paintStreak() {
+  const el = $('#streak'); if (!el) return;
+  el.hidden = streak < 2;
+  el.innerHTML = `${BONE}<b>${streak} in a row!</b>${streak >= MULT_AT ? '<i>×2</i>' : ''}`;
+  el.classList.toggle('hot', streak >= MULT_AT);
+}
+function toast(big, small) {
+  const t = document.createElement('div'); t.className = 'toast';
+  t.innerHTML = `<b>${big}</b>${small ? `<small>${small}</small>` : ''}`;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2300);
+}
+// asking Bonnie is a superpower: a "Scout Tip!" badge pops up, and the first one earns a bonus bone
+function scoutTip(first) {
+  const h = $('#game .helper'); if (!h) return;
+  const p = document.createElement('div'); p.className = 'scout-pop';
+  p.innerHTML = `${PAW}<b>Scout Tip!</b>${first ? '<small>+1 bonus bone</small>' : ''}`;
+  h.appendChild(p); setTimeout(() => p.remove(), 1800);
+}
+function numPop(el, items) {
+  if (!el || reduced()) return;
+  const r = el.getBoundingClientRect(), cols = ['var(--tens)', 'var(--ones)', 'var(--good)', '#C2185B', 'var(--wood-dk)'];
+  items.forEach((txt, i) => {
+    const s = document.createElement('span'); s.className = 'numpop'; s.textContent = txt;
+    s.style.left = (r.left + r.width / 2 + (Math.random() - .5) * r.width * .6) + 'px';
+    s.style.top = (r.top + r.height / 2) + 'px'; s.style.color = cols[i % cols.length];
+    s.style.setProperty('--dx', rand(-70, 70) + 'px'); s.style.setProperty('--dy', -rand(90, 160) + 'px');
+    s.style.animationDelay = (i * .08) + 's';
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1500);
+  });
+}
+function shake(el) { if (!el || reduced()) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+
+// tapping Bonnie (outside the help button) tickles her
+function tickle(dog) {
+  dog.classList.remove('tickled'); void dog.offsetWidth; dog.classList.add('tickled');
+  dog.dataset.mood = 'happy'; sfx.woof();
+  dog.querySelector('.tickle-pop')?.remove();
+  const p = document.createElement('span'); p.className = 'tickle-pop';
+  p.textContent = pick(['Hee hee!', 'That tickles!', 'Woof woof!', 'Again! Again!', 'Wiggle wiggle!']);
+  dog.appendChild(p);
+  setTimeout(() => { p.remove(); dog.classList.remove('tickled'); }, 1200);
+}
+
+// idle moments: after 5 seconds with no taps, a butterfly or frog wanders past, or Bonnie wiggles her ears
+let lastInput = Date.now(), nextCritter = 0;
+['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, () => { lastInput = Date.now(); }, true));
+const BUTTERFLY = '<svg viewBox="0 0 44 34" width="46" height="36" aria-hidden="true"><g class="wing wl"><path d="M22 17C10 0 0 6 4 16 0 26 12 30 22 19Z" fill="#F6A5C0" stroke="#B85C82" stroke-width="1.5"/><circle cx="11" cy="12" r="2.6" fill="#FFE07A"/></g><g class="wing wr"><path d="M22 17C34 0 44 6 40 16 44 26 32 30 22 19Z" fill="#F6A5C0" stroke="#B85C82" stroke-width="1.5"/><circle cx="33" cy="12" r="2.6" fill="#FFE07A"/></g><rect x="20.5" y="9" width="3" height="18" rx="1.5" fill="#3E2F27"/></svg>';
+const FROG = '<svg viewBox="0 0 60 44" width="58" height="42" aria-hidden="true"><ellipse cx="30" cy="30" rx="24" ry="13" fill="#6BBF59" stroke="#3E7E3E" stroke-width="2"/><circle cx="19" cy="15" r="8" fill="#6BBF59" stroke="#3E7E3E" stroke-width="2"/><circle cx="41" cy="15" r="8" fill="#6BBF59" stroke="#3E7E3E" stroke-width="2"/><circle cx="19" cy="14" r="3.5" fill="#24160e"/><circle cx="41" cy="14" r="3.5" fill="#24160e"/><path d="M22 32q8 6 16 0" stroke="#2f5f2f" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+function critter(kind) {
+  const c = document.createElement('div');
+  c.className = `critter ${kind}${Math.random() < .5 ? ' rtl' : ''}`;
+  if (kind === 'butterfly') { c.style.top = rand(12, 60) + 'vh'; c.innerHTML = `<div class="bob">${BUTTERFLY}</div>`; }
+  else c.innerHTML = `<div class="hop">${FROG}</div>`;
+  document.body.appendChild(c); setTimeout(() => c.remove(), 9500);
+}
+function wiggleEars() { $$('.dog').forEach(d => { d.classList.add('earwiggle'); setTimeout(() => d.classList.remove('earwiggle'), 1400); }); }
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastInput < 5000 || now < nextCritter || document.hidden || !modal.hidden) return;
+  nextCritter = now + rand(8000, 12000);
+  if (reduced()) return wiggleEars();
+  pick([() => critter('butterfly'), () => critter('butterfly'), () => critter('frog'), wiggleEars])();
+}, 1000);
+
+// a little story for every level, shown above the question
+const QUESTS = {
+  1: ['Bonnie’s bone bag burst! Sort the teen numbers into tens and ones.', 'Picnic time! Split each number for Bonnie’s basket.', 'A cheeky squirrel pinched a part! Find what’s missing.', 'Bonnie found a giant bone pile. Count it in hundreds!', 'Zero is hiding in the long grass. Spot the empty places!', 'Bonnie wants to swap a ten for ten treats. Split it another way!', 'The meadow fair has thousands of visitors! Split the big numbers.', 'Bonnie is adding up her treats. Tens first, then ones!'],
+  2: ['Stones are missing from the trail. Fill in the gaps!', 'Bonnie hops across the river in 2s, 5s and 10s.', 'Bonnie buried bones all along the riverbank!', 'Which two big stepping stones is each number between?', 'Freddie the frog is racing Bonnie. Jump along the line!'],
+  3: ['Bonnie is setting the picnic plates. Count her bones!', 'Plant the orchard! Grow the right rows of apple trees.', 'The wind is spinning the trees! Do the apples change?', 'Harvest day! Pick apples in 2s, 5s and 10s.', '{N} and Bonnie have orchard puzzles to solve.'],
+  4: ['The pond ducks are hungry. Share the treats fairly!', 'Pack the picnic baskets for the pond party.', 'Two lily pads, two frogs. Make it a fair half!', 'Four frogs want equal shares of everything!', 'Bonnie’s magic pond: times facts and sharing facts are twins.'],
+};
+function questFor(q) {
+  if (q.line && (q.ask === 'place' || q.ask === 'est')) return `Help Bonnie dig up her buried bone at ${q.fmt(q.target)}!`;
+  return ((QUESTS[S.world] || [])[S.level] || '').replace('{N}', NAME());
+}
+
+/* --- cosmetics: hats for Bonnie and meadow themes, bought with bones --- */
+const HATS = [
+  { id: 'eyepatch', name: 'Pirate Eyepatch', cost: 50 }, { id: 'party', name: 'Party Hat', cost: 75 },
+  { id: 'wizard', name: 'Wizard Hat', cost: 150 }, { id: 'crown', name: 'Crown', cost: 300 },
+];
+const THEMES = [
+  { id: 'day', name: 'Daytime Meadow', cost: 0 }, { id: 'sunset', name: 'Sunset Trail', cost: 100 },
+  { id: 'night', name: 'Spooky Moonlit Night', cost: 250 }, { id: 'snow', name: 'Winter Snow', cost: 400 },
+];
+function hatSVG(h) {
+  switch (h) {
+    case 'party': return '<g class="hat"><path d="M44 27 L63 -6 L78 25 Z" fill="#F07CA8" stroke="#3E2F27" stroke-width="2" stroke-linejoin="round"/><path d="M50 16 L72 19 M56 5 L68 7" stroke="#FFE07A" stroke-width="4" stroke-linecap="round"/><circle cx="63" cy="-7" r="5" fill="#FFE07A" stroke="#3E2F27" stroke-width="2"/></g>';
+    case 'crown': return '<g class="hat"><path d="M40 29 L42 9 L51 20 L60 4 L69 20 L78 9 L80 29 Z" fill="#F4C25B" stroke="#8A5A14" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="22" r="3.2" fill="#E2574C"/><circle cx="49" cy="25" r="2.3" fill="#3B7FC4"/><circle cx="71" cy="25" r="2.3" fill="#3F8B5C"/></g>';
+    case 'wizard': return '<g class="hat"><path d="M40 30 Q60 35 80 30 L58 -16 Z" fill="#6C4BB4" stroke="#3A2470" stroke-width="2" stroke-linejoin="round"/><ellipse cx="60" cy="30" rx="27" ry="6" fill="#6C4BB4" stroke="#3A2470" stroke-width="2"/><path d="M60 4l1.6 3.4 3.6.4-2.7 2.4.8 3.6-3.3-1.8-3.3 1.8.8-3.6-2.7-2.4 3.6-.4z" fill="#FFE07A"/><circle cx="52" cy="20" r="1.6" fill="#FFE07A"/><circle cx="67" cy="17" r="1.3" fill="#FFE07A"/></g>';
+    case 'eyepatch': return '<g class="hat"><path d="M37 38 Q60 30 85 44" stroke="#222" stroke-width="2.4" fill="none"/><ellipse cx="71.5" cy="52" rx="7.5" ry="6.5" fill="#222"/></g>';
+  }
+  return '';
+}
+function applyTheme() {
+  const t = save.theme || 'day';
+  document.documentElement.dataset.theme = t;
+  let sky = $('#sky');
+  if (!sky) { sky = document.createElement('div'); sky.id = 'sky'; sky.setAttribute('aria-hidden', 'true'); document.body.prepend(sky); }
+  sky.innerHTML = t === 'night'
+    ? '<i class="moon"></i>' + Array.from({ length: 40 }, () => `<i class="star" style="left:${rand(0, 100)}%;top:${rand(0, 75)}%;animation-delay:${(Math.random() * 3).toFixed(1)}s"></i>`).join('')
+    : t === 'snow'
+      ? Array.from({ length: 40 }, () => { const s = rand(4, 9); return `<i class="flake" style="left:${rand(0, 100)}%;width:${s}px;height:${s}px;animation-duration:${rand(8, 16)}s;animation-delay:-${rand(0, 16)}s"></i>`; }).join('')
+      : t === 'sunset' ? '<i class="sun"></i>' : '<i class="cloud c1"></i><i class="cloud c2"></i>';
+}
+const refreshDogs = () => $$('#game .dog, #home .dog').forEach(d => { d.innerHTML = bonnieSVG(); });
+
+/* --- the Bone Shop, now with tabs: real prizes, Bonnie's hats, meadow themes --- */
+let shopTab = 'prizes', pendingCos = null;
+function cosCard(tab, it) {
+  const hat = tab === 'hats', ownList = hat ? save.owned.hats : save.owned.themes;
+  const owned = it.cost === 0 || ownList.includes(it.id);
+  const using = hat ? (save.hat || null) === it.id : (save.theme || 'day') === it.id;
+  const ok = save.bones >= it.cost, pct = it.cost ? Math.min(100, Math.round(save.bones / it.cost * 100)) : 100;
+  const pic = hat ? `<div class="dog cos-dog" data-mood="idle">${bonnieSVG(it.id)}</div>` : `<div class="swatch t-${it.id}"></div>`;
+  const foot = using ? `<span class="done-chip">${ICON.tick} ${hat ? 'Wearing' : 'In use'}</span>`
+    : owned ? `<button class="btn" type="button" data-use="${tab}:${it.id || ''}">${hat ? (it.id ? 'Wear it' : 'Take hat off') : 'Use it'}</button>`
+    : ok ? `<span class="cost">${BONE}${it.cost}</span><button class="btn" type="button" data-buy="${tab}:${it.id}">Buy</button>`
+    : `<span class="cost">${BONE}${it.cost}</span><span class="meter" aria-hidden="true"><i style="width:${pct}%"></i></span><span class="more">${it.cost - save.bones} more</span>`;
+  return `<div class="card prize cos${ok && !owned ? ' can' : ''}">${pic}<h3>${it.name}</h3><div class="prize-foot">${foot}</div></div>`;
+}
+function openShop(tab = shopTab) {
+  shopTab = tab;
+  const tabs = [['prizes', 'Real prizes'], ['hats', 'Bonnie’s hats'], ['themes', 'Meadow themes']]
+    .map(([id, label]) => `<button class="tab${id === tab ? ' on' : ''}" type="button" data-tab="${id}" aria-pressed="${id === tab}">${label}</button>`).join('');
+  let line, body, happy = false;
+  if (tab === 'prizes') {
+    const list = save.rewards.slice().sort((a, b) => a.cost - b.cost);
+    const nextUp = list.find(r => r.cost > save.bones);
+    happy = list.some(r => r.cost <= save.bones);
+    line = !list.length ? 'No prizes yet. Ask a grown-up to add some!' : happy ? 'You can pick a prize!' : `${nextUp.cost - save.bones} more for ${nextUp.title}.`;
+    body = `<div class="prizes">${list.map((r, i) => {
+      const ok = save.bones >= r.cost, pct = Math.min(100, Math.round(save.bones / r.cost * 100));
+      const head = i === 0 || tierOf(list[i - 1].cost) !== tierOf(r.cost) ? `<h3 class="tier">${tierOf(r.cost)}</h3>` : '';
+      return `${head}<div class="card prize${ok ? ' can' : ''}">
+        <h3>${esc(r.title)}</h3>${r.desc ? `<p>${esc(r.desc)}</p>` : ''}
+        <div class="prize-foot"><span class="cost">${BONE}${r.cost}</span>
+          ${ok ? `<button class="btn" type="button" data-redeem="${r.id}">Redeem</button>`
+            : `<span class="meter" aria-hidden="true"><i style="width:${pct}%"></i></span><span class="more">${r.cost - save.bones} more</span>`}
+        </div></div>`;
+    }).join('')}</div>`;
+  } else {
+    happy = true;
+    line = tab === 'hats' ? 'Pick a hat for me! Woof!' : 'Change how the meadow looks!';
+    body = `<div class="prizes cos-grid">${(tab === 'hats' ? [{ id: null, name: 'No hat', cost: 0 }, ...HATS] : THEMES).map(it => cosCard(tab, it)).join('')}</div>`;
+  }
+  openModal(`<div class="card sheet" role="dialog" aria-label="Bone Shop">
+    <div class="sheet-head"><h2>Bone Shop</h2>${closeBtn}</div>
+    <div class="tabs" role="group" aria-label="Shop sections">${tabs}</div>
+    <div class="shop">
+      <div class="shop-dog">
+        <div class="feedback help"><span class="big">${BONE}${save.bones}</span><span>${esc(line)}</span></div>
+        <div class="dog" data-mood="${happy ? 'happy' : 'idle'}">${bonnieSVG()}</div>
+      </div>${body}
+    </div></div>`);
+  say(`You have ${save.bones} bones! ${line}`);
+}
+function openBuy(tab, id) {
+  const it = (tab === 'hats' ? HATS : THEMES).find(x => x.id === id);
+  if (!it || save.bones < it.cost) return openShop(tab);
+  pendingCos = { tab, id };
+  openModal(`<div class="card sheet narrow center" role="dialog" aria-label="Buy ${it.name}">
+    ${tab === 'hats' ? `<div class="dog big-dog" data-mood="happy">${bonnieSVG(id)}</div>` : `<div class="swatch big t-${id}"></div>`}
+    <h2>${it.name}</h2>
+    <p>Buy it for <b>${it.cost} bones</b>?</p>
+    <button class="btn" type="button" data-act="buy-yes">Yes, buy it!</button>
+    <button class="btn plain" type="button" data-act="shop">Not now</button>
+  </div>`);
+  say(`Buy the ${it.name} for ${it.cost} bones?`);
+}
+function buyCos() {
+  const { tab, id } = pendingCos || {}, it = (tab === 'hats' ? HATS : THEMES).find(x => x.id === id);
+  if (!it || save.bones < it.cost) return openShop(tab);
+  save.bones -= it.cost;
+  (tab === 'hats' ? save.owned.hats : save.owned.themes).push(id);
+  if (tab === 'hats') save.hat = id; else { save.theme = id; applyTheme(); }
+  save.redeemed.push({ title: (tab === 'hats' ? 'Bonnie’s ' : 'Theme: ') + it.name, cost: it.cost, when: today() });
+  persist(); $$('[data-shop] b').forEach(b => b.textContent = save.bones); refreshDogs();
+  sfx.win(); confetti();
+  openShop(tab);
+  say(tab === 'hats' ? `Woof! I love my ${it.name}!` : `Welcome to the ${it.name} meadow!`);
+}
+function useCos(tab, id) {
+  if (tab === 'hats') save.hat = id || null; else { save.theme = id || 'day'; applyTheme(); }
+  persist(); sfx.tap(); refreshDogs(); openShop(tab);
+}
+
 /* ---------- confetti ---------- */
 function confetti() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -2524,6 +2837,7 @@ function confetti() {
 }
 
 try { window.speechSynthesis && window.speechSynthesis.getVoices(); } catch (e) {}
+applyTheme();
 if (save.name) renderHome(); else showWelcome();
 })();
 </script>
