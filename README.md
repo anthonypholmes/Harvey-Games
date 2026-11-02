@@ -186,7 +186,7 @@ Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the devi
    npm run voice:check -- --names "Harvey"
    ```
 
-   The full set is about 35,000 characters. Starter plans include 30,000 a month, so it may take two months or a bigger plan. A cheaper model costs less: put `ELEVENLABS_MODEL=eleven_flash_v2_5` in front of the next command.
+   The full set is about 35,000 characters. With the default `eleven_v4` model that used about 14,000 credits (November 2026), because ElevenLabs charges fewer credits than characters for it. Re-runs after small edits cost only the new lines.
 5. Make 20 clips, then listen to them in `audio/clips/`:
 
    ```bash
