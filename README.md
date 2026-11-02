@@ -32,6 +32,8 @@ The first time it opens, Bonnie asks for the player's name.
 | 7 | Thousands | 4-digit numbers (stretch) |
 | 8 | Partition to Add | 34 + 25 by adding tens, then ones |
 
+**Tens are bundles, not ones.** To avoid the "4 rods = 4" trap, every ten-rod is strapped like a bundle and carries a "10" tag, and tens and ones sit on differently tinted trays. Tapping the rods counts them in tens out loud ("10, 20, 30, 40!"), with each rod lighting up in turn. Bonnie's clue says "Those long rods are super bundles worth 10 each! Count by tens: 10, 20, 30, 40!", and her step card counts along too. Counters in the hundreds levels count in 10s or 100s the same way.
+
 ### The Stepping Stone River (5 stones)
 
 | | Stone | What it practises |
@@ -94,12 +96,12 @@ The starter real-life prizes (you can edit, delete or add your own in the grown-
 
 | Tier | Prizes |
 |---|---|
-| Little treats | Pick tonight's dinner side (30), Stay up 10 minutes late (40), Choose the car radio station (50) |
-| Small prizes | 15 minutes extra gaming time (100), Pick the dessert (120), 30 minutes later bedtime (150) |
-| Medium prizes | Corner shop treat (300), Pick Friday movie night (400), Pokémon or LEGO card pack (500) |
-| Big goals | Trip to the bowling alley (1,000), Small LEGO set (1,200), Special weekend outing (1,500) |
+| Little treats | Choose the after-school snack (30), Stay up 10 mins late (40), Be the DJ for the car journey (50) |
+| Small prizes | 15 mins extra gaming/screen time (100), Choose tonight's dessert (120), 30 minutes later bedtime (150) |
+| Medium prizes | Special treat from the corner shop (300), Choose the Friday night family movie (400), Small toy or trading card pack (500) |
+| Big goals | Trip to the bowling alley (1,000), Small buildable toy set (1,200), Special weekend outing with a parent (1,500) |
 
-If the original five starter prizes were never edited, the game swaps in this list automatically. If you had edited them, your list is kept; the grown-ups panel has a **Use the starter prize list** button to switch over.
+If an earlier starter list was never edited, the game swaps in this list automatically. If you had edited them, your list is kept; the grown-ups panel has a **Use the starter prize list** button to switch over.
 
 Hats and themes are bought once and kept. He can swap between the ones he owns for free. Purchases appear in the grown-ups list of prizes claimed.
 

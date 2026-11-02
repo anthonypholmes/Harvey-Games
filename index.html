@@ -745,6 +745,18 @@ html[data-theme="snow"] body { background-color: #EEF5FB; background-image: radi
 #sky .c2 { top: 34%; width: 140px; animation-delay: -40s; }
 @keyframes drift { to { transform: translateX(calc(100vw + 440px)); } }
 
+/* ---------- tens are bundles: tags, straps, trays, counting ---------- */
+.ten { position: relative; }
+.ten rect.band { fill: var(--c-dk); stroke: none; }
+.ten-tag { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); min-width: 18px; padding: 1px 1px; border-radius: 6px; background: #fff; border: 2px solid var(--c-dk); color: var(--c-dk); font-family: var(--f-display); font-style: normal; font-weight: 700; font-size: 11px; line-height: 1.1; text-align: center; pointer-events: none; }
+.visual .grp.p1 .items:not(.counters):not(.empty) { gap: 9px; padding: 8px 8px 6px; border-radius: 12px; background: rgba(59, 127, 196, .10); }
+.visual .grp.p0 .items:not(.counters):not(.empty) { padding: 8px 8px 6px; border-radius: 12px; background: rgba(242, 131, 43, .10); }
+.visual .grp { cursor: pointer; }
+.ctr { position: relative; }
+.ten.counting, .ctr.counting { transform: translateY(-6px); filter: drop-shadow(0 0 6px rgba(244, 194, 91, .95)); transition: transform .15s; }
+.skip-num { position: absolute; left: 50%; bottom: 100%; margin-bottom: 6px; transform: translateX(-50%); padding: 2px 10px; font-size: 20px !important; border-radius: 999px; background: var(--sun); border: 2px solid var(--wood-dk); color: var(--ink); font-family: var(--f-display); font-weight: 700; font-size: 16px; white-space: nowrap; z-index: 2; animation: pop .3s ease-out; pointer-events: none; }
+@media (max-width: 560px) { .ten-tag { font-size: 9px; min-width: 16px; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -769,19 +781,21 @@ const STORE = 'harvey-splitter-v1';
 // starter prizes, sized for the 96 bones one play through all 8 levels gives
 // starter prizes in four tiers, sized for roughly 20–30 bones per level
 const STARTER_PRIZES = [
-  [30, 'Pick tonight’s dinner side', 'Chips, peas, beans… you choose!'],
-  [40, 'Stay up 10 minutes late', 'Ten extra minutes before bed.'],
-  [50, 'Choose the car radio station', 'You’re the DJ on the next drive.'],
-  [100, '15 minutes extra gaming time', 'A bit more game time.'],
-  [120, 'Pick the dessert', 'You choose pudding tonight.'],
+  [30, 'Choose the after-school snack', 'You pick the snack.'],
+  [40, 'Stay up 10 mins late', 'Ten extra minutes before bed.'],
+  [50, 'Be the DJ for the car journey', 'You choose the music.'],
+  [100, '15 mins extra gaming/screen time', 'A bit more screen time.'],
+  [120, 'Choose tonight’s dessert', 'You pick the pudding.'],
   [150, '30 minutes later bedtime', 'Half an hour later to bed.'],
-  [300, 'Corner shop treat', 'Pick a treat at the corner shop.'],
-  [400, 'Pick Friday movie night', 'You choose the family film.'],
-  [500, 'Pokémon or LEGO card pack', 'A pack of cards of your choice.'],
+  [300, 'Special treat from the corner shop', 'Pick a treat at the shop.'],
+  [400, 'Choose the Friday night family movie', 'You pick the film.'],
+  [500, 'Small toy or trading card pack', 'For example Pokémon or other collectible cards.'],
   [1000, 'Trip to the bowling alley', 'A family bowling trip.'],
-  [1200, 'Small LEGO set', 'Choose a small LEGO set.'],
-  [1500, 'Special weekend outing', 'A big day out together.'],
-].map(([cost, title, desc], i) => ({ id: 't' + i, cost, title, desc }));
+  [1200, 'Small buildable toy set', 'Choose a small building set.'],
+  [1500, 'Special weekend outing with a parent', 'A big day out together.'],
+].map(([cost, title, desc], i) => ({ id: 'u' + i, cost, title, desc }));
+// the previous starter list, so an untouched copy can be refreshed to the new wording
+const PREV_STARTER = ['30Pick tonight’s dinner side', '40Stay up 10 minutes late', '50Choose the car radio station', '10015 minutes extra gaming time', '120Pick the dessert', '15030 minutes later bedtime', '300Corner shop treat', '400Pick Friday movie night', '500Pokémon or LEGO card pack', '1000Trip to the bowling alley', '1200Small LEGO set', '1500Special weekend outing'];
 // the first starter list (before the economy was rebalanced), used to spot an untouched old list
 const OLD_STARTER = ['10Choose what’s for dinner', '2030 extra minutes of tablet before bed', '35Stay up for 30 minutes extra before bedtime', '50Special trip out for hot chocolate and cake', '80Choose a toy from Smyth’s Toys'];
 const PRIZE_TIERS = [[0, 'Little treats'], [100, 'Small prizes'], [300, 'Medium prizes'], [1000, 'Big goals']];
@@ -795,7 +809,7 @@ if (save.stars) { // older version used stars: any star means the level was fini
 }
 if (!Array.isArray(save.rewards)) save.rewards = STARTER_PRIZES.map(r => ({ ...r }));
 // if the grown-ups never changed the old starter prizes, swap in the new tiers; edited lists are left alone
-if (save.rewards.length === OLD_STARTER.length && save.rewards.every((r, i) => r.cost + r.title === OLD_STARTER[i])) {
+if ([OLD_STARTER, PREV_STARTER].some(old => save.rewards.length === old.length && save.rewards.every((r, i) => r.cost + r.title === old[i]))) {
   save.rewards = STARTER_PRIZES.map(r => ({ ...r }));
   try { localStorage.setItem(STORE, JSON.stringify(save)); } catch (e) {}
 }
@@ -927,7 +941,7 @@ function makeQ(type, n, lv) {
     q.prompt = `Split ${n} into ${placeList(n)}.`;
     q.eq = [{ main: n }, '='];
     parts.forEach((_, i) => { if (i) q.eq.push('+'); q.eq.push({ box: i }); });
-    q.boxes = parts.length; q.answer = parts.slice(); q.tip = zeroTip;
+    q.boxes = parts.length; q.answer = parts.slice(); q.tip = zeroTip || (lv.mode === 'blocks' && c[1] ? 'Tap the blue rods to count them in tens.' : '');
   }
   else if (type === 'missing') {
     const h = rand(0, parts.length - 1);
@@ -1450,7 +1464,9 @@ function questionFor(k) {
 const rodSVG = () => {
   let s = '<svg viewBox="0 0 10 100" preserveAspectRatio="none" aria-hidden="true"><rect x="0.75" y="0.75" width="8.5" height="98.5" rx="1" vector-effect="non-scaling-stroke"/>';
   for (let i = 1; i < 10; i++) s += `<line x1="0" x2="10" y1="${i * 10}" y2="${i * 10}" vector-effect="non-scaling-stroke"/>`;
-  return s + '</svg>';
+  // two straps tie the ten cubes into one bundle
+  s += '<rect class="band" x="0" y="18.5" width="10" height="3"/><rect class="band" x="0" y="78.5" width="10" height="3"/>';
+  return s + '</svg><i class="ten-tag" aria-hidden="true">10</i>';
 };
 const cubeSVG = '<svg viewBox="0 0 10 10" aria-hidden="true"><rect x="0.75" y="0.75" width="8.5" height="8.5" rx="1" vector-effect="non-scaling-stroke"/></svg>';
 
@@ -1988,6 +2004,10 @@ function boxResults(vals) {
 }
 
 /* ---------- Bonnie's help ---------- */
+// the "4 vs 40" trap: rods are bundles of ten, so count them in tens
+const hasRods = q => q.mode === 'blocks' && q.counts && q.counts[1] > 0;
+const tensSeq = n => Array.from({ length: n }, (_, i) => (i + 1) * 10).join(', ');
+const tensClue = q => ({ say: `Those long rods are super bundles worth 10 each! Count by tens: ${tensSeq(q.counts[1])}!`, point: 'place-1', skip: 1 });
 function clueFor(q) {
   if (q.line) return lineClue(q);
   if (q.gclue) return q.gclue;
@@ -1995,9 +2015,10 @@ function clueFor(q) {
   switch (q.type) {
     case 'split': case 'missing': {
       const v = targetFor(unsolvedBoxes()[0]), p = len(v) - 1;
+      if (p === 1 && hasRods(q)) return tensClue(q);
       return { say: `Count the ${named(p)}.`, point: `place-${p}` };
     }
-    case 'what': return { say: 'Count each colour.', point: 'visual' };
+    case 'what': return hasRods(q) ? tensClue(q) : { say: 'Count each colour.', point: 'visual' };
     case 'digit': return { say: `Which place is the ${q.digit} in?`, point: 'mark' };
     case 'build': return { say: 'Each digit tells you how many.', point: 'main' };
     case 'add':
@@ -2006,7 +2027,7 @@ function clueFor(q) {
       return { say: 'Put them together.', point: 'line-2' };
     default:
       if (q.broke < q.k) return { say: 'Tap a ten to swap it.', point: 'rod' };
-      return q.variant === 'B' ? { say: 'Count the blue tens.', point: 'place-1' } : { say: 'Count the orange ones.', point: 'place-0' };
+      return q.variant === 'B' ? tensClue(q) : { say: 'Count the orange ones.', point: 'place-0' };
   }
 }
 
@@ -2016,13 +2037,20 @@ function stepsFor(q) {
   const st = [];
   const placeSteps = (v, b) => {
     const p = len(v) - 1, c = v / pow(p);
+    if (p === 1 && q.mode === 'blocks') {
+      st.push({ say: 'How many super bundles of ten?', point: 'place-1', choices: near(c), answer: c });
+      st.push({ say: `${c} bundle${c > 1 ? 's' : ''} of ten. Count by tens with me!`, point: 'place-1', choices: makesChoices(c, q.L || 2), answer: v, fill: { box: b }, onShow: () => skipCount(1, { delay: 2600 }) });
+      return;
+    }
     st.push({ say: `How many ${PL[p].name}?`, point: `place-${p}`, choices: near(c), answer: c });
     st.push({ say: `${nameCount(c, p)} makes…`, choices: makesChoices(c, q.L || 2), answer: v, fill: { box: b } });
   };
   if (q.type === 'split' || q.type === 'missing') {
     unsolvedBoxes().map(b => [targetFor(b), b]).forEach(([v, b]) => placeSteps(v, b));
   } else if (q.type === 'what') {
-    q.places.forEach(p => st.push({ say: `How many ${PL[p].name}?`, point: `place-${p}`, choices: near(q.target[p]), answer: q.target[p] }));
+    q.places.forEach(p => st.push(p === 1 && q.mode === 'blocks'
+      ? { say: 'How many super bundles of ten?', point: 'place-1', choices: near(q.target[p]), answer: q.target[p], onShow: () => skipCount(1, { delay: 2000 }) }
+      : { say: `How many ${PL[p].name}?`, point: `place-${p}`, choices: near(q.target[p]), answer: q.target[p] }));
     st.push({ say: 'So the number is…', point: 'visual', choices: q.choices, answer: q.n, final: true });
   } else if (q.type === 'digit') {
     st.push({ say: `Which place is the ${q.digit} in?`, point: 'mark', choices: q.places.map(p => PL[p].name), answer: PL[q.digitPlace].name, words: true });
@@ -2062,6 +2090,7 @@ function raise(source, lead) {
     feedback('help', `<span><span class="big">${lead || pick(SCOUT_LEADS)}</span>${c.say}</span>`);
     say(c.say);
     renderControls();
+    if (c.skip) skipCount(c.skip, { voice: false, delay: save.sound || save.readAloud ? 3600 : 300 });
   } else if (S.tier === 1) {
     S.tier = 2;
     S.steps = stepsFor(q); S.step = 0;
@@ -2086,11 +2115,12 @@ function advanceSteps() {
   renderControls();
   if (S.step > 0) feedback('help', `<span><span class="big">${pick(['Yes!', 'That’s it!', 'Good!'])}</span>Next little step.</span>`);
   // sometimes Bonnie makes a silly guess, so he gets to put her right
-  if (!st.action && !st.words && st.choices && /^-?\d+$/.test(String(st.answer)) && Math.random() < .35) {
+  if (!st.action && !st.words && !st.onShow && st.choices && /^-?\d+$/.test(String(st.answer)) && Math.random() < .35) {
     const n = +st.answer, silly = pick([n * 10, 100, 1000, n + 50, 99].filter(x => x !== n && !st.choices.map(String).includes(String(x))));
     feedback('help', `<span><span class="big">Bonnie guesses… ${silly}?!</span>Silly Bonnie! You show her.</span>`);
     say(`Is it ${silly}?! Oops, silly me. ${st.say}`);
   } else say(st.say);
+  if (st.onShow) st.onShow();
 }
 
 function finishSteps() {
@@ -2811,6 +2841,36 @@ function useCos(tab, id) {
   if (tab === 'hats') save.hat = id || null; else { save.theme = id || 'day'; applyTheme(); }
   persist(); sfx.tap(); refreshDogs(); openShop(tab);
 }
+
+/* ---------- counting in tens (and hundreds) ----------
+   Tap the rods (or counters) and they count up one by one: 10, 20, 30, 40!
+   Bonnie's clue and step card play the same count. */
+let skipTimers = [];
+function clearSkip() {
+  skipTimers.forEach(clearTimeout); skipTimers = [];
+  $$('#game .skip-num').forEach(n => n.remove()); $$('#game .counting').forEach(n => n.classList.remove('counting'));
+}
+function skipCount(p, { delay = 0, voice = true } = {}) {
+  clearSkip();
+  const g = $(`#game #visual .grp.p${p}`); if (!g || !S) return;
+  const items = [...g.querySelectorAll(p === 1 && S.q.mode === 'blocks' ? '.ten' : '.ctr')]; if (!items.length) return;
+  const seq = items.map((_, i) => (i + 1) * pow(p));
+  if (voice) skipTimers.push(setTimeout(() => say(seq.join(', ') + '!'), delay));
+  items.forEach((el, i) => skipTimers.push(setTimeout(() => {
+    if (!el.isConnected) return;
+    el.classList.add('counting');
+    $$('#game .skip-num').forEach(x => x.remove());   // one number at a time, above the rod being counted
+    const n = document.createElement('b'); n.className = 'skip-num'; n.textContent = seq[i]; el.appendChild(n);
+    tone([520 + i * 60], .09, 'triangle', .08);
+  }, delay + 200 + i * 650)));
+  skipTimers.push(setTimeout(clearSkip, delay + 200 + items.length * 650 + 1600));
+}
+$('#game').addEventListener('click', e => {
+  if (!S || e.target.closest('button')) return;
+  const g = e.target.closest('#visual .grp'); if (!g) return;
+  const p = +(g.className.match(/\bp(\d)\b/) || [])[1];
+  if (p >= 1) skipCount(p);
+});
 
 /* ---------- confetti ---------- */
 function confetti() {
