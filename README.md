@@ -8,6 +8,8 @@ An arcade home page linking Harvey's learning games. Bones earned in any game go
 | `meadow-maths.html` | **Harvey's Meadow Maths** (described below). |
 | `meadow-words.html` | **Harvey's Meadow Words**: Year 2 English, with Phonics Forest, Tricky Word Trail, Sentence Meadow and Bonnie's Story Nook. |
 
+The player's name is entered on the Clubhouse page the first time it opens (and changed there with **✏️ Change name**). Every game uses it in titles and in Bonnie's dialogue. If a game is opened before a name has been entered, it sends the player to the Clubhouse first.
+
 Every game has a 🏠 button that goes back to the Clubhouse. All games share one save (`harvey-splitter-v1` in `localStorage`): bones, the player's name, Bonnie's hats, themes, the real-life prize list and the record of bones spent. Each game keeps its own level progress. Meadow Words stores its stars in `meadowWords_english_v1`.
 
 To add another game, add an entry to the `GAMES` list in the `CONFIG` block at the top of the script in `index.html`.
@@ -23,7 +25,7 @@ Four worlds:
 - **The Array Orchard:** equal groups, rows of apples and the 2, 5 and 10 times tables.
 - **The Sharing Pond:** sharing fairly, grouping, halves and quarters.
 
-The player's name (set on first launch, or in the grown-ups panel) is used throughout Bonnie's dialogue and the story questions. The game's title stays "Harvey's Meadow Maths".
+The player's name (entered on the Clubhouse page) is used in the game's title, throughout Bonnie's dialogue and in the story questions.
 
 The game is designed around resilience. There are no timers, no lives and no red "wrong" screens. Asking Bonnie for help never costs anything.
 
@@ -31,7 +33,7 @@ The game is designed around resilience. There are no timers, no lives and no red
 
 Open `index.html` (the Clubhouse) in Safari on the iPad and pick a game. To make it feel like an app, tap **Share → Add to Home Screen**.
 
-The first time it opens, Bonnie asks for the player's name.
+The first time the Clubhouse opens, Bonnie asks for the player's name.
 
 ### The Partitioning Park (8 paths)
 
@@ -130,7 +132,7 @@ Hats and themes are bought once and kept. He can swap between the ones he owns f
 
 Tap the faded gear icon in the top-right of the home screen and answer the times-table question. From there you can:
 
-- change the player's name
+- see whose name is being used (the name itself is changed on the Clubhouse page)
 - set or reset the bone balance
 - add, edit or delete prizes (title, description and cost)
 - see which prizes have been claimed, with dates

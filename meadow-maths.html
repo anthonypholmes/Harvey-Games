@@ -2,7 +2,7 @@
 <html lang="en-GB">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Harvey's Meadow Maths</title>
+<title>Meadow Maths</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -357,19 +357,10 @@ button.ten:active { transform: scale(.94); }
 .shop-btn .lbl { font-size: 16px; padding-left: 10px; border-left: 2px solid rgba(27, 36, 64, .2); }
 .gear { opacity: .5; border-color: var(--ink-soft); box-shadow: 0 3px 0 var(--ink-soft); color: var(--ink-soft); }
 
-/* ---------- welcome ---------- */
-.welcome { min-height: calc(100vh - 80px); display: grid; place-items: center; }
-.welcome form { width: min(560px, 100%); padding: 28px; display: grid; gap: 16px; justify-items: center; text-align: center; }
-.welcome .dog { width: 180px; }
-.welcome h1 { font-size: clamp(36px, 6vw, 52px); font-weight: 800; }
-.welcome label { font-size: 24px; font-weight: 700; }
-.welcome .inp { font-family: var(--f-display); font-size: 40px; font-weight: 800; text-align: center; min-height: 78px; border-width: 3px; border-radius: 18px; }
-.welcome .btn { width: 100%; min-height: 72px; font-size: 26px; }
-.welcome .btn svg { width: 30px; height: 30px; }
 
 /* ---------- pop-up sheets: gate, grown-ups, shop ---------- */
 input { -webkit-user-select: text; user-select: text; }
-.sheet, .sheet *, .welcome, .welcome * { box-sizing: border-box; }
+.sheet, .sheet * { box-sizing: border-box; }
 .inp {
   font: inherit; font-size: 18px; color: var(--ink); background: var(--card);
   border: 2px solid var(--ink); border-radius: 12px; padding: 8px 12px; min-height: 48px; width: 100%; min-width: 0;
@@ -764,7 +755,6 @@ html[data-theme="snow"] body { background-color: #EEF5FB; background-image: radi
 </style>
 
 <div id="app">
-  <section id="welcome" hidden></section>
   <section id="home"></section>
   <section id="game" hidden></section>
 </div>
@@ -819,7 +809,7 @@ if (!save.owned) save.owned = { hats: [], themes: ['day'] };
 if (save.w2v !== 2) { save.done2 = {}; save.log2 = {}; save.w2v = 2; } // World 2 was rebuilt for Year 2
 const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(save)); } catch (e) {} };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const NAME = () => save.name || 'Harvey';
+const NAME = () => save.name || 'friend'; // the name is set on the Clubhouse page (index.html)
 const nameH = () => esc(NAME());
 const today = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
@@ -924,7 +914,7 @@ function distractors(n) {
 
 /* ---------- questions ----------
    Each question says what it shows (eq, visual) and what counts as right (answer).
-   Help is worked out from the question when Harvey needs it: clueFor() and stepsFor(). */
+   Help is worked out from the question when the player needs it: clueFor() and stepsFor(). */
 function makeQ(type, n, lv) {
   if (type === 'add') return makeAdd(n[0], n[1]);
   const L = len(n), c = countsOf(n);
@@ -1113,7 +1103,7 @@ const NL_LEVELS = [
 
 /* ---------- Worlds 3 and 4: The Array Orchard and The Sharing Pond ----------
    These questions are mostly 'boxes' (type the answer on the keypad) with a picture
-   (q.vis) that Harvey can play with: plates, an apple array he can turn, an orchard grid
+   (q.vis) that the player can play with: plates, an apple array they can turn, an orchard grid
    he grows by tapping, bowls he shares bones into, baskets he fills.
    Each question carries its own clue (gclue) and step card (gsteps). */
 const APPLE = '<svg class="apple" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5c0-2.2 1-3.6 2.6-4.2" stroke="#6b4f3a" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="15.8" cy="5.2" rx="2.8" ry="1.4" fill="#5FA35A" transform="rotate(-25 15.8 5.2)"/><circle cx="12" cy="14.5" r="7.6" fill="#E2574C" stroke="#9E2F27" stroke-width="1.4"/><ellipse cx="9" cy="11.6" rx="1.8" ry="2.4" fill="#fff" opacity=".45"/></svg>';
@@ -1656,7 +1646,8 @@ function miniLine() {
 }
 
 function renderHome() {
-  const top = (back) => `<div class="topbar home-top">${back || `<div class="where"><b>Harvey’s Meadow Maths</b></div>`}<a class="icon-btn" href="index.html" aria-label="Back to the Clubhouse" title="Clubhouse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></a>${shopButton('home-shop', true)}<button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button></div>`;
+  document.title = `${NAME()}’s Meadow Maths`;
+  const top = (back) => `<div class="topbar home-top">${back || `<div class="where"><b>${nameH()}’s Meadow Maths</b></div>`}<a class="icon-btn" href="index.html" aria-label="Back to the Clubhouse" title="Clubhouse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></a>${shopButton('home-shop', true)}<button class="icon-btn gear" id="gear" aria-label="Grown-ups settings">${ICON.gear}</button></div>`;
   if (homeView === 'hub') {
     const demoQ = { mode: 'blocks', places: [1, 0], counts: { 1: 4, 0: 7 }, inter: null };
     const pics = {
@@ -1717,26 +1708,6 @@ $('#home').addEventListener('click', e => {
   if (btn.id === 'home-dog') tickle(btn);
 });
 
-/* ---------- welcome: ask for the player's name once ---------- */
-function showWelcome() {
-  $('#home').hidden = true; $('#game').hidden = true;
-  const w = $('#welcome'); w.hidden = false;
-  w.innerHTML = `<div class="welcome"><form class="card" id="welcome-form" autocomplete="off">
-    <div class="dog" data-mood="happy">${bonnieSVG()}</div>
-    <h1>Woof! I’m Bonnie.</h1>
-    <label for="w-name">What’s your name?</label>
-    <input class="inp" id="w-name" maxlength="16" value="${nameH()}" autocapitalize="words" spellcheck="false">
-    <button class="btn" type="submit">${PAW} Let’s play!</button>
-  </form></div>`;
-}
-$('#welcome').addEventListener('submit', e => {
-  e.preventDefault();
-  const v = $('#w-name').value.trim().replace(/\s+/g, ' ').slice(0, 16);
-  save.name = v || 'Harvey'; persist();
-  $('#welcome').hidden = true; $('#home').hidden = false;
-  renderHome(); window.scrollTo(0, 0);
-  sfx.woof(); say(`Hi ${NAME()}! Let’s split some numbers!`);
-});
 
 /* ---------- pop-up sheets (grown-ups gate, settings, bone shop) ---------- */
 const modal = $('#modal');
@@ -1781,8 +1752,7 @@ function openSettings() {
   openModal(`<div class="card sheet" role="dialog" aria-label="Grown-ups settings">
     <div class="sheet-head"><h2>Grown-ups</h2>${closeBtn}</div>
     <section class="gs-sec"><h3>Player</h3>
-      <form class="gs-line" id="gs-name-form" autocomplete="off"><input class="inp" id="gs-name" maxlength="16" value="${nameH()}" aria-label="Player name">
-        <button class="btn small" type="submit">Save name</button><span class="gs-ok" id="gs-name-ok"></span></form></section>
+      <p>Playing as <b>${nameH()}</b>. To change the name, use <b>Change name</b> on the <a href="index.html">Clubhouse</a> page.</p></section>
     <section class="gs-sec"><h3>Bones</h3>
       <p>1 bone for every question finished, however it was solved. Asking Bonnie for help adds a +1 Scout bone. After 3 right in a row (asking Bonnie doesn't break the run), each question gives 2 bones until a wrong answer. Plus 3 per level. So a level gives about 12 to 30 bones, usually 20 to 30. The starter prizes come in four tiers: little treats (30–50), small prizes (100–150), medium prizes (300–500) and big goals (1,000–1,500). Hats and themes in the Bone Shop also cost bones and appear under Prizes claimed.</p>
       <form class="gs-line" id="gs-bones-form" autocomplete="off"><input class="inp num" id="gs-bones" value="${save.bones}" inputmode="numeric" pattern="[0-9]*" aria-label="Bone balance">
@@ -1932,10 +1902,6 @@ modal.addEventListener('submit', e => {
   if (id === 'gate-form') {
     if (+$('#gate-in').value === gateAns) return openSettings();
     $('#gate-msg').textContent = 'Not quite. Try again.'; $('#gate-in').value = '';
-  }
-  if (id === 'gs-name-form') {
-    const v = $('#gs-name').value.trim().replace(/\s+/g, ' ').slice(0, 16);
-    save.name = v || 'Harvey'; persist(); $('#gs-name').value = save.name; $('#gs-name-ok').textContent = 'Saved';
   }
   if (id === 'gs-bones-form') {
     const v = parseInt($('#gs-bones').value.replace(/\D/g, ''), 10);
@@ -2899,6 +2865,6 @@ function confetti() {
 
 try { window.speechSynthesis && window.speechSynthesis.getVoices(); } catch (e) {}
 applyTheme();
-if (save.name) renderHome(); else showWelcome();
+if (save.name) renderHome(); else location.replace('index.html'); // no name yet: the Clubhouse asks for it
 })();
 </script>

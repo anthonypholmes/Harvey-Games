@@ -337,7 +337,6 @@ h1,h2,h3{margin:0;font-weight:700}
    themes and prizes are shared between both games.
    ========================================================= */
 const CONFIG = {
-  DEFAULT_CHILD_NAME: 'Harvey',
   SHARED_KEY: 'harvey-splitter-v1',          // Meadow Maths' save: bones, name, hats, themes, prizes are shared
   PROGRESS_KEY: 'meadowWords_english_v1',     // English-only progress (stars, unlocks)
   ITEMS_PER_LEVEL: 6,
@@ -395,7 +394,7 @@ function readRaw() { try { return JSON.parse(localStorage.getItem(CONFIG.SHARED_
 function loadShared() {
   const raw = readRaw(), owned = raw.owned || {};
   return {
-    childName: raw.name || CONFIG.DEFAULT_CHILD_NAME, nameSet: !!raw.name,
+    childName: raw.name || 'friend', nameSet: !!raw.name, // the name is set on the Clubhouse page
     bones: Math.max(0, Math.floor(+raw.bones || 0)),
     hat: raw.hat || 'none', theme: raw.theme || 'day',
     ownedHats: ['none', ...(owned.hats || [])], ownedThemes: owned.themes || ['day'],
@@ -409,7 +408,6 @@ function loadShared() {
 function saveShared() {
   const raw = readRaw();
   raw.bones = S.bones;
-  if (S.nameSet || S.childName !== CONFIG.DEFAULT_CHILD_NAME) raw.name = S.childName;
   raw.hat = S.hat === 'none' ? null : S.hat;
   raw.theme = S.theme;
   raw.owned = Object.assign({}, raw.owned, { hats: S.ownedHats.filter(h => h !== 'none'), themes: S.ownedThemes });
@@ -1358,8 +1356,8 @@ function parentScreen() {
       <div class="map-head"><button class="icon-btn" id="back">← Home</button><h2>⚙️ Grown-up Settings</h2></div>
       <p class="note">Bones, name, hats, themes and prizes are shared with Meadow Maths. Changes here show up there too.</p>
       <section><h3>Child</h3>
-        <label>Name <input type="text" id="pName" maxlength="20" value="${esc(S.childName)}"></label>
-        <p class="note">Used in all of Bonnie's dialogue, stories and celebrations.</p></section>
+        <p>Playing as <b>${esc(S.childName)}</b>. To change the name, use <b>Change name</b> on the <a href="index.html">Clubhouse</a> page.</p>
+        <p class="note">The name is used in all of Bonnie's dialogue, stories and celebrations.</p></section>
       <section><h3>Bones 🦴 <span class="chip bones" style="display:inline-flex">${S.bones}</span></h3>
         <div class="row-btns" style="justify-content:flex-start">
           <button class="btn small ghost" data-bone="-10">−10</button><button class="btn small ghost" data-bone="-1">−1</button>
@@ -1388,7 +1386,6 @@ function parentScreen() {
         <p class="note">Resetting clears English stars only. Bones, hats, prizes and maths progress are kept.</p></section>
     </div>`);
   $('#back').onclick = homeScreen;
-  $('#pName').onchange = e => { const v = e.target.value.trim().slice(0, 20) || CONFIG.DEFAULT_CHILD_NAME; mutate(s => { s.childName = v; s.nameSet = true; }); };
   $$('[data-bone]').forEach(b => b.onclick = () => { mutate(s => s.bones = Math.max(0, s.bones + +b.dataset.bone)); parentScreen(); });
   const readPrizes = () => $$('#prizeList .prize-row').map((row, i) => ({ id: S.prizes[i]?.id || 'w' + Date.now() + i, desc: S.prizes[i]?.desc || '',
     title: $('[data-f="title"]', row).value.trim() || 'Prize', cost: Math.max(1, Math.floor(+$('[data-f="cost"]', row).value || 1)) }));
@@ -1414,7 +1411,8 @@ $('#homeLink').onclick = () => homeScreen();
 $('#shopBtn').onclick = () => { sfx.pop(); shopScreen(); };
 $('#frog').addEventListener('click', e => { const f = e.currentTarget; f.classList.remove('boing'); void f.offsetWidth; f.classList.add('boing'); sfx.ribbit(); hearts(f, '💚', 2); });
 document.addEventListener('pointerdown', () => ac(), { once: true });
-applyTheme(); renderHud(); homeScreen();
+if (!S.nameSet) location.replace('index.html'); // no name yet: the Clubhouse asks for it
+else { applyTheme(); renderHud(); homeScreen(); }
 </script>
 </body>
 </html>
