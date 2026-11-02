@@ -1,0 +1,110 @@
+/* Meadow Clubhouse service worker — lets the games run offline.
+ *
+ * Pages: network first, so a newly uploaded game shows up straight away
+ *   when online; the saved copy is used when offline (or the network is slow).
+ * Everything else (icons, fonts): cache first, then network.
+ *
+ * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
+ */
+const CACHE_VERSION = 'meadow-club-v1';
+const FONT_CACHE = 'meadow-club-fonts-v1';
+const CORE_ASSETS = [
+  './',
+  './index.html',
+  './meadow-maths.html',
+  './meadow-words.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './apple-touch-icon.png',
+];
+// Google Fonts stylesheets used by the pages (keep in step with their <link> tags).
+const FONT_CSS = [
+  'https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap',
+  'https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap',
+];
+const NETWORK_TIMEOUT_MS = 4000;
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_VERSION)
+      .then(cache => cache.addAll(CORE_ASSETS.map(url => new Request(url, { cache: 'reload' }))))
+      .then(() => precacheFonts().catch(() => {})) // fonts are nice to have; never block install
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_VERSION && k !== FONT_CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // Google Fonts: keep a copy so the games look the same offline.
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    event.respondWith(cacheFirst(req, FONT_CACHE));
+    return;
+  }
+  if (url.origin !== self.location.origin) return;
+
+  const isPage = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
+  event.respondWith(isPage ? networkFirst(req) : cacheFirst(req, CACHE_VERSION));
+});
+
+// Save each font stylesheet and the font files it points to, so every game looks right offline.
+async function precacheFonts() {
+  const cache = await caches.open(FONT_CACHE);
+  await Promise.all(FONT_CSS.map(async cssUrl => {
+    const res = await fetch(cssUrl, { mode: 'cors' });
+    if (!res.ok) return;
+    const css = await res.clone().text();
+    await cache.put(cssUrl, res);
+    const fontUrls = [...css.matchAll(/url\((https:[^)]+)\)/g)].map(m => m[1]);
+    await Promise.all(fontUrls.map(async u => {
+      if (await cache.match(u)) return;
+      const f = await fetch(u, { mode: 'cors' });
+      if (f.ok) await cache.put(u, f);
+    }));
+  }));
+}
+
+async function networkFirst(req) {
+  const cache = await caches.open(CACHE_VERSION);
+  try {
+    const res = await withTimeout(fetch(req), NETWORK_TIMEOUT_MS);
+    if (res && res.ok) cache.put(req, res.clone());
+    return res;
+  } catch (e) {
+    const cached = await cache.match(req, { ignoreSearch: true });
+    // Unknown page while offline: show the Clubhouse rather than an error.
+    return cached || (await cache.match('./index.html')) || Response.error();
+  }
+}
+
+async function cacheFirst(req, cacheName) {
+  const cache = await caches.open(cacheName);
+  // Fonts: ignore Vary so a copy saved at install still matches the page's own request.
+  const cached = await cache.match(req, cacheName === CACHE_VERSION ? { ignoreSearch: true } : { ignoreVary: true });
+  if (cached) return cached;
+  try {
+    const res = await fetch(req);
+    if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+    return res;
+  } catch (e) {
+    return Response.error();
+  }
+}
+
+function withTimeout(promise, ms) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+  });
+}

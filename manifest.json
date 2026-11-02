@@ -1,0 +1,17 @@
+{
+  "name": "Harvey's Meadow Clubhouse",
+  "short_name": "Meadow Club",
+  "description": "Meadow Maths and Meadow Words with Bonnie — Year 2 learning games that work offline.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FDFBF7",
+  "theme_color": "#4CAF50",
+  "lang": "en-GB",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

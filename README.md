@@ -31,7 +31,19 @@ The game is designed around resilience. There are no timers, no lives and no red
 
 ## Playing it
 
-Open `index.html` (the Clubhouse) in Safari on the iPad and pick a game. To make it feel like an app, tap **Share → Add to Home Screen**.
+Open `index.html` (the Clubhouse) in Safari on the iPad and pick a game.
+
+### Installing on the iPad and playing offline
+
+The Clubhouse is a Progressive Web App (PWA), so it can be installed and then played with no internet connection.
+
+1. Open the site in **Safari** while online, and let the Clubhouse load fully.
+2. Tap **Share → Add to Home Screen**. The icon is Bonnie with "Meadow Club".
+3. Open it from the home screen. It runs full screen, like an app.
+
+After the first visit, all three pages, the icons and the fonts are saved on the iPad, so everything works offline. When the iPad is online, the newest version of each game loads automatically.
+
+**Saved progress and the home screen icon:** on iPad, an app added to the home screen usually keeps its own saved progress, separate from Safari. If the player has been using Safari until now, their bones and progress may not appear in the installed app. If so, a grown-up can set the bone balance in the grown-ups settings, and the name is entered again on the Clubhouse page.
 
 The first time the Clubhouse opens, Bonnie asks for the player's name.
 
@@ -157,6 +169,9 @@ This means:
 4. After a minute the Clubhouse is live at `https://<your-username>.github.io/<repository-name>/`, or at the custom domain in `CNAME`.
 
 ## Updating the game
+
+When you add a new page or rename a file, also add it to `CORE_ASSETS` in `sw.js` and change `CACHE_VERSION` (for example to `meadow-club-v2`), so the offline copy picks it up. If you change the Google Fonts `<link>` on any page, update `FONT_CSS` in `sw.js` to match. Simply editing an existing game file needs no change to `sw.js`.
+
 
 Each page is a single file, so updating a game means replacing that file (`meadow-maths.html`, `meadow-words.html` or the Clubhouse's `index.html`).
 
