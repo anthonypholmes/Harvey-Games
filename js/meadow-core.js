@@ -89,17 +89,17 @@ const prizeEmoji = t => { t = String(t).toLowerCase();
 const LINES = {
   praise: ['Pawsome, {N}!', 'Woof! Brilliant!', 'Tail-waggingly good!', 'Super job, {N}!', 'Bone-tastic!', 'Wow! Clever clogs!'],
   watched: 'Well done for watching and learning, {N}!',
-  oops: ['Nearly! Have another sniff.', 'Ooh, so close! Try again.', 'That’s okay — mistakes help our brains grow!', 'Not quite. You can do it, {N}!'],
+  oops: ['Nearly! Have another sniff.', 'Ooh, so close! Try again.', "That's okay — mistakes help our brains grow!", 'Not quite. You can do it, {N}!'],
   tickles: ['Hee hee! That tickles!', 'Ha ha! Stop it, {N}!', 'Woof woof! Giggle!', 'Ooh, my ears are ticklish!', 'Hehe! Do it again!'],
-  finish: { 3: 'WOW, {N}! Three stars! You’re a superstar!', 2: 'Brilliant work, {N}! Two shiny stars!', 1: 'You did it, {N}! Every try makes you stronger!' },
+  finish: { 3: "WOW, {N}! Three stars! You're a superstar!", 2: 'Brilliant work, {N}! Two shiny stars!', 1: 'You did it, {N}! Every try makes you stronger!' },
   already3: 'You already have 3 stars here: great practice!',
   stillBest: { 1: 'Your best here is still 1 star. Great practice!', 2: 'Your best here is still 2 stars. Great practice!' },
   locked: 'Finish the level before to unlock this one!',
-  shownAll: 'I’ve shown you the answer, {N}! Now you have a go. 🐾',
-  shopWelcome: 'Welcome to my shop, {N}! Bones from every Meadow game go in the same bone bowl.',
+  shownAll: "I've shown you the answer, {N}! Now you have a go. 🐾",
+  shopWelcome: 'Welcome to my shop, {N}! Bones from Meadow Maths and Meadow Words all go in the same bone bowl.',
   hatOn: 'Do I look smart?',
   hatOff: 'Ahh, that feels breezy!',
-  theme: 'Ooh, it’s beautiful! Thank you, {N}!',
+  theme: "Ooh, it's beautiful! Thank you, {N}!",
   grownUp: 'Go and get a grown-up! They hold the button to say yes.',
   prize: 'Hooray, {N}! Go and tell your grown-up what you unlocked!',
   testVoice: 'Hello {N}! I am Bonnie. Shall we play together?',
@@ -218,7 +218,14 @@ function write(s) {
 }
 function load() {
   const raw = readJSON(KEY);
-  if (isObj(raw) && raw.version) return normalise(raw);
+  if (isObj(raw) && raw.version) {
+    const s = normalise(raw);
+    if (!s.name) { // the Clubhouse still sets the name in the old save (until it moves onto the core)
+      const old = readJSON(OLD_KEYS.shared);
+      if (isObj(old) && typeof old.name === 'string' && old.name.trim()) { s.name = old.name.trim().slice(0, 30); write(s); }
+    }
+    return s;
+  }
   const s = migrate(); write(s); return s;
 }
 /* Always re-read before changing, so another open game never loses bones. */
@@ -311,7 +318,7 @@ const sfx = {
   woof: () => { tone(260, .07, 'sawtooth', .05, -70); tone(280, .07, 'sawtooth', .05, -80, .2); },
 };
 const Voice = () => window.BonnieVoice || { say: () => {}, hush: () => {}, whenQuiet: fn => fn(), hasClips: () => false, load: () => {} };
-function say(text, opts) { if (S && S.voice === false) return; Voice().say(fmt(text), opts); }
+function say(text, opts) { if (S && S.voice === false) return null; return Voice().say(fmt(text), opts); }
 function hush() { Voice().hush(); }
 function whenQuiet(fn) { Voice().whenQuiet(fn); }
 
@@ -662,6 +669,10 @@ function correct(el, opts = {}) {
 }
 /* Go to the next question (after correct() with auto:false). */
 function next() { if (!G || G.done) return; G.i++; nextQuestion(); }
+/* For worlds: is a right answer being celebrated (or the level over)? */
+function isBusy() { return !G || G.busy || G.done; }
+/* For worlds: the question being played. helped: Bonnie's help has reached the level that counts as help. */
+function round() { return G ? { index: G.i, count: G.count, tier: G.qTier, helped: G.qTier >= helpFrom(G.w), busy: G.busy } : null; }
 function wrong(msg, opts = {}) {
   if (!G || G.busy || G.done) return;
   G.mistakes++; streak = 0; renderHud(); sfx.wrong();
@@ -913,7 +924,7 @@ function parentScreen() {
   if ($('#pRead')) $('#pRead').onchange = e => mutate(s => { s.readAloud = e.target.checked; });
   $('#pRate').oninput = e => { $('#rateVal').textContent = e.target.value; };
   $('#pRate').onchange = e => mutate(s => { s.voiceRate = +e.target.value; });
-  $('#testVoice').onclick = () => say(LINES.testVoice);
+  $('#testVoice').onclick = () => say(GAME.testVoice || LINES.testVoice);
   $$('[data-year]').forEach(b => b.onchange = () => {
     const ys = $$('[data-year]').filter(x => x.checked).map(x => +x.dataset.year);
     mutate(s => { s.settings.years = ys.length ? ys : null; });
@@ -937,7 +948,7 @@ function parentScreen() {
 function spokenLines(game = GAME) {
   const out = new Set(), add = (...xs) => xs.forEach(x => x && out.add(fmt(x)));
   add(...LINES.praise, LINES.watched, ...LINES.oops, ...LINES.tickles, ...Object.values(LINES.finish), LINES.already3, ...Object.values(LINES.stillBest),
-    LINES.locked, LINES.shownAll.replace(' 🐾', ''), LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, LINES.testVoice);
+    LINES.locked, LINES.shownAll, LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
   [1, 2, 3].forEach(st => [1, 2].forEach(p => { if (st <= p) add(fmt(LINES.finish[st]) + ' ' + LINES.stillBest[p]); }));
   [1, 2, 3].forEach(st => add(fmt(LINES.finish[st]) + ' ' + LINES.already3));
   HATS.filter(h => h.cost > 0).forEach(h => add(`Thank you {N}! I love my ${h.name}!`));
@@ -1151,12 +1162,12 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 /* =========================================================
    START A GAME
    options: subject ('english', 'maths'…), title ('Meadow Words'), icon,
-   greets (Bonnie's hellos), homeHref (the Clubhouse), needName (go to the
+   greets (Bonnie's hellos), testVoice (the grown-ups' Test voice line), homeHref (the Clubhouse), needName (go to the
    Clubhouse when no name is set), readAloudOption, assetBase ('../' when the
    page is in a subfolder, so Bonnie's recordings are found), saveKey (testing only).
    ========================================================= */
 function startGame(opts = {}) {
-  if (window.__VOICE_LINES_ONLY__) { GAME = { greets: [], ...opts }; return; } // tools/make-voice.mjs only reads the lines
+  if (window.__VOICE_LINES_ONLY__) { GAME = { greets: [], ...opts }; S = load(); return; } // tools/make-voice.mjs only reads the lines
   GAME = { title: 'Meadow', icon: '🌼', homeHref: 'index.html', needName: true, greets: ['Hello {N}! Pick a world to explore!'], ...opts };
   if (opts.saveKey) KEY = opts.saveKey;
   S = load();
@@ -1199,7 +1210,7 @@ window.Meadow = {
   // content
   registerWorld, worlds: subjectWorlds, world: worldById, visibleWorlds, shownYears, levelUnlocked, starSummary,
   // play
-  startGame, startLevel, correct, wrong, helped, askedBonnie, next, finishLevel, bubble, later, learner,
+  startGame, startLevel, correct, wrong, helped, askedBonnie, next, finishLevel, bubble, later, learner, isBusy, round,
   // save
   save: { get key() { return KEY; }, load: () => (S = load()), get: () => S, mutate, migrate, readOld, normalise },
   stars: (worldId, levelId) => { if (!S) S = load(); return S.stars[worldId + '/' + levelId] || 0; },

@@ -15,6 +15,8 @@
  *   --list-voices         list the voices on your account and stop
  *   --dry-run             count lines and characters, no API key needed, nothing written
  *   --limit 20            make at most this many new clips (handy for trying a voice cheaply)
+ *   --compare             list the lines the new Meadow Words (beta) says that the old one doesn't, and
+ *                         the other way round, then stop (no API key needed, nothing written)
  *
  * Optional env: ELEVENLABS_MODEL (default eleven_v4).
  *
@@ -32,6 +34,8 @@ const NAMES_FILE = path.join(ROOT, 'tools', 'names.txt');
 const AUDIO = path.join(ROOT, 'audio');
 const MANIFEST = path.join(AUDIO, 'manifest.json');
 const NAME_TOKEN = 'Qqchildnameqq'; // stands in for the child's name while listing lines
+// Pages built on the shared engine (js/meadow-core.js) whose lines are recorded too.
+const CORE_PAGES = ['beta/meadow-words.html'];
 
 const args = process.argv.slice(2);
 const opt = n => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
@@ -105,9 +109,23 @@ function loadPages() {
     vm.runInContext(main, c, { filename: file });
     return vm.runInContext(`${fn}()`, c);
   };
+  // A page built on the shared engine (js/meadow-core.js): run its <script src> files and its
+  // inline script, then ask the core for every line (core lines + the game's worlds).
+  const runCore = file => {
+    const c = vm.createContext({ ...ctx }); c.window = c;
+    const html = fs.readFileSync(path.join(ROOT, file), 'utf8'), dir = path.dirname(path.join(ROOT, file));
+    for (const m of html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)) {
+      if (m[1]) { if (!/meadow-backup/.test(m[1])) vm.runInContext(fs.readFileSync(path.resolve(dir, m[1]), 'utf8'), c, { filename: m[1] }); }
+      else if (m[2].includes('Meadow.startGame')) vm.runInContext(m[2], c, { filename: file });
+    }
+    return vm.runInContext('Meadow.spokenLines()', c);
+  };
   const call = (f, ...a) => vm.runInContext(`BonnieVoice.${f}(${a.map(x => JSON.stringify(x)).join(',')})`, ctx);
   return {
-    lines: [...run('meadow-words.html', 'allSpokenLines'), ...run('index.html', 'clubhouseLines')],
+    lines: [...new Set([...run('meadow-words.html', 'allSpokenLines'), ...run('index.html', 'clubhouseLines'),
+      ...CORE_PAGES.flatMap(runCore)])],
+    oldWords: () => run('meadow-words.html', 'allSpokenLines'),
+    coreLines: runCore,
     pieces: (text, name) => call('pieces', text, name),
     sentences: text => call('sentences', text),
     template: (s, name) => call('template', s, name),
@@ -119,6 +137,14 @@ function loadPages() {
 
 /* ---------- 2. Work out which clips are needed ---------- */
 const game = loadPages();
+if (args.includes('--compare')) {
+  const oldL = new Set(game.oldWords()), newL = new Set(game.coreLines('beta/meadow-words.html'));
+  const onlyNew = [...newL].filter(l => !oldL.has(l)), onlyOld = [...oldL].filter(l => !newL.has(l));
+  console.log(`Old Meadow Words: ${oldL.size} lines. Beta: ${newL.size} lines.`);
+  console.log(`\nOnly in the beta (${onlyNew.length}):\n` + onlyNew.map(l => '  + ' + l).join('\n'));
+  console.log(`\nOnly in the old game (${onlyOld.length}):\n` + onlyOld.map(l => '  - ' + l).join('\n'));
+  process.exit(0);
+}
 const wanted = new Map(); // key -> text
 let collisions = 0;
 for (const line of game.lines) {
