@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meadow Core Test</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* only for this test page */
+  .tq{font-family:var(--font-read);font-size:clamp(1.6rem,4vw,2.2rem);text-align:center;margin:20px 0}
+  .topts{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:12px;max-width:520px;margin:0 auto}
+  .topt{font-family:var(--font-read);font-size:2rem;font-weight:700;padding:18px;min-height:72px;border-radius:24px;background:linear-gradient(180deg,#FFF,#F3EADA);border:3px solid var(--card-edge);border-bottom-width:7px}
+  .topt.wrong{animation:shake .45s;opacity:.35;pointer-events:none}
+  .topt.right{background:linear-gradient(180deg,#D8F0C6,#A9D58C);border-color:var(--leaf-dark)}
+  .topt.glow{box-shadow:0 0 0 6px rgba(242,193,78,.8)}
+  .testbar{position:relative;z-index:5;max-width:1100px;margin:0 auto 120px;padding:0 16px}
+  .testbar details{background:var(--card);border:2px dashed var(--berry);border-radius:18px;padding:12px 16px}
+  .testbar summary{font-weight:700;cursor:pointer;min-height:44px;display:flex;align-items:center}
+  .testbar pre{white-space:pre-wrap;font-size:.85rem;background:#fff;border-radius:10px;padding:10px;max-height:320px;overflow:auto}
+</style>
+</head>
+<body>
+<script src="../bonnie-voice.js"></script>
+<script src="../meadow-backup.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script>
+/* A small practice world, only to try the core engine. It is not a real game. */
+(() => {
+  const { $, $$, esc, shuffle, randInt } = Meadow.ui;
+  // a simple "tap the right answer" play() that every test level uses
+  function playChoice(q, ctx) {
+    const opts = shuffle([q.answer, ...q.wrong]);
+    ctx.area.innerHTML = `<div class="tq">${esc(q.text)}</div>
+      <div class="topts">${opts.map(o => `<button class="topt" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
+    const right = () => $$('.topt', ctx.area).find(b => b.dataset.v === String(q.answer));
+    ctx.hints([
+      () => `Read it slowly: <b>${esc(q.text)}</b>`,
+      () => esc(q.tip || 'Count carefully!'),
+      () => { const w = $$('.topt:not(.wrong)', ctx.area).find(b => b.dataset.v !== String(q.answer)); if (w) w.classList.add('wrong'); return 'I took one wrong answer away!'; },
+      () => { right().classList.add('glow'); return `It's <b>${esc(q.answer)}</b>. Tap the shiny one!`; },
+    ]);
+    ctx.bubble(esc(q.text));
+    $$('.topt', ctx.area).forEach(b => b.onclick = () => {
+      if (b.dataset.v === String(q.answer)) { b.classList.add('right'); Meadow.correct(b); }
+      else { b.classList.add('wrong'); Meadow.wrong(); }
+    });
+  }
+  const bigger = [[3, 7], [12, 9], [5, 15], [20, 18], [8, 11], [14, 4], [6, 16], [19, 10]]
+    .map(([a, b]) => ({ text: `Which is bigger: ${a} or ${b}?`, answer: Math.max(a, b), wrong: [Math.min(a, b)], tip: 'The bigger number comes later when you count.' }));
+  Meadow.registerWorld({
+    id: 'test-practice-patch', subject: 'test', year: 2, name: 'Practice Patch', tag: 'Only for testing the engine',
+    icon: '🧪', color: '#8E7CC3', tint: '#ECE6F6', play: playChoice,
+    levels: [
+      { id: 'bigger', name: 'Bigger Number', blurb: 'A fixed list (like Meadow Words)', eg: '7 or 3?', items: bigger },
+      { id: 'add-one', name: 'One More', blurb: 'Made by code (like Meadow Maths); gets easier after two hard ones', eg: '6 + 1', count: 5,
+        make: ({ eased }) => { const n = eased ? randInt(1, 5) : randInt(10, 40); return { text: `What is ${n} + 1?`, answer: n + 1, wrong: [n, n + 2], tip: 'Count on one from ' + n + '.' }; } },
+    ],
+  });
+  Meadow.registerWorld({
+    id: 'test-year-3-hill', subject: 'test', year: 3, name: 'Year 3 Hill', tag: 'A pretend Year 3 world', icon: '⛰️', color: '#2F8FB0', tint: '#DCEEF7', play: playChoice,
+    levels: [{ id: 'double', name: 'Doubles', blurb: 'Double a number', eg: '2 × 6', count: 3,
+      items: [4, 6, 7, 8, 9, 12].map(n => ({ text: `Double ${n}?`, answer: n * 2, wrong: [n * 2 + 2, n + 2] })) }],
+  });
+
+  Meadow.startGame({ subject: 'test', title: 'Core Test', icon: '🧪', homeHref: '../index.html', assetBase: '../', needName: false, saveKey: 'meadow-save-test',
+    greets: ['Hello {N}! This is the test meadow. Try a level!'] });
+
+  // test tools: what the one-off copy would bring across from this device's real saves (read only)
+  const m = Meadow.save.migrate(), stars = Object.entries(m.stars);
+  document.body.insertAdjacentHTML('beforeend', `<div class="testbar"><details>
+    <summary>🔧 Test tools (grown-ups)</summary>
+    <p>This page uses its own practice save (<code>meadow-save-test</code>), so it never changes the real games or the new save.</p>
+    <h3>What would be copied from this device's saves</h3>
+    <p><b>${esc(m.name || '(no name yet)')}</b> · ${m.bones} bones · hat: ${esc(m.hat || 'none')} · theme: ${esc(m.theme)} ·
+      hats owned: ${m.owned.hats.length} · themes owned: ${m.owned.themes.length} · prizes: ${m.rewards.length} · claimed: ${m.redeemed.length}</p>
+    <p>${stars.length} levels with stars:</p>
+    <pre>${stars.length ? stars.map(([k, v]) => '⭐'.repeat(v).padEnd(3, '☆') + '  ' + esc(k)).join('\n') : '(none yet)'}</pre>
+    <div class="row-btns" style="justify-content:flex-start">
+      <button class="btn small berry" id="restartTest">Start the test again from my real saves</button>
+    </div>
+  </details></div>`);
+  $('#restartTest').onclick = () => { localStorage.removeItem('meadow-save-test'); location.reload(); };
+})();
+</script>
+</body>
+</html>
