@@ -906,6 +906,7 @@ function world(d) {
   return {
     id: d.id, subject: 'maths', year: d.year || 2, name: d.name, tag: d.tag, icon: d.icon, color: d.color, tint: d.tint, intro: d.intro,
     layout: 'full', helpFrom: 2, hintNames: ['A clue', 'Step by step', 'Glowing buttons'], tierNames: TIER_NAMES, praise: PRAISE,
+    lines: d.lines,   // fixed lines for tools/make-voice.mjs to record (lines with changing numbers use the device voice)
     levels: d.levels.map((L, i) => wrapLevel(L, d.ids[i])),
     play,
   };

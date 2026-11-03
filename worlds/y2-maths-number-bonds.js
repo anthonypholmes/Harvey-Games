@@ -435,10 +435,30 @@ const LEVELS = [
     make: (type, k, easy) => makeFamily(type, easy) },
 ];
 
+// Bonnie's lines in this world that never change, so they can be recorded in her voice
+// (tools/make-voice.mjs). Lines with numbers in them use the iPad's voice. Keep these word for word
+// the same as the clues and steps above, or the recording won't be found.
+const VOICE_LINES = [
+  // clues
+  'Fill the empty burrows. Count how many you add!', 'Fill the first burrow to 10 first!',
+  'The first burrow is full: that’s 10. Add the ones!', 'The tens are the same. Look at the ones!',
+  'The top line helps! Now they are tens.', 'Tens first, then ones.', 'Spot two numbers that make 10!',
+  'Add the first two. Then add the last one.', 'Adding undoes taking away!', 'The same three numbers work both ways.',
+  'Does adding work in any order?', 'Does taking away work in any order?',
+  // step cards
+  'Tap the empty burrows to fill them up.', 'How many bones did you add?', 'How many bones are left?', 'How many did Bonnie eat?',
+  'How many more to make 10?', 'Fill the burrows with bags of 10.', 'How many bags did you add?', 'Which two make 10?',
+  'What undoes taking away?', 'Adding undoes taking away. Which one helps?', 'Are the same three numbers in both lines?',
+  'Same answer both ways! So it is…', 'So it is…',
+  // questions with no numbers in them
+  'True or false?', 'Use the little fact to help.', 'Use the adding fact to help.', 'Use the take away fact to help.',
+];
+
 Meadow.registerWorld(M.world({
   id: 'y2-maths-number-bonds', name: 'Number Bonds Burrow', tag: 'Adding and taking away', icon: '🐰', color: '#A0673A', tint: '#F5EADF',
   intro: 'Help Bonnie dig up number facts in the rabbit burrows. A <b>number bond</b> is two numbers that make another, like 7 and 3 make 10. Tap the burrows to fill them up!',
   ids: ['bonds-10', 'bonds-20', 'tens-facts', 'add-ones-tens', 'two-digit', 'three-numbers', 'fact-families'],
   levels: LEVELS,
+  lines: () => VOICE_LINES,
 }));
 })();
