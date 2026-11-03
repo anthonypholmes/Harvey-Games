@@ -737,7 +737,9 @@ function tickleBonnie(dog) {
   const line = U.tickle(dog);
   dog.querySelector('.tickle-pop')?.remove();
   const p = document.createElement('span'); p.className = 'tickle-pop'; p.textContent = line;
-  dog.appendChild(p); setTimeout(() => p.remove(), 1200);
+  // after the Easter egg's spin the line shows once she has landed, and stays a little longer
+  const egg = dog.classList.contains('bonnie-spin'), show = egg ? 1100 : 0;
+  setTimeout(() => { dog.querySelector('.tickle-pop')?.remove(); dog.appendChild(p); setTimeout(() => p.remove(), egg ? 2400 : 1600); }, show);
 }
 
 /* ---------- taps, drags and keys (set up once, for whichever question is showing) ---------- */
@@ -1104,7 +1106,7 @@ const CSS = String.raw`
 .mm .buddy .bonnie { width: 104px; height: 104px; }
 .mm .nl-dog { width: 72px; }
 .mm .nl-dog svg { display: block; width: 100%; height: auto; overflow: visible; }
-.mm .tickle-pop { position: absolute; left: 50%; top: -16px; transform: translateX(-50%); white-space: nowrap; background: #fff; border: 2px solid var(--fur); border-radius: 999px; padding: 2px 10px; font-family: var(--f-display); font-weight: 700; font-size: 16px; color: var(--fur-dk); animation: mm-tpop 1.2s ease-out forwards; pointer-events: none; z-index: 3; }
+.mm .tickle-pop { position: absolute; left: 50%; bottom: calc(100% - 4px); transform: translateX(-50%); width: max-content; max-width: 210px; text-align: center; line-height: 1.2; background: #fff; border: 2px solid var(--fur); border-radius: 16px; padding: 2px 10px; font-family: var(--f-display); font-weight: 700; font-size: 16px; color: var(--fur-dk); animation: mm-tpop 1.6s ease-out forwards; pointer-events: none; z-index: 3; }
 @keyframes mm-tpop { 0% { opacity: 0; transform: translate(-50%, 8px) scale(.6); } 20% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -16px); } }
 .mm-numpop { font-family: 'Fredoka', 'Nunito', system-ui, sans-serif; }
 `;
