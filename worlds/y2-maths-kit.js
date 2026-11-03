@@ -920,7 +920,7 @@ const CSS = String.raw`
 .mm .one { width: var(--u); height: var(--u); }
 .mm .mpop { animation: mm-pop .35s ease-out both; }
 @keyframes mm-pop { from { transform: scale(0); } to { transform: scale(1); } }
-.mm .ctr { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: #fff; border: 3px solid var(--c-dk); font-weight: 700; font-size: 14px; letter-spacing: -.02em; }
+.mm .ctr { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: #fff; border: 3px solid var(--c-dk); font-weight: 700; font-size: 14px; }
 .mm .p3 .ctr, .mm .ctr.p3 { font-size: 12px; }
 .mm .glabel { font-size: 17px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
 .mm .glabel b { color: var(--c); font-size: 20px; }
@@ -932,7 +932,7 @@ const CSS = String.raw`
 .mm .side { display: grid; gap: 16px; }
 .mm .feedback { min-height: 92px; padding: 14px 16px; border-radius: 16px; border: 3px solid transparent; font-size: 18px; font-weight: 600; display: flex; gap: 12px; align-items: center; background: var(--card); border-color: var(--grid); color: var(--ink-soft); }
 .mm .feedback .bone { width: 22px; height: 22px; vertical-align: -5px; margin-right: 2px; }
-.mm .feedback .big { display: block; font-family: var(--f-display); font-size: 26px; font-weight: 800; color: var(--good); }
+.mm .feedback .big { display: block; font-family: var(--f-display); font-size: 26px; font-weight: 700; color: var(--good); }
 .mm .feedback.good { background: var(--good-bg); border-color: var(--good); color: var(--ink); }
 .mm .feedback.info { background: var(--sun-soft); border-color: var(--sun); color: var(--ink); }
 .mm .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -957,7 +957,7 @@ const CSS = String.raw`
 .mm .mstep-dots i { width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid var(--fur-dk); background: var(--card); }
 .mm .mstep-dots i.past { background: var(--fur-dk); }
 .mm .mstep-dots i.now { background: var(--sun); }
-.mm .mstep-say { font-family: var(--f-display); font-weight: 800; font-size: 28px; line-height: 1.15; text-wrap: balance; }
+.mm .mstep-say { font-family: var(--f-display); font-weight: 700; font-size: 28px; line-height: 1.15; text-wrap: balance; }
 .mm .chips { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); }
 .mm .mchip { min-height: 80px; font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--card); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink); }
 .mm .mchip.word { font-size: 21px; }
@@ -1005,6 +1005,8 @@ const CSS = String.raw`
   .mm .nl-lab { font-size: 16px; }
 }
 .mm { --paper: #FDFBF7; --grid: #EFE5D3; --edge: #EADFCB; --ink: #3E2F27; --ink-soft: #7A6A5E; --card: #FFFFFF; --sun: #F4C25B; --sun-soft: #FDF1D3; --tens: #3B7FC4; --tens-dk: #245A91; --good: #3F8B5C; --good-bg: #E4F2E7; --wood: #A8743F; --wood-dk: #7A4F27; --wood-lt: #C99560; --cream: #FFF8EC; --soft-shadow: 0 2px 0 rgba(120, 85, 45, .06), 0 12px 28px -10px rgba(120, 85, 45, .28); --f-display: 'Fredoka', 'Nunito', 'Chalkboard SE', system-ui, sans-serif; --f-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+/* Fredoka and Nunito stop at bold (700): asking for more makes Safari fake it, which smudges the letters */
+.mm b, .mm strong { font-weight: 700; }
 .mm .eq, .mm .key, .mm .choice, .mm .mchip, .mm .box, .mm .nl-lab, .mm .mstep, .mm .ctr, .mm .nl-val, .mm .glabel b, .mm .prompt, .mm .mstep-say, .mm .feedback .big { font-family: var(--f-display); }
 .mm .prompt { font-weight: 600; }
 .mm .mcard { border: 2px solid var(--edge); border-radius: 20px; box-shadow: var(--soft-shadow); }
