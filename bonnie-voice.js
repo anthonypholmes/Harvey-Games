@@ -15,6 +15,7 @@
     getAudio: () => null,
     enabled: () => true,
     getRate: () => .9,
+    base: '',            // folder that holds audio/ ('../' for pages in a subfolder such as beta/)
     pack: null,          // audio/manifest.json once loaded
     device: null,        // the chosen device voice
     missing: new Set(),  // pieces with no clip (for checking a voice pack)
@@ -87,7 +88,7 @@
         if (!V.hasWords(clean)) { if (out.length) out[out.length - 1].pause = Math.max(out[out.length - 1].pause, pauseAfter(p.raw)); continue; }
         const file = p.file || (p.name ? V.pack.names && V.pack.names[clean.toLowerCase()] : V.pack.clips[V.pieceKey(clean)]);
         if (!file) { if (!p.name) V.missing.add(clean); return null; }
-        out.push({ ...p, file: 'audio/' + file, pause: pauseAfter(p.raw) });
+        out.push({ ...p, file: V.base + 'audio/' + file, pause: pauseAfter(p.raw) });
       }
     }
     return out.length ? out : null;
@@ -184,7 +185,7 @@
   /* ---------- loading the clips ---------- */
   V.load = async () => {
     try {
-      const res = await fetch('audio/manifest.json', { cache: 'no-cache' }); if (!res.ok) return;
+      const res = await fetch(V.base + 'audio/manifest.json', { cache: 'no-cache' }); if (!res.ok) return;
       const m = await res.json(); if (!m || !m.clips) return;
       V.pack = m;
       setTimeout(saveForOffline, 4000);
@@ -195,7 +196,7 @@
     if (!V.pack || typeof caches === 'undefined' || navigator.onLine === false) return;
     try {
       const cache = await caches.open(AUDIO_CACHE);
-      const files = [...new Set([...Object.values(V.pack.clips), ...Object.values(V.pack.names || {}), ...Object.values(V.pack.whole || {}).flatMap(Object.values)])].map(f => 'audio/' + f);
+      const files = [...new Set([...Object.values(V.pack.clips), ...Object.values(V.pack.names || {}), ...Object.values(V.pack.whole || {}).flatMap(Object.values)])].map(f => V.base + 'audio/' + f);
       let k = 0;
       const worker = async () => { while (k < files.length) { const f = files[k++];
         try { if (!(await cache.match(f))) { const r = await fetch(f); if (r.ok) await cache.put(f, r); } } catch (e) {} } };
