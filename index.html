@@ -22,8 +22,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* =========================================================
-   Meadow Clubhouse — arcade home page. Asks for the player's name,
-   which every game then uses.
+   Meadow Clubhouse — arcade home page on the shared engine.
+   Asks for the player's name, which every game then uses. It reads and writes
+   only meadow-save-v1 (the engine copies progress from the old saves, read only).
    Same storybook look as the games: #FDFBF7 parchment cards.
    ========================================================= */
 :root{
@@ -197,73 +198,49 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
 </div>
 
 <script src="bonnie-voice.js"></script>
+<script src="meadow-backup.js"></script>
+<script src="js/meadow-core.js"></script>
+<!-- Every world, so the cabinets can count stars. Add new world files here too. -->
+<script src="worlds/y2-english-phonics.js"></script>
+<script src="worlds/y2-english-tricky-words.js"></script>
+<script src="worlds/y2-english-sentences.js"></script>
+<script src="worlds/y2-english-stories.js"></script>
+<script src="worlds/y2-maths-kit.js"></script>
+<script src="worlds/y2-maths-partitioning.js"></script>
+<script src="worlds/y2-maths-number-lines.js"></script>
+<script src="worlds/y2-maths-arrays.js"></script>
+<script src="worlds/y2-maths-sharing.js"></script>
+<script src="worlds/y2-maths-sharing-fractions.js"></script>
 <script>
 /* =========================================================
    CONFIG — edit the game links to match your file names.
-   SHARED_KEY must be the same key the games use for bones.
+   progress is the subject whose stars the cabinet shows.
    ========================================================= */
 const CONFIG = {
-  SHARED_KEY: 'harvey-splitter-v1',   // Meadow Maths' save — shared by every game
   GAMES: [
     { name: 'Meadow Maths',  sub: 'Numbers, sums & times tables', href: 'meadow-maths.html', color: '#6BA368', dark: '#4C7E4A',
       screen: 'linear-gradient(180deg,#BFE3F0,#DFF0C8)', about: 'Count, add, take away and multiply with Bonnie!', progress: 'maths',
       bits: [['➕', 12, 18], ['✖️', 70, 62], ['🔢', 40, 10], ['🍎', 78, 14]], big: ['3 + 4 = 7', 18, 52] },
     { name: 'Meadow Words',  sub: 'Phonics, spelling & stories', href: 'meadow-words.html', color: '#E07A3F', dark: '#B85C26',
       screen: 'linear-gradient(180deg,#FBE3D2,#F6EBD3)', about: 'Build words, spell tricky words, fix sentences and read stories!',
-      bits: [['📖', 10, 14], ['🌼', 76, 60], ['🪧', 74, 10], ['🐝', 14, 64]], big: ['c a k e', 28, 40], progress: 'words' },
+      bits: [['📖', 10, 14], ['🌼', 76, 60], ['🪧', 74, 10], ['🐝', 14, 64]], big: ['c a k e', 28, 40], progress: 'english' },
     // Add more games here later, e.g.:
     // { name: 'Meadow Science', sub: 'Coming soon', href: '', soon: true, color: '#8E7CC3', dark: '#6A5A9E', screen: '...', about: '...', bits: [], big: ['?', 45, 40] },
   ],
 };
 
-/* ---------- shared economy (read-only here) ---------- */
-function readRaw() { try { return JSON.parse(localStorage.getItem(CONFIG.SHARED_KEY) || 'null') || {}; } catch (e) { return {}; } }
+/* ---------- the one save (meadow-save-v1), through the engine ---------- */
 function loadShared() {
-  const s = readRaw();
-  return { childName: s.name || '', hasName: !!s.name, bones: Math.max(0, Math.floor(+s.bones || 0)),
-           hat: s.hat || null, theme: s.theme || 'day', sfx: s.sound !== false, raw: s };
+  const s = Meadow.save.load();
+  return { childName: s.name || '', hasName: !!s.name, bones: s.bones, theme: s.theme, clubSound: s.clubSound };
 }
 let S = loadShared();
-let soundOn = S.sfx;
-try { const v = localStorage.getItem('meadowClubhouse_sound'); if (v !== null) soundOn = v === '1'; } catch (e) {}
+let soundOn = S.clubSound;
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const rand = a => a[Math.floor(Math.random() * a.length)];
 
-function curls(cx, cy, R, n, r) {
-  let s = '';
-  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; s += `<circle cx="${(cx + Math.cos(a) * R).toFixed(1)}" cy="${(cy + Math.sin(a) * R).toFixed(1)}" r="${r}"/>`; }
-  return s;
-}
-const ear = (x, dir) => [[0, 42, 10], [dir * 3, 53, 10], [dir * 1, 64, 9.5], [dir * 4, 74, 8.5], [dir * 1, 82, 7]]
-  .map(([dx, y, r]) => `<circle cx="${x + dx}" cy="${y}" r="${r}"/>`).join('');
-function hatSVG(h) {
-  switch (h) {
-    case 'party': return '<g class="hat"><path d="M44 27 L63 -6 L78 25 Z" fill="#F07CA8" stroke="#3E2F27" stroke-width="2" stroke-linejoin="round"/><path d="M50 16 L72 19 M56 5 L68 7" stroke="#FFE07A" stroke-width="4" stroke-linecap="round"/><circle cx="63" cy="-7" r="5" fill="#FFE07A" stroke="#3E2F27" stroke-width="2"/></g>';
-    case 'crown': return '<g class="hat"><path d="M40 29 L42 9 L51 20 L60 4 L69 20 L78 9 L80 29 Z" fill="#F4C25B" stroke="#8A5A14" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="22" r="3.2" fill="#E2574C"/><circle cx="49" cy="25" r="2.3" fill="#3B7FC4"/><circle cx="71" cy="25" r="2.3" fill="#3F8B5C"/></g>';
-    case 'wizard': return '<g class="hat"><path d="M40 30 Q60 35 80 30 L58 -16 Z" fill="#6C4BB4" stroke="#3A2470" stroke-width="2" stroke-linejoin="round"/><ellipse cx="60" cy="30" rx="27" ry="6" fill="#6C4BB4" stroke="#3A2470" stroke-width="2"/><path d="M60 4l1.6 3.4 3.6.4-2.7 2.4.8 3.6-3.3-1.8-3.3 1.8.8-3.6-2.7-2.4 3.6-.4z" fill="#FFE07A"/><circle cx="52" cy="20" r="1.6" fill="#FFE07A"/><circle cx="67" cy="17" r="1.3" fill="#FFE07A"/></g>';
-    case 'eyepatch': return '<g class="hat"><path d="M37 38 Q60 30 85 44" stroke="#222" stroke-width="2.4" fill="none"/><ellipse cx="71.5" cy="52" rx="7.5" ry="6.5" fill="#222"/></g>';
-  }
-  return '';
-}
-function bonnieSVG(hat) {
-  return `<svg viewBox="0 0 120 124" aria-hidden="true">
-    <g class="tail"><path d="M86 100 q20 -4 20 -24" fill="none" stroke="var(--fur-dk)" stroke-width="10" stroke-linecap="round"/><g fill="var(--fur-dk)">${curls(106, 74, 5, 5, 5)}</g></g>
-    <g fill="var(--fur)"><ellipse cx="60" cy="102" rx="31" ry="19"/>${curls(60, 102, 22, 12, 7)}</g>
-    <g fill="var(--fur-lt)" opacity=".55">${curls(60, 104, 10, 6, 4)}</g>
-    <g class="head">
-      <g fill="var(--fur-dk)">${ear(33, -1)}${ear(87, 1)}</g>
-      <g fill="var(--fur)"><circle cx="60" cy="52" r="25"/>${curls(60, 50, 23, 14, 7.5)}</g>
-      <g fill="var(--fur-lt)" opacity=".6">${curls(60, 30, 7, 6, 4.5)}</g>
-      <ellipse cx="60" cy="66" rx="16" ry="12.5" fill="var(--fur-lt)"/>
-      <g class="eyes"><circle cx="48.5" cy="52" r="4.2" fill="#24160e"/><circle cx="71.5" cy="52" r="4.2" fill="#24160e"/><circle cx="50" cy="50.4" r="1.4" fill="#fff"/><circle cx="73" cy="50.4" r="1.4" fill="#fff"/></g>
-      <ellipse cx="60" cy="75" rx="4.6" ry="6.5" fill="#ef7b8f"/>
-      <ellipse cx="60" cy="61" rx="5.8" ry="4.2" fill="#24160e"/><ellipse cx="58.2" cy="59.8" rx="1.6" ry="1" fill="#6b5446"/>
-      <path d="M60 65.2v4M52.5 68.6q7.5 5.4 15 0" stroke="#24160e" stroke-width="2" fill="none" stroke-linecap="round"/>
-      ${hatSVG(hat)}
-    </g>
-  </svg>`;
-}
+const bonnieSVG = () => Meadow.ui.bonnieSVG();   // the engine's Bonnie, wearing her hat, glasses and collar
 
 /* ---------- sound & speech ---------- */
 let AC = null;
@@ -277,7 +254,7 @@ function tone(f, d = .1, type = 'sine', vol = .15, delay = 0) {
 const giggle = () => [800, 1000, 850, 1100, 900].forEach((f, i) => tone(f, .07, 'sine', .12, i * .08));
 const coinUp = () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .12, 'square', .06, i * .06));
 // Bonnie's voice is in bonnie-voice.js: recorded clips when there are some, otherwise the device's British voice.
-Object.assign(BonnieVoice, { getName: () => S.childName, getAudio: ac, enabled: () => soundOn, getRate: () => .92 });
+Object.assign(BonnieVoice, { base: '', getName: () => S.childName, getAudio: ac, enabled: () => soundOn, getRate: () => .92 });
 function say(text, pitch = 1.1) { BonnieVoice.say(text, { pitch }); }
 function hearts(el, emoji = '💖', n = 4) {
   const r = el.getBoundingClientRect();
@@ -288,18 +265,9 @@ function hearts(el, emoji = '💖', n = 4) {
 
 /* ---------- render ---------- */
 function progressFor(game) {
-  try {
-    if (game.progress === 'words') {
-      const p = JSON.parse(localStorage.getItem('meadowWords_english_v1') || 'null');
-      const n = p ? Object.values(p).reduce((a, w) => a + (w.stars || []).reduce((x, y) => x + y, 0), 0) : 0;
-      return `⭐ ${n} of 60 stars`;
-    }
-    if (game.progress === 'maths') {
-      const r = S.raw, n = ['done', 'done2', 'done3', 'done4'].reduce((a, k) => a + Object.values(r[k] || {}).filter(Boolean).length, 0);
-      return `✔ ${n} level${n === 1 ? '' : 's'} done`;
-    }
-  } catch (e) {}
-  return '';
+  if (!game.progress) return '';
+  const { earned, possible } = Meadow.starSummary(game.progress);
+  return possible ? `⭐ ${earned} of ${possible} stars` : '';
 }
 function render() {
   S = loadShared();
@@ -316,7 +284,7 @@ function render() {
   document.getElementById('nameCancel').hidden = !S.hasName;
   document.getElementById('nameLabel').textContent = S.hasName ? 'What’s your new name?' : 'What’s your name?';
   document.getElementById('boneNum').textContent = S.bones;
-  document.getElementById('bonnie').innerHTML = bonnieSVG(S.hat);
+  document.getElementById('bonnie').innerHTML = bonnieSVG();
   document.getElementById('soundBtn').textContent = soundOn ? '🔊 Sound: on' : '🔇 Sound: off';
   document.getElementById('cabinets').innerHTML = CONFIG.GAMES.map(g => {
     const prog = progressFor(g);
@@ -365,10 +333,7 @@ const TICKLES = ['Hee hee! That tickles!', 'Ha ha! Stop it, {N}!', 'Woof woof! G
 
 /* ---------- the player's name (used by every game) ---------- */
 let editingName = false;
-function saveName(v) {
-  const raw = readRaw(); raw.name = v; // keep everything else the games have saved
-  try { localStorage.setItem(CONFIG.SHARED_KEY, JSON.stringify(raw)); } catch (e) {}
-}
+function saveName(v) { Meadow.save.mutate(s => { s.name = v; }); }
 function openNameCard() {
   editingName = true; render(); greet();
   const inp = document.getElementById('nameIn'); inp.value = S.childName; document.getElementById('nameMsg').textContent = '';
@@ -403,12 +368,12 @@ document.getElementById('frog').addEventListener('click', e => {
   tone(180, .08, 'sawtooth', .08); tone(160, .12, 'sawtooth', .08, .1); hearts(f, '💚', 2);
 });
 document.getElementById('soundBtn').addEventListener('click', () => {
-  soundOn = !soundOn; try { localStorage.setItem('meadowClubhouse_sound', soundOn ? '1' : '0'); } catch (e) {}
+  soundOn = !soundOn; Meadow.save.mutate(s => { s.clubSound = soundOn; });
   if (!soundOn) BonnieVoice.hush();
   render(); if (soundOn) say(firstLine);
 });
 // keep the bone count fresh when coming back from a game or another tab
-window.addEventListener('storage', e => { if (e.key === CONFIG.SHARED_KEY) { const old = S.bones; render(); if (S.bones !== old) document.getElementById('boneChip').classList.add('bump'); } });
+window.addEventListener('storage', e => { if (e.key === Meadow.save.key || e.key === null) { const old = S.bones; render(); if (S.bones !== old) document.getElementById('boneChip').classList.add('bump'); } });
 window.addEventListener('pageshow', e => { if (e.persisted) { render(); greet(); } });
 }
 </script>

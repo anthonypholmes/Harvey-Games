@@ -240,6 +240,36 @@ function migrate(old = readOld()) {
   return normalise(s);
 }
 
+/* ---------- keeping up with the old saves ----------
+   The old games may still be played after the new save was made: before go-live (the beta),
+   or offline on an iPad that still has the old pages saved. So every load checks whether the
+   old saves have changed since we last looked (a short fingerprint of their text), and if so
+   copies the new progress across. The old saves are still only read.
+     - stars: the best of both; logs: kept, missing ones filled in
+     - dress-up and themes: everything owned in either
+     - bones: the first time (a save from the beta) the live bones are used, because beta bones
+       were only for trying things out; after that, whatever the old game earned or spent since. */
+function oldPrint() {
+  const raw = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+  const t = raw(OLD_KEYS.shared) + '|' + raw(OLD_KEYS.words);
+  let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+  return t.length + ':' + h.toString(36);
+}
+function catchUp(s, old = readOld(), print = oldPrint()) {
+  const seen = isObj(s.oldSeen) ? s.oldSeen : null;
+  if (seen && seen.print === print) return false;
+  const live = migrate(old);
+  if (seen) s.bones = Math.max(0, s.bones + live.bones - int(seen.bones));
+  else { s.bones = live.bones; s.rewards = live.rewards; s.redeemed = live.redeemed; s.liveCopiedAt = new Date().toISOString(); }
+  if (seen) { const had = new Set(s.redeemed.map(r => JSON.stringify(r))); live.redeemed.forEach(r => { if (!had.has(JSON.stringify(r))) s.redeemed.push(r); }); }
+  Object.entries(live.stars).forEach(([k, v]) => { s.stars[k] = Math.max(s.stars[k] || 0, v); });
+  Object.entries(live.logs).forEach(([k, v]) => { if (!s.logs[k]) s.logs[k] = v; });
+  s.owned = { hats: [...new Set([...s.owned.hats, ...live.owned.hats])], themes: [...new Set([...s.owned.themes, ...live.owned.themes])] };
+  if (!s.name && live.name) s.name = live.name;
+  s.oldSeen = { print, bones: live.bones };
+  return true;
+}
+
 function write(s) {
   if (Object.values(OLD_KEYS).includes(KEY)) throw new Error('Meadow core must never write the old saves');
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
@@ -252,9 +282,10 @@ function load() {
       const old = readJSON(OLD_KEYS.shared);
       if (isObj(old) && typeof old.name === 'string' && old.name.trim()) { s.name = old.name.trim().slice(0, 30); write(s); }
     }
+    if (catchUp(s)) { const t = normalise(s); write(t); return t; }
     return s;
   }
-  const s = migrate(); write(s); return s;
+  const s = migrate(); s.oldSeen = { print: oldPrint(), bones: s.bones }; write(s); return s;
 }
 /* Always re-read before changing, so another open game never loses bones. */
 function mutate(fn) { S = load(); fn(S); S = normalise(S); write(S); renderHud(); return S; }
@@ -1289,7 +1320,7 @@ window.Meadow = {
   // play
   startGame, startLevel, correct, wrong, helped, askedBonnie, next, finishLevel, bubble, later, learner, isBusy, round,
   // save
-  save: { get key() { return KEY; }, load: () => (S = load()), get: () => S, mutate, migrate, readOld, normalise },
+  save: { get key() { return KEY; }, load: () => (S = load()), get: () => S, mutate, migrate, readOld, normalise, catchUp, oldPrint },
   stars: (worldId, levelId) => { if (!S) S = load(); return S.stars[worldId + '/' + levelId] || 0; },
   // screens
   home: () => homeScreen(), worldMap: id => worldScreen(id), shop: opts => shopScreen(opts || {}), grownUps: () => parentGate(),

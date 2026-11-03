@@ -10,7 +10,7 @@ An arcade home page linking Harvey's learning games. Bones earned in any game go
 
 The player's name is entered on the Clubhouse page the first time it opens (and changed there with **✏️ Change name**). Every game uses it in titles and in Bonnie's dialogue. If a game is opened before a name has been entered, it sends the player to the Clubhouse first.
 
-Every game has a 🏠 button that goes back to the Clubhouse. All games share one save (`harvey-splitter-v1` in `localStorage`): bones, the player's name, Bonnie's hats, themes, the real-life prize list and the record of bones spent. Each game keeps its own level progress. Meadow Words stores its stars in `meadowWords_english_v1`.
+Every game has a 🏠 button that goes back to the Clubhouse. All games share one save (`meadow-save-v1` in `localStorage`): bones, the player's name, Bonnie's dress-up, themes, the real-life prize list, the record of bones spent and every level's stars. (The old games saved to `harvey-splitter-v1` and `meadowWords_english_v1`; those are kept, read only.)
 
 To add another game, add an entry to the `GAMES` list in the `CONFIG` block at the top of the script in `index.html`.
 
@@ -23,7 +23,7 @@ Four worlds:
 - **The Partitioning Park:** splitting numbers into tens and ones (for example 47 = 40 + 7), with base-ten blocks and counters.
 - **The Stepping Stone River:** number lines from 0 to 100. Harvey drags Bonnie along the line to find numbers.
 - **The Array Orchard:** equal groups, rows of apples and the 2, 5 and 10 times tables.
-- **The Sharing Pond:** sharing fairly, grouping, halves and quarters.
+- **The Sharing Pond:** sharing fairly, grouping, halves, thirds and quarters.
 
 The player's name (entered on the Clubhouse page) is used in the game's title, throughout Bonnie's dialogue and in the story questions.
 
@@ -82,7 +82,7 @@ The first time the Clubhouse opens, Bonnie asks for the player's name.
 | 4 | Times Tables Harvest | 2, 5 and 10 times tables, with skip-counting help |
 | 5 | Word Problems | Little stories with groups, using the player's name |
 
-### The Sharing Pond (5 lily pads)
+### The Sharing Pond (7 lily pads)
 
 | | Lily pad | What it practises |
 |---|---|---|
@@ -92,7 +92,7 @@ The first time the Clubhouse opens, Bonnie asks for the player's name.
 | 4 | Quarter Splitting | Quarters of amounts and shapes, and naming ½, ¼ and ¾ |
 | 5 | Inverse Check | Using a times fact to solve a sharing fact, and back again |
 
-The beta also has two extra lily pads: **6 Thirds Island** (a third of an amount, which shape is cut into thirds, what fraction is shaded) and **7 Three Quarters** (three quarters of an amount and of a shape, and two quarters are the same as a half). They come from `worlds/y2-maths-sharing-fractions.js`.
+There are two more lily pads: **6 Thirds Island** (a third of an amount, which shape is cut into thirds, what fraction is shaded) and **7 Three Quarters** (three quarters of an amount and of a shape, and two quarters are the same as a half). They come from `worlds/y2-maths-sharing-fractions.js`.
 
 ## How Bonnie helps
 
@@ -163,23 +163,25 @@ This means:
 - Clearing Safari's website data, or browsing in a Private tab, starts afresh.
 - Updating the game file keeps progress, as long as the page address stays the same.
 
-## The shared engine (rebuild in progress)
+## The shared engine
 
-`js/meadow-core.js` is the shared engine every game will use: one save (`meadow-save-v1`), the star and bone rules, the world map, the level-complete screen, the Bone Shop, the grown-ups area and Bonnie. The live games don't use it yet. They move onto it one at a time in `/beta/` first.
+`js/meadow-core.js` is the shared engine all three pages use: one save (`meadow-save-v1`), the star and bone rules, the world map, the level-complete screen, the Bone Shop, the grown-ups area and Bonnie. The pages themselves are short: `index.html` (the Clubhouse), `meadow-maths.html` and `meadow-words.html` each load the engine and their world files.
 
 - **Old saves are only read.** The first time the engine runs, it copies `harvey-splitter-v1`, `meadowWords_english_v1` and `meadowClubhouse_sound` into `meadow-save-v1`. Words stars carry over. A Maths level that was done becomes 1 star. The old keys are never changed, so they stay as the rollback.
+- **Catching up with the old saves.** Each time it loads, the engine checks whether the old saves have changed since it last looked (for example, the old games played offline on an iPad that still had them saved). If so it copies the new progress across: the best stars of both, every dress-up item owned in either, and the bones the old game earned or spent since. A save made in the beta, before go-live, takes the live bones instead, because beta bones were only for trying things out.
 - **Stars:** 3 stars for at most 1 mistake and no help. 2 stars for at most 4 mistakes and at most 1 help. Otherwise 1 star. The best result is kept. A level unlocks once the one before has a star.
 - **Bones:** 1 per right answer, +1 the first time Bonnie is asked in a level, and 2 per *new* star at the end. There are no streak multipliers.
-- **Meadow Words (beta):** `beta/meadow-words.html` is Meadow Words on the engine. Its four worlds are in `worlds/y2-english-*.js`. It saves only to `meadow-save-v1`, so its bones and stars are separate from the live games until go-live. It has its own offline copy (`beta/sw.js`, cache `meadow-beta-…`), and the live `sw.js` leaves `/beta/` alone.
-- **Meadow Maths (beta):** `beta/meadow-maths.html` is Meadow Maths on the engine. `worlds/y2-maths-kit.js` is the question screen the four maths worlds share: the number pad, the pictures, the number line and Bonnie's help ladder (a clue, then the step card, then glowing buttons). The worlds themselves are in `worlds/y2-maths-*.js`. Only the step card and the glowing buttons count as help for stars; a clue does not. Two helped questions in a row quietly switch to easier numbers until two clean ones in a row.
-- **Clubhouse (beta):** `beta/index.html` is the Clubhouse on the engine. It reads and writes only `meadow-save-v1` (name, Clubhouse sound) and shows each game's stars. It loads every world file so it can count them, so a new world file is added there too. The beta games' 🏠 Clubhouse button goes back to it.
+- **Meadow Words:** its four worlds are in `worlds/y2-english-*.js`.
+- **Meadow Maths:** `worlds/y2-maths-kit.js` is the question screen the four maths worlds share: the number pad, the pictures, the number line and Bonnie's help ladder (a clue, then the step card, then glowing buttons). The worlds themselves are in `worlds/y2-maths-*.js`. Only the step card and the glowing buttons count as help for stars; a clue does not. Two helped questions in a row quietly switch to easier numbers until two clean ones in a row.
+- **Clubhouse:** reads and writes only `meadow-save-v1` (name, Clubhouse sound) and shows each game's stars. It loads every world file so it can count them, so a new world file is added there too.
 - **Bonnie's dress-up:** the Bone Shop's first tab has three slots, so Bonnie can wear a hat, something on her face and something round her neck at once (`hat`, `face`, `neck` in the save). Items are listed in `HATS` in the engine, each with its `slot`, and drawn in `hatSVG`, `faceSVG` and `neckSVG`.
-- **Voice lines:** `node tools/make-voice.mjs --compare` lists the lines the beta says that the old game doesn't, and the other way round. Normal runs record both.
+- **The old beta addresses** (`/beta/index.html`, `/beta/meadow-maths.html`, `/beta/meadow-words.html`) now just send you to the live pages. `beta/sw.js` removes the beta's old offline copy and then removes itself.
 - **Try it:** `beta/core-test.html` has a small practice world. It uses its own practice save (`meadow-save-test`), so it changes nothing. Its "Test tools" box shows what would be copied from this device's saves.
+- **Going back to the old games:** the old pages are in git history (the commit before "Stage 7"). Putting them back needs no save changes, because the old saves were never touched; only progress made in the new games would be missing.
 
 A world is one file that calls `Meadow.registerWorld({...})` with a stable `id`, a `subject`, a `year`, and `levels`. Each level has a stable `id` and either a list of `items` or a `make()` function. A `play(question, ctx)` function draws a question and calls `Meadow.correct(el)` or `Meadow.wrong(msg)`. Progress is stored as `worldId/levelId`, so worlds and levels can be reordered or added without breaking saves.
 
-A file can also add levels to a world another file made, with `Meadow.addLevels(worldId, levels)` (Maths files use `MeadowMaths.addLevels`). `worlds/y2-maths-sharing-fractions.js` does this for the Sharing Pond. To add a file like this: put a `<script>` line for it after the world's own file in `beta/meadow-maths.html` and `beta/index.html`, and add it to the list in `beta/sw.js` (and bump the version).
+A file can also add levels to a world another file made, with `Meadow.addLevels(worldId, levels)` (Maths files use `MeadowMaths.addLevels`). `worlds/y2-maths-sharing-fractions.js` does this for the Sharing Pond. To add a file like this: put a `<script>` line for it after the world's own file in `meadow-maths.html` and `index.html`, and add it to `CORE_ASSETS` in `sw.js` (and bump `CACHE_VERSION`).
 
 ## Bonnie's recorded voice (Clubhouse and Meadow Words)
 

@@ -2,37 +2,14 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Meadow Words (beta)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#FDFBF7">
-<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
-<script>
-  // the beta has its own offline copy (beta/sw.js), separate from the live games
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}); });
-  }
-</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Moved</title>
+<!-- The beta is now the live game, so this address just sends you there. -->
+<meta http-equiv="refresh" content="0; url=../meadow-words.html">
+<script>location.replace('../meadow-words.html' + location.hash);</script>
 </head>
-<body>
-<!-- Meadow Words on the shared engine. It saves only to meadow-save-v1 and only reads the old saves. -->
-<script src="../bonnie-voice.js"></script>
-<script src="../meadow-backup.js"></script>
-<script src="../js/meadow-core.js"></script>
-<!-- The worlds: to add one, add its file here. -->
-<script src="../worlds/y2-english-phonics.js"></script>
-<script src="../worlds/y2-english-tricky-words.js"></script>
-<script src="../worlds/y2-english-sentences.js"></script>
-<script src="../worlds/y2-english-stories.js"></script>
-<script>
-Meadow.startGame({
-  subject: 'english', title: 'Meadow Words', icon: '🌼', homeHref: 'index.html', assetBase: '../',
-  greets: ["Hello {N}! Shall we go on a word adventure?", "Woof! Hi {N}! Pick a world to explore!", "Hi {N}! I've hidden some words in the meadow. Let's find them!"],
-  testVoice: 'Hello {N}! I am Bonnie. Shall we read together?',
-});
-</script>
+<body style="font-family:sans-serif;background:#FDFBF7;padding:24px">
+<p>The new games are live now. <a href="../meadow-words.html">Go to Meadow Words</a>.</p>
 </body>
 </html>
