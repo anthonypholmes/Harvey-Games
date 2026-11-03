@@ -7,7 +7,7 @@
  * Pages and scripts always ask the server for a newer copy first, and use the
  * saved copy only when offline.
  */
-const BETA_VERSION = 'meadow-beta-v3';
+const BETA_VERSION = 'meadow-beta-v4';
 const FONT_CACHE = 'meadow-club-fonts-v1';   // shared with the live games
 const AUDIO_CACHE = 'meadow-club-audio-v1';  // shared with the live games and bonnie-voice.js
 const ASSETS = [
@@ -24,6 +24,7 @@ const ASSETS = [
   '../worlds/y2-maths-number-lines.js',
   '../worlds/y2-maths-arrays.js',
   '../worlds/y2-maths-sharing.js',
+  '../worlds/y2-maths-sharing-fractions.js',
   '../bonnie-voice.js',
   '../meadow-backup.js',
   '../icon-192.png',
