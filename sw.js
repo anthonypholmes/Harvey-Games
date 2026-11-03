@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v5';
+const CACHE_VERSION = 'meadow-club-v6';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -43,7 +43,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => ![CACHE_VERSION, FONT_CACHE, AUDIO_CACHE].includes(k)).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => ![CACHE_VERSION, FONT_CACHE, AUDIO_CACHE].includes(k) && !k.startsWith('meadow-beta-')).map(k => caches.delete(k)))) // beta/sw.js looks after its own
       .then(() => self.clients.claim())
   );
 });
@@ -59,6 +59,8 @@ self.addEventListener('fetch', event => {
     return;
   }
   if (url.origin !== self.location.origin) return;
+  // the beta games (/beta/) have their own service worker and cache: leave them alone
+  if (url.pathname.startsWith('/beta/')) return;
 
   if (url.pathname.includes('/audio/')) {
     event.respondWith(url.pathname.endsWith('/manifest.json') ? networkFirst(req, AUDIO_CACHE, false) : cacheFirst(req, AUDIO_CACHE));
