@@ -92,6 +92,8 @@ The first time the Clubhouse opens, Bonnie asks for the player's name.
 | 4 | Quarter Splitting | Quarters of amounts and shapes, and naming ½, ¼ and ¾ |
 | 5 | Inverse Check | Using a times fact to solve a sharing fact, and back again |
 
+The beta also has two extra lily pads: **6 Thirds Island** (a third of an amount, which shape is cut into thirds, what fraction is shaded) and **7 Three Quarters** (three quarters of an amount and of a shape, and two quarters are the same as a half). They come from `worlds/y2-maths-sharing-fractions.js`.
+
 ## How Bonnie helps
 
 The **Ask Bonnie** button, or a wrong answer, moves one step up a help ladder:
@@ -176,6 +178,8 @@ This means:
 - **Try it:** `beta/core-test.html` has a small practice world. It uses its own practice save (`meadow-save-test`), so it changes nothing. Its "Test tools" box shows what would be copied from this device's saves.
 
 A world is one file that calls `Meadow.registerWorld({...})` with a stable `id`, a `subject`, a `year`, and `levels`. Each level has a stable `id` and either a list of `items` or a `make()` function. A `play(question, ctx)` function draws a question and calls `Meadow.correct(el)` or `Meadow.wrong(msg)`. Progress is stored as `worldId/levelId`, so worlds and levels can be reordered or added without breaking saves.
+
+A file can also add levels to a world another file made, with `Meadow.addLevels(worldId, levels)` (Maths files use `MeadowMaths.addLevels`). `worlds/y2-maths-sharing-fractions.js` does this for the Sharing Pond. To add a file like this: put a `<script>` line for it after the world's own file in `beta/meadow-maths.html` and `beta/index.html`, and add it to the list in `beta/sw.js` (and bump the version).
 
 ## Bonnie's recorded voice (Clubhouse and Meadow Words)
 
