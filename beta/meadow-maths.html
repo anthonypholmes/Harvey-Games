@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meadow Maths (beta)</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FDFBF7">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+<script>
+  // the beta has its own offline copy (beta/sw.js), separate from the live games
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {}); });
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Meadow Maths on the shared engine. It saves only to meadow-save-v1 and only reads the old saves. -->
+<script src="../bonnie-voice.js"></script>
+<script src="../meadow-backup.js"></script>
+<script src="../js/meadow-core.js"></script>
+<!-- The maths question screen the worlds share, then the worlds: to add one, add its file here. -->
+<script src="../worlds/y2-maths-kit.js"></script>
+<script src="../worlds/y2-maths-partitioning.js"></script>
+<script src="../worlds/y2-maths-number-lines.js"></script>
+<script src="../worlds/y2-maths-arrays.js"></script>
+<script src="../worlds/y2-maths-sharing.js"></script>
+<script>
+Meadow.startGame({
+  subject: 'maths', title: 'Meadow Maths', icon: '🔢', homeHref: '../index.html', assetBase: '../', readAloudOption: true,
+  greets: ["Woof! I'm Bonnie. Stuck? Tap Ask Bonnie and we'll do it together.", "Hi {N}! Pick a world and let's do some maths!", "Hello {N}! Shall we count some bones?"],
+  testVoice: 'Hello {N}! I am Bonnie. Shall we do some maths?',
+});
+</script>
+</body>
+</html>
