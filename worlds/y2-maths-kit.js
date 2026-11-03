@@ -115,15 +115,15 @@ const fillStep = (say, ans, cands, box = 0) => ({ say, choices: pick3(ans, cands
 const shareDone = v => sum(v.bowls) === v.N && v.bowls.every(b => b === v.bowls[0]);
 const gridOk = v => v.r === v.tr && v.c === v.tc;
 /* The burrow frame: a ten frame drawn as burrow holes, in rows of 5 (two frames for numbers up to 20).
-   burrow({ n: holes, a, aItem, b, bItem, tap, item, pile, ten, cap }) makes the picture:
-     the first a holes hold aItem (bones), the next b hold bItem (carrots).
+   burrow({ n: holes, a, aItem, b, bItem, c, cItem, tap, item, pile, ten, cap }) makes the picture:
+     the first a holes hold aItem (bones), the next b hold bItem (carrots), the next c hold cItem (apples).
      tap 'fill': tap an empty hole to drop in an item (pile = how many there are; leave out for no limit),
                  tap one you dropped to take it out.  tap 'take': tap a bone for Bonnie to eat it (tap again to put it back).
      ten: every item is a bag of 10.  cap(v): the line under the frame. Leave it out for a cheer with no
      numbers in it ("The first burrow is full!"); a caption that counts would give the answer away. */
 function burrow(o) {
-  const n = o.n || 10, a = o.a || 0, b = o.b || 0;
-  const holes = Array.from({ length: n }, (_, i) => ({ k: i < a ? (o.aItem || 'bone') : i < a + b ? (o.bItem || 'carrot') : '', mine: false, eaten: false }));
+  const n = o.n || 10, a = o.a || 0, b = o.b || 0, c = o.c || 0;
+  const holes = Array.from({ length: n }, (_, i) => ({ k: i < a ? (o.aItem || 'bone') : i < a + b ? (o.bItem || 'carrot') : i < a + b + c ? (o.cItem || 'apple') : '', mine: false, eaten: false }));
   return { type: 'burrow', holes, tap: o.tap || null, item: o.item || 'bone', pile: o.pile ?? null, ten: !!o.ten, cap: o.cap || null, last: -1 };
 }
 // count the holes that match: burrowCount(v) = filled (and not eaten), or pass a test of your own
@@ -1131,7 +1131,7 @@ const CSS = String.raw`
 .mm button.gv-hole:not(.full) { box-shadow: 0 0 0 2px rgba(255, 248, 236, .55); }
 .mm button.gv-hole:active { transform: scale(.94); }
 .mm .gv-hole .gi { width: 40px; height: 40px; position: relative; }
-.mm .gv-hole .gi .bone, .mm .gv-hole .gi .carrot { width: 40px; height: 40px; }
+.mm .gv-hole .gi .bone, .mm .gv-hole .gi .carrot, .mm .gv-hole .gi .apple { width: 40px; height: 40px; }
 .mm .gv-hole.mine { border-color: var(--sun); box-shadow: 0 0 0 3px var(--sun) !important; }
 .mm .gv-hole.eaten .gi { opacity: .22; filter: grayscale(1); }
 .mm .gi .carrot { width: 26px; height: 26px; transform: rotate(-20deg); }
@@ -1140,7 +1140,7 @@ const CSS = String.raw`
 .mm .bag10 { position: absolute; left: 50%; bottom: -3px; transform: translateX(-50%); padding: 0 4px; border-radius: 6px; background: #fff; border: 2px solid var(--tens-dk); color: var(--tens-dk); font-family: var(--f-display); font-style: normal; font-weight: 700; font-size: 12px; line-height: 1.1; }
 @media (max-width: 560px) {
   .mm .gv-burrow { --hole: 44px; gap: 6px; padding: 10px; }
-  .mm .gv-hole .gi, .mm .gv-hole .gi .bone, .mm .gv-hole .gi .carrot { width: 32px; height: 32px; }
+  .mm .gv-hole .gi, .mm .gv-hole .gi .bone, .mm .gv-hole .gi .carrot, .mm .gv-hole .gi .apple { width: 32px; height: 32px; }
 }
 .mm .helper { position: relative; }
 .mm .scout-pop { position: absolute; right: 6px; top: -10px; display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; background: linear-gradient(180deg, #FFE7A3, var(--sun)); border: 2px solid var(--wood-dk); color: var(--ink); box-shadow: 0 8px 18px -8px rgba(120, 85, 45, .7); font-family: var(--f-display); z-index: 5; pointer-events: none; animation: mm-scout 1.8s cubic-bezier(.3, 1.5, .5, 1) forwards; }
@@ -1191,7 +1191,8 @@ window.MeadowMaths = {
   world, addLevels, SHAPES, rand, pick, shuffle, NAME, PL, len, pow, countsOf, partsOf, joinAnd, placeList, nameCount, colorNum, near, makesChoices,
   rd, fmtN, range, pick3, JUMPS, jumpOpts, gq, fillStep, shareDone, gridOk, shapeSVG, frac, sum, PRAISE, TIER_NAMES,
   burrow, burrowCount, burrowFull, burrowPlaced,
-  redraw: () => { if (S && root()) redrawG(); },   // repaint the picture after a step changes it
+  // repaint the picture after a step changes it (the burrow and other pictures, or the place value blocks)
+  redraw: () => { if (!S || !root()) return; if (S.q.vis) redrawG(); else if (S.q.mode) redrawVisual(); },
   peek: () => S,   // the question on screen, read only (for the browser tests)
 };
 })();
