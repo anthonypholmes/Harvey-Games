@@ -263,6 +263,26 @@ function mutate(fn) { S = load(); fn(S); S = normalise(S); write(S); renderHud()
    WORLDS
    ========================================================= */
 const WORLDS = [];
+function checkLevels(w, levels, fail) {
+  const seen = new Set();
+  levels.forEach((L, i) => {
+    if (!L || typeof L.id !== 'string' || !L.id) fail(`level ${i + 1} needs an id`);
+    if (seen.has(L.id)) fail(`level id "${L.id}" is used twice`); seen.add(L.id);
+    if (!Array.isArray(L.items) && typeof L.make !== 'function') fail(`level "${L.id}" needs items or make()`);
+    if (typeof (L.play || w.play) !== 'function') fail(`level "${L.id}" needs a play() function (on the level or the world)`);
+  });
+}
+/* A file can add levels to the end of a world another file made (load it after that world).
+   Stars are saved by level id, so the levels already there keep theirs. */
+function addLevels(worldId, levels) {
+  const w = WORLDS.find(x => x.id === worldId);
+  const fail = msg => { throw new Error(`Meadow.addLevels(${worldId}): ${msg}`); };
+  if (!w) fail('no world has that id (load its file first)');
+  if (!Array.isArray(levels) || !levels.length) fail('no levels to add');
+  checkLevels(w, [...w.levels, ...levels], fail);
+  w.levels.push(...levels);
+  return w;
+}
 function registerWorld(w) {
   const fail = msg => { throw new Error(`Meadow.registerWorld(${w && w.id}): ${msg}`); };
   if (!isObj(w) || typeof w.id !== 'string' || !w.id) fail('a world needs an id');
@@ -270,13 +290,7 @@ function registerWorld(w) {
   if (!w.subject) fail('a world needs a subject');
   if (!Number.isFinite(w.year)) fail('a world needs a school year (a number)');
   if (!Array.isArray(w.levels) || !w.levels.length) fail('a world needs levels');
-  const seen = new Set();
-  w.levels.forEach((L, i) => {
-    if (!L || typeof L.id !== 'string' || !L.id) fail(`level ${i + 1} needs an id`);
-    if (seen.has(L.id)) fail(`level id "${L.id}" is used twice`); seen.add(L.id);
-    if (!Array.isArray(L.items) && typeof L.make !== 'function') fail(`level "${L.id}" needs items or make()`);
-    if (typeof (L.play || w.play) !== 'function') fail(`level "${L.id}" needs a play() function (on the level or the world)`);
-  });
+  checkLevels(w, w.levels, fail);
   WORLDS.push(w);
   if (w.css && typeof document !== 'undefined' && document.head) addStyle(w.css, 'meadow-world-' + w.id);
   return w;
@@ -1271,7 +1285,7 @@ window.Meadow = {
   version: SAVE_VERSION,
   RULES, HATS, SLOTS, THEMES, STARTER_PRIZES, OLD_IDS, OLD_KEYS, LINES,
   // content
-  registerWorld, worlds: subjectWorlds, world: worldById, visibleWorlds, shownYears, levelUnlocked, starSummary,
+  registerWorld, addLevels, worlds: subjectWorlds, world: worldById, visibleWorlds, shownYears, levelUnlocked, starSummary,
   // play
   startGame, startLevel, correct, wrong, helped, askedBonnie, next, finishLevel, bubble, later, learner, isBusy, round,
   // save

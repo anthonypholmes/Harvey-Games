@@ -842,6 +842,8 @@ function wrapLevel(L, id) {
     },
   };
 }
+// more levels for a maths world another file made (Stage 6: thirds and three quarters)
+function addLevels(worldId, d) { return Meadow.addLevels(worldId, d.levels.map((L, i) => wrapLevel(L, d.ids[i]))); }
 function world(d) {
   DEFS[d.id] = d;
   return {
@@ -1109,7 +1111,7 @@ if (!document.getElementById('meadow-maths-kit')) {
 }
 
 window.MeadowMaths = {
-  world, rand, pick, shuffle, NAME, PL, len, pow, countsOf, partsOf, joinAnd, placeList, nameCount, colorNum, near, makesChoices,
+  world, addLevels, SHAPES, rand, pick, shuffle, NAME, PL, len, pow, countsOf, partsOf, joinAnd, placeList, nameCount, colorNum, near, makesChoices,
   rd, fmtN, range, pick3, JUMPS, jumpOpts, gq, fillStep, shareDone, gridOk, shapeSVG, frac, sum, PRAISE, TIER_NAMES,
   peek: () => S,   // the question on screen, read only (for the browser tests)
 };
