@@ -33,7 +33,7 @@ const AUDIO = path.join(ROOT, 'audio');
 const MANIFEST = path.join(AUDIO, 'manifest.json');
 const NAME_TOKEN = 'Qqchildnameqq'; // stands in for the child's name while listing lines
 // Pages built on the shared engine (js/meadow-core.js) whose lines are recorded too.
-const CORE_PAGES = ['meadow-words.html'];
+const CORE_PAGES = ['meadow-words.html', 'meadow-maths.html'];
 
 const args = process.argv.slice(2);
 const opt = n => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
@@ -176,6 +176,10 @@ const chars = todo.reduce((a, [, t]) => a + sayAs(t).length, 0) + namesTodo.redu
 
 console.log(`Lines: ${game.lines.length}  ·  pieces: ${wanted.size}  ·  new clips needed: ${todo.length + namesTodo.length + wholeTodo.length}  ·  characters: ${chars}`);
 if (DRY) {
+  // show what would be recorded, so new lines can be checked before paying for them
+  todo.forEach(([, t]) => console.log('  new: ' + t));
+  wholeTodo.forEach(w => console.log(`  new (${w.n}): ${w.text}`));
+  namesTodo.forEach(n => console.log('  new name: ' + n));
   const all = [...wanted.values()].reduce((a, t) => a + t.length, 0);
   console.log(`(A full set from scratch is about ${all} characters.) Dry run: nothing made.`);
   process.exit(0);

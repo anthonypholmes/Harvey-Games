@@ -4,6 +4,7 @@
  "clips": {
   "15831362": "clips/15831362-4crzui.mp3",
   "15841971": "clips/15841971-4crzui.mp3",
+  "27356004": "clips/27356004-4crzui.mp3",
   "30046465": "clips/30046465-4crzui.mp3",
   "33050819": "clips/33050819-4crzui.mp3",
   "35435071": "clips/35435071-4crzui.mp3",
@@ -1326,7 +1327,54 @@
   "c500aefe": "clips/c500aefe-4crzui.mp3",
   "67117fc0": "clips/67117fc0-4crzui.mp3",
   "c7c9c72c": "clips/c7c9c72c-4crzui.mp3",
-  "d5939a96": "clips/d5939a96-4crzui.mp3"
+  "d5939a96": "clips/d5939a96-4crzui.mp3",
+  "dc1c4fbc": "clips/dc1c4fbc-4crzui.mp3",
+  "d693847c": "clips/d693847c-4crzui.mp3",
+  "49e48fd6": "clips/49e48fd6-4crzui.mp3",
+  "ba3807d8": "clips/ba3807d8-4crzui.mp3",
+  "5c0d2db4": "clips/5c0d2db4-4crzui.mp3",
+  "ac8c8e3c": "clips/ac8c8e3c-4crzui.mp3",
+  "3deb0179": "clips/3deb0179-4crzui.mp3",
+  "8bff84ae": "clips/8bff84ae-4crzui.mp3",
+  "a9a8b11b": "clips/a9a8b11b-4crzui.mp3",
+  "747e7c3f": "clips/747e7c3f-4crzui.mp3",
+  "5c1c3eaf": "clips/5c1c3eaf-4crzui.mp3",
+  "982133a1": "clips/982133a1-4crzui.mp3",
+  "703f0561": "clips/703f0561-4crzui.mp3",
+  "86f41bd8": "clips/86f41bd8-4crzui.mp3",
+  "7c27880c": "clips/7c27880c-4crzui.mp3",
+  "66d9f817": "clips/66d9f817-4crzui.mp3",
+  "2a8c693a": "clips/2a8c693a-4crzui.mp3",
+  "debec917": "clips/debec917-4crzui.mp3",
+  "8b674a1d": "clips/8b674a1d-4crzui.mp3",
+  "d3a38690": "clips/d3a38690-4crzui.mp3",
+  "e8204bee": "clips/e8204bee-4crzui.mp3",
+  "b3c0d233": "clips/b3c0d233-4crzui.mp3",
+  "dee06d6d": "clips/dee06d6d-4crzui.mp3",
+  "7d965594": "clips/7d965594-4crzui.mp3",
+  "c4415397": "clips/c4415397-4crzui.mp3",
+  "c4cd7824": "clips/c4cd7824-4crzui.mp3",
+  "7a30c733": "clips/7a30c733-4crzui.mp3",
+  "5ab2498e": "clips/5ab2498e-4crzui.mp3",
+  "1c5c243c": "clips/1c5c243c-4crzui.mp3",
+  "fd9e9971": "clips/fd9e9971-4crzui.mp3",
+  "5c2bab51": "clips/5c2bab51-4crzui.mp3",
+  "83379a9f": "clips/83379a9f-4crzui.mp3",
+  "1d9b26a3": "clips/1d9b26a3-4crzui.mp3",
+  "efc16459": "clips/efc16459-4crzui.mp3",
+  "7cb09eb2": "clips/7cb09eb2-4crzui.mp3",
+  "fd318797": "clips/fd318797-4crzui.mp3",
+  "20e75bec": "clips/20e75bec-4crzui.mp3",
+  "c9c640ee": "clips/c9c640ee-4crzui.mp3",
+  "8730dbaa": "clips/8730dbaa-4crzui.mp3",
+  "dfc537ff": "clips/dfc537ff-4crzui.mp3",
+  "3ced33a8": "clips/3ced33a8-4crzui.mp3",
+  "4dc6704d": "clips/4dc6704d-4crzui.mp3",
+  "5708fb68": "clips/5708fb68-4crzui.mp3",
+  "46f16ad2": "clips/46f16ad2-4crzui.mp3",
+  "9ea77d4d": "clips/9ea77d4d-4crzui.mp3",
+  "aad66e78": "clips/aad66e78-4crzui.mp3",
+  "8e3c9e64": "clips/8e3c9e64-4crzui.mp3"
  },
  "names": {
   "harvey": "names/harvey-4crzui.mp3",
@@ -1438,6 +1486,7 @@
  "texts": {
   "15831362": "'like' has a magic 'e' at the end: l-i-k-e.",
   "15841971": "Okay, okay, you win!",
+  "27356004": "Fill the burrows with bags of 10.",
   "30046465": "\"Green\" doesn't need a capital letter here.",
   "33050819": "Watch me build it: s m i l e makes smile!",
   "35435071": "snail!",
@@ -2760,9 +2809,56 @@
   "c500aefe": "Watch my super spin!",
   "67117fc0": "So many tickles!",
   "c7c9c72c": "Time for a happy dance!",
-  "d5939a96": "You're the tickle champion,"
+  "d5939a96": "You're the tickle champion,",
+  "dc1c4fbc": "Shall we do some maths?",
+  "d693847c": "Stuck?",
+  "49e48fd6": "Tap Ask Bonnie and we'll do it together.",
+  "ba3807d8": "Pick a world and let's do some maths!",
+  "5c0d2db4": "Shall we count some bones?",
+  "ac8c8e3c": "Brilliant,",
+  "3deb0179": "Spot on!",
+  "8bff84ae": "You got it!",
+  "a9a8b11b": "Super splitting!",
+  "747e7c3f": "Nailed it,",
+  "5c1c3eaf": "Amazing!",
+  "982133a1": "Top marks!",
+  "703f0561": "Well done,",
+  "86f41bd8": "Fill the empty burrows.",
+  "7c27880c": "Count how many you add!",
+  "66d9f817": "Fill the first burrow to 10 first!",
+  "2a8c693a": "The first burrow is full: that’s 10.",
+  "debec917": "Add the ones!",
+  "8b674a1d": "The tens are the same.",
+  "d3a38690": "Look at the ones!",
+  "e8204bee": "The top line helps!",
+  "b3c0d233": "Now they are tens.",
+  "dee06d6d": "Tens first, then ones.",
+  "7d965594": "Spot two numbers that make 10!",
+  "c4415397": "Add the first two.",
+  "c4cd7824": "Then add the last one.",
+  "7a30c733": "Adding undoes taking away!",
+  "5ab2498e": "The same three numbers work both ways.",
+  "1c5c243c": "Does adding work in any order?",
+  "fd9e9971": "Does taking away work in any order?",
+  "5c2bab51": "Tap the empty burrows to fill them up.",
+  "83379a9f": "How many bones did you add?",
+  "1d9b26a3": "How many bones are left?",
+  "efc16459": "How many did Bonnie eat?",
+  "7cb09eb2": "How many more to make 10?",
+  "fd318797": "How many bags did you add?",
+  "20e75bec": "Which two make 10?",
+  "c9c640ee": "What undoes taking away?",
+  "8730dbaa": "Adding undoes taking away.",
+  "dfc537ff": "Which one helps?",
+  "3ced33a8": "Are the same three numbers in both lines?",
+  "4dc6704d": "Same answer both ways!",
+  "5708fb68": "So it is",
+  "46f16ad2": "True or false?",
+  "9ea77d4d": "Use the little fact to help.",
+  "aad66e78": "Use the adding fact to help.",
+  "8e3c9e64": "Use the take away fact to help."
  },
- "made": "2026-11-03T11:30:50.857Z",
+ "made": "2026-11-03T15:02:49.463Z",
  "said": {
   "11b54859": "Nnn...",
   "38deadf5": "rrrr.",
@@ -2826,7 +2922,10 @@
    "2db0f157": "whole/harvey/2db0f157-4crzui.mp3",
    "dfd71c22": "whole/harvey/dfd71c22-4crzui.mp3",
    "7ed4811d": "whole/harvey/7ed4811d-4crzui.mp3",
-   "b3a758d5": "whole/harvey/b3a758d5-4crzui.mp3"
+   "b3a758d5": "whole/harvey/b3a758d5-4crzui.mp3",
+   "8f2b9e07": "whole/harvey/8f2b9e07-4crzui.mp3",
+   "3b37d64e": "whole/harvey/3b37d64e-4crzui.mp3",
+   "ed29c7a4": "whole/harvey/ed29c7a4-4crzui.mp3"
   },
   "rex": {
    "10271631": "whole/rex/10271631-4crzui.mp3",
@@ -2883,7 +2982,10 @@
    "2db0f157": "whole/rex/2db0f157-4crzui.mp3",
    "dfd71c22": "whole/rex/dfd71c22-4crzui.mp3",
    "7ed4811d": "whole/rex/7ed4811d-4crzui.mp3",
-   "b3a758d5": "whole/rex/b3a758d5-4crzui.mp3"
+   "b3a758d5": "whole/rex/b3a758d5-4crzui.mp3",
+   "8f2b9e07": "whole/rex/8f2b9e07-4crzui.mp3",
+   "3b37d64e": "whole/rex/3b37d64e-4crzui.mp3",
+   "ed29c7a4": "whole/rex/ed29c7a4-4crzui.mp3"
   },
   "samantha": {
    "10271631": "whole/samantha/10271631-4crzui.mp3",
@@ -2940,7 +3042,10 @@
    "2db0f157": "whole/samantha/2db0f157-4crzui.mp3",
    "dfd71c22": "whole/samantha/dfd71c22-4crzui.mp3",
    "7ed4811d": "whole/samantha/7ed4811d-4crzui.mp3",
-   "b3a758d5": "whole/samantha/b3a758d5-4crzui.mp3"
+   "b3a758d5": "whole/samantha/b3a758d5-4crzui.mp3",
+   "8f2b9e07": "whole/samantha/8f2b9e07-4crzui.mp3",
+   "3b37d64e": "whole/samantha/3b37d64e-4crzui.mp3",
+   "ed29c7a4": "whole/samantha/ed29c7a4-4crzui.mp3"
   },
   "anthony": {
    "10271631": "whole/anthony/10271631-4crzui.mp3",
@@ -2997,7 +3102,10 @@
    "2db0f157": "whole/anthony/2db0f157-4crzui.mp3",
    "dfd71c22": "whole/anthony/dfd71c22-4crzui.mp3",
    "7ed4811d": "whole/anthony/7ed4811d-4crzui.mp3",
-   "b3a758d5": "whole/anthony/b3a758d5-4crzui.mp3"
+   "b3a758d5": "whole/anthony/b3a758d5-4crzui.mp3",
+   "8f2b9e07": "whole/anthony/8f2b9e07-4crzui.mp3",
+   "3b37d64e": "whole/anthony/3b37d64e-4crzui.mp3",
+   "ed29c7a4": "whole/anthony/ed29c7a4-4crzui.mp3"
   },
   "alaya": {
    "10271631": "whole/alaya/10271631-4crzui.mp3",
@@ -3054,7 +3162,10 @@
    "2db0f157": "whole/alaya/2db0f157-4crzui.mp3",
    "dfd71c22": "whole/alaya/dfd71c22-4crzui.mp3",
    "7ed4811d": "whole/alaya/7ed4811d-4crzui.mp3",
-   "b3a758d5": "whole/alaya/b3a758d5-4crzui.mp3"
+   "b3a758d5": "whole/alaya/b3a758d5-4crzui.mp3",
+   "8f2b9e07": "whole/alaya/8f2b9e07-4crzui.mp3",
+   "3b37d64e": "whole/alaya/3b37d64e-4crzui.mp3",
+   "ed29c7a4": "whole/alaya/ed29c7a4-4crzui.mp3"
   },
   "rory": {
    "10271631": "whole/rory/10271631-4crzui.mp3",
@@ -3111,7 +3222,10 @@
    "2db0f157": "whole/rory/2db0f157-4crzui.mp3",
    "dfd71c22": "whole/rory/dfd71c22-4crzui.mp3",
    "7ed4811d": "whole/rory/7ed4811d-4crzui.mp3",
-   "b3a758d5": "whole/rory/b3a758d5-4crzui.mp3"
+   "b3a758d5": "whole/rory/b3a758d5-4crzui.mp3",
+   "8f2b9e07": "whole/rory/8f2b9e07-4crzui.mp3",
+   "3b37d64e": "whole/rory/3b37d64e-4crzui.mp3",
+   "ed29c7a4": "whole/rory/ed29c7a4-4crzui.mp3"
   }
  },
  "wholeTexts": {
@@ -3170,7 +3284,10 @@
    "2db0f157": "On a frosty morning, Harvey saw a robin in the garden.",
    "dfd71c22": "Harvey put out some seeds for it.",
    "7ed4811d": "Welcome back, Harvey!",
-   "b3a758d5": "You're the tickle champion, Harvey!"
+   "b3a758d5": "You're the tickle champion, Harvey!",
+   "8f2b9e07": "Brilliant, Harvey!",
+   "3b37d64e": "Nailed it, Harvey!",
+   "ed29c7a4": "Well done, Harvey!"
   },
   "rex": {
    "10271631": "Mum and Rex went to the shop.",
@@ -3227,7 +3344,10 @@
    "2db0f157": "On a frosty morning, Rex saw a robin in the garden.",
    "dfd71c22": "Rex put out some seeds for it.",
    "7ed4811d": "Welcome back, Rex!",
-   "b3a758d5": "You're the tickle champion, Rex!"
+   "b3a758d5": "You're the tickle champion, Rex!",
+   "8f2b9e07": "Brilliant, Rex!",
+   "3b37d64e": "Nailed it, Rex!",
+   "ed29c7a4": "Well done, Rex!"
   },
   "samantha": {
    "10271631": "Mum and Samantha went to the shop.",
@@ -3284,7 +3404,10 @@
    "2db0f157": "On a frosty morning, Samantha saw a robin in the garden.",
    "dfd71c22": "Samantha put out some seeds for it.",
    "7ed4811d": "Welcome back, Samantha!",
-   "b3a758d5": "You're the tickle champion, Samantha!"
+   "b3a758d5": "You're the tickle champion, Samantha!",
+   "8f2b9e07": "Brilliant, Samantha!",
+   "3b37d64e": "Nailed it, Samantha!",
+   "ed29c7a4": "Well done, Samantha!"
   },
   "anthony": {
    "10271631": "Mum and Anthony went to the shop.",
@@ -3341,7 +3464,10 @@
    "2db0f157": "On a frosty morning, Anthony saw a robin in the garden.",
    "dfd71c22": "Anthony put out some seeds for it.",
    "7ed4811d": "Welcome back, Anthony!",
-   "b3a758d5": "You're the tickle champion, Anthony!"
+   "b3a758d5": "You're the tickle champion, Anthony!",
+   "8f2b9e07": "Brilliant, Anthony!",
+   "3b37d64e": "Nailed it, Anthony!",
+   "ed29c7a4": "Well done, Anthony!"
   },
   "alaya": {
    "10271631": "Mum and Alaya went to the shop.",
@@ -3398,7 +3524,10 @@
    "2db0f157": "On a frosty morning, Alaya saw a robin in the garden.",
    "dfd71c22": "Alaya put out some seeds for it.",
    "7ed4811d": "Welcome back, Alaya!",
-   "b3a758d5": "You're the tickle champion, Alaya!"
+   "b3a758d5": "You're the tickle champion, Alaya!",
+   "8f2b9e07": "Brilliant, Alaya!",
+   "3b37d64e": "Nailed it, Alaya!",
+   "ed29c7a4": "Well done, Alaya!"
   },
   "rory": {
    "10271631": "Mum and Rory went to the shop.",
@@ -3455,7 +3584,10 @@
    "2db0f157": "On a frosty morning, Rory saw a robin in the garden.",
    "dfd71c22": "Rory put out some seeds for it.",
    "7ed4811d": "Welcome back, Rory!",
-   "b3a758d5": "You're the tickle champion, Rory!"
+   "b3a758d5": "You're the tickle champion, Rory!",
+   "8f2b9e07": "Brilliant, Rory!",
+   "3b37d64e": "Nailed it, Rory!",
+   "ed29c7a4": "Well done, Rory!"
   }
  }
 }
