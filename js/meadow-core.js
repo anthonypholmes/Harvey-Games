@@ -1090,6 +1090,9 @@ body[data-theme="night"]{--on-bg:#F3EEDF;--accent:#B58BE0;--accent-dark:#8A62B8;
 body[data-theme="snow"]{--accent:#2F8FB0;--accent-dark:#1F6A85;background:radial-gradient(900px 600px at 10% 0%,rgba(180,212,240,.6),transparent 60%),radial-gradient(800px 600px at 100% 100%,rgba(255,255,255,.9),transparent 60%),#EEF5FB;background-attachment:fixed}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
+/* never fake bold or italics: the fonts have their own bold, and Safari's fake one smudges the letters */
+html{font-synthesis:none}
+b,strong{font-weight:700}
 body{font-family:var(--font-ui);color:var(--ink);background:radial-gradient(1200px 600px at 20% -10%,rgba(255,255,255,.55),transparent 60%),linear-gradient(180deg,var(--bg1),var(--bg2));background-color:var(--bg1);background-attachment:fixed;min-height:100%;overflow-x:hidden;user-select:none;-webkit-user-select:none}
 input,textarea{user-select:text;-webkit-user-select:text}
 button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}

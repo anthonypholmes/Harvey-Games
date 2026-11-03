@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v7';
+const CACHE_VERSION = 'meadow-club-v8';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -39,7 +39,7 @@ const CORE_ASSETS = [
 // Google Fonts stylesheets used by the pages (keep in step with their <link> tags).
 const FONT_CSS = [
   'https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap',
-  'https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@500;600;700;800&display=swap',
+  'https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap',
 ];
 const NETWORK_TIMEOUT_MS = 4000;
 

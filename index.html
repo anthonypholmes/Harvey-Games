@@ -42,6 +42,8 @@ body[data-theme="night"]{--on-bg:#F3EEDF;background:radial-gradient(700px 500px 
 body[data-theme="snow"]{background:radial-gradient(900px 600px at 10% 0%,rgba(180,212,240,.6),transparent 60%),radial-gradient(800px 600px at 100% 100%,rgba(255,255,255,.9),transparent 60%),#EEF5FB!important;background-attachment:fixed}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
+html{font-synthesis:none} /* never fake bold: Safari's fake bold smudges the letters */
+b,strong{font-weight:700}
 body{font-family:var(--font-ui);color:var(--ink);overflow-x:hidden;user-select:none;-webkit-user-select:none;
   background:radial-gradient(1200px 600px at 20% -10%,rgba(255,255,255,.55),transparent 60%),linear-gradient(180deg,var(--bg1),var(--bg2));
   background-attachment:fixed;min-height:100vh}
