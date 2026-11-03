@@ -1,5 +1,5 @@
 /*
- * Meadow Maths kit: the question screen that all four Year 2 maths worlds share.
+ * Meadow Maths kit: the question screen that all the Year 2 maths worlds share.
  *
  * It draws the question (the sum, the blocks or pictures, the number line), the number
  * pad or answer buttons, and Bonnie's help ladder:
@@ -70,7 +70,8 @@ const ICON = {
   del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h11v14H9l-6-7z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/></svg>',
   turn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.3-5.6"/><path d="M20 4v4.5h-4.5"/></svg>',
 };
-const itemSVG = k => (k === 'apple' ? APPLE : BONE);
+const CARROT = '<svg class="carrot" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c1-2.6 .4-4.6-.8-5.6M12 7c1.6-2 3.6-2.4 5.4-1.8M12 7c-1.4-1.6-3.6-2-5.2-1.2" stroke="#4E9A47" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M8.2 8.4c2.2-1.4 5.4-1.4 7.6 0 .8.6 1 1.6.6 2.6L12.9 21c-.4 1.1-1.4 1.1-1.8 0L7.6 11c-.4-1-.2-2 .6-2.6z" fill="#F08A2C" stroke="#A9541A" stroke-width="1.4" stroke-linejoin="round"/><path d="M9.6 12h2.2M10.4 15h2M11.1 18h1.2" stroke="#A9541A" stroke-width="1.2" stroke-linecap="round"/></svg>';
+const itemSVG = k => (k === 'apple' ? APPLE : k === 'carrot' ? CARROT : BONE);
 const sum = a => a.reduce((x, y) => x + y, 0);
 const frac = (n, d) => `<span class="frac"><i>${n}</i><i>${d}</i></span>`;
 
@@ -113,6 +114,21 @@ function gq(o) {
 const fillStep = (say, ans, cands, box = 0) => ({ say, choices: pick3(ans, cands.filter(v => v >= 0 && v !== ans)), answer: ans, fill: { box } });
 const shareDone = v => sum(v.bowls) === v.N && v.bowls.every(b => b === v.bowls[0]);
 const gridOk = v => v.r === v.tr && v.c === v.tc;
+/* The burrow frame: a ten frame drawn as burrow holes, in rows of 5 (two frames for numbers up to 20).
+   burrow({ n: holes, a, aItem, b, bItem, tap, item, pile, ten, cap }) makes the picture:
+     the first a holes hold aItem (bones), the next b hold bItem (carrots).
+     tap 'fill': tap an empty hole to drop in an item (pile = how many there are; leave out for no limit),
+                 tap one you dropped to take it out.  tap 'take': tap a bone for Bonnie to eat it (tap again to put it back).
+     ten: every item is a bag of 10.  cap(v): the line under the frame (there is a sensible one if left out). */
+function burrow(o) {
+  const n = o.n || 10, a = o.a || 0, b = o.b || 0;
+  const holes = Array.from({ length: n }, (_, i) => ({ k: i < a ? (o.aItem || 'bone') : i < a + b ? (o.bItem || 'carrot') : '', mine: false, eaten: false }));
+  return { type: 'burrow', holes, tap: o.tap || null, item: o.item || 'bone', pile: o.pile ?? null, ten: !!o.ten, cap: o.cap || null, last: -1 };
+}
+// count the holes that match: burrowCount(v) = filled (and not eaten), or pass a test of your own
+const burrowCount = (v, f = h => h.k && !h.eaten) => v.holes.filter(f).length;
+const burrowFull = (v, from = 0, to = v.holes.length) => v.holes.slice(from, to).every(h => h.k && !h.eaten);
+const burrowPlaced = v => burrowCount(v, h => h.mine);
 
 /* ---------- sound and speech (through the core, so the sound settings apply) ---------- */
 const tone = (fs, d = .12, type = 'sine', vol = .15) => fs.forEach((f, i) => U.tone(f, d * 1.7, type, vol, 0, i * d));
@@ -417,10 +433,34 @@ function gvisInner(q) {
         <div class="gv-row">${Array.from({ length: v.baskets }, () => box(v.s)).join('')}</div>
         <div class="gv-tools"><button class="mbtn small" type="button" data-g="fill" data-t="g-fill" ${pile < v.s ? 'disabled' : ''}>Fill a basket</button><button class="mbtn small plain" type="button" data-g="reset">Start again</button></div>`;
     }
+    case 'burrow': {
+      const frames = [], tag = v.ten ? '<i class="bag10">10</i>' : '';
+      for (let f = 0; f < v.holes.length; f += 10) {
+        const cells = v.holes.slice(f, f + 10).map((h, j) => {
+          const i = f + j, can = v.tap === 'fill' ? (!h.k || h.mine) : v.tap === 'take' ? (h.k && !h.mine) : false;
+          const inner = h.k ? `<span class="gi${v.ten ? ' ten10' : ''}${i === v.last ? ' drop' : ''}">${itemSVG(h.k)}${tag}</span>` : '';
+          const cls = `gv-hole${h.k ? ' full' : ''}${h.mine ? ' mine' : ''}${h.eaten ? ' eaten' : ''}`;
+          return can ? `<button class="${cls}" type="button" data-g-hole="${i}" data-t="hole-${i}" aria-label="Burrow ${i + 1}${h.k ? (h.eaten ? ', eaten' : ', has a ' + (v.ten ? 'bag of 10' : h.k)) : ', empty'}">${inner}</button>`
+            : `<span class="${cls}" data-t="hole-${i}">${inner}</span>`;
+        }).join('');
+        frames.push(`<div class="gv-burrow" data-t="frame-${f / 10}">${cells}</div>`);
+      }
+      const left = v.pile == null ? 0 : v.pile - burrowPlaced(v);
+      const cap = v.cap ? v.cap(v) : burrowCap(v);
+      return `${v.pile != null ? `<div class="gv-pile" data-t="pile">${left ? many(left) : '<span class="gv-empty">All in the burrows!</span>'}</div>` : ''}
+        <div class="gv-row gv-burrows">${frames.join('')}</div>
+        ${cap ? `<div class="gv-cap">${cap}</div>` : ''}
+        ${v.tap ? '<div class="gv-tools"><button class="mbtn small plain" type="button" data-g="reset">Start again</button></div>' : ''}`;
+    }
     case 'shape': return `<div class="gv-shape">${shapeSVG(v.shape, v.shade)}</div>`;
     case 'shapes': return `<div class="gv-row gv-shapes">${v.list.map(k => shapeSVG(k, 0)).join('')}</div>`;
   }
   return '';
+}
+function burrowCap(v) {
+  const full = burrowCount(v), empty = burrowCount(v, h => !h.k), eaten = burrowCount(v, h => h.eaten), unit = v.ten ? ' bags' : '';
+  if (v.tap === 'take') return `${full}${unit} left${eaten ? ` · Bonnie ate ${eaten}` : ''}`;
+  return `${full}${unit} in · ${empty} empty`;
 }
 const gridCap = v => (v.r ? `${v.r} row${v.r > 1 ? 's' : ''} of ${v.c} = ${v.r * v.c}` : 'Tap a square to grow the orchard');
 function redrawG() { const el = inMM('#visual'); if (el && S.q.vis) el.innerHTML = gvisInner(S.q); refreshSpots(); }
@@ -442,6 +482,17 @@ function gAction(b) {
     setTimeout(() => { if (S && S.q === q && root()) { v.turned = !v.turned; redrawG(); afterMove(); } }, 560);
     return;
   }
+  if (b.dataset.gHole !== undefined) {
+    const i = +b.dataset.gHole, h = v.holes[i];
+    v.last = -1;
+    if (v.tap === 'fill' && h.mine) { h.k = ''; h.mine = false; sfx.tap(); }
+    else if (v.tap === 'fill' && !h.k && (v.pile == null || burrowPlaced(v) < v.pile)) { h.k = v.item; h.mine = true; v.last = i; tone([520 + burrowCount(v) * 40], .05, 'triangle', .08); }
+    else if (v.tap === 'take' && h.k && !h.mine) { h.eaten = !h.eaten; sfx.tap(); }
+    else sfx.soft();
+    redrawG();
+    if (burrowFull(v, 0, 10) && v.holes.length >= 10 && v.tap === 'fill' && h.mine) tone([523, 659, 784], .08, 'triangle', .1);
+    return afterMove();
+  }
   if (b.dataset.gBowl !== undefined) {
     if (sum(v.bowls) < v.N) { v.bowls[+b.dataset.gBowl]++; sfx.tap(); } else sfx.soft();
   } else if (b.dataset.g === 'each') {
@@ -450,7 +501,9 @@ function gAction(b) {
   } else if (b.dataset.g === 'fill') {
     if (v.N - v.baskets * v.s >= v.s) { v.baskets++; tone([600, 760], .05, 'triangle', .08); }
   } else if (b.dataset.g === 'reset') {
-    if (v.bowls) v.bowls.fill(0); if ('baskets' in v) v.baskets = 0; sfx.tap();
+    if (v.bowls) v.bowls.fill(0); if ('baskets' in v) v.baskets = 0;
+    if (v.holes) { v.holes.forEach(h => { if (h.mine) { h.k = ''; h.mine = false; } h.eaten = false; }); v.last = -1; }
+    sfx.tap();
   }
   redrawG();
   if (v.type === 'share' && shareDone(v)) tone([523, 659, 784], .08, 'triangle', .1);
@@ -755,7 +808,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (b.id === 'mmSay') return say(S.q.prompt);
-  if (b.dataset.g || b.dataset.gBowl !== undefined) return gAction(b);
+  if (b.dataset.g || b.dataset.gBowl !== undefined || b.dataset.gHole !== undefined) return gAction(b);
   if (b.id === 'mmAsk') { if (live()) raise('ask'); return; }
   if (b.dataset.chip !== undefined) return chooseStep(+b.dataset.chip, b);
   if (b.dataset.key) return press(b.dataset.key);
@@ -1069,6 +1122,24 @@ const CSS = String.raw`
   .mm .gv-plate { height: 104px; }
   .mm .gv-lily { width: 112px; height: 112px; }
 }
+.mm .gv-burrows { gap: 16px 22px; }
+.mm .gv-burrow { display: grid; grid-template-columns: repeat(5, var(--hole)); gap: 8px; padding: 14px 14px 12px; border-radius: 22px 22px 16px 16px; background: linear-gradient(180deg, #A6D68A 0 14px, #C79A66 14px, #B5854F); border: 2px solid #7A5530; box-shadow: inset 0 -6px 0 rgba(90, 55, 25, .18); --hole: 54px; }
+.mm .gv-hole { width: var(--hole); height: var(--hole); padding: 0; border-radius: 50% 50% 44% 44%; background: radial-gradient(ellipse at 50% 62%, #3A2614 0 52%, #5B3D22 56%, #7A5530 72%); border: 2px solid #5B3D22; display: grid; place-items: center; font: inherit; color: inherit; }
+.mm button.gv-hole { cursor: pointer; }
+.mm button.gv-hole:not(.full) { box-shadow: 0 0 0 2px rgba(255, 248, 236, .55); }
+.mm button.gv-hole:active { transform: scale(.94); }
+.mm .gv-hole .gi { width: 40px; height: 40px; position: relative; }
+.mm .gv-hole .gi .bone, .mm .gv-hole .gi .carrot { width: 40px; height: 40px; }
+.mm .gv-hole.mine { border-color: var(--sun); box-shadow: 0 0 0 3px var(--sun) !important; }
+.mm .gv-hole.eaten .gi { opacity: .22; filter: grayscale(1); }
+.mm .gi .carrot { width: 26px; height: 26px; transform: rotate(-20deg); }
+.mm .gv-hole .gi.drop { animation: mm-drop .32s cubic-bezier(.3, 1.5, .5, 1); }
+@keyframes mm-drop { from { transform: translateY(-18px) scale(.6); opacity: 0; } }
+.mm .bag10 { position: absolute; left: 50%; bottom: -3px; transform: translateX(-50%); padding: 0 4px; border-radius: 6px; background: #fff; border: 2px solid var(--tens-dk); color: var(--tens-dk); font-family: var(--f-display); font-style: normal; font-weight: 700; font-size: 12px; line-height: 1.1; }
+@media (max-width: 560px) {
+  .mm .gv-burrow { --hole: 44px; gap: 6px; padding: 10px; }
+  .mm .gv-hole .gi, .mm .gv-hole .gi .bone, .mm .gv-hole .gi .carrot { width: 32px; height: 32px; }
+}
 .mm .helper { position: relative; }
 .mm .scout-pop { position: absolute; right: 6px; top: -10px; display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; background: linear-gradient(180deg, #FFE7A3, var(--sun)); border: 2px solid var(--wood-dk); color: var(--ink); box-shadow: 0 8px 18px -8px rgba(120, 85, 45, .7); font-family: var(--f-display); z-index: 5; pointer-events: none; animation: mm-scout 1.8s cubic-bezier(.3, 1.5, .5, 1) forwards; }
 .mm .scout-pop svg { width: 22px; height: 22px; color: var(--fur-dk); }
@@ -1117,6 +1188,8 @@ if (!document.getElementById('meadow-maths-kit')) {
 window.MeadowMaths = {
   world, addLevels, SHAPES, rand, pick, shuffle, NAME, PL, len, pow, countsOf, partsOf, joinAnd, placeList, nameCount, colorNum, near, makesChoices,
   rd, fmtN, range, pick3, JUMPS, jumpOpts, gq, fillStep, shareDone, gridOk, shapeSVG, frac, sum, PRAISE, TIER_NAMES,
+  burrow, burrowCount, burrowFull, burrowPlaced,
+  redraw: () => { if (S && root()) redrawG(); },   // repaint the picture after a step changes it
   peek: () => S,   // the question on screen, read only (for the browser tests)
 };
 })();
