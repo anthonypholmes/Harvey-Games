@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v9';
+const CACHE_VERSION = 'meadow-club-v10';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -27,6 +27,7 @@ const CORE_ASSETS = [
   './worlds/y2-english-stories.js',
   './worlds/y2-maths-kit.js',
   './worlds/y2-maths-partitioning.js',
+  './worlds/y2-maths-number-bonds.js',
   './worlds/y2-maths-number-lines.js',
   './worlds/y2-maths-arrays.js',
   './worlds/y2-maths-sharing.js',
