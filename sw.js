@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v6';
+const CACHE_VERSION = 'meadow-club-v7';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -19,6 +19,18 @@ const CORE_ASSETS = [
   './meadow-words.html',
   './bonnie-voice.js',
   './meadow-backup.js',
+  './js/meadow-core.js',
+  // the worlds (keep in step with the <script> lines in the pages)
+  './worlds/y2-english-phonics.js',
+  './worlds/y2-english-tricky-words.js',
+  './worlds/y2-english-sentences.js',
+  './worlds/y2-english-stories.js',
+  './worlds/y2-maths-kit.js',
+  './worlds/y2-maths-partitioning.js',
+  './worlds/y2-maths-number-lines.js',
+  './worlds/y2-maths-arrays.js',
+  './worlds/y2-maths-sharing.js',
+  './worlds/y2-maths-sharing-fractions.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -27,7 +39,7 @@ const CORE_ASSETS = [
 // Google Fonts stylesheets used by the pages (keep in step with their <link> tags).
 const FONT_CSS = [
   'https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap',
-  'https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap',
+  'https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@500;600;700;800&display=swap',
 ];
 const NETWORK_TIMEOUT_MS = 4000;
 
@@ -59,7 +71,7 @@ self.addEventListener('fetch', event => {
     return;
   }
   if (url.origin !== self.location.origin) return;
-  // the beta games (/beta/) have their own service worker and cache: leave them alone
+  // /beta/ only holds the practice page and links back to the games now: leave it to the network
   if (url.pathname.startsWith('/beta/')) return;
 
   if (url.pathname.includes('/audio/')) {
