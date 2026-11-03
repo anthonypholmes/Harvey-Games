@@ -346,6 +346,7 @@ h1,h2,h3{margin:0;font-weight:700}
 </div>
 
 <script src="bonnie-voice.js"></script>
+<script src="meadow-backup.js"></script>
 <script>
 /* =========================================================
    CONFIG — match these to your maths app so bones, hats,
@@ -1401,6 +1402,9 @@ function parentScreen() {
         ${WORLDS.map((w, i) => `<div class="note">${w.icon} ${w.name}: ⭐ ${worldStars(i)} / 15</div>`).join('')}
         <div class="row-btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small berry" id="resetProg">Reset English progress</button></div>
         <p class="note">Resetting clears English stars only. Bones, hats, prizes and maths progress are kept.</p></section>
+      <section><h3>Back up progress</h3>
+        <p class="note">Saves everything on this device (bones, hats, themes, prizes, Maths and Words) as a file or a code, and restores it on this or another device.</p>
+        <div class="row-btns" style="justify-content:flex-start"><button class="btn small green" id="backupBtn">💾 Export or import save</button></div></section>
     </div>`);
   $('#back').onclick = homeScreen;
   $$('[data-bone]').forEach(b => b.onclick = () => { mutate(s => s.bones = Math.max(0, s.bones + +b.dataset.bone)); parentScreen(); });
@@ -1414,6 +1418,7 @@ function parentScreen() {
   $('#pSfx').onchange = e => mutate(s => s.settings.sfx = e.target.checked);
   $('#pRate').oninput = e => { $('#rateVal').textContent = e.target.value; };
   $('#pRate').onchange = e => mutate(s => s.settings.voiceRate = +e.target.value);
+  $('#backupBtn').onclick = () => MeadowBackup.open();
   $('#testVoice').onclick = () => say(fmt('Hello {N}! I am Bonnie. Shall we read together?'));
   $('#pUnlock').onchange = e => mutate(s => s.settings.unlockAll = e.target.checked);
   $('#resetProg').onclick = () => modal(`<h2>Reset English progress?</h2><p>All stars in the four English worlds will be cleared.</p>

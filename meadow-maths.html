@@ -775,6 +775,7 @@ html[data-theme="snow"] body { background-color: #EEF5FB; background-image: radi
 <canvas id="confetti" hidden></canvas>
 
 
+<script src="meadow-backup.js"></script>
 <script>
 (() => {
 'use strict';
@@ -1788,6 +1789,9 @@ function openSettings() {
         <button class="toggle" type="button" data-tog="unlockAll" aria-pressed="${save.unlockAll}"><span class="sw"></span>Open all levels</button>
         <span id="reset-slot"><button class="btn plain small" type="button" data-act="reset">Reset progress</button></span>
       </div></section>
+    <section class="gs-sec"><h3>Back up progress</h3>
+      <p>Saves everything on this device (bones, hats, themes, prizes, Maths and Words) as a file or a code, and restores it on this or another device.</p>
+      <div class="gs-line"><button class="btn small" type="button" data-act="backup">💾 Export or import save</button></div></section>
   </div>`);
 }
 
@@ -1851,6 +1855,7 @@ modal.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const act = b.dataset.act;
   if (act === 'close') { sfx.tap(); return closeModal(); }
+  if (act === 'backup') { sfx.tap(); return MeadowBackup.open(); }
   if (act === 'shop') { sfx.tap(); return openShop(); }
   if (b.dataset.tab) { sfx.tap(); return openShop(b.dataset.tab); }
   if (b.dataset.buy) { sfx.tap(); const [t, id] = b.dataset.buy.split(':'); return openBuy(t, id); }
