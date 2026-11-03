@@ -146,7 +146,7 @@ function makeTens(type, easy) {
   if (type === 'tadd') {
     const x = rand(1, top - 1), y = rand(1, top - x), ans = 10 * (x + y);
     return gq({ t: 'tadd', prompt: `What is ${10 * x} add ${10 * y}?`, eq: [{ num: 10 * x }, '+', { num: 10 * y }, '=', { box: 0 }], answer: [ans],
-      vis: burrow({ n: 10, a: x, b: y, ten: true, cap: () => `${x} tens and ${y} tens` }),
+      vis: burrow({ n: 10, a: x, b: y, ten: true }),
       clue: { say: `Use the bond ${x} + ${y}. Each bag is 10!`, point: 'visual' },
       steps: () => [
         { say: `${x} + ${y} = ?`, choices: near(x + y), answer: x + y },

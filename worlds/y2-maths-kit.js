@@ -119,7 +119,8 @@ const gridOk = v => v.r === v.tr && v.c === v.tc;
      the first a holes hold aItem (bones), the next b hold bItem (carrots).
      tap 'fill': tap an empty hole to drop in an item (pile = how many there are; leave out for no limit),
                  tap one you dropped to take it out.  tap 'take': tap a bone for Bonnie to eat it (tap again to put it back).
-     ten: every item is a bag of 10.  cap(v): the line under the frame (there is a sensible one if left out). */
+     ten: every item is a bag of 10.  cap(v): the line under the frame. Leave it out for a cheer with no
+     numbers in it ("The first burrow is full!"); a caption that counts would give the answer away. */
 function burrow(o) {
   const n = o.n || 10, a = o.a || 0, b = o.b || 0;
   const holes = Array.from({ length: n }, (_, i) => ({ k: i < a ? (o.aItem || 'bone') : i < a + b ? (o.bItem || 'carrot') : '', mine: false, eaten: false }));
@@ -457,10 +458,11 @@ function gvisInner(q) {
   }
   return '';
 }
+// no numbers here: counting the burrows is his job, so the line under the picture never gives the answer away
 function burrowCap(v) {
-  const full = burrowCount(v), empty = burrowCount(v, h => !h.k), eaten = burrowCount(v, h => h.eaten), unit = v.ten ? ' bags' : '';
-  if (v.tap === 'take') return `${full}${unit} left${eaten ? ` · Bonnie ate ${eaten}` : ''}`;
-  return `${full}${unit} in · ${empty} empty`;
+  if (v.tap !== 'fill') return '';
+  if (burrowFull(v)) return 'Every burrow is full!';
+  return burrowFull(v, 0, 10) && v.holes.length > 10 ? 'The first burrow is full!' : '';
 }
 const gridCap = v => (v.r ? `${v.r} row${v.r > 1 ? 's' : ''} of ${v.c} = ${v.r * v.c}` : 'Tap a square to grow the orchard');
 function redrawG() { const el = inMM('#visual'); if (el && S.q.vis) el.innerHTML = gvisInner(S.q); refreshSpots(); }
