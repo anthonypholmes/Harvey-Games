@@ -161,6 +161,17 @@ This means:
 - Clearing Safari's website data, or browsing in a Private tab, starts afresh.
 - Updating the game file keeps progress, as long as the page address stays the same.
 
+## The shared engine (rebuild in progress)
+
+`js/meadow-core.js` is the shared engine every game will use: one save (`meadow-save-v1`), the star and bone rules, the world map, the level-complete screen, the Bone Shop, the grown-ups area and Bonnie. The live games don't use it yet. They move onto it one at a time in `/beta/` first.
+
+- **Old saves are only read.** The first time the engine runs, it copies `harvey-splitter-v1`, `meadowWords_english_v1` and `meadowClubhouse_sound` into `meadow-save-v1`. Words stars carry over. A Maths level that was done becomes 1 star. The old keys are never changed, so they stay as the rollback.
+- **Stars:** 3 stars for at most 1 mistake and no help. 2 stars for at most 4 mistakes and at most 1 help. Otherwise 1 star. The best result is kept. A level unlocks once the one before has a star.
+- **Bones:** 1 per right answer, +1 the first time Bonnie is asked in a level, and 2 per *new* star at the end. There are no streak multipliers.
+- **Try it:** `beta/core-test.html` has a small practice world. It uses its own practice save (`meadow-save-test`), so it changes nothing. Its "Test tools" box shows what would be copied from this device's saves.
+
+A world is one file that calls `Meadow.registerWorld({...})` with a stable `id`, a `subject`, a `year`, and `levels`. Each level has a stable `id` and either a list of `items` or a `make()` function. A `play(question, ctx)` function draws a question and calls `Meadow.correct(el)` or `Meadow.wrong(msg)`. Progress is stored as `worldId/levelId`, so worlds and levels can be reordered or added without breaking saves.
+
 ## Bonnie's recorded voice (Clubhouse and Meadow Words)
 
 The Clubhouse and Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the device's built-in voice. Bonnie is currently voiced by **Shelley** (voice ID `4CrZuIW9am7gYAxgo2Af`). Both pages share the player in `bonnie-voice.js`. The clips are made once on a computer and uploaded with the games, so the iPad never needs the ElevenLabs key, and they work offline.
