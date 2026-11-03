@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Number Bonds Burrow Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px 16px; color: #3E2F27; background: #FDFBF7; }
+  h1 { font-size: 1.4rem; margin: 0 0 6px; }
+  p { margin: 0 0 16px; color: #7A6A5E; }
+  #result { font-size: 1.3rem; font-weight: 700; padding: 12px 16px; border-radius: 14px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  table { border-collapse: collapse; margin-top: 16px; font-size: .95rem; }
+  td, th { text-align: left; padding: 4px 10px; border-bottom: 1px solid #EADFCB; }
+  pre { white-space: pre-wrap; font-size: .85rem; background: #fff; border-radius: 10px; padding: 10px; }
+</style>
+</head>
+<body>
+<h1>🐰 Number Bonds Burrow: question check</h1>
+<p>Makes every kind of question hundreds of times, in normal and easy mode, and checks the sums, Bonnie's step cards and the number ranges. It only makes questions: it never plays them, and it doesn't touch the save.</p>
+<div id="result">Checking…</div>
+<table id="table"></table>
+<pre id="errs" hidden></pre>
+
+<script src="../js/meadow-core.js"></script>
+<script src="../worlds/y2-maths-kit.js"></script>
+<script src="../worlds/y2-maths-number-bonds.js"></script>
+<script>
+(() => {
+  const storageBefore = JSON.stringify(Object.entries(localStorage).sort());
+  const w = Meadow.world('y2-maths-number-bonds'), errs = [], seen = {}, made = {};
+  const IDS = ['bonds-10', 'bonds-20', 'tens-facts', 'add-ones-tens', 'two-digit', 'three-numbers', 'fact-families'];
+  // the biggest number allowed in each level: [normal, easy]
+  const MAX = { 'bonds-10': [10, 6], 'bonds-20': [20, 20], 'tens-facts': [100, 50], 'add-ones-tens': [99, 99], 'two-digit': [99, 99], 'three-numbers': [19, 10], 'fact-families': [18, 10] };
+  const NO_CROSSING_WHEN_EASY = ['bonds-20', 'add-ones-tens', 'two-digit'];
+
+  const show = q => (q.eq || []).map(t => typeof t === 'string' ? t : t.num ?? (t.box !== undefined ? '□' : '/')).join(' ');
+  const bad = (L, q, m) => { if (errs.length < 60) errs.push(`${L.id}${q.eased ? ' (easy)' : ''} ${q.type}  [${show(q)}]  answer ${q.answer}: ${m}`); };
+  const side = a => a.reduce((acc, x, j) => j === 0 ? x : a[j - 1] === '+' ? acc + x : a[j - 1] === '−' ? acc - x : acc, 0);
+  // each line of the sum, worked out with the answer in the box (true/false questions: is the statement right?)
+  function evalEq(q) {
+    const lines = [[]]; q.eq.forEach(t => (t === '\n' ? lines.push([]) : lines[lines.length - 1].push(t)));
+    for (const ln of lines) {
+      const toks = ln.map(t => typeof t === 'string' ? t : t.box !== undefined ? q.answer[t.box] : t.num), i = toks.indexOf('=');
+      const L = side(toks.slice(0, i)), R = side(toks.slice(i + 1));
+      if (q.kind === 'choice') { if ((L === R ? 0 : 1) !== q.answer[0]) return 'true/false answer is wrong'; continue; }
+      if (L !== R) return `the sum does not add up (${L} and ${R})`;
+    }
+    return null;
+  }
+
+  if (!w) errs.push('The world did not load.');
+  else if (w.levels.map(L => L.id).join() !== IDS.join()) errs.push('Level ids have changed: ' + w.levels.map(L => L.id).join(', '));
+
+  for (const L of (w ? w.levels : [])) for (const eased of [false, true]) for (let rep = 0; rep < 300; rep++) for (let index = 0; index < L.seq.length; index++) {
+    const q = L.make({ eased, index, type: L.seq[index] });
+    const key = L.id + (eased ? ' easy' : '');
+    made[key] = (made[key] || 0) + 1; (seen[key] = seen[key] || new Set()).add(q.type.replace(/^g-/, ''));
+    const nums = q.eq.filter(t => typeof t === 'object' && t.num !== undefined).map(t => t.num).concat(q.kind === 'choice' ? [] : q.answer);
+    if (!q.answer.every(Number.isInteger) || nums.some(n => n < 0)) bad(L, q, 'a number is negative or not whole');
+    if (q.kind !== 'choice' && nums.some(n => n === 0)) bad(L, q, 'has a zero in it');
+    const e = evalEq(q); if (e) bad(L, q, e);
+    if (Math.max(...nums) > MAX[L.id][eased ? 1 : 0]) bad(L, q, 'a number is too big for this level');
+    if (eased && NO_CROSSING_WHEN_EASY.includes(L.id) && q.eq[3] === '=' && q.eq[0].num !== undefined && q.eq[2].num !== undefined) {
+      const [a, op, b] = [q.eq[0].num, q.eq[1], q.eq[2].num];
+      if (op === '+' && a % 10 + b % 10 >= 10) bad(L, q, 'easy mode crosses a ten');
+      if (op === '−' && a % 10 < b % 10) bad(L, q, 'easy mode crosses a ten');
+    }
+    if (q.vis && q.vis.type === 'burrow' && q.vis.holes.length > 20) bad(L, q, 'more than two burrows');
+    if (q.mode === 'blocks' && (q.counts[1] > 9 || q.counts[0] > 9)) bad(L, q, 'too many blocks');
+    if (!q.gclue || !q.gclue.say) bad(L, q, 'no clue');
+    const steps = q.gsteps();
+    if (!steps.length) { bad(L, q, 'no step card'); continue; }
+    steps.forEach((st, i) => {
+      if (st.action) return;
+      const ch = st.choices.map(String);
+      if (!ch.includes(String(st.answer))) bad(L, q, `step ${i + 1}: the right answer is not one of the buttons`);
+      if (new Set(ch).size !== ch.length || ch.length < 2) bad(L, q, `step ${i + 1}: buttons ${ch.join(', ')}`);
+      if (ch.some(c => /^-/.test(c))) bad(L, q, `step ${i + 1}: a negative button`);
+      if (st.fill && 'count' in st.fill && (st.answer > 9 || st.answer < 0)) bad(L, q, `step ${i + 1}: sets the blocks to ${st.answer}`);
+    });
+    const last = steps[steps.length - 1];
+    if (q.kind === 'choice') { if (!last.final || last.answer !== q.cfmt(q.answer[0])) bad(L, q, 'the last step does not give the answer'); }
+    else if (!last.fill || String(last.answer) !== String(q.answer[0])) bad(L, q, 'the last step does not give the answer');
+  }
+  if (JSON.stringify(Object.entries(localStorage).sort()) !== storageBefore) errs.push('The check changed something in storage!');
+
+  const total = Object.values(made).reduce((a, b) => a + b, 0), res = document.getElementById('result');
+  res.className = errs.length ? 'fail' : 'pass';
+  res.textContent = errs.length ? `✗ ${errs.length} problem${errs.length > 1 ? 's' : ''} found (in ${total} questions)` : `✓ All ${total} questions passed`;
+  document.getElementById('table').innerHTML = '<tr><th>Level</th><th>Questions</th><th>Kinds</th></tr>' +
+    Object.keys(made).map(k => `<tr><td>${k}</td><td>${made[k]}</td><td>${[...seen[k]].join(', ')}</td></tr>`).join('');
+  if (errs.length) { const p = document.getElementById('errs'); p.hidden = false; p.textContent = errs.join('\n'); }
+  window.TEST_RESULT = { passed: !errs.length, total, errs };
+})();
+</script>
+</body>
+</html>
