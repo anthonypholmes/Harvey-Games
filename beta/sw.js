@@ -7,10 +7,11 @@
  * Pages and scripts always ask the server for a newer copy first, and use the
  * saved copy only when offline.
  */
-const BETA_VERSION = 'meadow-beta-v2';
+const BETA_VERSION = 'meadow-beta-v3';
 const FONT_CACHE = 'meadow-club-fonts-v1';   // shared with the live games
 const AUDIO_CACHE = 'meadow-club-audio-v1';  // shared with the live games and bonnie-voice.js
 const ASSETS = [
+  './index.html',
   './meadow-words.html',
   '../js/meadow-core.js',
   '../worlds/y2-english-phonics.js',
