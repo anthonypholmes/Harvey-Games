@@ -67,11 +67,37 @@ const STARTER_PRIZES = [
   [1200, 'Small buildable toy set', 'Choose a small building set.'],
   [1500, 'Special weekend outing with a parent', 'A big day out together.'],
 ].map(([cost, title, desc], i) => ({ id: 'u' + i, cost, title, desc }));
-const HATS = [
-  { id: 'none', name: 'No hat', cost: 0 },
-  { id: 'eyepatch', name: 'Pirate Eyepatch', cost: 50 }, { id: 'party', name: 'Party Hat', cost: 75 },
-  { id: 'wizard', name: 'Wizard Hat', cost: 150 }, { id: 'crown', name: 'Crown', cost: 300 },
+/* Bonnie's dress-up. Each item goes in one slot, so she can wear a hat, something on her
+   face and something round her neck all at once. The save keeps them in hat, face and neck
+   (owned ones are all listed in owned.hats, the name it had before there were slots). */
+const SLOTS = [
+  { id: 'head', key: 'hat', name: 'Hats', off: 'Take hat off' },
+  { id: 'face', key: 'face', name: 'Glasses and eyepatches', off: 'Take them off' },
+  { id: 'neck', key: 'neck', name: 'Collars and more', off: 'Take it off' },
 ];
+const HATS = [
+  { id: 'collar-red', slot: 'neck', name: 'Red Collar', cost: 30 },
+  { id: 'collar-blue', slot: 'neck', name: 'Blue Collar', cost: 40 },
+  { id: 'eyepatch', slot: 'face', name: 'Pirate Eyepatch', cost: 50 },
+  { id: 'sunglasses', slot: 'face', name: 'Cool Sunglasses', cost: 60 },
+  { id: 'bandana', slot: 'neck', name: 'Spotty Bandana', cost: 60 },
+  { id: 'specs', slot: 'face', name: 'Clever Specs', cost: 70 },
+  { id: 'bowtie', slot: 'neck', name: 'Purple Bow Tie', cost: 70 },
+  { id: 'party', slot: 'head', name: 'Party Hat', cost: 75 },
+  { id: 'bobble', slot: 'head', name: 'Bobble Hat', cost: 80 },
+  { id: 'flowers', slot: 'head', name: 'Flower Crown', cost: 90 },
+  { id: 'scarf', slot: 'neck', name: 'Christmas Scarf', cost: 100 },
+  { id: 'chef', slot: 'head', name: 'Chef’s Hat', cost: 110 },
+  { id: 'santa', slot: 'head', name: 'Santa Hat', cost: 120 },
+  { id: 'headphones', slot: 'head', name: 'DJ Headphones', cost: 130 },
+  { id: 'wizard', slot: 'head', name: 'Wizard Hat', cost: 150 },
+  { id: 'cape', slot: 'neck', name: 'Superhero Cape', cost: 180 },
+  { id: 'cowboy', slot: 'head', name: 'Cowboy Hat', cost: 200 },
+  { id: 'medal', slot: 'neck', name: 'Gold Medal', cost: 250 },
+  { id: 'crown', slot: 'head', name: 'Crown', cost: 300 },
+];
+const itemOf = id => HATS.find(h => h.id === id);
+const slotKey = id => { const it = itemOf(id); return it ? SLOTS.find(x => x.id === it.slot).key : null; };
 const THEMES = [
   { id: 'day', name: 'Daytime Meadow', cost: 0, sw: 'linear-gradient(#F6EBD3,#E7D9B8)' },
   { id: 'sunset', name: 'Sunset Trail', cost: 100, sw: 'linear-gradient(#F7968C,#FFBE6E)' },
@@ -131,7 +157,7 @@ let S = null; // the save, always re-read before a change
 function readJSON(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } }
 function blankSave() {
   return {
-    version: SAVE_VERSION, name: null, bones: 0, hat: null, theme: 'day',
+    version: SAVE_VERSION, name: null, bones: 0, hat: null, face: null, neck: null, theme: 'day',
     sound: true, voice: true, readAloud: false, voiceRate: 0.9, clubSound: true,
     owned: { hats: [], themes: ['day'] },
     rewards: STARTER_PRIZES.map(r => ({ ...r })), redeemed: [],
@@ -146,13 +172,15 @@ function normalise(raw) {
   s.version = SAVE_VERSION;
   s.name = typeof s.name === 'string' && s.name.trim() ? s.name.trim().slice(0, 30) : null;
   s.bones = int(s.bones, 0, 99999);
-  s.hat = HATS.some(h => h.id === s.hat && h.id !== 'none') ? s.hat : null;
+  // the eyepatch used to be worn as a hat: it moves to the face slot
+  if (slotKey(s.hat) === 'face' && !s.face) s.face = s.hat;
+  ['hat', 'face', 'neck'].forEach(k => { s[k] = slotKey(s[k]) === k ? s[k] : null; });
   s.theme = THEMES.some(t => t.id === s.theme) ? s.theme : 'day';
   ['sound', 'voice', 'clubSound'].forEach(k => { s[k] = s[k] !== false; });
   s.readAloud = !!s.readAloud;
   s.voiceRate = Math.min(1.2, Math.max(0.6, +s.voiceRate || 0.9));
   const o = isObj(s.owned) ? s.owned : {};
-  s.owned = { hats: [...new Set((o.hats || []).filter(h => HATS.some(x => x.id === h && h !== 'none')))],
+  s.owned = { hats: [...new Set((o.hats || []).filter(h => itemOf(h)))],
     themes: [...new Set(['day', ...(o.themes || []).filter(t => THEMES.some(x => x.id === t))])] };
   s.rewards = Array.isArray(s.rewards) ? s.rewards.filter(isObj).map(cleanPrize) : STARTER_PRIZES.map(r => ({ ...r }));
   s.redeemed = Array.isArray(s.redeemed) ? s.redeemed.filter(isObj) : [];
@@ -337,17 +365,51 @@ function hatSVG(h) {
     case 'party': return '<g class="hat"><path d="M44 27 L63 -6 L78 25 Z" fill="#F07CA8" stroke="#3E2F27" stroke-width="2" stroke-linejoin="round"/><path d="M50 16 L72 19 M56 5 L68 7" stroke="#FFE07A" stroke-width="4" stroke-linecap="round"/><circle cx="63" cy="-7" r="5" fill="#FFE07A" stroke="#3E2F27" stroke-width="2"/></g>';
     case 'crown': return '<g class="hat"><path d="M40 29 L42 9 L51 20 L60 4 L69 20 L78 9 L80 29 Z" fill="#F4C25B" stroke="#8A5A14" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="22" r="3.2" fill="#E2574C"/><circle cx="49" cy="25" r="2.3" fill="#3B7FC4"/><circle cx="71" cy="25" r="2.3" fill="#3F8B5C"/></g>';
     case 'wizard': return '<g class="hat"><path d="M40 30 Q60 35 80 30 L58 -16 Z" fill="#6C4BB4" stroke="#3A2470" stroke-width="2" stroke-linejoin="round"/><ellipse cx="60" cy="30" rx="27" ry="6" fill="#6C4BB4" stroke="#3A2470" stroke-width="2"/><path d="M60 4l1.6 3.4 3.6.4-2.7 2.4.8 3.6-3.3-1.8-3.3 1.8.8-3.6-2.7-2.4 3.6-.4z" fill="#FFE07A"/><circle cx="52" cy="20" r="1.6" fill="#FFE07A"/><circle cx="67" cy="17" r="1.3" fill="#FFE07A"/></g>';
-    case 'eyepatch': return '<g class="hat"><path d="M37 38 Q60 30 85 44" stroke="#222" stroke-width="2.4" fill="none"/><ellipse cx="71.5" cy="52" rx="7.5" ry="6.5" fill="#222"/></g>';
+    case 'santa': return '<g class="hat"><path d="M38 29 C40 10 58 -2 78 1 C90 3 96 12 95 24 C90 17 82 13 75 14 C79 19 82 24 82 29 Z" fill="#D9443A" stroke="#8E2A22" stroke-width="2" stroke-linejoin="round"/><rect x="35" y="23" width="50" height="11" rx="5.5" fill="#fff" stroke="#D8D2CC" stroke-width="1.5"/><circle cx="95" cy="25" r="6" fill="#fff" stroke="#D8D2CC" stroke-width="1.5"/></g>';
+    case 'bobble': return '<g class="hat"><path d="M38 30 Q37 3 60 3 Q83 3 82 30 Z" fill="#3B7FC4" stroke="#245A91" stroke-width="2"/><path d="M41 14 H79 M39 21 H81" stroke="#fff" stroke-width="3.5"/><rect x="35" y="25" width="50" height="10" rx="5" fill="#245A91"/><circle cx="60" cy="2" r="7" fill="#fff" stroke="#C9D6E3" stroke-width="1.5"/></g>';
+    case 'flowers': return `<g class="hat"><path d="M34 33 Q60 20 86 33" stroke="#5FA35A" stroke-width="3" fill="none"/>${[[38, 30, '#F07CA8'], [49, 25, '#FFE07A'], [60, 23, '#B58BE0'], [71, 25, '#F07CA8'], [82, 30, '#FFE07A']].map(([x, y, c]) => `<g fill="${c}">${curls(x, y, 3.6, 5, 3.2)}</g><circle cx="${x}" cy="${y}" r="2.4" fill="#F4A13A"/>`).join('')}</g>`;
+    case 'chef': return '<g class="hat"><g fill="#fff" stroke="#CFC8BF" stroke-width="1.6"><circle cx="47" cy="13" r="10"/><circle cx="60" cy="7" r="11"/><circle cx="73" cy="13" r="10"/><rect x="45" y="14" width="30" height="17" rx="2"/></g><path d="M45 25 H75" stroke="#CFC8BF" stroke-width="1.5"/></g>';
+    case 'headphones': return '<g class="hat"><path d="M30 46 Q30 8 60 8 Q90 8 90 46" stroke="#2F3542" stroke-width="5" fill="none" stroke-linecap="round"/><rect x="22" y="38" width="14" height="22" rx="6" fill="#E2574C" stroke="#2F3542" stroke-width="2"/><rect x="84" y="38" width="14" height="22" rx="6" fill="#E2574C" stroke="#2F3542" stroke-width="2"/></g>';
+    case 'cowboy': return '<g class="hat"><path d="M44 29 Q41 6 52 7 Q60 12 68 7 Q79 6 76 29 Z" fill="#B5763A" stroke="#6E4520" stroke-width="2" stroke-linejoin="round"/><rect x="44" y="21" width="32" height="5" fill="#5A3A1A"/><path d="M22 27 Q60 40 98 27 Q100 33 92 34 Q60 42 28 34 Q20 33 22 27 Z" fill="#A0662E" stroke="#6E4520" stroke-width="2" stroke-linejoin="round"/></g>';
   }
   return '';
 }
-/* One drawing of Bonnie for every game. hat: an id, 'none', or leave out for the hat she is wearing. */
-function bonnieSVG(hat) {
-  if (hat === undefined) hat = S && S.hat;
+/* Neck things sit under her chin; the cape hangs behind her. */
+function neckSVG(id, back) {
+  if (back) return id === 'cape' ? '<path d="M40 84 Q18 104 22 122 Q60 128 98 122 Q102 104 80 84 Z" fill="#D9443A" stroke="#8E2A22" stroke-width="2" stroke-linejoin="round"/>' : '';
+  const collar = (c, d) => `<path d="M36 85 Q60 98 84 85" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M36 85 Q60 98 84 85" stroke="${d}" stroke-width="1.6" fill="none" stroke-dasharray="2 5" stroke-linecap="round"/>`;
+  switch (id) {
+    case 'collar-red': return collar('#D9443A', '#FFD2CC') + '<circle cx="60" cy="98" r="4.5" fill="#F4C25B" stroke="#8A5A14" stroke-width="1.5"/>';
+    case 'collar-blue': return collar('#3B7FC4', '#CFE3F7') + '<path d="M60 102 l-4.2-4.2a2.6 2.6 0 0 1 4.2-3 2.6 2.6 0 0 1 4.2 3z" fill="#F4C25B" stroke="#8A5A14" stroke-width="1.3"/>';
+    case 'bandana': return '<path d="M35 84 Q60 95 85 84 L60 113 Z" fill="#E2574C" stroke="#9E2F27" stroke-width="1.6" stroke-linejoin="round"/><g fill="#fff"><circle cx="48" cy="91" r="1.8"/><circle cx="60" cy="96" r="1.8"/><circle cx="72" cy="91" r="1.8"/><circle cx="56" cy="104" r="1.6"/><circle cx="64" cy="104" r="1.6"/></g>';
+    case 'bowtie': return '<path d="M60 92 L46 84 L46 100 Z M60 92 L74 84 L74 100 Z" fill="#8E6CD0" stroke="#3A2470" stroke-width="1.6" stroke-linejoin="round"/><circle cx="60" cy="92" r="4" fill="#6C4BB4" stroke="#3A2470" stroke-width="1.6"/>';
+    case 'scarf': return '<path d="M34 83 Q60 97 86 83 L86 92 Q60 106 34 92 Z" fill="#C0392B" stroke="#7E1F16" stroke-width="1.5"/><path d="M45 89 v8 M58 92 v9 M71 89 v9" stroke="#fff" stroke-width="3"/><g transform="rotate(-12 72 96)"><rect x="66" y="94" width="11" height="22" rx="2" fill="#C0392B" stroke="#7E1F16" stroke-width="1.5"/><path d="M66 102 h11 M66 109 h11" stroke="#fff" stroke-width="3"/><path d="M67 116 v4 M71 116 v4 M75 116 v4" stroke="#C0392B" stroke-width="1.6"/></g>';
+    case 'medal': return '<path d="M46 83 L58 101 M74 83 L62 101" stroke="#3B7FC4" stroke-width="5" stroke-linecap="round"/><circle cx="60" cy="105" r="8" fill="#F4C25B" stroke="#8A5A14" stroke-width="1.8"/><path d="M60 100.5l1.4 2.9 3.2.4-2.3 2.2.6 3.2-2.9-1.6-2.9 1.6.6-3.2-2.3-2.2 3.2-.4z" fill="#FFF3B0"/>';
+    case 'cape': return '<circle cx="45" cy="86" r="3.5" fill="#F4C25B" stroke="#8A5A14" stroke-width="1.3"/><circle cx="75" cy="86" r="3.5" fill="#F4C25B" stroke="#8A5A14" stroke-width="1.3"/>';
+  }
+  return '';
+}
+/* Things on her face (drawn over her eyes). */
+function faceSVG(id) {
+  switch (id) {
+    case 'eyepatch': return '<g class="hat"><path d="M37 38 Q60 30 85 44" stroke="#222" stroke-width="2.4" fill="none"/><ellipse cx="71.5" cy="52" rx="7.5" ry="6.5" fill="#222"/></g>';
+    case 'sunglasses': return '<g class="hat"><path d="M38 48 L31 44 M82 48 L89 44" stroke="#111" stroke-width="2.2" stroke-linecap="round"/><rect x="38" y="44" width="21" height="14" rx="6" fill="#1E1E2A" stroke="#111" stroke-width="1.6"/><rect x="61" y="44" width="21" height="14" rx="6" fill="#1E1E2A" stroke="#111" stroke-width="1.6"/><path d="M59 49 h2" stroke="#111" stroke-width="3"/><path d="M42 48 l6 0 M65 48 l6 0" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".55"/></g>';
+    case 'specs': return '<g class="hat" fill="rgba(255,255,255,.18)" stroke="#6B3E1F" stroke-width="2.2"><circle cx="48.5" cy="52" r="8.5"/><circle cx="71.5" cy="52" r="8.5"/><path d="M57 51 Q60 48.5 63 51 M40 50 L33 46 M80 50 L87 46" fill="none"/></g>';
+  }
+  return '';
+}
+/* One drawing of Bonnie for every game.
+   look: leave out for what she is wearing, 'none' for nothing, or one item id (a shop picture). */
+function bonnieSVG(look) {
+  let hat, face, neck;
+  if (look === undefined) ({ hat, face, neck } = S || {});
+  else { const k = slotKey(look); hat = k === 'hat' ? look : null; face = k === 'face' ? look : null; neck = k === 'neck' ? look : null; }
   return `<svg viewBox="0 0 120 124" aria-hidden="true">
+    ${neckSVG(neck, true)}
     <g class="tail"><path d="M86 100 q20 -4 20 -24" fill="none" stroke="var(--fur-dk)" stroke-width="10" stroke-linecap="round"/><g fill="var(--fur-dk)">${curls(106, 74, 5, 5, 5)}</g></g>
     <g fill="var(--fur)"><ellipse cx="60" cy="102" rx="31" ry="19"/>${curls(60, 102, 22, 12, 7)}</g>
     <g fill="var(--fur-lt)" opacity=".55">${curls(60, 104, 10, 6, 4)}</g>
+    ${neckSVG(neck)}
     <g class="head">
       <g fill="var(--fur-dk)"><g class="ear-l">${ear(33, -1)}</g><g class="ear-r">${ear(87, 1)}</g></g>
       <g fill="var(--fur)"><circle cx="60" cy="52" r="25"/>${curls(60, 50, 23, 14, 7.5)}</g>
@@ -357,7 +419,8 @@ function bonnieSVG(hat) {
       <ellipse class="tongue" cx="60" cy="75" rx="4.6" ry="6.5" fill="#ef7b8f"/>
       <ellipse cx="60" cy="61" rx="5.8" ry="4.2" fill="#24160e"/><ellipse cx="58.2" cy="59.8" rx="1.6" ry="1" fill="#6b5446"/>
       <path d="M60 65.2v4M52.5 68.6q7.5 5.4 15 0" stroke="#24160e" stroke-width="2" fill="none" stroke-linecap="round"/>
-      ${hatSVG(hat === 'none' ? null : hat)}
+      ${faceSVG(face)}
+      ${hatSVG(hat)}
     </g>
   </svg>`;
 }
@@ -724,14 +787,15 @@ function finishLevel() {
 let shopTab = 'hats', shopFromClub = false;
 function shopScreen(opts = {}) {
   G = null; S = load();
-  const tabs = { hats: '🎩 Bonnie’s Hats', themes: '🎨 Themes', prizes: '🎁 Real Prizes' };
+  const tabs = { hats: '🎀 Dress Up Bonnie', themes: '🎨 Themes', prizes: '🎁 Real Prizes' };
   const more = cost => `<span class="meter" aria-hidden="true"><i style="width:${Math.min(100, Math.round(S.bones / cost * 100))}%"></i></span><div class="note">${cost - S.bones} more to go!</div>`;
   let body = '';
-  if (shopTab === 'hats') body = HATS.map(h => {
-    const own = h.id === 'none' || S.owned.hats.includes(h.id), on = (S.hat || 'none') === h.id;
+  if (shopTab === 'hats') body = SLOTS.map(sl => `<h3 class="tier">${sl.name}</h3>` + HATS.filter(h => h.slot === sl.id).map(h => {
+    const own = S.owned.hats.includes(h.id), on = S[sl.key] === h.id;
     return `<div class="card item"><div class="hatprev">${bonnieSVG(h.id)}</div><b>${h.name}</b>
-      ${own ? `<button class="btn small ${on ? 'ghost' : 'green'}" data-hat="${h.id}" ${on ? 'disabled' : ''}>${on ? 'Wearing ✓' : h.id === 'none' ? 'Take hat off' : 'Wear'}</button>`
-        : `<div class="cost">🦴 ${h.cost}</div>${S.bones >= h.cost ? `<button class="btn small" data-buy="hats:${h.id}">Buy</button>` : more(h.cost)}`}</div>`; }).join('');
+      ${own ? (on ? `<div class="note">Wearing ✓</div><button class="btn small ghost" data-off="${sl.key}">${sl.off}</button>`
+          : `<button class="btn small green" data-wear="${h.id}">Wear</button>`)
+        : `<div class="cost">🦴 ${h.cost}</div>${S.bones >= h.cost ? `<button class="btn small" data-buy="hats:${h.id}">Buy</button>` : more(h.cost)}`}</div>`; }).join('')).join('');
   if (shopTab === 'themes') body = THEMES.map(t => {
     const own = S.owned.themes.includes(t.id), on = S.theme === t.id;
     return `<div class="card item"><div class="swatch" style="background:${t.sw}"></div><b>${t.name}</b>
@@ -765,10 +829,9 @@ function shopScreen(opts = {}) {
   if (opts.welcome) setTimeout(() => say(LINES.shopWelcome), 250);
   const sb = $('#shopBonnie'); sb.onclick = () => { const t = tickle(sb); $('#shopSay').textContent = t; say(t, { pitch: 1.4 }); };
   $$('[data-tab]').forEach(b => b.onclick = () => { shopTab = b.dataset.tab; sfx.pop(); shopScreen(); });
-  $$('[data-hat]').forEach(b => b.onclick = () => {
-    const id = b.dataset.hat; mutate(s => { s.hat = id === 'none' ? null : id; }); sfx.pop(); shopScreen();
-    setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); shopSay(id === 'none' ? LINES.hatOff : LINES.hatOn); }, 50);
-  });
+  const dressed = line => setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); shopSay(line); }, 50);
+  $$('[data-wear]').forEach(b => b.onclick = () => { const id = b.dataset.wear; mutate(s => { s[slotKey(id)] = id; }); sfx.pop(); shopScreen(); dressed(LINES.hatOn); });
+  $$('[data-off]').forEach(b => b.onclick = () => { mutate(s => { s[b.dataset.off] = null; }); sfx.pop(); shopScreen(); dressed(LINES.hatOff); });
   $$('[data-usetheme]').forEach(b => b.onclick = () => { mutate(s => { s.theme = b.dataset.usetheme; }); applyTheme(); sfx.pop(); shopScreen(); });
   $$('[data-buy]').forEach(b => b.onclick = () => { sfx.tap(); confirmBuy(...b.dataset.buy.split(':')); });
   $$('[data-prize]').forEach(b => b.onclick = () => { sfx.tap(); confirmPrize(b.dataset.prize); });
@@ -782,7 +845,7 @@ function confirmBuy(tab, id) {
     S = load(); if (S.bones < it.cost) return shopScreen();
     mutate(s => {
       s.bones -= it.cost;
-      if (tab === 'hats') { s.owned.hats.push(id); s.hat = id; } else { s.owned.themes.push(id); s.theme = id; }
+      if (tab === 'hats') { s.owned.hats.push(id); s[slotKey(id)] = id; } else { s.owned.themes.push(id); s.theme = id; }
       s.redeemed.push({ title: (tab === 'hats' ? 'Bonnie’s ' : 'Theme: ') + it.name, cost: it.cost, when: todayGB() });
     });
     applyTheme(); sfx.fanfare(); confetti(20); shopScreen();
@@ -1206,7 +1269,7 @@ function startGame(opts = {}) {
 
 window.Meadow = {
   version: SAVE_VERSION,
-  RULES, HATS, THEMES, STARTER_PRIZES, OLD_IDS, OLD_KEYS, LINES,
+  RULES, HATS, SLOTS, THEMES, STARTER_PRIZES, OLD_IDS, OLD_KEYS, LINES,
   // content
   registerWorld, worlds: subjectWorlds, world: worldById, visibleWorlds, shownYears, levelUnlocked, starSummary,
   // play
