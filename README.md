@@ -18,9 +18,10 @@ To add another game, add an entry to the `GAMES` list in the `CONFIG` block at t
 
 A Year 2 (Key Stage 1) maths game for iPad, built for Harvey with help from Bonnie, the family's brown cockapoo.
 
-Four worlds:
+Five worlds:
 
 - **The Partitioning Park:** splitting numbers into tens and ones (for example 47 = 40 + 7), with base-ten blocks and counters.
+- **Number Bonds Burrow:** adding and taking away: number bonds to 10 and 20, tens facts to 100, 2-digit sums, three numbers and fact families.
 - **The Stepping Stone River:** number lines from 0 to 100. Harvey drags Bonnie along the line to find numbers.
 - **The Array Orchard:** equal groups, rows of apples and the 2, 5 and 10 times tables.
 - **The Sharing Pond:** sharing fairly, grouping, halves, thirds and quarters.
@@ -61,6 +62,22 @@ The first time the Clubhouse opens, Bonnie asks for the player's name.
 | 8 | Partition to Add | 34 + 25 by adding tens, then ones |
 
 **Tens are bundles, not ones.** To avoid the "4 rods = 4" trap, every ten-rod is strapped like a bundle and carries a "10" tag, and tens and ones sit on differently tinted trays. Tapping the rods counts them in tens out loud ("10, 20, 30, 40!"), with each rod lighting up in turn. Bonnie's clue says "Those long rods are super bundles worth 10 each! Count by tens: 10, 20, 30, 40!", and her step card counts along too. Counters in the hundreds levels count in 10s or 100s the same way.
+
+### Number Bonds Burrow (7 burrows)
+
+Year 2 asks children to recall addition and subtraction facts to 20 fluently and use them for facts up to 100. The main picture is the **burrow frame**: a ten frame drawn as 10 burrow holes in two rows of 5 (two frames for numbers up to 20). Bones are the first number and carrots the second. Harvey taps an empty hole to drop one in, or taps a bone for Bonnie to eat it. Nothing under the picture counts for him, so the answer is never given away.
+
+| | Burrow | What it practises | Easy version |
+|---|---|---|---|
+| 1 | Bonds to 10 | Pairs that make 10, both ways round (7 + ? = 10, 10 − 3) | Pairs to 5 and 6 |
+| 2 | Bonds to 20 | Facts to 20, filling the first burrow to 10 first (8 + 5 = 13, 14 − 6 = 8) | No crossing 10 |
+| 3 | Tens Facts | Using a bond to 10 for tens, with bags of 10 (3 + 7 = 10, so 30 + 70 = 100) | Totals to 50 |
+| 4 | Ones and Tens | A 2-digit number add or take away ones or tens (46 + 3, 46 + 30, 58 − 20), with base-ten blocks | No crossing a ten |
+| 5 | Two-Digit Diggers | 2-digit add and take away 2-digit, tens first then ones (34 + 25, 67 − 24) | No exchanging |
+| 6 | Three Little Numbers | Adding three numbers by spotting a bond to 10 (4 + 6 + 3) | Totals to 10 |
+| 7 | Fact Families | Missing numbers (? − 8 = 7), using one fact for another, and "true or false: 5 − 3 = 3 − 5" | Within 10 |
+
+Word problems with the player's name and Bonnie come up in every level. The world is in `worlds/y2-maths-number-bonds.js`; the burrow frame is in the kit (`vis: { type: 'burrow' }`, made with `MeadowMaths.burrow({...})`), so other worlds can use it too. `tests/number-bonds-test.html` checks every kind of question (see "Try it" below).
 
 ### The Stepping Stone River (5 stones)
 
@@ -172,10 +189,11 @@ This means:
 - **Stars:** 3 stars for at most 1 mistake and no help. 2 stars for at most 4 mistakes and at most 1 help. Otherwise 1 star. The best result is kept. A level unlocks once the one before has a star.
 - **Bones:** 1 per right answer, +1 the first time Bonnie is asked in a level, and 2 per *new* star at the end. There are no streak multipliers.
 - **Meadow Words:** its four worlds are in `worlds/y2-english-*.js`.
-- **Meadow Maths:** `worlds/y2-maths-kit.js` is the question screen the four maths worlds share: the number pad, the pictures, the number line and Bonnie's help ladder (a clue, then the step card, then glowing buttons). The worlds themselves are in `worlds/y2-maths-*.js`. Only the step card and the glowing buttons count as help for stars; a clue does not. Two helped questions in a row quietly switch to easier numbers until two clean ones in a row.
+- **Meadow Maths:** `worlds/y2-maths-kit.js` is the question screen the maths worlds share: the number pad, the pictures (including the burrow frame), the number line and Bonnie's help ladder (a clue, then the step card, then glowing buttons). The worlds themselves are in `worlds/y2-maths-*.js`. Only the step card and the glowing buttons count as help for stars; a clue does not. Two helped questions in a row quietly switch to easier numbers until two clean ones in a row.
 - **Clubhouse:** reads and writes only `meadow-save-v1` (name, Clubhouse sound) and shows each game's stars. It loads every world file so it can count them, so a new world file is added there too.
 - **Bonnie's dress-up:** the Bone Shop's first tab has three slots, so Bonnie can wear a hat, something on her face and something round her neck at once (`hat`, `face`, `neck` in the save). Items are listed in `HATS` in the engine, each with its `slot`, and drawn in `hatSVG`, `faceSVG` and `neckSVG`.
 - **The old beta addresses** (`/beta/index.html`, `/beta/meadow-maths.html`, `/beta/meadow-words.html`) now just send you to the live pages. `beta/sw.js` removes the beta's old offline copy and then removes itself.
+- **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world.
 - **Try it:** `beta/core-test.html` has a small practice world. It uses its own practice save (`meadow-save-test`), so it changes nothing. Its "Test tools" box shows what would be copied from this device's saves.
 - **Going back to the old games:** the old pages are in git history (the commit before "Stage 7"). Putting them back needs no save changes, because the old saves were never touched; only progress made in the new games would be missing.
 
@@ -183,9 +201,9 @@ A world is one file that calls `Meadow.registerWorld({...})` with a stable `id`,
 
 A file can also add levels to a world another file made, with `Meadow.addLevels(worldId, levels)` (Maths files use `MeadowMaths.addLevels`). `worlds/y2-maths-sharing-fractions.js` does this for the Sharing Pond. To add a file like this: put a `<script>` line for it after the world's own file in `meadow-maths.html` and `index.html`, and add it to `CORE_ASSETS` in `sw.js` (and bump `CACHE_VERSION`).
 
-## Bonnie's recorded voice (Clubhouse and Meadow Words)
+## Bonnie's recorded voice (Clubhouse, Meadow Words and Meadow Maths)
 
-The Clubhouse and Meadow Words can play a recorded ElevenLabs voice for Bonnie instead of the device's built-in voice. Bonnie is currently voiced by **Shelley** (voice ID `4CrZuIW9am7gYAxgo2Af`). Both pages share the player in `bonnie-voice.js`. The clips are made once on a computer and uploaded with the games, so the iPad never needs the ElevenLabs key, and they work offline.
+The Clubhouse and both games can play a recorded ElevenLabs voice for Bonnie instead of the device's built-in voice. Bonnie is currently voiced by **Shelley** (voice ID `4CrZuIW9am7gYAxgo2Af`). Both pages share the player in `bonnie-voice.js`. The clips are made once on a computer and uploaded with the games, so the iPad never needs the ElevenLabs key, and they work offline.
 
 **Making the clips** (needs [Node.js](https://nodejs.org) 20 or newer):
 
@@ -224,6 +242,8 @@ The Clubhouse and Meadow Words can play a recorded ElevenLabs voice for Bonnie i
 - Names marked with `*` in `tools/names.txt` (Harvey, Rex, Samantha, Anthony, Alaya and Rory) have every sentence containing their name recorded in one go, so there's no join around the name. That's about 52 sentences, or roughly 1,500 characters, per name. Other names are joined in, with the quiet ends of each clip trimmed so the joins are short.
 - Prizes a grown-up adds or renames can't be recorded in advance. For those, Bonnie says "Hooray! Go and tell your grown-up what you unlocked!" in the recorded voice, and the prize name is shown on screen.
 - After editing the words in the game, run the script again. It only makes the new lines and removes clips that are no longer used. Changing the voice ID or model remakes everything.
+- **Meadow Maths** questions are full of numbers that change, so most of its lines use the device voice. Its greetings, its well-done lines and each world's fixed lines are recorded. A Maths world lists its fixed lines in `lines` (see `VOICE_LINES` in `worlds/y2-maths-number-bonds.js`); keep them word for word the same as the clues and steps.
+- `npm run voice -- --dry-run` lists every new line it would record and how many characters that costs, without the key and without making anything.
 - The reading speed setting only changes the device voice.
 - Some letter sounds came out as letter names ("lll" was read as "L, L, L"), so the script sends ElevenLabs a different spelling for those (`SAY_AS` in `tools/make-voice.mjs`). The device voice still uses the game's own spelling.
 - Letter sounds such as "buh" and "sss" are hard for any computer voice. To use your own recording, replace that clip's file in `audio/clips/` (keep the name). `audio/manifest.json` lists the words in each clip under `texts`. The script won't overwrite it unless the voice changes.
@@ -265,4 +285,4 @@ git push
 
 - Each page is a single HTML file with plain JavaScript. There is nothing to install or build.
 - The only outside requests are the two Google Fonts (Fredoka and Nunito). The game still works without them, using fallback fonts.
-- Bonnie's voice uses the device's built-in speech, or recorded clips in Meadow Words (see above). The game picks the most natural British English voice available, preferring enhanced or premium ones. On an iPad you can download a better voice in **Settings → Accessibility → Spoken Content → Voices → English → (UK voices)**. If speech isn't available, Bonnie plays a short chime instead.
+- Bonnie's voice uses the device's built-in speech, or recorded clips (see above). The game picks the most natural British English voice available, preferring enhanced or premium ones. On an iPad you can download a better voice in **Settings → Accessibility → Spoken Content → Voices → English → (UK voices)**. If speech isn't available, Bonnie plays a short chime instead.
