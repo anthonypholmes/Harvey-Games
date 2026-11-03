@@ -116,7 +116,11 @@ const LINES = {
   praise: ['Pawsome, {N}!', 'Woof! Brilliant!', 'Tail-waggingly good!', 'Super job, {N}!', 'Bone-tastic!', 'Wow! Clever clogs!'],
   watched: 'Well done for watching and learning, {N}!',
   oops: ['Nearly! Have another sniff.', 'Ooh, so close! Try again.', "That's okay — mistakes help our brains grow!", 'Not quite. You can do it, {N}!'],
-  tickles: ['Hee hee! That tickles!', 'Ha ha! Stop it, {N}!', 'Woof woof! Giggle!', 'Ooh, my ears are ticklish!', 'Hehe! Do it again!'],
+  tickles: ['Hee hee! That tickles!', 'Ha ha! Stop it, {N}!', 'Ooh, my ears are ticklish!', 'Hehe! Do it again!', 'Woof! Not my tummy!',
+    'Ha ha! You found my ticklish spot!', 'Ooh, that makes my tail wag!', 'Hee hee! My paws have gone all wiggly!', 'Woof woof! Again, again!',
+    'Ha ha! My whiskers are wobbling!', 'Hee hee! Who taught you to tickle like that?'],
+  // the Easter egg: tickle her lots of times quickly and she does a spinning jump
+  tickleEgg: ['Okay, okay, you win! Watch my super spin!', "So many tickles! Time for a happy dance!", "Woof! You're the tickle champion, {N}!"],
   finish: { 3: "WOW, {N}! Three stars! You're a superstar!", 2: 'Brilliant work, {N}! Two shiny stars!', 1: 'You did it, {N}! Every try makes you stronger!' },
   already3: 'You already have 3 stars here: great practice!',
   stillBest: { 1: 'Your best here is still 1 star. Great practice!', 2: 'Your best here is still 2 stars. Great practice!' },
@@ -481,7 +485,20 @@ function hearts(el, emoji = '💖', n = 4) {
     h.style.left = (r.left + r.width * (.2 + Math.random() * .6)) + 'px'; h.style.top = (r.top + r.height * .2) + 'px';
     h.style.animationDelay = (i * .12) + 's'; document.body.appendChild(h); setTimeout(() => h.remove(), 1600); }
 }
-function tickle(el) { animate(el, 'giggle', 900); sfx.giggle(); hearts(el); return fmt(rand(LINES.tickles)); }
+/* Tickling Bonnie. Lots of quick tickles in a row (EGG_TAPS, each within 2 seconds of the last)
+   set off the Easter egg: a spinning jump, a shower of bones, paws and stars, and a special line. */
+const EGG_TAPS = 10;
+let tickN = 0, tickAt = 0;
+function tickleEgg() { const now = Date.now(); tickN = now - tickAt < 2000 ? tickN + 1 : 1; tickAt = now;
+  if (tickN < EGG_TAPS) return false; tickN = 0; return true; }
+function tickle(el) {
+  if (tickleEgg()) {
+    animate(el, 'bonnie-spin', 1300); sfx.fanfare();
+    ['🦴', '🐾', '⭐', '💖'].forEach((e, i) => setTimeout(() => hearts(el, e, 4), i * 150));
+    return fmt(rand(LINES.tickleEgg));
+  }
+  animate(el, 'giggle', 900); sfx.giggle(); hearts(el); return fmt(rand(LINES.tickles));
+}
 function banner(text) { const b = document.createElement('div'); b.className = 'banner'; b.innerHTML = text; document.body.appendChild(b); setTimeout(() => b.remove(), 2500); }
 function shakeScreen() { if (!reduceMotion()) animate($('#screen'), 'shake', 420); }
 function confetti(n = 40) {
@@ -623,7 +640,7 @@ function homeScreen() {
   hb.onclick = () => { const t = tickle(hb); $('#homeSay').textContent = t; say(t, { pitch: 1.4 }); };
   $$('.world-card').forEach(b => b.onclick = () => { sfx.pop(); worldScreen(b.dataset.w); });
   $('#goShop').onclick = () => shopScreen({ welcome: true });
-  $('#goParent').onclick = parentGate;
+  $('#goParent').onclick = () => { parentFromClub = false; parentGate(); };
   setTimeout(() => say(greet), 250);
 }
 
@@ -922,14 +939,21 @@ function confirmPrize(id) {
 /* =========================================================
    GROWN-UPS: sum check, then settings
    ========================================================= */
+/* Once the sum is answered, the grown-ups area opens without it again for a few minutes in this
+   tab, so a grown-up can hop between the Clubhouse, Maths and Words settings. */
+const GATE_KEY = 'meadow-grownups-open-until', GATE_MS = 10 * 60 * 1000;
+const gateOpen = () => { try { return +sessionStorage.getItem(GATE_KEY) > Date.now(); } catch (e) { return false; } };
+const gatePassed = () => { try { sessionStorage.setItem(GATE_KEY, String(Date.now() + GATE_MS)); } catch (e) {} };
+let parentFromClub = false;
 function parentGate() {
+  if (gateOpen()) { parentScreen(); return; }
   const a = randInt(6, 9), b = randInt(12, 19);
   const bg = modal(`<h2>🔒 Grown-ups only</h2><p>To open settings, please answer:</p>
     <p style="font-size:2rem;font-weight:700">${a} × ${b} = ?</p>
     <input type="number" inputmode="numeric" id="gateAns" aria-label="Answer"><p class="note" id="gateMsg" aria-live="polite"></p>
     <div class="btns"><button class="btn green" data-a="ok">Unlock</button><button class="btn ghost" data-a="cancel">Cancel</button></div>`, act => {
-    if (act === 'cancel') return;
-    if (+$('#gateAns').value === a * b) { parentScreen(); return; }
+    if (act === 'cancel') { if (parentFromClub) location.href = GAME.homeHref; return; }
+    if (+$('#gateAns').value === a * b) { gatePassed(); parentScreen(); return; }
     $('#gateMsg').textContent = 'Not quite — please try again.'; $('#gateAns').value = ''; sfx.wrong(); return true;
   });
   const inp = $('#gateAns', bg); inp.focus();
@@ -950,8 +974,9 @@ function parentScreen() {
   const V = window.BonnieVoice;
   show(`
     <div class="card parent">
-      <div class="map-head"><button class="icon-btn" id="back">← Home</button><h2>⚙️ Grown-up Settings</h2></div>
-      <p class="note">Bones, name, hats, themes and prizes are shared by every Meadow game. Changes here show up there too.</p>
+      <div class="map-head"><button class="icon-btn" id="back">${parentFromClub ? '← Clubhouse' : '← Home'}</button><h2>⚙️ Grown-up Settings: ${esc(GAME.title)}</h2></div>
+      <p class="note">Bones, name, hats, themes and prizes are shared by every Meadow game. Changes here show up there too. Stars and progress further down are for ${esc(GAME.title)} only.</p>
+      ${(GAME.otherGames || []).length ? `<div class="row-btns" style="justify-content:flex-start">${GAME.otherGames.map(g => `<a class="btn small ghost" href="${esc(g.href)}#grownups">${esc(g.icon || '')} ${esc(g.title)} settings →</a>`).join('')}</div>` : ''}
       <section><h3>Child</h3>
         <p>Playing as <b>${esc(nameOf())}</b>. To change the name, use <b>Change name</b> on the <a href="${esc(GAME.homeHref)}">Clubhouse</a> page.</p></section>
       <section><h3>Bones 🦴 <span class="chip bones" style="display:inline-flex" id="pBones">${S.bones}</span></h3>
@@ -1000,7 +1025,7 @@ function parentScreen() {
         <p class="note">Saves everything on this device (bones, hats, themes, prizes and every game's progress) as a file or a code, and restores it on this or another device.</p>
         <div class="row-btns" style="justify-content:flex-start"><button class="btn small green" id="backupBtn" ${window.MeadowBackup ? '' : 'disabled'}>💾 Export or import save</button></div></section>
     </div>`);
-  $('#back').onclick = homeScreen;
+  $('#back').onclick = () => { if (parentFromClub) location.href = GAME.homeHref; else homeScreen(); };
   $$('[data-bone]').forEach(b => b.onclick = () => { mutate(s => { s.bones = Math.max(0, s.bones + +b.dataset.bone); }); $('#pBones').textContent = S.bones; $('#boneSet').value = S.bones; });
   $('#boneForm').onsubmit = e => { e.preventDefault(); const v = int($('#boneSet').value, 0, 99999); mutate(s => { s.bones = v; }); $('#pBones').textContent = S.bones; $('#boneSet').value = S.bones; $('#boneOk').textContent = 'Saved ✓'; };
   // prizes save as you type
@@ -1055,7 +1080,7 @@ function parentScreen() {
    ========================================================= */
 function spokenLines(game = GAME) {
   const out = new Set(), add = (...xs) => xs.forEach(x => x && out.add(fmt(x)));
-  add(...LINES.praise, LINES.watched, ...LINES.oops, ...LINES.tickles, ...Object.values(LINES.finish), LINES.already3, ...Object.values(LINES.stillBest),
+  add(...LINES.praise, LINES.watched, ...LINES.oops, ...LINES.tickles, ...LINES.tickleEgg, ...Object.values(LINES.finish), LINES.already3, ...Object.values(LINES.stillBest),
     LINES.locked, LINES.shownAll, LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
   [1, 2, 3].forEach(st => [1, 2].forEach(p => { if (st <= p) add(fmt(LINES.finish[st]) + ' ' + LINES.stillBest[p]); }));
   [1, 2, 3].forEach(st => add(fmt(LINES.finish[st]) + ' ' + LINES.already3));
@@ -1238,6 +1263,9 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 @keyframes wag{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(18deg)}}
 @keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
 @keyframes hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-22px) scale(1.04)}}
+@keyframes bonnieSpin{0%{transform:translateY(0) rotate(0)}35%{transform:translateY(-40px) rotate(180deg) scale(1.1)}70%{transform:translateY(-10px) rotate(360deg)}85%{transform:translateY(0) scale(1.08,.92)}100%{transform:none}}
+.bonnie-spin{animation:bonnieSpin 1.2s cubic-bezier(.3,1.2,.5,1) !important}
+@media (prefers-reduced-motion:reduce){.bonnie-spin{animation:none !important}}
 @keyframes giggle{0%,100%{transform:rotate(0)}10%,50%{transform:rotate(-10deg) scale(1.05)}30%,70%{transform:rotate(10deg) scale(1.05)}}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(.8)}100%{opacity:0;transform:translateY(-90px) scale(1.2)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
@@ -1312,7 +1340,10 @@ function startGame(opts = {}) {
   window.addEventListener('storage', e => { if (e.key === KEY || e.key === null) { S = load(); renderHud(); applyTheme(); } });
   applyTheme(); renderHud(); Voice().load();
   // game.html#shop opens the Bone Shop straight away (the Clubhouse links there)
-  if (location.hash === '#shop') { shopFromClub = true; shopScreen({ welcome: true }); } else homeScreen();
+  // game.html#grownups opens the grown-ups area (after the sum check): the Clubhouse links there
+  if (location.hash === '#shop') { shopFromClub = true; shopScreen({ welcome: true }); }
+  else if (location.hash === '#grownups') { parentFromClub = true; homeScreen(); parentGate(); }
+  else homeScreen();
 }
 
 window.Meadow = {
@@ -1329,7 +1360,7 @@ window.Meadow = {
   home: () => homeScreen(), worldMap: id => worldScreen(id), shop: opts => shopScreen(opts || {}), grownUps: () => parentGate(),
   // UI kit for world files
   ui: { $, $$, esc, fmt, rand, randInt, shuffle, wait, plural, reduceMotion, say, hush, whenQuiet, sfx, tone, ac, animate, hearts, banner, confetti,
-    shakeScreen, tickle, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show },
+    shakeScreen, tickle, tickleEgg, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show },
   spokenLines,
 };
 })();
