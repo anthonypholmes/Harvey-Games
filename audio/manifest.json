@@ -1374,7 +1374,11 @@
   "46f16ad2": "clips/46f16ad2-4crzui.mp3",
   "9ea77d4d": "clips/9ea77d4d-4crzui.mp3",
   "aad66e78": "clips/aad66e78-4crzui.mp3",
-  "8e3c9e64": "clips/8e3c9e64-4crzui.mp3"
+  "8e3c9e64": "clips/8e3c9e64-4crzui.mp3",
+  "6757b3e9": "clips/6757b3e9-4crzui.mp3",
+  "5e5adf08": "clips/5e5adf08-4crzui.mp3",
+  "fd39b950": "clips/fd39b950-4crzui.mp3",
+  "b138e6f5": "clips/b138e6f5-4crzui.mp3"
  },
  "names": {
   "harvey": "names/harvey-4crzui.mp3",
@@ -2856,9 +2860,13 @@
   "46f16ad2": "True or false?",
   "9ea77d4d": "Use the little fact to help.",
   "aad66e78": "Use the adding fact to help.",
-  "8e3c9e64": "Use the take away fact to help."
+  "8e3c9e64": "Use the take away fact to help.",
+  "6757b3e9": "You came back for more,",
+  "5e5adf08": "This one's extra practice.",
+  "fd39b950": "Finish it for 3 bonus bones!",
+  "b138e6f5": "3 extra practice bones for you!"
  },
- "made": "2026-11-03T15:02:49.463Z",
+ "made": "2026-11-04T14:43:42.246Z",
  "said": {
   "11b54859": "Nnn...",
   "38deadf5": "rrrr.",
@@ -2925,7 +2933,8 @@
    "b3a758d5": "whole/harvey/b3a758d5-4crzui.mp3",
    "8f2b9e07": "whole/harvey/8f2b9e07-4crzui.mp3",
    "3b37d64e": "whole/harvey/3b37d64e-4crzui.mp3",
-   "ed29c7a4": "whole/harvey/ed29c7a4-4crzui.mp3"
+   "ed29c7a4": "whole/harvey/ed29c7a4-4crzui.mp3",
+   "3fdb500c": "whole/harvey/3fdb500c-4crzui.mp3"
   },
   "rex": {
    "10271631": "whole/rex/10271631-4crzui.mp3",
@@ -2985,7 +2994,8 @@
    "b3a758d5": "whole/rex/b3a758d5-4crzui.mp3",
    "8f2b9e07": "whole/rex/8f2b9e07-4crzui.mp3",
    "3b37d64e": "whole/rex/3b37d64e-4crzui.mp3",
-   "ed29c7a4": "whole/rex/ed29c7a4-4crzui.mp3"
+   "ed29c7a4": "whole/rex/ed29c7a4-4crzui.mp3",
+   "3fdb500c": "whole/rex/3fdb500c-4crzui.mp3"
   },
   "samantha": {
    "10271631": "whole/samantha/10271631-4crzui.mp3",
@@ -3045,7 +3055,8 @@
    "b3a758d5": "whole/samantha/b3a758d5-4crzui.mp3",
    "8f2b9e07": "whole/samantha/8f2b9e07-4crzui.mp3",
    "3b37d64e": "whole/samantha/3b37d64e-4crzui.mp3",
-   "ed29c7a4": "whole/samantha/ed29c7a4-4crzui.mp3"
+   "ed29c7a4": "whole/samantha/ed29c7a4-4crzui.mp3",
+   "3fdb500c": "whole/samantha/3fdb500c-4crzui.mp3"
   },
   "anthony": {
    "10271631": "whole/anthony/10271631-4crzui.mp3",
@@ -3105,7 +3116,8 @@
    "b3a758d5": "whole/anthony/b3a758d5-4crzui.mp3",
    "8f2b9e07": "whole/anthony/8f2b9e07-4crzui.mp3",
    "3b37d64e": "whole/anthony/3b37d64e-4crzui.mp3",
-   "ed29c7a4": "whole/anthony/ed29c7a4-4crzui.mp3"
+   "ed29c7a4": "whole/anthony/ed29c7a4-4crzui.mp3",
+   "3fdb500c": "whole/anthony/3fdb500c-4crzui.mp3"
   },
   "alaya": {
    "10271631": "whole/alaya/10271631-4crzui.mp3",
@@ -3165,7 +3177,8 @@
    "b3a758d5": "whole/alaya/b3a758d5-4crzui.mp3",
    "8f2b9e07": "whole/alaya/8f2b9e07-4crzui.mp3",
    "3b37d64e": "whole/alaya/3b37d64e-4crzui.mp3",
-   "ed29c7a4": "whole/alaya/ed29c7a4-4crzui.mp3"
+   "ed29c7a4": "whole/alaya/ed29c7a4-4crzui.mp3",
+   "3fdb500c": "whole/alaya/3fdb500c-4crzui.mp3"
   },
   "rory": {
    "10271631": "whole/rory/10271631-4crzui.mp3",
@@ -3225,7 +3238,8 @@
    "b3a758d5": "whole/rory/b3a758d5-4crzui.mp3",
    "8f2b9e07": "whole/rory/8f2b9e07-4crzui.mp3",
    "3b37d64e": "whole/rory/3b37d64e-4crzui.mp3",
-   "ed29c7a4": "whole/rory/ed29c7a4-4crzui.mp3"
+   "ed29c7a4": "whole/rory/ed29c7a4-4crzui.mp3",
+   "3fdb500c": "whole/rory/3fdb500c-4crzui.mp3"
   }
  },
  "wholeTexts": {
@@ -3287,7 +3301,8 @@
    "b3a758d5": "You're the tickle champion, Harvey!",
    "8f2b9e07": "Brilliant, Harvey!",
    "3b37d64e": "Nailed it, Harvey!",
-   "ed29c7a4": "Well done, Harvey!"
+   "ed29c7a4": "Well done, Harvey!",
+   "3fdb500c": "You came back for more, Harvey!"
   },
   "rex": {
    "10271631": "Mum and Rex went to the shop.",
@@ -3347,7 +3362,8 @@
    "b3a758d5": "You're the tickle champion, Rex!",
    "8f2b9e07": "Brilliant, Rex!",
    "3b37d64e": "Nailed it, Rex!",
-   "ed29c7a4": "Well done, Rex!"
+   "ed29c7a4": "Well done, Rex!",
+   "3fdb500c": "You came back for more, Rex!"
   },
   "samantha": {
    "10271631": "Mum and Samantha went to the shop.",
@@ -3407,7 +3423,8 @@
    "b3a758d5": "You're the tickle champion, Samantha!",
    "8f2b9e07": "Brilliant, Samantha!",
    "3b37d64e": "Nailed it, Samantha!",
-   "ed29c7a4": "Well done, Samantha!"
+   "ed29c7a4": "Well done, Samantha!",
+   "3fdb500c": "You came back for more, Samantha!"
   },
   "anthony": {
    "10271631": "Mum and Anthony went to the shop.",
@@ -3467,7 +3484,8 @@
    "b3a758d5": "You're the tickle champion, Anthony!",
    "8f2b9e07": "Brilliant, Anthony!",
    "3b37d64e": "Nailed it, Anthony!",
-   "ed29c7a4": "Well done, Anthony!"
+   "ed29c7a4": "Well done, Anthony!",
+   "3fdb500c": "You came back for more, Anthony!"
   },
   "alaya": {
    "10271631": "Mum and Alaya went to the shop.",
@@ -3527,7 +3545,8 @@
    "b3a758d5": "You're the tickle champion, Alaya!",
    "8f2b9e07": "Brilliant, Alaya!",
    "3b37d64e": "Nailed it, Alaya!",
-   "ed29c7a4": "Well done, Alaya!"
+   "ed29c7a4": "Well done, Alaya!",
+   "3fdb500c": "You came back for more, Alaya!"
   },
   "rory": {
    "10271631": "Mum and Rory went to the shop.",
@@ -3587,7 +3606,8 @@
    "b3a758d5": "You're the tickle champion, Rory!",
    "8f2b9e07": "Brilliant, Rory!",
    "3b37d64e": "Nailed it, Rory!",
-   "ed29c7a4": "Well done, Rory!"
+   "ed29c7a4": "Well done, Rory!",
+   "3fdb500c": "You came back for more, Rory!"
   }
  }
 }
