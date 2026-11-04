@@ -52,18 +52,54 @@ function croakSVG(mood = 'claim') {
     </g></svg>`;
 }
 // The Captain speaks in his own recorded voice (audio/captain.json, made by tools/make-voice.mjs --captain-voice).
+// Each list is a bag: he says every line in it once before any comes round again.
 const HOST = { name: CAPTAIN, who: 'captain', svg: croakSVG, says: {
-  busted: 'Shiver me lily pads, you’ve busted my conjecture!',
-  holds: 'Arr, my conjecture holds up!',
-  sometimes: 'Sometimes right, sometimes not. Arr!',
+  busted: [   // after Harvey shows his conjecture is wrong
+    'Shiver me lily pads, you’ve busted my conjecture!',
+    'Blow me down! You busted it!',
+    'Arr, you caught me out!',
+    'Croak! My conjecture sank!',
+    'Barnacles! You’re too clever for me!',
+    'Well spotted, matey! I was wrong.',
+    'Into the pond with that conjecture!',
+  ],
+  holds: [    // after Harvey shows it's true
+    'Arr, my conjecture holds up!',
+    'Ho ho! I was right all along!',
+    'Treasure! You proved me right!',
+    'Yo ho ho! It works every time!',
+    'Ribbit! That one’s true!',
+    'Hooray! My conjecture floats!',
+  ],
+  sometimes: [
+    'Sometimes right, sometimes not. Arr!',
+    'Only sometimes? Fair enough, matey!',
+    'Sometimes it works, sometimes it doesn’t. Arr!',
+    'Half right, half wrong! Croak!',
+  ],
+  oops: [     // Level 3: a test number busts his conjecture
+    'Shiver me lily pads!',
+    'Uh oh! Not that number!',
+    'Barnacles!',
+    'Oh no, my poor conjecture!',
+    'Croak! That one doesn’t work!',
+  ],
 }, taps: [
   `Ahoy, matey! I’m ${CAPTAIN}!`,
   'Arr! Can you bust my conjecture?',
   'Every pirate needs a good mathematician!',
   'Ribbit! I mean... arr!',
+  'A conjecture is an idea that might be true!',
+  'Don’t believe me? Test me!',
+  'Prove me wrong, if you can!',
+  'My raft is made of lily pads!',
+  'Arr, numbers are my treasure!',
+  'Bonnie is my best first mate!',
+  'Yo ho ho and a bottle of pond water!',
+  'Splish, splash, I love maths!',
 ] };
 // everything he says out loud (his claim's small line, like "Prove it to me, matey!", is said when he's tapped)
-HOST.lines = [...Object.values(HOST.says), ...HOST.taps, 'Shiver me lily pads!', 'My working is perfect, arr!', 'Prove it to me, matey!'];
+HOST.lines = [...Object.values(HOST.says).flat(), ...HOST.taps, 'My working is perfect, arr!', 'Prove it to me, matey!'];
 
 /* =====================================================================
    LEVEL 1  True or False?  make(easy) → { nums, truth, text, reasons: [right, wrong, wrong], clue, steps }
@@ -217,19 +253,19 @@ const ASN = [
   { id: 'sum-even', text: 'Adding two numbers makes an even number', answer: 'sometimes', domain: pairs(1, 20), holds: ([a, b]) => even(a + b),
     clue: 'Try a few different pairs.', show: sumShow, ask: ([a, b]) => `Is ${a + b} even?` },
   { id: 'twos-in-fives', text: 'Numbers in the 2 times table are in the 5 times table too', answer: 'sometimes', domain: range(2, 24, 2), holds: n => n % 5 === 0,
-    clue: 'Try 2, then try 10.', show: n => `${n} is in the 2 times table`, ask: n => `Is ${n} in the 5 times table?` },
+    clue: ex => `Try ${ex[0]}, then try ${ex[1]}.`, show: n => `${n} is in the 2 times table`, ask: n => `Is ${n} in the 5 times table?` },
   { id: 'share-2', text: 'A number of bones can be shared fairly between 2 dogs', answer: 'sometimes', domain: n20, holds: even,
     clue: 'Try sharing an even number, then an odd one.', show: n => `Share ${n} bones between 2 dogs`, ask: n => `Is it fair, with none left over?` },
   { id: 'share-4', text: 'A number of bones can be shared fairly into quarters', answer: 'sometimes', domain: n20, holds: n => n % 4 === 0,
-    clue: 'Try 8, then try 10.', show: n => `Share ${n} bones between 4 dogs`, ask: () => 'Is it fair, with none left over?' },
+    clue: ex => `Try ${ex[0]}, then try ${ex[1]}.`, show: n => `Share ${n} bones between 4 dogs`, ask: () => 'Is it fair, with none left over?' },
   { id: 'cross-ten', text: 'Adding two 1-digit numbers makes a number bigger than 10', answer: 'sometimes', domain: pairs(1, 9), holds: ([a, b]) => a + b > 10,
     clue: 'Try two big ones, then two small ones.', show: sumShow, ask: ([a, b]) => `Is ${a + b} bigger than 10?` },
   { id: 'ones-bigger', text: 'In a 2-digit number, the ones digit is bigger than the tens digit', answer: 'sometimes', domain: range(10, 99), holds: n => ones(n) > tens(n),
-    clue: 'Try 37, then try 73.', show: n => `${n}: ${T(tens(n))} and ${ones(n)} ones`, ask: n => `Is ${ones(n)} bigger than ${tens(n)}?` },
+    clue: ex => `Try ${ex[0]}, then try ${ex[1]}.`, show: n => `${n}: ${T(tens(n))} and ${ones(n)} ones`, ask: n => `Is ${ones(n)} bigger than ${tens(n)}?` },
   { id: 'over-50', text: 'A 2-digit number is bigger than 50', answer: 'sometimes', domain: range(10, 99), holds: n => n > 50,
-    clue: 'Try 23, then try 87.', show: n => `Think of ${n}`, ask: n => `Is ${n} bigger than 50?` },
+    clue: ex => `Try ${ex[0]}, then try ${ex[1]}.`, show: n => `Think of ${n}`, ask: n => `Is ${n} bigger than 50?` },
   { id: 'take-swap', text: 'You can swap two different numbers in a take away and get the same answer', answer: 'never', easy: true, domain: pairs(1, 20).filter(([a, b]) => a !== b), holds: ([a, b]) => a - b === b - a,
-    clue: 'Try 12 − 5. Can you do 5 − 12?', show: ([a, b]) => { const H = Math.max(a, b), L = Math.min(a, b); return `${H} − ${L} = ${H - L}, but you can’t take ${H} from ${L}`; }, ask: () => 'Same answer both ways?' },
+    clue: ([[a, b]]) => { const H = Math.max(a, b), L = Math.min(a, b); return `Try ${H} − ${L}. Can you do ${L} − ${H}?`; }, show: ([a, b]) => { const H = Math.max(a, b), L = Math.min(a, b); return `${H} − ${L} = ${H - L}, but you can’t take ${H} from ${L}`; }, ask: () => 'Same answer both ways?' },
   { id: 'odd+odd-odd', text: 'Odd + odd makes an odd number', answer: 'never', domain: odPairs, holds: ([a, b]) => !even(a + b),
     clue: 'Can you make pairs? The two odd ones pair up!', show: sumShow, ask: ([a, b]) => `Is ${a + b} odd?` },
   { id: 'even+even-odd', text: 'Even + even makes an odd number', answer: 'never', domain: evPairs, holds: ([a, b]) => !even(a + b),
@@ -241,11 +277,11 @@ const ASN = [
   { id: 'add-10-change', text: 'Adding 10 changes the ones digit', answer: 'never', easy: true, domain: n100, holds: n => ones(n + 10) !== ones(n),
     clue: 'Try a few numbers! Look at the ones digit.', show: n => `${n} + 10 = ${n + 10}`, ask: () => 'Did the ones digit change?' },
   { id: 'half-odd', text: 'Half of an odd number is a whole number', answer: 'never', domain: range(1, 19, 2), holds: n => Number.isInteger(n / 2),
-    clue: 'Try halving 7 bones.', show: n => `Halve ${n} bones`, ask: n => `Can you halve ${n} bones without breaking one?` },
+    clue: ex => `Try halving ${ex[0]} bones.`, show: n => `Halve ${n} bones`, ask: n => `Can you halve ${n} bones without breaking one?` },
   { id: 'two-digit-small', text: 'A 2-digit number is smaller than 10', answer: 'never', easy: true, domain: range(10, 99), holds: n => n < 10,
     clue: 'What is the smallest 2-digit number?', show: n => `Think of ${n}`, ask: n => `Is ${n} smaller than 10?` },
   { id: 'threeq-half', text: 'Three quarters of something is less than half of it', answer: 'never', domain: range(4, 40, 4), holds: n => n * 3 / 4 < n / 2,
-    clue: 'Try it with 8 bones.', show: n => `Three quarters of ${n} is ${n * 3 / 4}, and half of ${n} is ${n / 2}`, ask: n => `Is ${n * 3 / 4} less than ${n / 2}?` },
+    clue: ex => `Try it with ${ex[0]} bones.`, show: n => `Three quarters of ${n} is ${n * 3 / 4}, and half of ${n} is ${n / 2}`, ask: n => `Is ${n * 3 / 4} less than ${n / 2}?` },
   { id: 'odd+even-even', text: 'Odd + even makes an even number', answer: 'never', domain: oePairs, holds: ([a, b]) => even(a + b),
     clue: 'Try an odd number add an even one.', show: sumShow, ask: ([a, b]) => `Is ${a + b} even?` },
 ];
@@ -261,7 +297,7 @@ function makeASN(type, easy) {
   steps.push({ say: c.answer === 'sometimes' ? 'Once yes, once no. So it is…' : c.answer === 'always' ? 'It works every time. So it is…' : 'It never works. So it is…',
     choices: choices.map(i => CHESTS[i]), answer: CHESTS[ans], words: true, final: true });
   const q = gq({ t: 'asn', kind: 'chests', prompt: easy ? 'Always or never?' : 'Always, sometimes or never?', tip: 'Tap a chest, or drag the conjecture into one.',
-    answer: [ans], choices, cfmt: i => CHESTS[i], key: c.id, clue: { say: c.clue, point: 'scroll' }, steps: () => steps });
+    answer: [ans], choices, cfmt: i => CHESTS[i], key: c.id, clue: { say: typeof c.clue === 'function' ? c.clue(ex) : c.clue, point: 'scroll' }, steps: () => steps });
   q.claim = { text: c.text }; q.claimTrue = c.answer === 'always' ? true : c.answer === 'never' ? false : 'sometimes'; q.cid = c.id;
   return q;
 }
@@ -313,7 +349,7 @@ function makeTest(type, easy) {
   steps.push({ say: 'So is the Captain right?', choices: VERDICTS, answer: VERDICTS[ans], words: true, final: true });
   const q = gq({ t: 'test', kind: 'tester', prompt: 'Test it! Can you bust it?', answer: [ans], choices: [0, 1], cfmt: i => VERDICTS[i], key: c.id,
     clue: { say: 'Try a few numbers! One that doesn’t fit busts it.', point: 'test-0' }, steps: () => steps });
-  q.claim = { text: c.text }; q.claimTrue = ans === 1; q.tests = tests; q.cid = c.id; q.busted = 'Shiver me lily pads!';
+  q.claim = { text: c.text }; q.claimTrue = ans === 1; q.tests = tests; q.cid = c.id;
   return q;
 }
 
@@ -585,7 +621,7 @@ const VOICE_LINES = [
   'Look at the tens!', 'Take away the tens. The ones stay the same.', 'Count in fives!', 'Times 2 means double it!', 'Count in tens!',
   'Half means two equal parts.', 'A quarter is half of a half!', 'Share it into 3 equal groups.', 'The first digit tells you the tens.',
   'Look at the tens first!', 'Look at the ones digit.', 'Share them out one each.', 'Taking away undoes adding!',
-  ...new Set(ASN.map(c => c.clue).filter(c => !/\d/.test(c))),
+  ...new Set(ASN.map(c => c.clue).filter(c => typeof c === 'string' && !/\d/.test(c))),
 ];
 
 // The world's badge on the Maths map: the Captain's head and hat on a lily pad in the cove (sized in em, like an emoji)

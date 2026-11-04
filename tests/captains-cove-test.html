@@ -97,6 +97,9 @@
       if (!q.choices.includes(q.answer[0])) bad(where, 'the right chest is missing');
       checkSteps(where, q, q.cfmt(q.answer[0]));
       q.gsteps().slice(0, -1).forEach(st => { if (!/^(Yes|No)$/.test(st.answer)) bad(where, 'an example step has no yes/no'); });
+      // a clue that names numbers must name the ones Bonnie's step card uses (not some other example)
+      const cardNums = new Set(q.gsteps().flatMap(st => st.say.match(/\d+/g) || []));
+      (q.gclue.say.replace(/\d+-digit|\d+ times table/g, '').match(/\d+/g) || []).forEach(n => { if (!/Count in fives/.test(q.gclue.say) && !cardNums.has(n)) bad(where, `the clue "${q.gclue.say}" says ${n}, but the step card doesn't`); });
     }
     // Level 3
     for (let index = 0; index < L[2].seq.length; index++) {
@@ -190,7 +193,7 @@
   }
   // the Captain's voice: everything he can say out loud must be on his recording list (HOST.lines)
   if (w && w.host) {
-    const said = new Set([...Object.values(w.host.says), ...(w.host.taps || [])]);
+    const said = new Set([...Object.values(w.host.says).flat(), ...(w.host.taps || [])]);
     for (const Lv of L) for (const eased of [false, true]) for (let rep = 0; rep < 20; rep++) for (let index = 0; index < Lv.seq.length; index++) {
       const q = Lv.make({ eased, index, type: Lv.seq[index] });
       if (q.busted) said.add(q.busted);
