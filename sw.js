@@ -32,6 +32,7 @@ const CORE_ASSETS = [
   './worlds/y2-maths-arrays.js',
   './worlds/y2-maths-sharing.js',
   './worlds/y2-maths-sharing-fractions.js',
+  './worlds/y2-maths-captains-cove.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

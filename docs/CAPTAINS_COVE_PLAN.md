@@ -389,7 +389,7 @@ These are the same rules as every world.
 - **The Captain should sound different from Bonnie.** I suggest a separate ElevenLabs voice: a warm, jolly, slightly growly "pirate uncle". To make that work:
   - I'd add a `captainLines()` list and a `--captain-voice` option to `tools/make-voice.mjs`.
   - His clips would be saved with his voice's id, so they never mix with Bonnie's.
-  - **What I need from you:** pick a voice in the ElevenLabs library and tell me its **voice ID**. That's not a secret; it's the short code like Bonnie's `4CrZuIW9am7gYAxgo2Af`.
+  - **The Captain's voice ID is `PPzYpIqttlTYA83688JI`** (chosen on 4 November 2026). Bonnie's is `4CrZuIW9am7gYAxgo2Af`.
 - Lines with changing numbers ("Every number in the 5 times table ends in 5") use the device voice, as the other worlds do. Fixed lines, like his catchphrases and the chest and verdict words, get recorded.
 
 ---

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Captain's Cove Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px 16px; color: #3E2F27; background: #FDFBF7; }
+  h1 { font-size: 1.4rem; margin: 0 0 6px; }
+  p { margin: 0 0 16px; color: #7A6A5E; max-width: 760px; }
+  #result { font-size: 1.3rem; font-weight: 700; padding: 12px 16px; border-radius: 14px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  table { border-collapse: collapse; margin-top: 16px; font-size: .95rem; }
+  td, th { text-align: left; padding: 4px 10px; border-bottom: 1px solid #EADFCB; }
+  pre { white-space: pre-wrap; font-size: .85rem; background: #fff; border-radius: 10px; padding: 10px; }
+</style>
+</head>
+<body>
+<h1>🐸 Captain's Cove: claim check</h1>
+<p>Checks every one of the Captain's conjectures against its own check, then makes every kind of question hundreds of times (normal and easy) and checks the answer key, the reasons and Bonnie's step cards. It only makes questions: it never plays them, and it doesn't touch the save.</p>
+<div id="result">Checking…</div>
+<table id="table"></table>
+<pre id="errs" hidden></pre>
+
+<script src="../js/meadow-core.js"></script>
+<script src="../worlds/y2-maths-kit.js"></script>
+<script src="../worlds/y2-maths-captains-cove.js"></script>
+<script>
+(() => {
+  const storageBefore = JSON.stringify(Object.entries(localStorage).sort());
+  const C = window.CaptainsCove, w = Meadow.world('y2-maths-captains-cove'), errs = [], made = {};
+  const IDS = ['true-false', 'always-sometimes-never', 'test-the-captain'];
+  const bad = (where, m) => { if (errs.length < 80) errs.push(`${where}: ${m}`); };
+  const count = k => { made[k] = (made[k] || 0) + 1; };
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+  if (!w) bad('world', 'did not load');
+  else if (w.levels.map(L => L.id).join() !== IDS.join()) bad('world', 'level ids have changed: ' + w.levels.map(L => L.id).join(', '));
+
+  // 1. the claim banks against their own checks (the whole domain, not samples)
+  for (const c of C.ASN) {
+    const r = c.domain.map(c.holds), got = r.every(Boolean) ? 'always' : r.some(Boolean) ? 'sometimes' : 'never';
+    if (got !== c.answer) bad('chests', `"${c.text}" is marked ${c.answer} but tests as ${got}`);
+    count('Level 2 claims');
+  }
+  for (const c of C.TEST) {
+    const got = c.domain.every(c.holds) ? 'true' : 'busted';
+    if (got !== c.verdict) bad('test', `"${c.text}" is marked ${c.verdict} but tests as ${got}`);
+    if (c.tests.some(x => !c.domain.some(d => same(d, x)))) bad('test', `"${c.text}" has a test button outside the claim`);
+    const fails = c.tests.filter(x => !c.holds(x)).length;
+    if (c.verdict === 'busted' && !fails) bad('test', `"${c.text}": no button busts it`);
+    if (c.verdict === 'true' && fails) bad('test', `"${c.text}": a button fails`);
+    count('Level 3 claims');
+  }
+
+  // 2. make lots of questions through the world, as the game does
+  function checkSteps(where, q, last) {
+    const steps = q.gsteps();
+    if (!steps.length) return bad(where, 'no step card');
+    steps.forEach((st, i) => {
+      if (st.action) return;
+      const ch = st.choices.map(String);
+      if (!ch.includes(String(st.answer))) bad(where, `step ${i + 1} "${st.say}": answer ${st.answer} is not a button (${ch})`);
+      if (new Set(ch).size !== ch.length || ch.length < 2) bad(where, `step ${i + 1} "${st.say}": buttons ${ch}`);
+      if (ch.some(c => /^-|NaN|undefined/.test(c))) bad(where, `step ${i + 1}: a broken button ${ch}`);
+    });
+    const L = steps[steps.length - 1];
+    if (String(L.answer) !== String(last)) bad(where, `the last step gives ${L.answer}, not ${last}`);
+    if (!q.gclue || !q.gclue.say) bad(where, 'no clue');
+  }
+  const L = w ? w.levels : [];
+  for (const eased of [false, true]) for (let rep = 0; rep < 300; rep++) {
+    // Level 1
+    for (let index = 0; index < L[0].seq.length; index++) {
+      const q = L[0].make({ eased, index, type: L[0].seq[index] }), where = `true-false ${q.maker}${eased ? ' (easy)' : ''} "${q.claim.text}"`;
+      count('Level 1 questions' + (eased ? ' (easy)' : ''));
+      const m = C.TF.find(x => x.id === q.maker);
+      if (eased && !m.easyOk) bad(where, 'not an easy maker');
+      if (m.check(q.nums) !== q.claimTrue) bad(where, `marked ${q.claimTrue}`);
+      if (q.verdict.right[0] !== (q.claimTrue ? 0 : 1)) bad(where, 'True/False answer is the wrong way round');
+      if (Object.values(q.nums).some(v => typeof v === 'number' && (v < 0 || !Number.isInteger(v)))) bad(where, 'a number is negative or not whole');
+      const r = q.verdict.reasons(q.verdict.right[0]);
+      if (r.list.length !== (eased ? 2 : 3) || new Set(r.list).size !== r.list.length) bad(where, `reasons: ${r.list.join(' / ')}`);
+      if (r.answer < 0) bad(where, 'the right reason is missing');
+      if (r.list.some(x => /-\d|NaN|undefined/.test(x))) bad(where, 'a broken reason');
+      checkSteps(where, q, q.verdict.picks[q.verdict.right[0]]);
+    }
+    // Level 2
+    for (let index = 0; index < L[1].seq.length; index++) {
+      const q = L[1].make({ eased, index, type: L[1].seq[index] }), c = C.ASN.find(x => x.id === q.cid), where = `chests ${q.cid}${eased ? ' (easy)' : ''}`;
+      count('Level 2 questions' + (eased ? ' (easy)' : ''));
+      const ans = ['always', 'sometimes', 'never'][q.answer[0]];
+      if (ans !== c.answer) bad(where, `answer ${ans}, claim says ${c.answer}`);
+      if (eased && (q.choices.length !== 2 || !c.easy || c.answer === 'sometimes')) bad(where, 'easy mode is not easy');
+      if (!q.choices.includes(q.answer[0])) bad(where, 'the right chest is missing');
+      checkSteps(where, q, q.cfmt(q.answer[0]));
+      q.gsteps().slice(0, -1).forEach(st => { if (!/^(Yes|No)$/.test(st.answer)) bad(where, 'an example step has no yes/no'); });
+    }
+    // Level 3
+    for (let index = 0; index < L[2].seq.length; index++) {
+      const q = L[2].make({ eased, index, type: L[2].seq[index] }), c = C.TEST.find(x => x.id === q.cid), where = `test ${q.cid}${eased ? ' (easy)' : ''}`;
+      count('Level 3 questions' + (eased ? ' (easy)' : ''));
+      if ((q.answer[0] === 0) !== (c.verdict === 'busted')) bad(where, 'verdict is the wrong way round');
+      if (q.tests.length !== (eased ? 4 : 6) || new Set(q.tests.map(t => t.label)).size !== q.tests.length) bad(where, 'test buttons: ' + q.tests.map(t => t.label));
+      q.tests.forEach(t => { if (t.ok !== c.holds(t.x)) bad(where, `button ${t.label} result is wrong`); });
+      if (q.answer[0] === 0 && !q.tests.some(t => !t.ok)) bad(where, 'busted, but no button busts it');
+      if (q.answer[0] === 1 && q.tests.some(t => !t.ok)) bad(where, 'looks true, but a button fails');
+      if (eased && !c.easy) bad(where, 'not an easy claim');
+      checkSteps(where, q, q.cfmt(q.answer[0]));
+    }
+  }
+  if (JSON.stringify(Object.entries(localStorage).sort()) !== storageBefore) bad('storage', 'the check changed something in storage!');
+
+  const total = Object.values(made).reduce((a, b) => a + b, 0), res = document.getElementById('result');
+  res.className = errs.length ? 'fail' : 'pass';
+  res.textContent = errs.length ? `✗ ${errs.length} problem${errs.length > 1 ? 's' : ''} found` : `✓ All ${total} checks passed`;
+  document.getElementById('table').innerHTML = '<tr><th>What</th><th>Checked</th></tr>' + Object.keys(made).map(k => `<tr><td>${k}</td><td>${made[k]}</td></tr>`).join('');
+  if (errs.length) { const p = document.getElementById('errs'); p.hidden = false; p.textContent = errs.join('\n'); }
+  window.TEST_RESULT = { passed: !errs.length, total, errs };
+})();
+</script>
+</body>
+</html>
