@@ -171,7 +171,7 @@ function play(q, ctx) {
   clearSkip();
   S = { q, ctx, values: Array(q.boxes || 1).fill(''), active: 0, locked: false, busy: false,
     tier: 0, steps: null, step: 0, solved: new Set(), tried: new Set(), cluePoint: null, zone: null,
-    vstage: 0, vpick: null, vtried: new Set(), tested: [], mood: 'claim' };
+    vstage: 0, vpick: null, vtried: new Set(), tested: [], mood: 'claim', wstage: 0, wtried: new Set() };
   if (q.inter === 'break') { q.counts = countsOf(q.n); q.broke = 0; }
   S.pos = q.line ? (q.line.pawn === 'sit' ? q.line.sitAt : q.line.start) : null;
   ctx.area.classList.add('mm-area');
@@ -274,6 +274,7 @@ function finishSteps() {
   if (q.kind === 'build' && buildTotal() === q.n) return win();
   if (q.kind === 'line' && inTarget()) return win();
   if (q.kind === 'grid' && gridOk(q.vis)) return win();
+  if (q.kind === 'steps' && S.wstage === 1 && !unsolvedBoxes().length) return win();
   // a verdict: the step card worked out the first answer, so fill it in and ask for the reason
   if (q.kind === 'verdict' && S.vstage === 0) {
     S.vpick = q.verdict.right[0]; S.vstage = 1; S.steps = null; renderControls(); updateAsk();
@@ -293,6 +294,7 @@ function chooseStep(i, btn) {
     S.busy = true;
     btn.classList.add('right'); clearSpots();
     if (st.final) { S.busy = false; return win(); }
+    if (st.wstep) pickWrongStep();
     tone([660, 880], .07, 'triangle', .1);
     setMood('happy');
     if (st.fill && 'box' in st.fill) {
@@ -332,6 +334,7 @@ function applyGuide() {
   if (q.kind === 'grid') return spot(gridOk(q.vis) ? 'key-check' : `cell-${q.vis.tr}-${q.vis.tc}`);
   if (q.kind === 'choice' || q.kind === 'chests') return spot(`choice-${q.answer[0]}`);
   if (q.kind === 'verdict') return spot(S.vstage === 0 ? `vpick-${q.verdict.right[0]}` : `vreason-${reasonsNow().answer}`);
+  if (q.kind === 'steps' && S.wstage === 0) return spot(`wstep-${q.work.wrong}`);
   if (q.kind === 'tester') {
     const t = q.tests, untried = i => !S.tested.includes(i);
     if (q.answer[0] === 0 && !S.tested.some(i => !t[i].ok)) return spot(`test-${t.findIndex((x, i) => !x.ok && untried(i))}`);
@@ -621,7 +624,7 @@ function questFor(q) {
 function renderGame() {
   const q = S.q, quest = questFor(q);
   const hello = S.ctx.index === 0 ? (q.claim ? 'Let’s test the Captain’s conjecture!' : `Woof! Let’s go, ${esc(NAME())}!`)
-    : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'verdict' ? 'Is the Captain right?' : q.kind === 'chests' ? 'Which chest does it go in?' : q.kind === 'tester' ? 'Tap a number to test it!' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
+    : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'verdict' ? 'Is the Captain right?' : q.kind === 'chests' ? 'Which chest does it go in?' : q.kind === 'tester' ? 'Tap a number to test it!' : q.kind === 'steps' ? 'Which step is wrong?' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
   S.ctx.area.innerHTML = `<div class="mm" id="mm">
     <div class="play">
       <div class="mcard stage">
@@ -635,6 +638,7 @@ function renderGame() {
         ${q.tip ? `<div class="tip">${q.tip}</div>` : ''}
         ${eqHTML(q)}
         ${q.kind === 'tester' ? `<div class="tester" id="tester">${testerHTML(q)}</div>` : ''}
+        ${q.kind === 'steps' ? `<div class="work" id="work" data-t="work">${workHTML(q)}</div>` : ''}
         ${q.line ? lineHTML(q) : ''}
         ${q.vis ? `<div class="visual gvis" id="visual" data-t="visual" ${q.showVisual ? '' : 'hidden'}>${gvisInner(q)}</div>` : ''}
         ${q.mode ? `<div class="visual" id="visual" data-t="visual" ${q.showVisual ? '' : 'hidden'}>${visualHTML(q)}</div>` : ''}
@@ -663,7 +667,9 @@ function renderControls() {
       ${st.action ? `<div class="mstep-wait">${PAW} ${st.wait || 'Tap it up there!'}</div>`
         : `<div class="chips">${st.choices.map((c, i) => `<button class="mchip${st.words ? ' word' : ''}" type="button" data-chip="${i}">${c}</button>`).join('')}</div>`}
     </div>`;
-  } else if (q.kind === 'boxes') {
+  } else if (q.kind === 'steps' && S.wstage === 0) {
+    el.innerHTML = '<div class="wait-note big">Tap the step with the mistake.</div>';
+  } else if (q.kind === 'boxes' || q.kind === 'steps') {
     el.innerHTML = `<div class="pad" id="pad">
       ${[7, 8, 9, 4, 5, 6, 1, 2, 3].map(d => `<button class="key" type="button" data-key="${d}" data-t="key-${d}">${d}</button>`).join('')}
       <button class="key del" type="button" data-key="del" data-t="key-del" aria-label="Delete">${ICON.del}</button>
@@ -725,7 +731,7 @@ function press(key) {
   if (!live()) return;
   const q = S.q;
   if (key === 'check') return onCheck();
-  if (q.kind !== 'boxes' || S.tier === 2) return;
+  if (!(q.kind === 'boxes' || (q.kind === 'steps' && S.wstage === 1)) || S.tier === 2) return;
   if (S.solved.has(S.active)) { const u = unsolvedBoxes(); if (!u.length) return; S.active = u[0]; }
   const cur = S.values[S.active];
   if (key === 'del') S.values[S.active] = cur.slice(0, -1);
@@ -750,7 +756,8 @@ function onCheck() {
     if (inTarget()) return win();
     return raise('wrong');
   }
-  if (q.kind === 'boxes') {
+  if (q.kind === 'steps' && S.wstage === 0) return;
+  if (q.kind === 'boxes' || q.kind === 'steps') {
     const empty = unsolvedBoxes().find(i => S.values[i] === '');
     if (empty !== undefined) {
       S.active = empty; paintBoxes();
@@ -801,7 +808,7 @@ function claimHTML(q) {
   const h = host();
   return `<div class="claim" data-t="claim">
     ${h ? `<div class="host" id="mmHost">${h.svg(S.mood)}</div>` : ''}
-    <div class="scroll" id="mmScroll" data-t="scroll">${h ? `<small>${esc(h.name)}’s conjecture</small>` : ''}<b>${esc(q.claim.text)}</b>${q.claim.sub ? `<span class="sub">${esc(q.claim.sub)}</span>` : ''}</div>
+    <div class="scroll" id="mmScroll" data-t="scroll">${h ? `<small>${esc(q.claim.label || h.name + '’s conjecture')}</small>` : ''}<b>${esc(q.claim.text)}</b>${q.claim.sub ? `<span class="sub">${esc(q.claim.sub)}</span>` : ''}</div>
   </div>`;
 }
 function setHost(mood) {
@@ -849,6 +856,34 @@ function runTest(i) {
   renderControls();
   const st = S.tier === 2 && S.steps && S.steps[S.step];
   if (st && st.action && st.action()) { const q0 = S.q; setTimeout(() => { if (S && S.q === q0 && S.tier === 2) { S.step++; advanceSteps(); } }, 700); }
+}
+/* kind 'steps': the host shows his working, q.work = { steps: [{ text(v), right, shown }], wrong }.
+   Exactly one step shows a wrong value. Tap it (tapping a right step is a mistake), then fix it on the keypad:
+   the wrong value becomes answer box 0, so q.answer = [the right value]. A step card step with wstep: true
+   picks the wrong step for him. */
+const BOXMARK = '\u0001';
+function workHTML(q) {
+  const w = q.work;
+  return w.steps.map((st, i) => {
+    const fixing = S.wstage === 1 && i === w.wrong;
+    const txt = fixing ? esc(st.text(BOXMARK)).replace(BOXMARK, '<button class="box" type="button" data-box="0" data-t="box-0" aria-label="The fixed number"></button>') : esc(st.text(st.shown ?? st.right));
+    const cls = `wstep${fixing ? ' bad' : ''}${S.wtried.has(i) ? ' ok' : ''}`;
+    return fixing ? `<div class="${cls}" data-t="wstep-${i}"><i>Step ${i + 1}</i><span>${txt}</span></div>`
+      : `<button class="${cls}" type="button" data-wstep="${i}" data-t="wstep-${i}" ${S.wstage === 1 || S.wtried.has(i) ? 'disabled' : ''}><i>Step ${i + 1}</i><span>${txt}</span>${S.wtried.has(i) ? '<b class="tick">✓</b>' : ''}</button>`;
+  }).join('');
+}
+function redrawWork() { const el = inMM('#work'); if (el) el.innerHTML = workHTML(S.q); paintBoxes(); refreshSpots(); }
+function pickWrongStep() { S.wstage = 1; S.active = 0; redrawWork(); }
+function tapWorkStep(i, btn) {
+  if (!live() || S.wstage !== 0 || S.tier === 2) return;
+  if (i === S.q.work.wrong) {
+    tone([660, 880], .07, 'triangle', .1); setHost('busted');
+    pickWrongStep(); renderControls();
+    feedback('info', '<span><span class="big">Found it!</span>Now fix it. What should it be?</span>');
+    return say('Found it! Now fix it. What should it be?');
+  }
+  S.wtried.add(i); redrawWork();
+  raise('wrong', 'That step is right!');
 }
 // drag the claim's scroll into a chest (tapping a chest works too)
 let scrollDrag = null;
@@ -956,11 +991,15 @@ document.addEventListener('click', e => {
   if (b.dataset.vpick !== undefined) return vpick(+b.dataset.vpick, b);
   if (b.dataset.vreason !== undefined) return vreason(+b.dataset.vreason, b);
   if (b.dataset.test !== undefined) return runTest(+b.dataset.test);
+  if (b.dataset.wstep !== undefined) return tapWorkStep(+b.dataset.wstep, b);
   if (b.dataset.step && live()) {
     const q = S.q, p = +b.dataset.p, c = q.counts[p] + +b.dataset.step;
     if (c < 0 || c > 9) { sfx.soft(); if (c > 9) feedback('info', `<span>9 ${PL[p].name} is the most. Ten ${PL[p].name} would make the next place!</span>`); return; }
     q.counts[p] = c; sfx.tap();
     redrawVisual(b.dataset.step === '1' && p === 0 && q.mode === 'blocks' ? c - 1 : -1);
+    // a step card step waiting for a tap on + or − moves on once it's done
+    const st = S.tier === 2 && S.steps && S.steps[S.step];
+    if (st && st.action && st.action()) { const q0 = S.q; setTimeout(() => { if (S && S.q === q0 && S.tier === 2) { S.step++; advanceSteps(); } }, 500); }
     return;
   }
   if (b.hasAttribute('data-break') && live()) {
@@ -1365,6 +1404,18 @@ const CSS = String.raw`
   .mm .tests { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mm .chest b { font-size: 16px; }
 }
+/* the host's worked steps */
+.mm .work { display: grid; gap: 10px; }
+.mm .wstep { display: flex; align-items: center; gap: 14px; text-align: left; min-height: 60px; padding: 8px 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); font-family: var(--f-display); font-size: 24px; font-weight: 700; }
+.mm button.wstep:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--ink); }
+.mm .wstep i { flex: none; font-style: normal; font-size: 14px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); }
+.mm .wstep span { flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.mm .wstep .box { height: 1.5em; font-size: 26px; }
+.mm .wstep.ok { border-color: var(--good); box-shadow: 0 4px 0 var(--good); }
+.mm .wstep .tick { color: var(--good); }
+.mm .wstep.bad { border-color: #A93E4F; background: #FBE3E3; box-shadow: 0 4px 0 #A93E4F; }
+.mm .wstep[disabled] { opacity: .7; }
+.mm .wait-note.big { font-family: var(--f-display); font-size: 22px; color: var(--ink); padding: 8px 4px; }
 /* fitting the maths screen into the shared engine */
 #area.mm-area { background: none; border: 0; box-shadow: none; padding: 0; min-height: 0; }
 .mm { font-family: var(--f-body); font-size: 18px; line-height: 1.45; color: var(--ink); }
