@@ -665,7 +665,7 @@ function renderControls() {
       <div class="mstep-dots" aria-label="Step ${S.step + 1} of ${S.steps.length}">${S.steps.map((_, i) => `<i class="${i < S.step ? 'past' : i === S.step ? 'now' : ''}"></i>`).join('')}</div>
       <div class="mstep-say">${st.say}</div>
       ${st.action ? `<div class="mstep-wait">${PAW} ${st.wait || 'Tap it up there!'}</div>`
-        : `<div class="chips">${st.choices.map((c, i) => `<button class="mchip${st.words ? ' word' : ''}" type="button" data-chip="${i}">${c}</button>`).join('')}</div>`}
+        : `<div class="chips${st.words ? ' words' : ''}">${st.choices.map((c, i) => `<button class="mchip${st.words ? ' word' : ''}" type="button" data-chip="${i}">${c}</button>`).join('')}</div>`}
     </div>`;
   } else if (q.kind === 'steps' && S.wstage === 0) {
     el.innerHTML = '<div class="wait-note big">Tap the step with the mistake.</div>';
@@ -797,7 +797,8 @@ function choose(val, btn) {
 
 /* ---------- claims: a host (like Captain Croak) says something, and the child decides ----------
    q.claim = { text }  the host's claim, shown in a speech scroll with the world's host drawing
-   (M.world({ host: { name, who, svg(mood), says: { busted, holds, sometimes }, taps, lines } }), moods: 'claim', 'busted', 'holds').
+   (M.world({ host: { name, who, svg(mood), says: { busted, holds, sometimes, oops }, taps, lines } }), moods: 'claim', 'busted', 'holds').
+   Each of says' entries and taps can be one line or a list (said in turn, with no repeats until the list runs out).
    who names his recorded voice (audio/<who>.json); lines lists everything he says, for tools/make-voice.mjs.
    kind 'verdict': q.verdict = { picks: [labels], right: [indexes that are right], reasons(i) → { list, answer }, why }
      tap a pick, then "How do you know?": the best of the reasons. A wrong tap at either step is a mistake.
@@ -822,6 +823,18 @@ function hostSays(text) {
   el.querySelector('.host-say')?.remove();
   const p = document.createElement('span'); p.className = 'host-say'; p.textContent = text; el.appendChild(p);
   setTimeout(() => p.remove(), 2600);
+}
+/* A list of lines works like a bag: each line comes out once before any repeats (and never the same one twice in a row). */
+const bags = new Map();
+function fresh(list) {
+  if (!Array.isArray(list)) return list;
+  let b = bags.get(list);
+  if (!b || !b.left.length) {
+    const left = shuffle(list.slice());
+    if (b && left.length > 1 && left[left.length - 1] === b.last) left.unshift(left.pop()); // the next one out isn't the last one said
+    b = { left, last: b && b.last }; bags.set(list, b);
+  }
+  return (b.last = b.left.pop());
 }
 /* The host says a line out loud in his own voice (host.who: audio/<who>.json), once Bonnie has finished. */
 function hostSpeak(text, now) {
@@ -857,7 +870,7 @@ function runTest(i) {
   if (!live()) return;
   const q = S.q, t = q.tests[i];
   if (!S.tested.includes(i)) S.tested.push(i);
-  if (t.ok) tone([523, 659], .07, 'triangle', .08); else { tone([392, 311], .1, 'sawtooth', .06); setHost('busted'); hostSpeak(q.busted || 'Shiver me lily pads!'); }
+  if (t.ok) tone([523, 659], .07, 'triangle', .08); else { tone([392, 311], .1, 'sawtooth', .06); setHost('busted'); hostSpeak(fresh(q.busted || host().says.oops || 'Shiver me lily pads!')); }
   say(t.show + (t.ok ? '. That fits.' : '. That busts it!'));
   const el = inMM('#tester'); if (el) el.innerHTML = testerHTML(q);
   renderControls();
@@ -937,7 +950,7 @@ function win() {
   if (S.q.claim && host()) {
     const h = host(), ct = S.q.claimTrue;
     if (S.q.kind === 'chests') { const c = inMM(`.chest[data-choice="${S.q.answer[0]}"]`); if (c) c.classList.add('open'); }
-    setHost(ct === false ? 'busted' : 'holds'); hostSpeak(ct === false ? h.says.busted : ct === 'sometimes' ? h.says.sometimes : h.says.holds);
+    setHost(ct === false ? 'busted' : 'holds'); hostSpeak(fresh(ct === false ? h.says.busted : ct === 'sometimes' ? h.says.sometimes : h.says.holds));
   }
   Meadow.correct(origin, { praise: S.tier === 0 ? pick(PRAISE) : pick(TEAM) });
 }
@@ -979,7 +992,7 @@ document.addEventListener('click', e => {
   if (!b) {
     const dog = e.target.closest('#gameBonnie'); if (dog) return tickleBonnie(dog);
     // tap the host and he says one of his lines
-    if (e.target.closest('#mmHost') && host() && host().taps) { const el = inMM('#mmHost'); el.classList.remove('jump'); void el.offsetWidth; el.classList.add('jump'); return hostSpeak(S.q.claim && S.q.claim.sub && Math.random() < .5 ? S.q.claim.sub : pick(host().taps), true); }
+    if (e.target.closest('#mmHost') && host() && host().taps) { const el = inMM('#mmHost'); el.classList.remove('jump'); void el.offsetWidth; el.classList.add('jump'); return hostSpeak(S.q.claim && S.q.claim.sub && Math.random() < .3 ? S.q.claim.sub : fresh(host().taps), true); }
     // tap the rods or counters to count them in tens (or hundreds)
     const g = e.target.closest('#visual .grp'); if (!g) return;
     const p = +(g.className.match(/\bp(\d)\b/) || [])[1];
@@ -1205,7 +1218,9 @@ const CSS = String.raw`
 .mm .mstep-say { font-family: var(--f-display); font-weight: 700; font-size: 28px; line-height: 1.15; text-wrap: balance; }
 .mm .chips { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); }
 .mm .mchip { min-height: 80px; font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--card); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink); }
-.mm .mchip.word { font-size: 21px; }
+.mm .mchip.word { font-size: 21px; padding: 4px 8px; line-height: 1.15; overflow-wrap: break-word; }
+/* word buttons ("Sometimes", "Looks true!") get more room, so a long word wraps to a new row of buttons instead of spilling out */
+.mm .chips.words { grid-template-columns: repeat(auto-fit, minmax(124px, 1fr)); }
 .mm .mchip:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
 .mm .mchip.right { background: var(--good-bg); border-color: var(--good); color: var(--good); }
 .mm .mstep-wait { display: flex; gap: 10px; align-items: center; font-size: 20px; font-weight: 700; color: var(--fur-dk); }
