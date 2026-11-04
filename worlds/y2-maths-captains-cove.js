@@ -309,6 +309,242 @@ function makeTest(type, easy) {
   return q;
 }
 
+/* =====================================================================
+   LEVEL 4  Spot the Mistake.  The Captain shows his working; exactly one step is wrong.
+   make(easy) → { title, wrong, steps: [{ text(v), right, shown }], clue }.
+   The test page reads every step back as a plain sum and checks it.
+   ===================================================================== */
+const MIS = [
+  { id: 'add-exchange', easyOk: false, clue: 'Check each step. Did he use the ten from the ones?',
+    make() { let a, b; do { a = rand(2, 6) * 10 + rand(3, 9); b = rand(1, 3) * 10 + rand(3, 9); } while (ones(a) + ones(b) < 10);
+      const Tn = tens(a) * 10 + tens(b) * 10, O = ones(a) + ones(b);
+      return { title: `${a} + ${b}`, wrong: 2, steps: [
+        { text: v => `${tens(a) * 10} + ${tens(b) * 10} = ${v}`, right: Tn },
+        { text: v => `${ones(a)} + ${ones(b)} = ${v}`, right: O },
+        { text: v => `${Tn} + ${O} = ${v}`, right: Tn + O, shown: Tn + O - 10 }] }; } },
+  { id: 'take-partition', easyOk: false, clue: 'Check each take away. Count back carefully.',
+    make() { const a = rand(4, 9) * 10 + rand(1, 5), b = 10 + rand(6, 9), m = a - 10;
+      return { title: `${a} − ${b}`, wrong: 1, steps: [
+        { text: v => `${a} − 10 = ${v}`, right: m },
+        { text: v => `${m} − ${ones(b)} = ${v}`, right: m - ones(b), shown: m - ones(b) + 1 }] }; } },
+  { id: 'count-5s', easyOk: true, clue: 'Count in fives along with him.',
+    make(easy) { const n = rand(easy ? 3 : 4, easy ? 4 : 6), w = rand(2, n - 1);
+      return { title: `${n} × 5, counting in fives`, wrong: w, steps: range(0, n - 1).map(i =>
+        ({ text: v => `${i + 1} five${i ? 's' : ''}: ${v}`, right: (i + 1) * 5, shown: i === w ? (i + 1) * 5 + 1 : undefined })) }; } },
+  { id: 'partition', easyOk: true, clue: 'How much is each tens digit worth?',
+    make() { const a = rand(2, 9), b = rand(1, 9), n = a * 10 + b;
+      return { title: `Split ${n} into tens and ones`, wrong: 1, steps: [
+        { text: v => `${n} has ${v} tens and ${b} ones`, right: a },
+        { text: v => `${a} tens is ${v}`, right: a * 10, shown: a },
+        { text: v => `${n} = ${a * 10} + ${v}`, right: b }] }; } },
+  { id: 'bridge-10', easyOk: true, clue: 'Do the two parts add back to the number?',
+    make() { const a = rand(6, 9), b = rand(11 - a, 9), need = 10 - a, rest = b - need;
+      return { title: `${a} + ${b}, making 10 first`, wrong: 1, steps: [
+        { text: v => `${a} needs ${v} to make 10`, right: need },
+        { text: v => `Split ${b} into ${need} and ${v}`, right: rest, shown: rest + 1 },
+        { text: v => `10 + ${rest} = ${v}`, right: 10 + rest }] }; } },
+  { id: 'half-split', easyOk: false, clue: 'Check each half. Double it back!',
+    make() { const t = rand(1, 4) * 2, o = pick([2, 4, 6, 8]), n = t * 10 + o;
+      return { title: `Half of ${n}`, wrong: 1, steps: [
+        { text: v => `Half of ${t * 10} is ${v}`, right: t * 5 },
+        { text: v => `Half of ${o} is ${v}`, right: o / 2, shown: o / 2 + 1 },
+        { text: v => `${t * 5} + ${o / 2} = ${v}`, right: t * 5 + o / 2 }] }; } },
+  { id: 'share-count', easyOk: true, clue: 'Count up in equal steps with him.',
+    make(easy) { const g = pick(easy ? [2] : [2, 3]), e = rand(4, easy ? 5 : 6), w = rand(1, e - 2);
+      return { title: `${g * e} shared between ${g}, counting in ${g}s`, wrong: w, steps: range(0, e - 1).map(i =>
+        ({ text: v => `${i + 1} each: ${v} used`, right: (i + 1) * g, shown: i === w ? (i + 1) * g + 1 : undefined })) }; } },
+  { id: 'three-add', easyOk: true, clue: 'Check each adding step.',
+    make() { const a = rand(1, 9), b = 10 - a, c = rand(2, 9);
+      return { title: `${a} + ${c} + ${b}`, wrong: 1, steps: [
+        { text: v => `${a} + ${b} = ${v}`, right: 10 },
+        { text: v => `10 + ${c} = ${v}`, right: 10 + c, shown: 10 + c - 1 }] }; } },
+  { id: 'fact-family', easyOk: false, clue: 'Taking away undoes adding!',
+    make() { const a = rand(6, 9), b = pick([4, 5, 6, 7, 8, 9].filter(x => x !== a)), c = a + b;
+      return { title: `The ${a}, ${b}, ${c} fact family`, wrong: 2, steps: [
+        { text: v => `${a} + ${b} = ${v}`, right: c },
+        { text: v => `${c} − ${b} = ${v}`, right: a },
+        { text: v => `${c} − ${a} = ${v}`, right: b, shown: b + 1 }] }; } },
+  { id: 'count-on-10s', easyOk: true, clue: 'Adding 10 keeps the ones digit the same.',
+    make() { const s = rand(1, 3) * 10 + rand(1, 9), w = rand(2, 3);
+      return { title: `Count on in tens from ${s}`, wrong: w, steps: range(1, 4).map((k, i) =>
+        ({ text: v => `${s + (k - 1) * 10} + 10 = ${v}`, right: s + k * 10, shown: i === w ? s + k * 10 + 1 : undefined })) }; } },
+  { id: 'quarter-halve', easyOk: false, clue: 'Check the first half. Double it back!',
+    make() { const q = rand(2, 5), n = q * 4;
+      return { title: `A quarter of ${n}: halve it, then halve again`, wrong: 0, steps: [
+        { text: v => `Half of ${n} is ${v}`, right: q * 2, shown: q * 2 + 1 },
+        { text: v => `Half of ${q * 2} is ${v}`, right: q }] }; } },
+  { id: 'missing-add', easyOk: true, clue: 'Check his answer by adding.',
+    make(easy) { const c = rand(easy ? 6 : 11, easy ? 10 : 18), b = rand(2, c - 2), a = c - b;
+      return { title: `□ + ${b} = ${c}`, wrong: 0, steps: [
+        { text: v => `${c} − ${b} = ${v}`, right: a, shown: a + 1 },
+        { text: v => `Check: ${a} + ${b} = ${v}`, right: c }] }; } },
+];
+const stepWord = i => `Step ${i + 1}`;
+function makeMistake(k, easy) {
+  const m = pick(MIS.filter(x => !easy || x.easyOk)), w = m.make(easy), W = w.steps[w.wrong];
+  const steps = [];
+  if (w.wrong > 0) { const P = w.steps[w.wrong - 1]; steps.push({ say: `Is step ${w.wrong} right? ${P.text(P.right)}`, point: `wstep-${w.wrong - 1}`, choices: YN, answer: 'Yes', words: true }); }
+  steps.push({ say: `Look at step ${w.wrong + 1}: ${W.text(W.shown)}. Is that right?`, point: `wstep-${w.wrong}`, choices: YN, answer: 'No', words: true });
+  steps.push({ say: 'So which step is wrong?', choices: w.steps.map((_, i) => stepWord(i)), answer: stepWord(w.wrong), words: true, wstep: true });
+  steps.push(M.fillStep('What should it be?', W.right, [W.shown, W.right + 1, W.right - 1, W.right + 10]));
+  const q = gq({ t: 'mis-' + m.id, kind: 'steps', prompt: 'Spot the mistake, then fix it!', answer: [W.right], key: w.title + w.steps.map(s => s.shown ?? '').join(),
+    clue: { say: m.clue, point: 'work' }, steps: () => steps });
+  q.claim = { text: w.title, sub: 'My working is perfect, arr!', label: `${CAPTAIN}’s working` }; q.claimTrue = false; q.work = w; q.maker = m.id;
+  return q;
+}
+
+/* =====================================================================
+   LEVEL 5  Prove It!  Every claim here is true. Use the picture to show why, then answer.
+   check(q) confirms the claim (and the answer) with plain arithmetic.
+   ===================================================================== */
+const shareAct = q => ({ say: 'Tap “One each” until the pile is empty.', point: 'g-each', action: () => M.shareDone(q.vis), wait: 'Share them out up there!' });
+const PROVE = [
+  { id: 'odd+odd', make() { const a = pick([3, 5, 7, 9]), b = pick([1, 3, 5, 7]), N = a + b, h = N / 2;
+      return { claim: `${a} + ${b} makes an even number`, prompt: `Share ${N} bones between 2 bowls. Is any bone left over?`, tip: 'Even numbers share into 2 with none left over.',
+        eq: [{ num: a }, '+', { num: b }, '=', { num: N }, '\n', { num: N }, '=', { box: 0 }, '+', { box: 1 }], answer: [h, h],
+        vis: { type: 'share', N, bowls: [0, 0], box: 'bowl', item: 'bone' }, clue: 'Can you make pairs? Share them into 2 bowls.',
+        steps: q => [shareAct(q), M.fillStep('How many in one bowl?', h, near(h), 0), M.fillStep('And in the other?', h, near(h), 1)], nums: { a, b, h } }; },
+    check: q => { const { a, b, h } = q.nums; return !even(a) && !even(b) && even(a + b) && h * 2 === a + b; } },
+  { id: 'array-turn', make(easy) { let a, b; do { a = rand(2, easy ? 3 : 5); b = rand(2, 5); } while (a === b); const p = a * b;
+      return { claim: `${a} × ${b} = ${b} × ${a}`, prompt: `Turn the tree! What is ${b} × ${a}?`, eq: [{ num: b }, '×', { num: a }, '=', { box: 0 }], answer: [p],
+        vis: { type: 'array', r: a, c: b, item: 'apple', label: true, turn: true, turned: false }, clue: 'Turn the tree and count again.',
+        steps: q => [{ say: 'Tap “Turn the tree”.', point: 'g-turn', action: () => q.vis.turned, wait: 'Tap the button up there!' }, { say: 'Did any apples fall off?', choices: YN, answer: 'No', words: true }, M.fillStep(`So ${b} × ${a} is…`, p, [p - a, p + b, a + b])], nums: { a, b, p } }; },
+    check: q => { const { a, b, p } = q.nums; return a * b === p && b * a === p; } },
+  { id: 'add-10', make() { let n; do { n = rand(12, 79); } while (ones(n) === 0); const t = n + 10;
+      return { claim: `${n} + 10 keeps the ones digit the same`, prompt: `Add 10 to ${n}. Make ${t} with the blocks.`, tip: 'Tap <b>+</b> to add. Watch the ones!', kind: 'build',
+        eq: [{ num: n }, '+', { num: 10 }, '=', { main: t }], answer: [t], build: { from: n, to: t }, clue: 'Adding 10 is one more ten. Look at the ones!',
+        steps: () => [{ say: 'Add one more ten. Tap + on the tens.', point: 'plus-1', action: () => M.peek().q.counts[1] >= tens(t), wait: 'Tap + on the tens!' }], nums: { n, t } }; },
+    check: q => { const { n, t } = q.nums; return t === n + 10 && ones(t) === ones(n); } },
+  { id: 'add-swap', make() { const a = rand(4, 7), b = rand(1, 9 - a), s = a + b;
+      return { claim: `${a} + ${b} = ${b} + ${a}`, prompt: 'Count the bones and carrots both ways.', eq: [{ num: a }, '+', { num: b }, '=', { box: 0 }, '\n', { num: b }, '+', { num: a }, '=', { box: 1 }], answer: [s, s],
+        vis: M.burrow({ n: 10, a, b }), clue: 'Count the bones first, then the carrots first.',
+        steps: () => [M.fillStep(`${a} bones and ${b} carrots make…`, s, near(s), 0), { say: 'Did the burrow change when you counted the other way?', choices: YN, answer: 'No', words: true }, M.fillStep(`So ${b} + ${a} is…`, s, near(s), 1)], nums: { a, b, s } }; },
+    check: q => { const { a, b, s } = q.nums; return a + b === s && b + a === s; } },
+  { id: 'half', make(easy) { const h = rand(3, easy ? 5 : 9), N = h * 2;
+      return { claim: `${N} bones share fairly between 2 lily pads`, prompt: `Share ${N} bones between 2 lily pads.`, eq: [{ text: 'Half of' }, { num: N }, { text: 'is' }, { box: 0 }], answer: [h],
+        vis: { type: 'share', N, bowls: [0, 0], box: 'lily', item: 'bone' }, clue: 'Share them between the two lily pads.',
+        steps: q => [shareAct(q), M.fillStep('How many on each lily pad?', h, near(h))], nums: { N, h } }; },
+    check: q => q.nums.h * 2 === q.nums.N },
+  { id: 'share-3', make() { const e = rand(2, 5), N = e * 3;
+      return { claim: `${N} bones share fairly between 3 bowls`, prompt: `Share ${N} bones between 3 bowls.`, eq: [{ num: N }, '÷', { num: 3 }, '=', { box: 0 }, { text: 'each' }], answer: [e],
+        vis: { type: 'share', N, bowls: [0, 0, 0], box: 'bowl', item: 'bone' }, clue: 'Give every bowl one, then again.',
+        steps: q => [shareAct(q), M.fillStep('How many in each bowl?', e, near(e))], nums: { N, e } }; },
+    check: q => q.nums.e * 3 === q.nums.N },
+  { id: 'in-5s', make(easy) { const k = rand(2, easy ? 4 : 6), N = k * 5;
+      return { claim: `${N} is in the 5 times table`, prompt: `Put ${N} bones in baskets of 5. How many baskets?`, eq: [{ num: N }, '÷', { num: 5 }, '=', { box: 0 }, { text: 'baskets' }], answer: [k],
+        vis: { type: 'group', N, s: 5, baskets: 0, box: 'basket', item: 'bone' }, clue: 'Fill baskets of 5 until none are left.',
+        steps: q => [{ say: 'Tap “Fill a basket” until the pile is empty.', point: 'g-fill', action: () => q.vis.baskets * 5 === N, wait: 'Fill the baskets up there!' }, M.fillStep('How many baskets?', k, near(k))], nums: { N, k } }; },
+    check: q => q.nums.k * 5 === q.nums.N },
+  { id: 'bridge-10', make() { const a = rand(6, 9), b = rand(11 - a, 9), s = a + b, need = 10 - a;
+      return { claim: `${a} + ${b} is more than 10`, prompt: `${a} bones and ${b} carrots. How many altogether?`, eq: [{ num: a }, '+', { num: b }, '=', { box: 0 }], answer: [s],
+        vis: M.burrow({ n: 20, a, b }), clue: 'The first burrow is full: that’s 10. Add the ones!',
+        steps: () => [{ say: `How many carrots fill the first burrow?`, point: 'frame-0', choices: near(need), answer: need }, { say: 'How many carrots are in the second burrow?', point: 'frame-1', choices: near(b - need), answer: b - need }, M.fillStep(`10 and ${b - need} make…`, s, near(s))], nums: { a, b, s } }; },
+    check: q => q.nums.a + q.nums.b === q.nums.s && q.nums.s > 10 },
+  { id: 'partition', make() { const n = rand(21, 89); 
+      return { claim: `${n} = ${tens(n) * 10} + ${ones(n)}`, prompt: `Make ${n} with tens and ones.`, tip: 'Tap <b>+</b> to add. Tap <b>−</b> to take one away.', kind: 'build',
+        eq: [{ main: n }], answer: [n], build: { from: 0, to: n }, clue: 'Each digit tells you how many.',
+        steps: () => [{ say: 'How many tens?', point: 'digit-1', choices: near(tens(n)), answer: tens(n), fill: { count: 1 } }, { say: 'How many ones?', point: 'digit-0', choices: near(ones(n)), answer: ones(n), fill: { count: 0 } }], nums: { n } }; },
+    check: q => tens(q.nums.n) * 10 + ones(q.nums.n) === q.nums.n },
+  { id: 'even-pairs', make() { const N = pick([6, 8, 10, 12, 14, 16]), h = N / 2;
+      return { claim: `${N} is even`, prompt: `Share ${N} bones between 2 bowls. Is any left over?`, tip: 'Even numbers share into 2 with none left over.',
+        eq: [{ num: N }, '=', { box: 0 }, '+', { box: 1 }], answer: [h, h],
+        vis: { type: 'share', N, bowls: [0, 0], box: 'bowl', item: 'bone' }, clue: 'Can you make pairs? Share them into 2 bowls.',
+        steps: q => [shareAct(q), M.fillStep('How many in one bowl?', h, near(h), 0), M.fillStep('And in the other?', h, near(h), 1)], nums: { N, h } }; },
+    check: q => even(q.nums.N) && q.nums.h * 2 === q.nums.N },
+  { id: 'double', make(easy) { const n = rand(3, easy ? 5 : 9), d = n * 2;
+      return { claim: `Double ${n} is an even number`, prompt: `Two rows of ${n} apples. How many?`, eq: [{ text: 'Double' }, { num: n }, '=', { box: 0 }], answer: [d],
+        vis: { type: 'array', r: 2, c: n, item: 'apple', label: true }, clue: 'Double means two lots the same.',
+        steps: () => [{ say: 'How many rows?', point: 'visual', choices: [1, 2, 3], answer: 2 }, M.fillStep(`${n} and ${n} make…`, d, near(d))], nums: { n, d } }; },
+    check: q => q.nums.d === q.nums.n + q.nums.n && even(q.nums.d) },
+  { id: 'two-quarters', make() { const shape = pick(['sq4', 'ci4', 'strip4']);
+      return { claim: '2 quarters make a half', prompt: 'Two quarters are shaded. Is that the same as half?', kind: 'choice', choices: [0, 1], cfmt: i => YN[i], answer: [0],
+        vis: { type: 'shape', shape, shade: 2 }, clue: 'Quarters are 4 equal pieces. Half is 2 of them.', key: 'twoq' + shape,
+        steps: () => [{ say: 'How many quarters make a whole?', choices: [2, 3, 4], answer: 4 }, { say: 'Half of 4 quarters is…', choices: [1, 2, 3], answer: 2 }, { say: 'So is 2 quarters the same as half?', choices: YN, answer: 'Yes', words: true, final: true }], nums: { q: 2 } }; },
+    check: q => q.nums.q / 4 === 1 / 2 && q.answer[0] === 0 },
+  { id: 'groups-of-2', make() { const g = rand(3, 8), p = g * 2;
+      return { claim: `${g} plates of 2 bones makes an even number of bones`, prompt: `${g} plates with 2 bones on each. How many bones?`, eq: [{ num: g }, '×', { num: 2 }, '=', { box: 0 }], answer: [p],
+        vis: { type: 'groups', g, n: 2, box: 'plate', item: 'bone' }, clue: 'Count in twos, once for each plate.',
+        steps: () => [{ say: 'How many plates?', point: 'visual', choices: near(g), answer: g }, M.fillStep(`Count in twos ${g} times. That makes…`, p, near(p))], nums: { g, p } }; },
+    check: q => q.nums.g * 2 === q.nums.p && even(q.nums.p) },
+];
+function makeProve(k, easy) {
+  const P = pick(PROVE), d = P.make(easy);
+  const q = gq({ t: 'prove-' + P.id, kind: d.kind, prompt: d.prompt, tip: d.tip, eq: d.eq, answer: d.answer, vis: d.vis, choices: d.choices, cfmt: d.cfmt,
+    key: d.key || d.claim, clue: { say: d.clue, point: 'visual' }, steps: d.steps });
+  if (d.build) { q.inter = 'build'; q.mode = 'blocks'; q.places = [1, 0]; q.counts = d.build.from ? M.countsOf(d.build.from) : { 1: 0, 0: 0 }; q.target = M.countsOf(d.build.to); q.n = d.build.to; }
+  q.claim = { text: d.claim, sub: 'Prove it to me, matey!' }; q.claimTrue = true; q.nums = d.nums; q.maker = P.id;
+  return q;
+}
+
+/* =====================================================================
+   LEVEL 6  Odd One Out.  Four numbers: pick the one that doesn't belong, then the reason.
+   Any pick is right if a reason makes it the only one (validPicks works them all out).
+   ===================================================================== */
+const PROPS = [
+  { id: 'odd', reason: n => `${n} is odd and the others are even`, test: n => !even(n), ask: ['Which number is odd?', 'Are the others even?'] },
+  { id: 'even', reason: n => `${n} is even and the others are odd`, test: even, ask: ['Which number is even?', 'Are the others odd?'] },
+  { id: 'not-5s', reason: n => `${n} is not in the 5 times table`, test: n => n % 5 !== 0, ask: ['Which number is not in the 5 times table?', 'Are the others in the 5 times table?'] },
+  { id: 'not-10s', reason: n => `${n} is not in the 10 times table`, test: n => n % 10 !== 0, ask: ['Which number is not in the 10 times table?', 'Are the others in the 10 times table?'] },
+  { id: 'in-10s', reason: n => `${n} is in the 10 times table and the others are not`, test: n => n % 10 === 0, ask: ['Which number is in the 10 times table?', 'Are the others left out of it?'] },
+  { id: 'one-digit', reason: n => `${n} has only 1 digit`, test: n => n < 10, ask: ['Which number has only 1 digit?', 'Do the others have 2 digits?'] },
+  { id: 'over-50', reason: n => `${n} is more than 50 and the others are not`, test: n => n > 50, ask: ['Which number is more than 50?', 'Are the others 50 or less?'] },
+  { id: 'under-50', reason: n => `${n} is less than 50 and the others are not`, test: n => n < 50, ask: ['Which number is less than 50?', 'Are the others 50 or more?'] },
+  { id: 'diff-tens', reason: n => `${n} has a different number of tens`, digit: tens, ask: ['Which number has a different number of tens?', 'Do the others have the same tens?'] },
+  { id: 'diff-ones', reason: n => `${n} has a different ones digit`, digit: ones, ask: ['Which number has a different ones digit?', 'Do the others end the same way?'] },
+];
+// for each item: the properties that make it the only one
+function validPicks(items) {
+  const out = items.map(() => []);
+  for (const p of PROPS) {
+    const has = p.digit
+      ? items.map((x, i) => { const o = items.filter((_, j) => j !== i).map(p.digit); return o.every(d => d === o[0]) && p.digit(x) !== o[0]; })
+      : items.map(p.test);
+    const yes = has.map((h, i) => (h ? i : -1)).filter(i => i >= 0);
+    if (yes.length === 1) out[yes[0]].push(p);
+  }
+  return out;
+}
+const OOO = [
+  { id: 'fives', easy: true, make: () => { const fs = shuffle(range(2, 10).map(k => k * 5)).slice(0, 3); let x; do { x = rand(11, 49); } while (x % 5 === 0); return [...fs, x]; } },
+  { id: 'evens', easy: true, make: () => [...shuffle(range(2, 20, 2)).slice(0, 3), pick(range(3, 19, 2))] },
+  { id: 'odds', easy: true, make: () => [...shuffle(range(1, 19, 2)).slice(0, 3), pick(range(2, 20, 2))] },
+  { id: 'tens', easy: true, make: () => { const ts = shuffle(range(1, 9).map(k => k * 10)).slice(0, 3); let x; do { x = rand(11, 89); } while (x % 10 === 0); return [...ts, x]; } },
+  { id: 'same-tens', make: () => { const t = rand(2, 7), os = shuffle(range(1, 9)).slice(0, 4); return [...os.slice(0, 3).map(o => t * 10 + o), (t + pick([1, 2])) * 10 + os[3]]; } },
+  { id: 'same-ones', make: () => { const o = rand(1, 9), ts = shuffle(range(1, 9)).slice(0, 4); return [...ts.slice(0, 3).map(t => t * 10 + o), ts[3] * 10 + (o % 9) + 1]; } },
+  { id: 'big', make: () => [...shuffle(range(55, 95)).slice(0, 3), rand(12, 45)] },
+  { id: 'small', make: () => [...shuffle(range(12, 45)).slice(0, 3), rand(55, 95)] },
+  { id: 'one-digit', easy: true, make: () => [...shuffle(range(12, 40)).slice(0, 3), rand(2, 9)] },
+  { id: 'brief-example', make: () => [10, 15, 20, 24] },
+];
+function makeOdd(k, easy) {
+  let items, valid, S;
+  do { S = pick(OOO.filter(x => !easy || x.easy)); items = shuffle(S.make()); valid = validPicks(items); }
+  while (new Set(items).size !== 4 || !valid.some(v => v.length) || valid.every(v => v.length));
+  const right = items.map((_, i) => i).filter(i => valid[i].length);
+  // the step card walks through one right answer: the one the set was built around, if it has a reason
+  const main = right[Math.floor(Math.random() * right.length)], mp = valid[main][0];
+  right.splice(right.indexOf(main), 1); right.unshift(main);
+  const reasons = items.map((x, i) => {
+    if (!valid[i].length) return { list: [], answer: -1 };
+    const good = valid[i][0].reason(x);
+    // wrong reasons are statements that are false about this number (never "different digit" ones, which can be half true)
+    const bad = shuffle(PROPS.filter(p => !p.digit && !p.test(x)).map(p => p.reason(x))).slice(0, easy ? 1 : 2);
+    const list = shuffle([good, ...bad]);
+    return { list, answer: list.indexOf(good) };
+  });
+  const labels = items.map(String);
+  const steps = [
+    { say: mp.ask[0], choices: labels, answer: labels[main], words: false },
+    { say: mp.ask[1], choices: YN, answer: 'Yes', words: true },
+    { say: 'So the odd one out is…', choices: labels, answer: labels[main] },
+  ];
+  const q = gq({ t: 'odd-' + S.id, kind: 'verdict', prompt: 'Which one is the odd one out?', answer: [main], key: items.join(),
+    clue: { say: 'Look for something three of them share.', point: 'scroll' }, steps: () => steps });
+  q.claim = { text: `${items.join(', ')}: they all belong together!` }; q.claimTrue = false; q.items = items; q.valid = valid; q.set = S.id;
+  q.verdict = { picks: labels, right, why: 'Now, why is it the odd one out?', reasons: i => reasons[i] };
+  return q;
+}
+
 const LEVELS = [
   { name: 'True or False?', blurb: 'Is the Captain right? How do you know?', eg: '36 + 20 = 56', quest: 'The Captain has a conjecture! Is he right, {N}?',
     seq: ['tf', 'tf', 'tf', 'tf', 'tf', 'tf', 'tf', 'tf'], make: (type, k, easy) => makeTF(k, easy) },
@@ -316,6 +552,12 @@ const LEVELS = [
     seq: ['always', 'sometimes', 'never', 'always', 'never', 'sometimes', 'always', 'never'], make: (type, k, easy) => makeASN(type, easy) },
   { name: 'Test the Captain', blurb: 'Test it with numbers. Can you bust it?', eg: 'Every 5 times table number ends in 5', quest: 'Test the conjecture, {N}. Can you bust it?',
     seq: ['busted', 'true', 'busted', 'busted', 'true', 'busted', 'true'], make: (type, k, easy) => makeTest(type, easy) },
+  { name: 'Spot the Mistake', blurb: 'Find the wrong step and fix it', eg: '45 + 38 = 73?', quest: 'The Captain’s working has a mistake. Can you spot it, {N}?',
+    seq: ['m', 'm', 'm', 'm', 'm', 'm', 'm', 'm'], make: (type, k, easy) => makeMistake(k, easy) },
+  { name: 'Prove It!', blurb: 'Show the Captain why with a picture', eg: '3 × 4 = 4 × 3', quest: 'The Captain is right this time! Can you prove it, {N}?',
+    seq: ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], make: (type, k, easy) => makeProve(k, easy) },
+  { name: 'Odd One Out', blurb: 'Which one doesn’t belong? Why?', eg: '10, 15, 20, 24', quest: 'One of these doesn’t belong. Which one, {N}, and why?',
+    seq: ['o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'], make: (type, k, easy) => makeOdd(k, easy) },
 ];
 
 // Bonnie's fixed lines, for tools/make-voice.mjs (lines with numbers in them use the device voice)
@@ -324,6 +566,13 @@ const VOICE_LINES = [
   'Always, sometimes or never?', 'Always or never?', 'Which chest does it go in?', 'Tap a number to test it!', 'Test it! Can you bust it?',
   'Did any test bust it?', 'Once yes, once no. So it is…', 'It works every time. So it is…', 'It never works. So it is…',
   'Try a few numbers! One that doesn’t fit busts it.', 'That fits.', 'That busts it!', 'Keep testing!',
+  'Spot the mistake, then fix it!', 'Which step is wrong?', 'So which step is wrong?', 'What should it be?', 'Found it!', 'Now fix it.',
+  'That step is right!', 'My working is perfect, arr!', 'Prove it to me, matey!', 'Which one is the odd one out?', 'Now, why is it the odd one out?',
+  'So the odd one out is…', 'Look for something three of them share.', 'Tap “One each” until the pile is empty.', 'Tap “Turn the tree”.',
+  'Did any apples fall off?', 'Tap “Fill a basket” until the pile is empty.', 'How many baskets?', 'How many in each bowl?', 'How many on each lily pad?',
+  'How many in one bowl?', 'And in the other?', 'How many tens?', 'How many ones?', 'How many rows?', 'How many plates?',
+  'How many quarters make a whole?', 'Half of 4 quarters is…', 'So is 2 quarters the same as half?', 'Add one more ten.', 'Tap + on the tens.',
+  ...new Set(MIS.map(m => m.clue)), ...PROPS.flatMap(p => p.ask),
   // Level 1 clues with no numbers in them
   'Look at the tens!', 'Take away the tens. The ones stay the same.', 'Count in fives!', 'Times 2 means double it!', 'Count in tens!',
   'Half means two equal parts.', 'A quarter is half of a half!', 'Share it into 3 equal groups.', 'The first digit tells you the tens.',
@@ -334,10 +583,10 @@ const VOICE_LINES = [
 Meadow.registerWorld(M.world({
   id: 'y2-maths-captains-cove', name: 'Captain’s Cove', tag: 'Is the Captain right?', icon: '🐸', color: '#3D7FB3', tint: '#E4F0F8',
   intro: `Test the Captain’s conjectures and prove it! ${CAPTAIN} makes bold claims. A <b>conjecture</b> is an idea that might be true. Is the Captain right?`,
-  ids: ['true-false', 'always-sometimes-never', 'test-the-captain'],
+  ids: ['true-false', 'always-sometimes-never', 'test-the-captain', 'spot-the-mistake', 'prove-it', 'odd-one-out'],
   levels: LEVELS, host: HOST,
   lines: () => VOICE_LINES,
 }));
 // for the test page: the claim banks and their checks
-window.CaptainsCove = { CAPTAIN, TF, ASN, TEST, makeTF, makeASN, makeTest };
+window.CaptainsCove = { CAPTAIN, TF, ASN, TEST, MIS, PROVE, PROPS, OOO, validPicks, makeTF, makeASN, makeTest, makeMistake, makeProve, makeOdd };
 })();

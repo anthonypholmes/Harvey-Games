@@ -31,7 +31,7 @@
 (() => {
   const storageBefore = JSON.stringify(Object.entries(localStorage).sort());
   const C = window.CaptainsCove, w = Meadow.world('y2-maths-captains-cove'), errs = [], made = {};
-  const IDS = ['true-false', 'always-sometimes-never', 'test-the-captain'];
+  const IDS = ['true-false', 'always-sometimes-never', 'test-the-captain', 'spot-the-mistake', 'prove-it', 'odd-one-out'];
   const bad = (where, m) => { if (errs.length < 80) errs.push(`${where}: ${m}`); };
   const count = k => { made[k] = (made[k] || 0) + 1; };
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -109,6 +109,83 @@
       if (q.answer[0] === 1 && q.tests.some(t => !t.ok)) bad(where, 'looks true, but a button fails');
       if (eased && !c.easy) bad(where, 'not an easy claim');
       checkSteps(where, q, q.cfmt(q.answer[0]));
+    }
+  }
+  // Level 4: read each step back as a plain sum. Every right value must be true, the Captain's one mistake false.
+  function stepTrue(t, title) {
+    let m;
+    if ((m = t.match(/^(?:Check: )?(\d+) ([+−]) (\d+) = (\d+)$/))) return (m[2] === '+' ? +m[1] + +m[3] : m[1] - m[3]) === +m[4];
+    if ((m = t.match(/^(\d+) = (\d+) \+ (\d+)$/))) return +m[1] === +m[2] + +m[3];
+    if ((m = t.match(/^(\d+) has (\d+) tens and (\d+) ones$/))) return +m[1] === m[2] * 10 + +m[3];
+    if ((m = t.match(/^(\d+) tens is (\d+)$/))) return m[1] * 10 === +m[2];
+    if ((m = t.match(/^(\d+) needs (\d+) to make 10$/))) return +m[1] + +m[2] === 10;
+    if ((m = t.match(/^Split (\d+) into (\d+) and (\d+)$/))) return +m[1] === +m[2] + +m[3];
+    if ((m = t.match(/^Half of (\d+) is (\d+)$/))) return +m[1] === m[2] * 2;
+    if ((m = t.match(/^(\d+) fives?: (\d+)$/))) return m[1] * 5 === +m[2];
+    if ((m = t.match(/^(\d+) each: (\d+) used$/))) return m[1] * +title.match(/between (\d+)/)[1] === +m[2];
+    return null;
+  }
+  for (const eased of [false, true]) for (let rep = 0; rep < 300; rep++) {
+    for (let index = 0; index < L[3].seq.length; index++) {
+      const q = L[3].make({ eased, index, type: L[3].seq[index] }), w = q.work, where = `mistake ${q.maker}${eased ? ' (easy)' : ''} ${w.title}`;
+      count('Level 4 questions' + (eased ? ' (easy)' : ''));
+      if (eased && !C.MIS.find(m => m.id === q.maker).easyOk) bad(where, 'not an easy maker');
+      const wrongs = [];
+      w.steps.forEach((st, i) => {
+        const ok = stepTrue(st.text(st.right), w.title);
+        if (ok === null) bad(where, `can't read "${st.text(st.right)}"`); else if (!ok) bad(where, `"${st.text(st.right)}" is not true`);
+        if (st.shown !== undefined && st.shown !== st.right) { wrongs.push(i); if (stepTrue(st.text(st.shown), w.title) !== false) bad(where, `the mistake "${st.text(st.shown)}" is not a mistake`); if (st.shown < 0) bad(where, 'negative mistake'); }
+      });
+      if (wrongs.length !== 1 || wrongs[0] !== w.wrong) bad(where, `wrong steps ${wrongs}, meant ${w.wrong}`);
+      if (q.answer[0] !== w.steps[w.wrong].right) bad(where, 'the fix is not the right value');
+      const steps = q.gsteps();
+      if (!steps.some(st => st.wstep && st.answer === `Step ${w.wrong + 1}`)) bad(where, 'the step card does not pick the wrong step');
+      checkSteps(where, q, q.answer[0]);
+    }
+    // Level 5: every claim is true, and the answer matches it
+    for (let index = 0; index < L[4].seq.length; index++) {
+      const q = L[4].make({ eased, index, type: L[4].seq[index] }), P = C.PROVE.find(x => x.id === q.maker), where = `prove ${q.maker}${eased ? ' (easy)' : ''} "${q.claim.text}"`;
+      count('Level 5 questions' + (eased ? ' (easy)' : ''));
+      if (!P.check(q)) bad(where, 'the claim or answer is not true');
+      if (q.claimTrue !== true) bad(where, 'Prove It claims must be true');
+      // the claim must not give the answer away (build questions are about building, so they may)
+      if (q.kind !== 'build' && q.kind !== 'choice' && q.answer.some(a => new RegExp(`(=|is) ${a}([^0-9]|$)`).test(q.claim.text))) bad(where, `the claim gives away the answer ${q.answer}`);
+      if (q.kind === 'build') { if (q.n !== q.answer[0] || q.places.some(p => q.target[p] > 9)) bad(where, 'build target is wrong'); }
+      else if (q.kind === 'choice') checkSteps(where, q, q.cfmt(q.answer[0]));
+      else {
+        // the boxes: each line of the sum must add up with the answers in
+        const side = a => a.reduce((acc, x, j) => j === 0 ? x : a[j - 1] === '+' ? acc + x : a[j - 1] === '−' ? acc - x : a[j - 1] === '×' ? acc * x : a[j - 1] === '÷' ? acc / x : acc, 0);
+        const lines = [[]]; q.eq.forEach(t => (t === '\n' ? lines.push([]) : lines[lines.length - 1].push(t)));
+        for (const ln of lines) {
+          const toks = ln.filter(t => !(t && t.text)).map(t => typeof t === 'string' ? t : t.box !== undefined ? q.answer[t.box] : t.num), i = toks.indexOf('=');
+          if (i < 0) continue;
+          const left = side(toks.slice(0, i)), right = side(toks.slice(i + 1));
+          const isHalf = ln.some(t => t && t.text === 'Half of'), isDouble = ln.some(t => t && t.text === 'Double');
+          if (!isHalf && !isDouble && left !== right) bad(where, `a line does not add up (${left} and ${right})`);
+        }
+        const last = q.gsteps().slice(-1)[0];
+        if (!last.fill) bad(where, 'the last step does not fill a box');
+      }
+      if (q.kind !== 'choice') q.gsteps().forEach((st, i) => { if (!st.action && !st.choices.map(String).includes(String(st.answer))) bad(where, `step ${i + 1}: answer not a button`); });
+    }
+    // Level 6: four different numbers; the right picks are exactly those with a reason; reasons fit
+    for (let index = 0; index < L[5].seq.length; index++) {
+      const q = L[5].make({ eased, index, type: L[5].seq[index] }), where = `odd one out ${q.set}${eased ? ' (easy)' : ''} [${q.items}]`;
+      count('Level 6 questions' + (eased ? ' (easy)' : ''));
+      if (new Set(q.items).size !== 4 || q.items.some(n => n < 1 || n > 99)) bad(where, 'bad set');
+      const valid = C.validPicks(q.items), want = valid.map((v, i) => (v.length ? i : -1)).filter(i => i >= 0).sort().join();
+      if ([...q.verdict.right].sort().join() !== want) bad(where, `right picks ${q.verdict.right}, should be ${want}`);
+      if (!want || valid.every(v => v.length)) bad(where, 'no right pick, or every pick is right');
+      for (const i of q.verdict.right) {
+        const r = q.verdict.reasons(i), good = r.list[r.answer];
+        if (r.list.length !== (eased ? 2 : 3) || r.answer < 0) bad(where, `reasons for ${q.items[i]}: ${r.list}`);
+        // the right reason must make it the only one; the others must not be true reasons for it
+        if (!valid[i].some(p => p.reason(q.items[i]) === good)) bad(where, `"${good}" doesn't make ${q.items[i]} the odd one out`);
+        r.list.forEach((x, k) => { if (k !== r.answer && valid[i].some(p => p.reason(q.items[i]) === x)) bad(where, `"${x}" is also right`); });
+        // a wrong reason must be false about that number (not just true but shared)
+        r.list.forEach((x, k) => { if (k === r.answer) return; const p = C.PROPS.find(pp => pp.reason(q.items[i]) === x); if (!p || p.digit || p.test(q.items[i])) bad(where, `"${x}" could be true about ${q.items[i]}`); });
+      }
+      checkSteps(where, q, String(q.items[q.verdict.right[0]]));
     }
   }
   if (JSON.stringify(Object.entries(localStorage).sort()) !== storageBefore) bad('storage', 'the check changed something in storage!');
