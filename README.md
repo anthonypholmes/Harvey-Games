@@ -121,17 +121,20 @@ The **Ask Bonnie** button, or a wrong answer, moves one step up a help ladder:
 
 Harvey always gives the final answer himself.
 
-Asking for help is framed as a superpower. Each Ask pops up a **Scout Tip!** badge, and the first one in a question earns a **+1 Scout bone** when it's solved. Bonnie plays a silly sidekick: her clues come with lines like "Bonnie's tail got in the way!", and on the step-by-step card she sometimes makes a funny wrong guess ("Is it… 100?!") so Harvey can put her right.
+Asking for help is framed as a superpower. Each Ask pops up a **Scout Tip!** badge, and the first one in each play of a level earns a **+1 Scout bone**. Bonnie plays a silly sidekick: her clues come with lines like "Bonnie's tail got in the way!", and on the step-by-step card she sometimes makes a funny wrong guess ("Is it… 100?!") so Harvey can put her right.
 
 The game also adjusts the difficulty quietly. After two answers in a row that needed step-by-step or guided help, the next questions get easier, for example smaller numbers or extra labels. After two answers in a row done solo or with just a clue, it goes back to normal. Nothing on screen shows this.
 
 ## Bones and the Bone Shop
 
-- **1 bone** for every question finished, however it was solved.
-- **+1 Scout bone** if he asked Bonnie for help on that question.
-- **Streak:** after 3 right in a row, each question is worth **2 bones** ("Bone Multiplier Active!"). Asking Bonnie doesn't break a streak; a wrong answer quietly starts it again.
-- **3 bonus bones** for finishing a level.
-- So a level gives roughly 12 to 30 bones, usually 20 to 30.
+Bones work the same in every game and world:
+
+- **Normal plays:** the first **2** plays of each level each day pay **1 bone** for every right answer.
+- **Extra practice:** the 3rd and later plays of that level on the same day pay no bones per answer, but **3 bonus bones** for finishing. An **Extra practice** chip shows in the top bar, and Bonnie says so at the start, so the missing answer bones don't look like a bug. Everything else (sounds, streak banners, stars, MASTERED) works as usual.
+- **Asking Bonnie:** **+1 bone** once per play, in any play.
+- **New best stars:** **3 bones** for each star better than the best so far.
+- There's no limit across the game: five different levels in a day all pay normally. Practice is never limited, only how fast bones come.
+- So a 10-question level played 5 times in one day (3 stars the first time) pays (10 + 9) + 10 + 3 + 3 + 3 = 38 bones.
 
 The **Bone Shop** can be opened from the Clubhouse (the **Bone Shop** button under the games, or at the top), or from inside either game. It has three tabs:
 
@@ -187,13 +190,15 @@ This means:
 - **Old saves are only read.** The first time the engine runs, it copies `harvey-splitter-v1`, `meadowWords_english_v1` and `meadowClubhouse_sound` into `meadow-save-v1`. Words stars carry over. A Maths level that was done becomes 1 star. The old keys are never changed, so they stay as the rollback.
 - **Catching up with the old saves.** Each time it loads, the engine checks whether the old saves have changed since it last looked (for example, the old games played offline on an iPad that still had them saved). If so it copies the new progress across: the best stars of both, every dress-up item owned in either, and the bones the old game earned or spent since. A save made in the beta, before go-live, takes the live bones instead, because beta bones were only for trying things out.
 - **Stars:** 3 stars for at most 1 mistake and no help. 2 stars for at most 4 mistakes and at most 1 help. Otherwise 1 star. The best result is kept. A level unlocks once the one before has a star.
-- **Bones:** 1 per right answer, +1 the first time Bonnie is asked in a level, and 2 per *new* star at the end. There are no streak multipliers.
+- **Bones:** the numbers are in `RULES` in the engine. 1 per right answer in the first 2 plays of a level each day (`NORMAL_RUNS_PER_DAY`), then extra practice plays pay 3 for finishing instead (`EXTRA_RUN_BONES`). +1 the first time Bonnie is asked in a play, and 3 per *new* star at the end. There are no streak multipliers.
+- **Counting plays:** the save keeps `daily: { day, normalRuns: { 'worldId/levelId': n } }`, using the device's local date. A play is counted when it pays its first answer bone, in the same save, so quitting part-way uses one up, leaving before answering doesn't, and a refresh can't pay twice. A new day starts the counts again; if the clock goes backwards, the stored day and counts are kept.
 - **Meadow Words:** its four worlds are in `worlds/y2-english-*.js`.
 - **Meadow Maths:** `worlds/y2-maths-kit.js` is the question screen the maths worlds share: the number pad, the pictures (including the burrow frame), the number line and Bonnie's help ladder (a clue, then the step card, then glowing buttons). The worlds themselves are in `worlds/y2-maths-*.js`. Only the step card and the glowing buttons count as help for stars; a clue does not. Two helped questions in a row quietly switch to easier numbers until two clean ones in a row.
 - **Clubhouse:** reads and writes only `meadow-save-v1` (name, Clubhouse sound) and shows each game's stars. It loads every world file so it can count them, so a new world file is added there too.
 - **Bonnie's dress-up:** the Bone Shop's first tab has three slots, so Bonnie can wear a hat, something on her face and something round her neck at once (`hat`, `face`, `neck` in the save). Items are listed in `HATS` in the engine, each with its `slot`, and drawn in `hatSVG`, `faceSVG` and `neckSVG`.
 - **The old beta addresses** (`/beta/index.html`, `/beta/meadow-maths.html`, `/beta/meadow-words.html`) now just send you to the live pages. `beta/sw.js` removes the beta's old offline copy and then removes itself.
 - **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world.
+- **Checking the bone rules:** open `tests/bones-test.html`. It plays a pretend level many times with a pretend clock and checks the bones (5 plays in a day = 38, a new day, quitting, refreshing, a clock moved back, asking Bonnie, new stars, old saves). It uses its own test save and deletes it at the end. Run it after changing the bone rules.
 - **Try it:** `beta/core-test.html` has a small practice world. It uses its own practice save (`meadow-save-test`), so it changes nothing. Its "Test tools" box shows what would be copied from this device's saves.
 - **Going back to the old games:** the old pages are in git history (the commit before "Stage 7"). Putting them back needs no save changes, because the old saves were never touched; only progress made in the new games would be missing.
 

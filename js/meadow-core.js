@@ -26,13 +26,19 @@ const SAVE_VERSION = 1;
 const DEFAULT_KEY = 'meadow-save-v1';
 const OLD_KEYS = { shared: 'harvey-splitter-v1', words: 'meadowWords_english_v1', club: 'meadowClubhouse_sound' };
 
-/* ---------- the rules (section 2 of the brief) ---------- */
+/* ---------- the rules (Bones v1.1) ----------
+   Practice is never limited; only how fast bones come in on repeat plays.
+   The first NORMAL_RUNS_PER_DAY plays of a level each day are normal runs: a bone per right answer.
+   Later plays that day are extra practice runs: no answer bones, EXTRA_RUN_BONES for finishing.
+   New best stars and asking Bonnie pay on every run. There is no daily cap across the game. */
 const RULES = {
-  ANSWER_BONES: 1,        // every right answer, flat; no multipliers
-  ASK_BONES: 1,           // the first time Bonnie is asked in a level
-  BONES_PER_NEW_STAR: 2,  // level complete: 2 bones for each star better than the best so far
+  ANSWER_BONES: 1,        // every right answer in a normal run, flat; no multipliers
+  ASK_BONES: 1,           // the first time Bonnie is asked in a run (any run)
+  BONES_PER_NEW_STAR: 3,  // level complete: 3 bones for each star better than the best so far (any run)
+  NORMAL_RUNS_PER_DAY: 2, // per level, per day
+  EXTRA_RUN_BONES: 3,     // finishing an extra practice run
   starsFor: ({ mistakes, helps }) => (mistakes <= 1 && helps === 0 ? 3 : mistakes <= 4 && helps <= 1 ? 2 : 1),
-  starBonus: (stars, prevBest) => 2 * Math.max(0, stars - prevBest),
+  starBonus: (stars, prevBest) => RULES.BONES_PER_NEW_STAR * Math.max(0, stars - prevBest),
 };
 
 /* ---------- old saves stored progress by position; these are the new, stable ids ----------
@@ -124,6 +130,9 @@ const LINES = {
   finish: { 3: "WOW, {N}! Three stars! You're a superstar!", 2: 'Brilliant work, {N}! Two shiny stars!', 1: 'You did it, {N}! Every try makes you stronger!' },
   already3: 'You already have 3 stars here: great practice!',
   stillBest: { 1: 'Your best here is still 1 star. Great practice!', 2: 'Your best here is still 2 stars. Great practice!' },
+  // Bones v1.1: the 3rd and later plays of a level in a day
+  extraPractice: "You came back for more, {N}! This one's extra practice. Finish it for 3 bonus bones!",
+  extraDone: '3 extra practice bones for you!',
   locked: 'Finish the level before to unlock this one!',
   shownAll: "I've shown you the answer, {N}! Now you have a go. 🐾",
   shopWelcome: 'Welcome to my shop, {N}! Bones from Meadow Maths and Meadow Words all go in the same bone bowl.',
@@ -147,6 +156,21 @@ const nameOf = () => (S && S.name) || 'friend';
 const fmt = s => String(s).replaceAll('{N}', nameOf());
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const todayGB = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+/* Bones v1.1: the device's local date as YYYY-MM-DD. clock() can be swapped by the tests (Meadow.setClock). */
+let clock = () => new Date();
+const pad2 = n => String(n).padStart(2, '0');
+const localDay = (d = clock()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+/* A new day clears the counts. If the date has gone backwards, the stored day and its counts are kept. */
+function rollDay(s) {
+  const t = localDay();
+  if (!s.daily.day || t > s.daily.day) s.daily = { day: t, normalRuns: {} };
+  return s.daily;
+}
+/* How many normal runs this level has had today (without changing the save). */
+function runsToday(s, key) {
+  const t = localDay(), d = s.daily;
+  return d.day && t <= d.day ? d.normalRuns[key] || 0 : 0;
+}
 const reduceMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const plural = (n, one, many = one + 's') => `${n} ${n === 1 ? one : many}`;
 const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -167,6 +191,7 @@ function blankSave() {
     rewards: STARTER_PRIZES.map(r => ({ ...r })), redeemed: [],
     stars: {}, logs: {},
     settings: { unlockAll: {}, years: null },
+    daily: { day: null, normalRuns: {} }, // Bones v1.1: normal runs per level today (local date)
   };
 }
 const cleanPrize = (r, i) => ({ id: String(r.id || 'p' + i), title: String(r.title || 'Prize').slice(0, 60), desc: String(r.desc || '').slice(0, 120), cost: int(r.cost, 1, 9999) || 1 });
@@ -191,6 +216,9 @@ function normalise(raw) {
   const stars = {}; if (isObj(s.stars)) Object.entries(s.stars).forEach(([k, v]) => { v = int(v, 0, 3); if (v) stars[k] = v; });
   s.stars = stars;
   s.logs = isObj(s.logs) ? s.logs : {};
+  const d = isObj(s.daily) ? s.daily : {}, runs = {};
+  if (isObj(d.normalRuns)) Object.entries(d.normalRuns).forEach(([k, v]) => { v = int(v, 0, 99); if (v) runs[k] = v; });
+  s.daily = { day: typeof d.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.day) ? d.day : null, normalRuns: runs };
   const st = isObj(s.settings) ? s.settings : {};
   s.settings = { ...st, unlockAll: isObj(st.unlockAll) ? st.unlockAll : {},
     years: Array.isArray(st.years) && st.years.length ? [...new Set(st.years.map(Number).filter(Number.isFinite))] : null };
@@ -508,10 +536,11 @@ function confetti(n = 40) {
     c.style.left = Math.random() * 100 + 'vw'; c.style.animationDuration = (2.2 + Math.random() * 2) + 's'; c.style.animationDelay = (Math.random() * .8) + 's';
     document.body.appendChild(c); setTimeout(() => c.remove(), 5200); }
 }
-/* Adds bones to the bowl, with bones flying from the element to the counter. */
-function addBones(n, fromEl, label) {
+/* Adds bones to the bowl, with bones flying from the element to the counter.
+   also(save) makes another change in the same save, so the two can never be split by a refresh. */
+function addBones(n, fromEl, label, also) {
   if (n <= 0) return;
-  mutate(s => { s.bones += n; });
+  mutate(s => { s.bones += n; if (also) also(s); });
   const chip = $('#boneChip'); if (!chip) return;
   if (fromEl && !reduceMotion()) {
     const r = fromEl.getBoundingClientRect(), t = chip.getBoundingClientRect();
@@ -687,14 +716,20 @@ function startLevel(worldId, levelId) {
   if (li < 0) return homeScreen();
   const L = w.levels[li];
   const count = L.count || (L.seq && L.seq.length) || w.perLevel || (L.items ? 6 : 8);
-  G = { w, L, li, key: keyOf(w, L), i: 0, count, items: L.items ? shuffle(L.items).slice(0, count) : null,
-    mistakes: 0, helps: 0, answerBones: 0, askBones: 0, asked: false, tiers: tierNames(w).map(() => 0), eased: 0, done: false };
+  const key = keyOf(w, L);
+  S = load();
+  // Bones v1.1: decided now, for the whole run. A normal run is only counted when it pays its first answer bone.
+  const extra = runsToday(S, key) >= RULES.NORMAL_RUNS_PER_DAY;
+  G = { w, L, li, key, i: 0, count, items: L.items ? shuffle(L.items).slice(0, count) : null,
+    mistakes: 0, helps: 0, answerBones: 0, askBones: 0, asked: false, tiers: tierNames(w).map(() => 0), eased: 0, done: false,
+    extra, counted: false, extraBones: 0 };
   G.count = G.items ? G.items.length : count;
   const full = w.layout === 'full';
   show(`
     <div class="game-top">
       <button class="icon-btn" id="back">← Map</button>
       <div class="gt">${w.icon || ''} ${esc(w.name)} · Level ${li + 1}</div>
+      ${extra ? '<div class="chip extra" id="extraChip" title="Plays after the first 2 today: no bones per answer, 3 bonus bones for finishing">🎯 Extra practice</div>' : ''}
       <div class="pips" id="pips"></div>
     </div>
     <div class="game-main ${full ? 'full' : ''}">
@@ -732,6 +767,7 @@ function nextQuestion() {
   const q = G.items ? G.items[G.i] : G.L.make({ eased, index: G.i, count: G.count, level: G.L, world: G.w, type: G.L.seq ? G.L.seq[G.i] : undefined });
   G.q = q; G.qEased = !G.items && eased;
   (G.L.play || G.w.play)(q, ctx());
+  if (G.extra && G.i === 0) bubble(esc(fmt(LINES.extraPractice)));
 }
 /* What a world's play() gets, besides the Meadow API. */
 function ctx() {
@@ -779,8 +815,13 @@ function correct(el, opts = {}) {
     else if (streak === 5) { banner('🌟 5 in a row! Super streak!'); sfx.streak(); }
     else if (streak > 5 && streak % 5 === 0) { banner(`🚀 ${streak} in a row! Unstoppable!`); sfx.streak(); }
   }
-  G.answerBones += RULES.ANSWER_BONES;
-  addBones(RULES.ANSWER_BONES, el || $('#area'));
+  if (!G.extra) { // extra practice runs pay at the end instead
+    const first = !G.counted, key = G.key;
+    G.counted = true;
+    G.answerBones += RULES.ANSWER_BONES;
+    // the first answer bone uses up one of today's normal runs, in the same save as the bone
+    addBones(RULES.ANSWER_BONES, el || $('#area'), '', first ? s => { const d = rollDay(s); d.normalRuns[key] = (d.normalRuns[key] || 0) + 1; } : null);
+  }
   renderHud();
   const bon = $('#gameBonnie'); animate(bon, 'happy', 550); hearts(bon, '⭐', 3);
   const praise = opts.praise != null ? fmt(opts.praise) : wasHelped ? fmt(LINES.watched) : fmt(rand(G.w.praise || LINES.praise));
@@ -813,13 +854,14 @@ function finishLevel() {
   let prev = 0;
   mutate(s => { prev = s.stars[key] || 0; s.stars[key] = Math.max(prev, stars); s.logs[key] = { tiers: G.tiers, eased: G.eased, when: todayGB() }; });
   const bonus = RULES.starBonus(stars, prev), newStars = Math.max(0, stars - prev);
+  if (G.extra) { G.extraBones = RULES.EXTRA_RUN_BONES; addBones(G.extraBones, $('#area'), 'extra practice!'); }
   if (bonus) addBones(bonus, $('#area'), 'star bonus!');
   confetti(); sfx.fanfare();
   const hasNext = li < w.levels.length - 1;
   const msg = fmt(LINES.finish[stars]);
   const extra = bonus ? '' : prev >= 3 ? LINES.already3 : LINES.stillBest[prev] || '';
-  const total = G.answerBones + G.askBones + bonus;
-  const parts = [`${G.answerBones} for answers`];
+  const total = G.answerBones + G.askBones + G.extraBones + bonus;
+  const parts = [G.extra ? `${G.extraBones} extra practice bones` : `${G.answerBones} for answers`];
   if (G.askBones) parts.push(`${G.askBones} for asking Bonnie`);
   parts.push(bonus ? `${bonus} star bonus (${plural(newStars, 'new star')})` : 'no star bonus this time');
   modal(`
@@ -840,7 +882,7 @@ function finishLevel() {
     else worldScreen(w.id);
   });
   const eb = $('#endBonnie'); eb.style.margin = '0 auto'; animate(eb, 'happy', 600);
-  say(extra ? msg + ' ' + extra : msg);
+  say([msg, extra, G.extra ? LINES.extraDone : ''].filter(Boolean).join(' '));
 }
 
 /* =========================================================
@@ -980,7 +1022,7 @@ function parentScreen() {
       <section><h3>Child</h3>
         <p>Playing as <b>${esc(nameOf())}</b>. To change the name, use <b>Change name</b> on the <a href="${esc(GAME.homeHref)}">Clubhouse</a> page.</p></section>
       <section><h3>Bones 🦴 <span class="chip bones" style="display:inline-flex" id="pBones">${S.bones}</span></h3>
-        <p class="note">1 bone for each right answer. +1 the first time Bonnie is asked for help in a level. At the end of a level, 2 bones for each new star (stars better than the best so far). Replaying a 3-star level pays only the answer bones.</p>
+        <p class="note">In each level, the first 2 plays each day pay 1 bone for each right answer. Plays after that on the same day are extra practice: no bones per answer, but 3 bonus bones for finishing. Asking Bonnie for help pays 1 bone once per play, in any play. Each new best star pays 3 bones (only stars better than the best so far). Practice is never limited, and five different levels in a day all pay normally.</p>
         <div class="row-btns" style="justify-content:flex-start">
           <button class="btn small ghost" data-bone="-10">−10</button><button class="btn small ghost" data-bone="-1">−1</button>
           <button class="btn small ghost" data-bone="1">+1</button><button class="btn small ghost" data-bone="10">+10</button></div>
@@ -1080,6 +1122,7 @@ function parentScreen() {
    ========================================================= */
 function spokenLines(game = GAME) {
   const out = new Set(), add = (...xs) => xs.forEach(x => x && out.add(fmt(x)));
+  add(LINES.extraPractice, LINES.extraDone);
   add(...LINES.praise, LINES.watched, ...LINES.oops, ...LINES.tickles, ...LINES.tickleEgg, ...Object.values(LINES.finish), LINES.already3, ...Object.values(LINES.stillBest),
     LINES.locked, LINES.shownAll, LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
   [1, 2, 3].forEach(st => [1, 2].forEach(p => { if (st <= p) add(fmt(LINES.finish[st]) + ' ' + LINES.stillBest[p]); }));
@@ -1170,6 +1213,7 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 .stone.bad{animation:shake .45s}
 .game-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .game-top .gt{font-weight:700;color:var(--on-bg);font-size:1.1rem}
+.chip.extra{background:linear-gradient(180deg,#E9F4FB,#CFE6F5);border-color:#9CC3DE;color:#245A91;font-size:.95rem;padding:4px 12px}
 .pips{display:flex;gap:6px;margin-left:auto}
 .pip{width:16px;height:16px;border-radius:50%;background:var(--card);border:2px solid var(--card-edge)}
 .pip.done{background:var(--leaf);border-color:var(--leaf-dark)}
@@ -1362,5 +1406,7 @@ window.Meadow = {
   ui: { $, $$, esc, fmt, rand, randInt, shuffle, wait, plural, reduceMotion, say, hush, whenQuiet, sfx, tone, ac, animate, hearts, banner, confetti,
     shakeScreen, tickle, tickleEgg, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show },
   spokenLines,
+  // tests only: pretend the date is something else (fn returns a Date; leave it out to go back to the real clock)
+  setClock: fn => { clock = typeof fn === 'function' ? fn : () => new Date(); },
 };
 })();
