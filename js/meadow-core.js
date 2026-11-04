@@ -1136,6 +1136,16 @@ function spokenLines(game = GAME) {
   });
   return [...out];
 }
+/* Lines other speakers say, by who: { captain: [...] } (a world's host: { who, lines }) */
+function hostLines(game = GAME) {
+  const out = {};
+  WORLDS.filter(w => !game || w.subject === game.subject).forEach(w => {
+    const h = w.host; if (!h || !h.who || !h.lines) return;
+    const set = out[h.who] || (out[h.who] = new Set());
+    h.lines.forEach(x => x && set.add(fmt(x)));
+  });
+  return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, [...v]]));
+}
 
 /* =========================================================
    STYLES (Meadow Words' storybook look)
@@ -1405,7 +1415,7 @@ window.Meadow = {
   // UI kit for world files
   ui: { $, $$, esc, fmt, rand, randInt, shuffle, wait, plural, reduceMotion, say, hush, whenQuiet, sfx, tone, ac, animate, hearts, banner, confetti,
     shakeScreen, tickle, tickleEgg, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show },
-  spokenLines,
+  spokenLines, hostLines,
   // tests only: pretend the date is something else (fn returns a Date; leave it out to go back to the real clock)
   setClock: fn => { clock = typeof fn === 'function' ? fn : () => new Date(); },
 };

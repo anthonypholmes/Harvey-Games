@@ -797,7 +797,8 @@ function choose(val, btn) {
 
 /* ---------- claims: a host (like Captain Croak) says something, and the child decides ----------
    q.claim = { text }  the host's claim, shown in a speech scroll with the world's host drawing
-   (M.world({ host: { name, svg(mood), says: { busted, holds } } }), moods: 'claim', 'busted', 'holds').
+   (M.world({ host: { name, who, svg(mood), says: { busted, holds, sometimes }, taps, lines } }), moods: 'claim', 'busted', 'holds').
+   who names his recorded voice (audio/<who>.json); lines lists everything he says, for tools/make-voice.mjs.
    kind 'verdict': q.verdict = { picks: [labels], right: [indexes that are right], reasons(i) → { list, answer }, why }
      tap a pick, then "How do you know?": the best of the reasons. A wrong tap at either step is a mistake.
    kind 'chests':  q.choices (indexes) + q.cfmt(i) for the chest labels; drop the claim in the right chest.
@@ -821,6 +822,12 @@ function hostSays(text) {
   el.querySelector('.host-say')?.remove();
   const p = document.createElement('span'); p.className = 'host-say'; p.textContent = text; el.appendChild(p);
   setTimeout(() => p.remove(), 2600);
+}
+/* The host says a line out loud in his own voice (host.who: audio/<who>.json), once Bonnie has finished. */
+function hostSpeak(text, now) {
+  const h = host(), q0 = S && S.q; if (!h || !text) return;
+  const go = () => { if (!S || S.q !== q0) return; hostSays(text); U.say(text, { who: h.who, pitch: .7, rate: .85 }); };
+  if (now) go(); else U.whenQuiet(go);
 }
 const reasonsNow = () => S.q.verdict.reasons(S.vpick);
 function vpick(i, btn) {
@@ -850,7 +857,7 @@ function runTest(i) {
   if (!live()) return;
   const q = S.q, t = q.tests[i];
   if (!S.tested.includes(i)) S.tested.push(i);
-  if (t.ok) tone([523, 659], .07, 'triangle', .08); else { tone([392, 311], .1, 'sawtooth', .06); setHost('busted'); hostSays(q.busted || 'Shiver me lily pads!'); }
+  if (t.ok) tone([523, 659], .07, 'triangle', .08); else { tone([392, 311], .1, 'sawtooth', .06); setHost('busted'); hostSpeak(q.busted || 'Shiver me lily pads!'); }
   say(t.show + (t.ok ? '. That fits.' : '. That busts it!'));
   const el = inMM('#tester'); if (el) el.innerHTML = testerHTML(q);
   renderControls();
@@ -930,7 +937,7 @@ function win() {
   if (S.q.claim && host()) {
     const h = host(), ct = S.q.claimTrue;
     if (S.q.kind === 'chests') { const c = inMM(`.chest[data-choice="${S.q.answer[0]}"]`); if (c) c.classList.add('open'); }
-    setHost(ct === false ? 'busted' : 'holds'); hostSays(ct === false ? h.says.busted : ct === 'sometimes' ? h.says.sometimes : h.says.holds);
+    setHost(ct === false ? 'busted' : 'holds'); hostSpeak(ct === false ? h.says.busted : ct === 'sometimes' ? h.says.sometimes : h.says.holds);
   }
   Meadow.correct(origin, { praise: S.tier === 0 ? pick(PRAISE) : pick(TEAM) });
 }
@@ -971,6 +978,8 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b) {
     const dog = e.target.closest('#gameBonnie'); if (dog) return tickleBonnie(dog);
+    // tap the host and he says one of his lines
+    if (e.target.closest('#mmHost') && host() && host().taps) { const el = inMM('#mmHost'); el.classList.remove('jump'); void el.offsetWidth; el.classList.add('jump'); return hostSpeak(S.q.claim && S.q.claim.sub && Math.random() < .5 ? S.q.claim.sub : pick(host().taps), true); }
     // tap the rods or counters to count them in tens (or hundreds)
     const g = e.target.closest('#visual .grp'); if (!g) return;
     const p = +(g.className.match(/\bp(\d)\b/) || [])[1];
@@ -1352,7 +1361,7 @@ const CSS = String.raw`
 }
 /* claims: the host's speech scroll, verdict + reason, treasure chests, the tester */
 .mm .claim { display: flex; gap: 14px; align-items: center; }
-.mm .host { position: relative; flex: none; width: 116px; }
+.mm .host { position: relative; flex: none; width: 116px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .mm .host svg { display: block; width: 100%; height: auto; animation: mm-bob 3s ease-in-out infinite; }
 @keyframes mm-bob { 50% { transform: translateY(3px) rotate(-1deg); } }
 .mm .host.jump { animation: mm-hjump .5s cubic-bezier(.3, 1.5, .5, 1); }
