@@ -4,12 +4,12 @@
  *   when online; the saved copy is used when offline (or the network is slow).
  * Everything else (icons, fonts): cache first, then network.
  * Bonnie's recorded voice (audio/): clips are cache first in their own cache, which
- *   survives updates; audio/manifest.json is network first so new clips are found.
+ *   survives updates; audio/manifest.json (and captain.json) is network first so new clips are found.
  *   Meadow Words saves every clip in the background, so the voice works offline too.
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v11';
+const CACHE_VERSION = 'meadow-club-v12';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -77,7 +77,7 @@ self.addEventListener('fetch', event => {
   if (url.pathname.startsWith('/beta/')) return;
 
   if (url.pathname.includes('/audio/')) {
-    event.respondWith(url.pathname.endsWith('/manifest.json') ? networkFirst(req, AUDIO_CACHE, false) : cacheFirst(req, AUDIO_CACHE));
+    event.respondWith(url.pathname.endsWith('.json') ? networkFirst(req, AUDIO_CACHE, false) : cacheFirst(req, AUDIO_CACHE));
     return;
   }
 

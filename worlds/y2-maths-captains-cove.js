@@ -51,11 +51,19 @@ function croakSVG(mood = 'claim') {
       <path d="M100 40 l4 8 l8 1 l-6 6 l2 8 l-8 -4 l-8 4 l2 -8 l-6 -6 l8 -1 z" fill="#FFC83D"/>
     </g></svg>`;
 }
-const HOST = { name: CAPTAIN, svg: croakSVG, says: {
+// The Captain speaks in his own recorded voice (audio/captain.json, made by tools/make-voice.mjs --captain-voice).
+const HOST = { name: CAPTAIN, who: 'captain', svg: croakSVG, says: {
   busted: 'Shiver me lily pads, you’ve busted my conjecture!',
   holds: 'Arr, my conjecture holds up!',
   sometimes: 'Sometimes right, sometimes not. Arr!',
-} };
+}, taps: [
+  `Ahoy, matey! I’m ${CAPTAIN}!`,
+  'Arr! Can you bust my conjecture?',
+  'Every pirate needs a good mathematician!',
+  'Ribbit! I mean... arr!',
+] };
+// everything he says out loud (his claim's small line, like "Prove it to me, matey!", is said when he's tapped)
+HOST.lines = [...Object.values(HOST.says), ...HOST.taps, 'Shiver me lily pads!', 'My working is perfect, arr!', 'Prove it to me, matey!'];
 
 /* =====================================================================
    LEVEL 1  True or False?  make(easy) → { nums, truth, text, reasons: [right, wrong, wrong], clue, steps }
@@ -567,7 +575,7 @@ const VOICE_LINES = [
   'Did any test bust it?', 'Once yes, once no. So it is…', 'It works every time. So it is…', 'It never works. So it is…',
   'Try a few numbers! One that doesn’t fit busts it.', 'That fits.', 'That busts it!', 'Keep testing!',
   'Spot the mistake, then fix it!', 'Which step is wrong?', 'So which step is wrong?', 'What should it be?', 'Found it!', 'Now fix it.',
-  'That step is right!', 'My working is perfect, arr!', 'Prove it to me, matey!', 'Which one is the odd one out?', 'Now, why is it the odd one out?',
+  'That step is right!', 'Which one is the odd one out?', 'Now, why is it the odd one out?',
   'So the odd one out is…', 'Look for something three of them share.', 'Tap “One each” until the pile is empty.', 'Tap “Turn the tree”.',
   'Did any apples fall off?', 'Tap “Fill a basket” until the pile is empty.', 'How many baskets?', 'How many in each bowl?', 'How many on each lily pad?',
   'How many in one bowl?', 'And in the other?', 'How many tens?', 'How many ones?', 'How many rows?', 'How many plates?',
@@ -580,8 +588,22 @@ const VOICE_LINES = [
   ...new Set(ASN.map(c => c.clue).filter(c => !/\d/.test(c))),
 ];
 
+// The world's badge on the Maths map: the Captain's head and hat on a lily pad in the cove (sized in em, like an emoji)
+const COVE_ICON = `<svg viewBox="0 0 64 64" width="1em" height="1em" style="vertical-align:-.15em" role="img" aria-label="${CAPTAIN}">
+  <ellipse cx="32" cy="54" rx="29" ry="8" fill="#9CCDEB"/><path d="M8 54 q6 -3 12 0 M44 55 q6 -3 12 0" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <ellipse cx="32" cy="50" rx="24" ry="7" fill="#6CB86A"/><path d="M32 50 L52 45 L54 49 Z" fill="#9CCDEB"/>
+  <ellipse cx="32" cy="38" rx="19" ry="14" fill="#5DA34B"/>
+  <circle cx="22" cy="27" r="8" fill="#5DA34B"/><circle cx="42" cy="27" r="8" fill="#5DA34B"/>
+  <circle cx="22" cy="27" r="5.4" fill="#fff"/><circle cx="42" cy="27" r="5.4" fill="#fff"/>
+  <circle cx="23" cy="28" r="2.8" fill="#2B2B2B"/><circle cx="43" cy="28" r="2.8" fill="#2B2B2B"/>
+  <circle cx="19" cy="40" r="2.6" fill="#F2A3A3" opacity=".8"/><circle cx="45" cy="40" r="2.6" fill="#F2A3A3" opacity=".8"/>
+  <path d="M24 40 Q32 47 40 40" fill="none" stroke="#2F5B2A" stroke-width="2.4" stroke-linecap="round"/>
+  <g transform="rotate(-6 32 18)"><path d="M12 19 Q32 -3 52 19 Q32 14 12 19 Z" fill="#2E2A3A"/><path d="M8 19 Q32 11 56 19 Q32 25 8 19 Z" fill="#3B3650"/>
+  <path d="M32 5 l2 4 l4.4 .5 l-3.2 3 l1 4.3 l-4.2 -2.2 l-4.2 2.2 l1 -4.3 l-3.2 -3 l4.4 -.5 z" fill="#FFC83D"/></g>
+</svg>`;
+
 Meadow.registerWorld(M.world({
-  id: 'y2-maths-captains-cove', name: 'Captain’s Cove', tag: 'Is the Captain right?', icon: '🐸', color: '#3D7FB3', tint: '#E4F0F8',
+  id: 'y2-maths-captains-cove', name: 'Captain’s Cove', tag: 'Is the Captain right?', icon: COVE_ICON, color: '#3D7FB3', tint: '#E4F0F8',
   intro: `Test the Captain’s conjectures and prove it! ${CAPTAIN} makes bold claims. A <b>conjecture</b> is an idea that might be true. Is the Captain right?`,
   ids: ['true-false', 'always-sometimes-never', 'test-the-captain', 'spot-the-mistake', 'prove-it', 'odd-one-out'],
   levels: LEVELS, host: HOST,

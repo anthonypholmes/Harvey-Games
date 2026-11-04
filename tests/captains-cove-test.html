@@ -188,6 +188,17 @@
       checkSteps(where, q, String(q.items[q.verdict.right[0]]));
     }
   }
+  // the Captain's voice: everything he can say out loud must be on his recording list (HOST.lines)
+  if (w && w.host) {
+    const said = new Set([...Object.values(w.host.says), ...(w.host.taps || [])]);
+    for (const Lv of L) for (const eased of [false, true]) for (let rep = 0; rep < 20; rep++) for (let index = 0; index < Lv.seq.length; index++) {
+      const q = Lv.make({ eased, index, type: Lv.seq[index] });
+      if (q.busted) said.add(q.busted);
+      if (q.claim && q.claim.sub) said.add(q.claim.sub);
+    }
+    if (w.host.who !== 'captain') bad('voice', `the Captain's voice is "${w.host.who}", not "captain"`);
+    for (const s of said) { count('Captain lines'); if (!(w.host.lines || []).includes(s)) bad('voice', `the Captain says "${s}" but it isn't in HOST.lines, so it won't be recorded`); }
+  }
   if (JSON.stringify(Object.entries(localStorage).sort()) !== storageBefore) bad('storage', 'the check changed something in storage!');
 
   const total = Object.values(made).reduce((a, b) => a + b, 0), res = document.getElementById('result');
