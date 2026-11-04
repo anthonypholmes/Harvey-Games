@@ -1,0 +1,37 @@
+{
+ "voice": "PPzYpIqttlTYA83688JI",
+ "model": "eleven_v4",
+ "clips": {
+  "3208f2d9": "captain/3208f2d9-ppzypi.mp3",
+  "ab69a898": "captain/ab69a898-ppzypi.mp3",
+  "078eed9c": "captain/078eed9c-ppzypi.mp3",
+  "f57d3edb": "captain/f57d3edb-ppzypi.mp3",
+  "a6341873": "captain/a6341873-ppzypi.mp3",
+  "ecb51da3": "captain/ecb51da3-ppzypi.mp3",
+  "da0e1913": "captain/da0e1913-ppzypi.mp3",
+  "a6cbd1a6": "captain/a6cbd1a6-ppzypi.mp3",
+  "61c7de04": "captain/61c7de04-ppzypi.mp3",
+  "b6ba8ef5": "captain/b6ba8ef5-ppzypi.mp3",
+  "72d689bb": "captain/72d689bb-ppzypi.mp3",
+  "3d16e20d": "captain/3d16e20d-ppzypi.mp3",
+  "f4b04803": "captain/f4b04803-ppzypi.mp3",
+  "56137d40": "captain/56137d40-ppzypi.mp3"
+ },
+ "texts": {
+  "3208f2d9": "Shiver me lily pads, you’ve busted my conjecture!",
+  "ab69a898": "Arr, my conjecture holds up!",
+  "078eed9c": "Sometimes right, sometimes not.",
+  "f57d3edb": "Arr!",
+  "a6341873": "Ahoy, matey!",
+  "ecb51da3": "I’m Captain Croak!",
+  "da0e1913": "Can you bust my conjecture?",
+  "a6cbd1a6": "Every pirate needs a good mathematician!",
+  "61c7de04": "Ribbit!",
+  "b6ba8ef5": "I mean",
+  "72d689bb": "arr!",
+  "3d16e20d": "Shiver me lily pads!",
+  "f4b04803": "My working is perfect, arr!",
+  "56137d40": "Prove it to me, matey!"
+ },
+ "made": "2026-11-04T15:41:49.987Z"
+}
