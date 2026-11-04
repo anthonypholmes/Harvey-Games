@@ -11,6 +11,9 @@
  *
  * Options:
  *   --voice <id>          the ElevenLabs voice to use (or set ELEVENLABS_VOICE_ID)
+ *   --captain-voice <id>  also record Captain Croak's lines (Captain's Cove) in this voice. His clips go in
+ *                         audio/captain/ with their own list, audio/captain.json, so they never mix with Bonnie's.
+ *                         Either voice can be recorded on its own.
  *   --names "Harvey,Sam"  extra child names to record (as well as tools/names.txt; *Name records whole sentences)
  *   --list-voices         list the voices on your account and stop
  *   --dry-run             count lines and characters, no API key needed, nothing written
@@ -117,11 +120,15 @@ function loadPages() {
       if (m[1]) { if (!/meadow-backup/.test(m[1])) vm.runInContext(fs.readFileSync(path.resolve(dir, m[1]), 'utf8'), c, { filename: m[1] }); }
       else if (m[2].includes('Meadow.startGame')) vm.runInContext(m[2], c, { filename: file });
     }
+    const hosts = vm.runInContext('Meadow.hostLines ? Meadow.hostLines() : {}', c);
+    for (const [who, ls] of Object.entries(hosts)) (hostLines[who] ||= new Set()) && ls.forEach(l => hostLines[who].add(l));
     return vm.runInContext('Meadow.spokenLines()', c);
   };
+  const hostLines = {}; // other speakers' lines: { captain: Set }
   const call = (f, ...a) => vm.runInContext(`BonnieVoice.${f}(${a.map(x => JSON.stringify(x)).join(',')})`, ctx);
+  const lines = [...new Set([...run('index.html', 'clubhouseLines'), ...CORE_PAGES.flatMap(runCore)])];
   return {
-    lines: [...new Set([...run('index.html', 'clubhouseLines'), ...CORE_PAGES.flatMap(runCore)])],
+    lines, hosts: Object.fromEntries(Object.entries(hostLines).map(([k, v]) => [k, [...v]])),
     pieces: (text, name) => call('pieces', text, name),
     sentences: text => call('sentences', text),
     template: (s, name) => call('template', s, name),
@@ -162,7 +169,7 @@ if (fs.existsSync(MANIFEST)) {
 }
 manifest.texts = manifest.texts || {}; manifest.names = manifest.names || {}; manifest.said = manifest.said || {};
 manifest.whole = manifest.whole || {}; manifest.wholeTexts = manifest.wholeTexts || {};
-if (!DRY && (manifest.voice !== VOICE || manifest.model !== MODEL)) {
+if (!DRY && VOICE && (manifest.voice !== VOICE || manifest.model !== MODEL)) {
   if (Object.keys(manifest.clips).length) console.log('Voice or model changed: making every clip again.');
   manifest = { voice: VOICE, model: MODEL, clips: {}, names: {}, texts: {}, said: {}, whole: {}, wholeTexts: {} };
 }
@@ -174,6 +181,21 @@ const wholeTodo = WHOLE.flatMap(n => [...wantedWhole].map(([k, tmpl]) => ({ n, k
 const chars = todo.reduce((a, [, t]) => a + sayAs(t).length, 0) + namesTodo.reduce((a, n) => a + n.length, 0)
   + wholeTodo.reduce((a, w) => a + w.text.length, 0);
 
+/* Captain Croak (and any other speaker a world's host names): his own pieces, list and folder */
+const CAPTAIN_VOICE = opt('--captain-voice') || process.env.ELEVENLABS_CAPTAIN_VOICE_ID;
+const CAP_FILE = path.join(AUDIO, 'captain.json');
+const capWanted = new Map();
+for (const line of (game.hosts.captain || [])) for (const p of game.pieces(line, '')) {
+  const text = game.clean(p.raw); if (game.hasWords(text)) capWanted.set(game.key(text), text);
+}
+let capMan = { voice: CAPTAIN_VOICE || null, model: MODEL, clips: {}, texts: {} };
+if (fs.existsSync(CAP_FILE)) { try { capMan = { ...capMan, ...JSON.parse(fs.readFileSync(CAP_FILE, 'utf8')) }; } catch (e) { console.warn('! audio/captain.json unreadable; starting fresh'); } }
+if (!DRY && CAPTAIN_VOICE && (capMan.voice !== CAPTAIN_VOICE || capMan.model !== MODEL)) {
+  if (Object.keys(capMan.clips).length) console.log('Captain\'s voice or model changed: making his clips again.');
+  capMan = { voice: CAPTAIN_VOICE, model: MODEL, clips: {}, texts: {} };
+}
+const capTodo = [...capWanted].filter(([k, t]) => !(exists(capMan.clips[k]) && capMan.texts[k] === t));
+
 console.log(`Lines: ${game.lines.length}  ·  pieces: ${wanted.size}  ·  new clips needed: ${todo.length + namesTodo.length + wholeTodo.length}  ·  characters: ${chars}`);
 if (DRY) {
   // show what would be recorded, so new lines can be checked before paying for them
@@ -181,10 +203,13 @@ if (DRY) {
   wholeTodo.forEach(w => console.log(`  new (${w.n}): ${w.text}`));
   namesTodo.forEach(n => console.log('  new name: ' + n));
   const all = [...wanted.values()].reduce((a, t) => a + t.length, 0);
-  console.log(`(A full set from scratch is about ${all} characters.) Dry run: nothing made.`);
+  console.log(`(A full set from scratch is about ${all} characters.)`);
+  console.log(`Captain Croak: ${capWanted.size} pieces  ·  new clips needed: ${capTodo.length}  ·  characters: ${capTodo.reduce((a, [, t]) => a + t.length, 0)}`);
+  capTodo.forEach(([, t]) => console.log('  new (Captain): ' + t));
+  console.log('Dry run: nothing made.');
   process.exit(0);
 }
-if (!VOICE) { console.error('Choose a voice with --voice <id> (see --list-voices), or use --dry-run.'); process.exit(1); }
+if (!VOICE && !CAPTAIN_VOICE) { console.error('Choose a voice with --voice <id> and/or --captain-voice <id> (see --list-voices), or use --dry-run.'); process.exit(1); }
 const client = await elevenLabs();
 
 /* ---------- 3. Make the clips ---------- */
@@ -198,8 +223,8 @@ const saveManifest = () => {
   fs.writeFileSync(MANIFEST, JSON.stringify(manifest, null, 1) + '\n');
 };
 
-async function tts(text) {
-  const audio = await client.textToSpeech.convert(VOICE, {
+async function tts(text, voice = VOICE) {
+  const audio = await client.textToSpeech.convert(voice, {
     text, modelId: MODEL, outputFormat: 'mp3_44100_64', voiceSettings: VOICE_SETTINGS,
     ...(MODEL.startsWith('eleven_multilingual_v2') ? {} : { languageCode: 'en' }),
   });
@@ -207,7 +232,7 @@ async function tts(text) {
 }
 
 let made = 0;
-try {
+if (VOICE) try {
   for (const n of namesTodo) {
     if (made >= LIMIT) break;
     const file = `names/${slug(n)}-${tag}.mp3`;
@@ -251,5 +276,28 @@ try {
   ['clips', 'names', 'whole'].forEach(sweep);
   saveManifest();
 }
+let capMade = 0;
+if (CAPTAIN_VOICE) {
+  const ctag = CAPTAIN_VOICE.slice(0, 6).toLowerCase();
+  fs.mkdirSync(path.join(AUDIO, 'captain'), { recursive: true });
+  const saveCap = () => { capMan.made = new Date().toISOString(); fs.writeFileSync(CAP_FILE, JSON.stringify(capMan, null, 1) + '\n'); };
+  try {
+    for (const [k, text] of capTodo) {
+      if (made + capMade >= LIMIT) break;
+      const file = `captain/${k}-${ctag}.mp3`;
+      fs.writeFileSync(path.join(AUDIO, file), await tts(text, CAPTAIN_VOICE));
+      capMan.clips[k] = file; capMan.texts[k] = text; capMade++;
+      console.log(`  Captain ${String(capMade).padStart(3)}  ${text}`);
+    }
+  } finally {
+    for (const k of Object.keys(capMan.clips)) if (!capWanted.has(k)) { delete capMan.clips[k]; delete capMan.texts[k]; }
+    const keep = new Set(Object.values(capMan.clips));
+    for (const f of fs.readdirSync(path.join(AUDIO, 'captain'))) if (f.endsWith('.mp3') && !keep.has(`captain/${f}`)) fs.unlinkSync(path.join(AUDIO, 'captain', f));
+    saveCap();
+  }
+  const capLeft = capTodo.length - capMade;
+  console.log(`Captain: made ${capMade} clip(s).${capLeft > 0 ? ` ${capLeft} still to make — run again to carry on.` : ' All done.'}`);
+}
+if (!VOICE) process.exit(0);
 const left = todo.length + namesTodo.length + wholeTodo.length - made;
 console.log(`Made ${made} clip(s).${left > 0 ? ` ${left} still to make — run again to carry on.` : ' All done.'}${collisions ? ` (${collisions} key clashes — see warnings)` : ''}`);

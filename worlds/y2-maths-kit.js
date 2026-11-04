@@ -170,14 +170,16 @@ function play(q, ctx) {
   if (ctx.index === 0) askedLevel = false;
   clearSkip();
   S = { q, ctx, values: Array(q.boxes || 1).fill(''), active: 0, locked: false, busy: false,
-    tier: 0, steps: null, step: 0, solved: new Set(), tried: new Set(), cluePoint: null, zone: null };
+    tier: 0, steps: null, step: 0, solved: new Set(), tried: new Set(), cluePoint: null, zone: null,
+    vstage: 0, vpick: null, vtried: new Set(), tested: [], mood: 'claim', wstage: 0, wtried: new Set() };
   if (q.inter === 'break') { q.counts = countsOf(q.n); q.broke = 0; }
   S.pos = q.line ? (q.line.pawn === 'sit' ? q.line.sitAt : q.line.start) : null;
   ctx.area.classList.add('mm-area');
   renderGame();
   const st = Meadow.save.get();
-  if (st && st.readAloud) say(q.prompt);
+  if (st && st.readAloud) say(readOut(q));
 }
+const readOut = q => (q.claim ? `${q.claim.text}. ` : '') + q.prompt;
 
 /* ---------- answer boxes ---------- */
 const unsolvedBoxes = () => S.values.map((_, i) => i).filter(i => !S.solved.has(i));
@@ -272,6 +274,13 @@ function finishSteps() {
   if (q.kind === 'build' && buildTotal() === q.n) return win();
   if (q.kind === 'line' && inTarget()) return win();
   if (q.kind === 'grid' && gridOk(q.vis)) return win();
+  if (q.kind === 'steps' && S.wstage === 1 && !unsolvedBoxes().length) return win();
+  // a verdict: the step card worked out the first answer, so fill it in and ask for the reason
+  if (q.kind === 'verdict' && S.vstage === 0) {
+    S.vpick = q.verdict.right[0]; S.vstage = 1; S.steps = null; renderControls(); updateAsk();
+    feedback('help', `<span><span class="big">That’s it!</span>${esc(q.verdict.why)}</span>`);
+    return say(q.verdict.why);
+  }
   // something still isn't right (it was changed while stepping): guide the rest of the way
   setTier(3); S.steps = null; renderControls(); updateAsk();
   feedback('help', `<span><span class="big">Nearly there!</span>${glowMsg()}</span>`);
@@ -285,6 +294,7 @@ function chooseStep(i, btn) {
     S.busy = true;
     btn.classList.add('right'); clearSpots();
     if (st.final) { S.busy = false; return win(); }
+    if (st.wstep) pickWrongStep();
     tone([660, 880], .07, 'triangle', .1);
     setMood('happy');
     if (st.fill && 'box' in st.fill) {
@@ -322,7 +332,15 @@ function applyGuide() {
   if (q.inter === 'break' && q.broke < q.k) return spot('rod');
   if (q.kind === 'line') return spot(inTarget() ? 'key-check' : 'pawn');
   if (q.kind === 'grid') return spot(gridOk(q.vis) ? 'key-check' : `cell-${q.vis.tr}-${q.vis.tc}`);
-  if (q.kind === 'choice') return spot(`choice-${q.answer[0]}`);
+  if (q.kind === 'choice' || q.kind === 'chests') return spot(`choice-${q.answer[0]}`);
+  if (q.kind === 'verdict') return spot(S.vstage === 0 ? `vpick-${q.verdict.right[0]}` : `vreason-${reasonsNow().answer}`);
+  if (q.kind === 'steps' && S.wstage === 0) return spot(`wstep-${q.work.wrong}`);
+  if (q.kind === 'tester') {
+    const t = q.tests, untried = i => !S.tested.includes(i);
+    if (q.answer[0] === 0 && !S.tested.some(i => !t[i].ok)) return spot(`test-${t.findIndex((x, i) => !x.ok && untried(i))}`);
+    if (!testerReady()) return spot(`test-${t.findIndex((_, i) => untried(i))}`);
+    return spot(`choice-${q.answer[0]}`);
+  }
   if (q.kind === 'build') {
     for (const p of q.places) {
       if (q.counts[p] < q.target[p]) return spot(`plus-${p}`);
@@ -605,8 +623,8 @@ function questFor(q) {
 
 function renderGame() {
   const q = S.q, quest = questFor(q);
-  const hello = S.ctx.index === 0 ? `Woof! Let’s go, ${esc(NAME())}!`
-    : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
+  const hello = S.ctx.index === 0 ? (q.claim ? 'Let’s test the Captain’s conjecture!' : `Woof! Let’s go, ${esc(NAME())}!`)
+    : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'verdict' ? 'Is the Captain right?' : q.kind === 'chests' ? 'Which chest does it go in?' : q.kind === 'tester' ? 'Tap a number to test it!' : q.kind === 'steps' ? 'Which step is wrong?' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
   S.ctx.area.innerHTML = `<div class="mm" id="mm">
     <div class="play">
       <div class="mcard stage">
@@ -616,8 +634,11 @@ function renderGame() {
           <div class="prompt">${q.prompt}</div>
           <button class="micon" type="button" id="mmSay" aria-label="Read the question out loud">${ICON.speak}</button>
         </div>
+        ${q.claim ? claimHTML(q) : ''}
         ${q.tip ? `<div class="tip">${q.tip}</div>` : ''}
         ${eqHTML(q)}
+        ${q.kind === 'tester' ? `<div class="tester" id="tester">${testerHTML(q)}</div>` : ''}
+        ${q.kind === 'steps' ? `<div class="work" id="work" data-t="work">${workHTML(q)}</div>` : ''}
         ${q.line ? lineHTML(q) : ''}
         ${q.vis ? `<div class="visual gvis" id="visual" data-t="visual" ${q.showVisual ? '' : 'hidden'}>${gvisInner(q)}</div>` : ''}
         ${q.mode ? `<div class="visual" id="visual" data-t="visual" ${q.showVisual ? '' : 'hidden'}>${visualHTML(q)}</div>` : ''}
@@ -646,13 +667,31 @@ function renderControls() {
       ${st.action ? `<div class="mstep-wait">${PAW} ${st.wait || 'Tap it up there!'}</div>`
         : `<div class="chips">${st.choices.map((c, i) => `<button class="mchip${st.words ? ' word' : ''}" type="button" data-chip="${i}">${c}</button>`).join('')}</div>`}
     </div>`;
-  } else if (q.kind === 'boxes') {
+  } else if (q.kind === 'steps' && S.wstage === 0) {
+    el.innerHTML = '<div class="wait-note big">Tap the step with the mistake.</div>';
+  } else if (q.kind === 'boxes' || q.kind === 'steps') {
     el.innerHTML = `<div class="pad" id="pad">
       ${[7, 8, 9, 4, 5, 6, 1, 2, 3].map(d => `<button class="key" type="button" data-key="${d}" data-t="key-${d}">${d}</button>`).join('')}
       <button class="key del" type="button" data-key="del" data-t="key-del" aria-label="Delete">${ICON.del}</button>
       <button class="key" type="button" data-key="0" data-t="key-0">0</button>
       <button class="key check" type="button" data-key="check" data-t="key-check">Check</button>
     </div>`;
+  } else if (q.kind === 'verdict') {
+    const v = q.verdict;
+    if (S.vstage === 0) {
+      el.innerHTML = `<div class="choices wordy${v.picks.length > 2 ? ' four' : ''}">${v.picks.map((c, i) => `<button class="choice${S.tried.has(i) ? ' faded' : ''}" type="button" data-vpick="${i}" data-t="vpick-${i}" ${S.tried.has(i) ? 'disabled' : ''}>${c}</button>`).join('')}</div>`;
+    } else {
+      const r = reasonsNow();
+      el.innerHTML = `<div class="reasons"><div class="picked">${PAW}<span>${esc(v.picks[S.vpick])}</span></div>
+        <div class="why">How do you know?</div>
+        ${r.list.map((c, i) => `<button class="reason${S.vtried.has(i) ? ' faded' : ''}" type="button" data-vreason="${i}" data-t="vreason-${i}" ${S.vtried.has(i) ? 'disabled' : ''}>${esc(c)}</button>`).join('')}</div>`;
+    }
+  } else if (q.kind === 'chests') {
+    el.innerHTML = `<div class="chests n${q.choices.length}">${q.choices.map(c => `<button class="chest${S.tried.has(c) ? ' faded' : ''}" type="button" data-choice="${c}" data-t="choice-${c}" ${S.tried.has(c) ? 'disabled' : ''}>${CHEST}<b>${q.cfmt(c)}</b></button>`).join('')}</div>`;
+  } else if (q.kind === 'tester') {
+    const ready = testerReady();
+    el.innerHTML = `<div class="verdicts">${ready ? '' : '<div class="wait-note">Test at least 2 first!</div>'}
+      <div class="choices wordy">${q.choices.map(c => `<button class="choice${S.tried.has(c) ? ' faded' : ''}" type="button" data-choice="${c}" data-t="choice-${c}" ${S.tried.has(c) || !ready ? 'disabled' : ''}>${q.cfmt(c)}</button>`).join('')}</div></div>`;
   } else if (q.kind === 'choice') {
     el.innerHTML = `<div class="choices${q.cfmt ? ' wordy' : ''}">${q.choices.map(c => `<button class="choice${S.tried.has(c) ? ' faded' : ''}" type="button" data-choice="${c}" data-t="choice-${c}" ${S.tried.has(c) ? 'disabled' : ''}>${q.cfmt ? q.cfmt(c) : q.fmt ? q.fmt(c) : c}</button>`).join('')}</div>`;
   } else {
@@ -692,7 +731,7 @@ function press(key) {
   if (!live()) return;
   const q = S.q;
   if (key === 'check') return onCheck();
-  if (q.kind !== 'boxes' || S.tier === 2) return;
+  if (!(q.kind === 'boxes' || (q.kind === 'steps' && S.wstage === 1)) || S.tier === 2) return;
   if (S.solved.has(S.active)) { const u = unsolvedBoxes(); if (!u.length) return; S.active = u[0]; }
   const cur = S.values[S.active];
   if (key === 'del') S.values[S.active] = cur.slice(0, -1);
@@ -717,7 +756,8 @@ function onCheck() {
     if (inTarget()) return win();
     return raise('wrong');
   }
-  if (q.kind === 'boxes') {
+  if (q.kind === 'steps' && S.wstage === 0) return;
+  if (q.kind === 'boxes' || q.kind === 'steps') {
     const empty = unsolvedBoxes().find(i => S.values[i] === '');
     if (empty !== undefined) {
       S.active = empty; paintBoxes();
@@ -747,10 +787,140 @@ function onCheck() {
 
 function choose(val, btn) {
   if (!live()) return;
-  if (val === S.q.answer[0]) { btn.classList.add('right'); return win(); }
+  const q = S.q;
+  if (q.kind === 'tester' && !testerReady()) return;
+  if (val === q.answer[0]) { btn.classList.add('right'); return win(); }
   S.tried.add(val); btn.classList.add('faded'); btn.disabled = true;
+  if (q.kind === 'chests') { const c = btn.querySelector('.chest-svg'); if (c) c.classList.add('shut'); }
+  raise('wrong', q.kind === 'tester' && q.answer[0] === 0 ? 'Keep testing!' : null);
+}
+
+/* ---------- claims: a host (like Captain Croak) says something, and the child decides ----------
+   q.claim = { text }  the host's claim, shown in a speech scroll with the world's host drawing
+   (M.world({ host: { name, who, svg(mood), says: { busted, holds, sometimes }, taps, lines } }), moods: 'claim', 'busted', 'holds').
+   who names his recorded voice (audio/<who>.json); lines lists everything he says, for tools/make-voice.mjs.
+   kind 'verdict': q.verdict = { picks: [labels], right: [indexes that are right], reasons(i) → { list, answer }, why }
+     tap a pick, then "How do you know?": the best of the reasons. A wrong tap at either step is a mistake.
+   kind 'chests':  q.choices (indexes) + q.cfmt(i) for the chest labels; drop the claim in the right chest.
+   kind 'tester':  q.tests = [{ label, ok, show }], q.choices [0 busted, 1 looks true]. Tapping tests is exploring;
+     only the verdict is marked. The verdict buttons wake up after 2 tests, or once a test busts it. */
+const host = () => def().host || null;
+function claimHTML(q) {
+  const h = host();
+  return `<div class="claim" data-t="claim">
+    ${h ? `<div class="host" id="mmHost">${h.svg(S.mood)}</div>` : ''}
+    <div class="scroll" id="mmScroll" data-t="scroll">${h ? `<small>${esc(q.claim.label || h.name + '’s conjecture')}</small>` : ''}<b>${esc(q.claim.text)}</b>${q.claim.sub ? `<span class="sub">${esc(q.claim.sub)}</span>` : ''}</div>
+  </div>`;
+}
+function setHost(mood) {
+  if (!S || S.mood === mood) return;
+  S.mood = mood; const h = host(), el = inMM('#mmHost');
+  if (h && el) { el.querySelector('svg')?.remove(); el.insertAdjacentHTML('afterbegin', h.svg(mood)); el.classList.remove('jump'); void el.offsetWidth; el.classList.add('jump'); }
+}
+function hostSays(text) {
+  const el = inMM('#mmHost'); if (!el || !text) return;
+  el.querySelector('.host-say')?.remove();
+  const p = document.createElement('span'); p.className = 'host-say'; p.textContent = text; el.appendChild(p);
+  setTimeout(() => p.remove(), 2600);
+}
+/* The host says a line out loud in his own voice (host.who: audio/<who>.json), once Bonnie has finished. */
+function hostSpeak(text, now) {
+  const h = host(), q0 = S && S.q; if (!h || !text) return;
+  const go = () => { if (!S || S.q !== q0) return; hostSays(text); U.say(text, { who: h.who, pitch: .7, rate: .85 }); };
+  if (now) go(); else U.whenQuiet(go);
+}
+const reasonsNow = () => S.q.verdict.reasons(S.vpick);
+function vpick(i, btn) {
+  if (!live()) return;
+  const v = S.q.verdict;
+  if (v.right.includes(i)) {
+    btn.classList.add('right'); tone([660, 880], .07, 'triangle', .1);
+    S.vpick = i; S.vstage = 1; S.vtried = new Set();
+    setTimeout(() => { if (!live()) return; renderControls(); feedback('info', `<span><span class="big">${esc(v.picks[i])}!</span>Now, how do you know?</span>`); say('Now, how do you know?'); }, 450);
+    return;
+  }
+  S.tried.add(i); btn.classList.add('faded'); btn.disabled = true;
   raise('wrong');
 }
+function vreason(i, btn) {
+  if (!live()) return;
+  if (i === reasonsNow().answer) { btn.classList.add('right'); return win(); }
+  S.vtried.add(i); btn.classList.add('faded'); btn.disabled = true;
+  raise('wrong');
+}
+const testerReady = () => S.tested.length >= 2 || S.tested.some(i => !S.q.tests[i].ok);
+function testerHTML(q) {
+  return `<div class="tests">${q.tests.map((t, i) => `<button class="tbtn${S.tested.includes(i) ? (t.ok ? ' done ok' : ' done bad') : ''}" type="button" data-test="${i}" data-t="test-${i}">${esc(t.label)}</button>`).join('')}</div>
+    <div class="tlog" id="tlog" aria-live="polite">${S.tested.length ? S.tested.map(i => `<div class="tl ${q.tests[i].ok ? 'ok' : 'bad'}">${q.tests[i].ok ? '✓' : '✗'} ${esc(q.tests[i].show)}</div>`).join('') : '<div class="tl none">Tap a number to test the conjecture.</div>'}</div>`;
+}
+function runTest(i) {
+  if (!live()) return;
+  const q = S.q, t = q.tests[i];
+  if (!S.tested.includes(i)) S.tested.push(i);
+  if (t.ok) tone([523, 659], .07, 'triangle', .08); else { tone([392, 311], .1, 'sawtooth', .06); setHost('busted'); hostSpeak(q.busted || 'Shiver me lily pads!'); }
+  say(t.show + (t.ok ? '. That fits.' : '. That busts it!'));
+  const el = inMM('#tester'); if (el) el.innerHTML = testerHTML(q);
+  renderControls();
+  const st = S.tier === 2 && S.steps && S.steps[S.step];
+  if (st && st.action && st.action()) { const q0 = S.q; setTimeout(() => { if (S && S.q === q0 && S.tier === 2) { S.step++; advanceSteps(); } }, 700); }
+}
+/* kind 'steps': the host shows his working, q.work = { steps: [{ text(v), right, shown }], wrong }.
+   Exactly one step shows a wrong value. Tap it (tapping a right step is a mistake), then fix it on the keypad:
+   the wrong value becomes answer box 0, so q.answer = [the right value]. A step card step with wstep: true
+   picks the wrong step for him. */
+const BOXMARK = '\u0001';
+function workHTML(q) {
+  const w = q.work;
+  return w.steps.map((st, i) => {
+    const fixing = S.wstage === 1 && i === w.wrong;
+    const txt = fixing ? esc(st.text(BOXMARK)).replace(BOXMARK, '<button class="box" type="button" data-box="0" data-t="box-0" aria-label="The fixed number"></button>') : esc(st.text(st.shown ?? st.right));
+    const cls = `wstep${fixing ? ' bad' : ''}${S.wtried.has(i) ? ' ok' : ''}`;
+    return fixing ? `<div class="${cls}" data-t="wstep-${i}"><i>Step ${i + 1}</i><span>${txt}</span></div>`
+      : `<button class="${cls}" type="button" data-wstep="${i}" data-t="wstep-${i}" ${S.wstage === 1 || S.wtried.has(i) ? 'disabled' : ''}><i>Step ${i + 1}</i><span>${txt}</span>${S.wtried.has(i) ? '<b class="tick">✓</b>' : ''}</button>`;
+  }).join('');
+}
+function redrawWork() { const el = inMM('#work'); if (el) el.innerHTML = workHTML(S.q); paintBoxes(); refreshSpots(); }
+function pickWrongStep() { S.wstage = 1; S.active = 0; redrawWork(); }
+function tapWorkStep(i, btn) {
+  if (!live() || S.wstage !== 0 || S.tier === 2) return;
+  if (i === S.q.work.wrong) {
+    tone([660, 880], .07, 'triangle', .1); setHost('busted');
+    pickWrongStep(); renderControls();
+    feedback('info', '<span><span class="big">Found it!</span>Now fix it. What should it be?</span>');
+    return say('Found it! Now fix it. What should it be?');
+  }
+  S.wtried.add(i); redrawWork();
+  raise('wrong', 'That step is right!');
+}
+// drag the claim's scroll into a chest (tapping a chest works too)
+let scrollDrag = null;
+function dragScrollStart(e) {
+  const sc = inMM('#mmScroll'); if (!sc) return;
+  const r = sc.getBoundingClientRect(), ghost = sc.cloneNode(true);
+  ghost.className = 'scroll scroll-ghost'; ghost.removeAttribute('id'); ghost.style.width = r.width + 'px';
+  document.body.appendChild(ghost);
+  scrollDrag = { id: e.pointerId, ghost, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false, x0: e.clientX, y0: e.clientY };
+  moveGhost(e);
+}
+function moveGhost(e) {
+  const d = scrollDrag; if (!d) return;
+  if (Math.abs(e.clientX - d.x0) + Math.abs(e.clientY - d.y0) > 8) d.moved = true;
+  d.ghost.style.left = (e.clientX - d.dx) + 'px'; d.ghost.style.top = (e.clientY - d.dy) + 'px';
+  allMM('.chest').forEach(c => { const r = c.getBoundingClientRect(); c.classList.toggle('over', !c.disabled && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom); });
+}
+function dragScrollEnd() {
+  const d = scrollDrag; if (!d) return;
+  scrollDrag = null; d.ghost.remove();
+  const over = allMM('.chest.over')[0]; allMM('.chest.over').forEach(c => c.classList.remove('over'));
+  if (over && d.moved) choose(+over.dataset.choice, over);
+}
+const CHEST = `<svg class="chest-svg" viewBox="0 0 100 80" aria-hidden="true">
+  <rect x="10" y="36" width="80" height="40" rx="6" fill="#A8743F"/><rect x="10" y="50" width="80" height="6" fill="#7A4F27"/>
+  <rect x="44" y="44" width="12" height="16" rx="3" fill="#F4C25B"/><circle cx="50" cy="51" r="2.4" fill="#7A4F27"/>
+  <g class="lid"><path d="M10 38 Q10 12 50 12 Q90 12 90 38 Z" fill="#C08A50"/><rect x="10" y="32" width="80" height="6" fill="#7A4F27"/>
+  <path d="M30 14 v24 M70 14 v24" stroke="#F4C25B" stroke-width="5"/></g>
+  <g class="gold"><circle cx="34" cy="34" r="6" fill="#FFD75E"/><circle cx="50" cy="30" r="7" fill="#FFC83D"/><circle cx="66" cy="34" r="6" fill="#FFD75E"/></g>
+</svg>`;
 
 // a right answer: the core gives the bone, says well done and moves on
 function win() {
@@ -764,6 +934,11 @@ function win() {
   numPop(origin, S.q.kind === 'boxes' ? S.values.filter(Boolean) : S.q.kind === 'line' ? [S.q.fmt(S.q.target)] : []);
   const fb = inMM('#bubble'); if (fb) fb.className = 'feedback good';
   setMood('happy');
+  if (S.q.claim && host()) {
+    const h = host(), ct = S.q.claimTrue;
+    if (S.q.kind === 'chests') { const c = inMM(`.chest[data-choice="${S.q.answer[0]}"]`); if (c) c.classList.add('open'); }
+    setHost(ct === false ? 'busted' : 'holds'); hostSpeak(ct === false ? h.says.busted : ct === 'sometimes' ? h.says.sometimes : h.says.holds);
+  }
   Meadow.correct(origin, { praise: S.tier === 0 ? pick(PRAISE) : pick(TEAM) });
 }
 
@@ -803,13 +978,15 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b) {
     const dog = e.target.closest('#gameBonnie'); if (dog) return tickleBonnie(dog);
+    // tap the host and he says one of his lines
+    if (e.target.closest('#mmHost') && host() && host().taps) { const el = inMM('#mmHost'); el.classList.remove('jump'); void el.offsetWidth; el.classList.add('jump'); return hostSpeak(S.q.claim && S.q.claim.sub && Math.random() < .5 ? S.q.claim.sub : pick(host().taps), true); }
     // tap the rods or counters to count them in tens (or hundreds)
     const g = e.target.closest('#visual .grp'); if (!g) return;
     const p = +(g.className.match(/\bp(\d)\b/) || [])[1];
     if (p >= 1) skipCount(p);
     return;
   }
-  if (b.id === 'mmSay') return say(S.q.prompt);
+  if (b.id === 'mmSay') return say(readOut(S.q));
   if (b.dataset.g || b.dataset.gBowl !== undefined || b.dataset.gHole !== undefined) return gAction(b);
   if (b.id === 'mmAsk') { if (live()) raise('ask'); return; }
   if (b.dataset.chip !== undefined) return chooseStep(+b.dataset.chip, b);
@@ -820,11 +997,18 @@ document.addEventListener('click', e => {
     S.active = i; sfx.tap(); return paintBoxes();
   }
   if (b.dataset.choice !== undefined) return choose(+b.dataset.choice, b);
+  if (b.dataset.vpick !== undefined) return vpick(+b.dataset.vpick, b);
+  if (b.dataset.vreason !== undefined) return vreason(+b.dataset.vreason, b);
+  if (b.dataset.test !== undefined) return runTest(+b.dataset.test);
+  if (b.dataset.wstep !== undefined) return tapWorkStep(+b.dataset.wstep, b);
   if (b.dataset.step && live()) {
     const q = S.q, p = +b.dataset.p, c = q.counts[p] + +b.dataset.step;
     if (c < 0 || c > 9) { sfx.soft(); if (c > 9) feedback('info', `<span>9 ${PL[p].name} is the most. Ten ${PL[p].name} would make the next place!</span>`); return; }
     q.counts[p] = c; sfx.tap();
     redrawVisual(b.dataset.step === '1' && p === 0 && q.mode === 'blocks' ? c - 1 : -1);
+    // a step card step waiting for a tap on + or − moves on once it's done
+    const st = S.tier === 2 && S.steps && S.steps[S.step];
+    if (st && st.action && st.action()) { const q0 = S.q; setTimeout(() => { if (S && S.q === q0 && S.tier === 2) { S.step++; advanceSteps(); } }, 500); }
     return;
   }
   if (b.hasAttribute('data-break') && live()) {
@@ -844,6 +1028,7 @@ document.addEventListener('click', e => {
 
 document.addEventListener('pointerdown', e => {
   const r = root(); if (!r || !r.contains(e.target) || !live()) return;
+  if (S.q.kind === 'chests' && S.tier !== 2 && e.target.closest('#mmScroll')) { e.preventDefault(); return dragScrollStart(e); }
   const cell = e.target.closest('[data-cell]');
   if (cell && S.q.kind === 'grid') { e.preventDefault(); gridDrag = e.pointerId; setGridFrom(cell); return; }
   const nl = e.target.closest('#nl');
@@ -855,6 +1040,7 @@ document.addEventListener('pointerdown', e => {
   }
 });
 document.addEventListener('pointermove', e => {
+  if (scrollDrag && e.pointerId === scrollDrag.id) return moveGhost(e);
   if (!live()) return;
   if (dragId !== null && e.pointerId === dragId) movePawn(posFromX(e.clientX));
   if (gridDrag !== null && e.pointerId === gridDrag) {
@@ -863,6 +1049,7 @@ document.addEventListener('pointermove', e => {
   }
 });
 ['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, e => {
+  if (scrollDrag && e.pointerId === scrollDrag.id) return dragScrollEnd();
   if (dragId !== null && e.pointerId === dragId) {
     dragId = null; const p = inMM('#nl-pawn'); if (p) p.classList.remove('dragging');
     afterMove();
@@ -906,7 +1093,7 @@ function world(d) {
   return {
     id: d.id, subject: 'maths', year: d.year || 2, name: d.name, tag: d.tag, icon: d.icon, color: d.color, tint: d.tint, intro: d.intro,
     layout: 'full', helpFrom: 2, hintNames: ['A clue', 'Step by step', 'Glowing buttons'], tierNames: TIER_NAMES, praise: PRAISE,
-    lines: d.lines,   // fixed lines for tools/make-voice.mjs to record (lines with changing numbers use the device voice)
+    lines: d.lines, host: d.host,   // fixed lines for tools/make-voice.mjs to record (lines with changing numbers use the device voice)
     levels: d.levels.map((L, i) => wrapLevel(L, d.ids[i])),
     play,
   };
@@ -1172,6 +1359,72 @@ const CSS = String.raw`
 @media (prefers-reduced-motion: reduce) {
   .mm *, .mm *::before, .mm *::after { animation: none !important; transition: none !important; }
 }
+/* claims: the host's speech scroll, verdict + reason, treasure chests, the tester */
+.mm .claim { display: flex; gap: 14px; align-items: center; }
+.mm .host { position: relative; flex: none; width: 116px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mm .host svg { display: block; width: 100%; height: auto; animation: mm-bob 3s ease-in-out infinite; }
+@keyframes mm-bob { 50% { transform: translateY(3px) rotate(-1deg); } }
+.mm .host.jump { animation: mm-hjump .5s cubic-bezier(.3, 1.5, .5, 1); }
+@keyframes mm-hjump { 0% { transform: none; } 40% { transform: translateY(-12px) rotate(-4deg); } 100% { transform: none; } }
+.mm .host-say { position: absolute; left: 6px; top: -6px; transform: translateY(-100%); width: max-content; max-width: 220px; padding: 4px 10px; border-radius: 14px; background: #fff; border: 2px solid #3F8B5C; color: #2F6B45; font-family: var(--f-display); font-weight: 700; font-size: 15px; line-height: 1.2; text-align: center; z-index: 4; animation: mm-hsay 2.6s ease-out forwards; pointer-events: none; }
+@keyframes mm-hsay { 0% { opacity: 0; transform: translateY(-80%) scale(.7); } 15% { opacity: 1; transform: translateY(-100%) scale(1.04); } 85% { opacity: 1; transform: translateY(-100%); } 100% { opacity: 0; transform: translateY(-115%); } }
+.mm .scroll { position: relative; flex: 1; min-width: 0; padding: 14px 20px; border-radius: 18px; background: linear-gradient(180deg, #FFF8E6, #F6E7C4); border: 2px solid #D9B77A; box-shadow: 0 8px 18px -12px rgba(120, 85, 45, .6); touch-action: none; }
+.mm .scroll::before { content: ""; position: absolute; left: -10px; top: 50%; width: 16px; height: 16px; margin-top: -8px; background: #FFF4DB; border-left: 2px solid #D9B77A; border-bottom: 2px solid #D9B77A; transform: rotate(45deg); }
+.mm .scroll small { display: block; font-family: var(--f-display); font-weight: 600; font-size: 14px; letter-spacing: .05em; text-transform: uppercase; color: #9A7440; }
+.mm .scroll b { display: block; font-family: var(--f-display); font-size: clamp(22px, 2.6vw, 30px); line-height: 1.25; text-wrap: balance; }
+.mm .scroll .sub { display: block; margin-top: 4px; font-size: 16px; color: var(--ink-soft); }
+.scroll-ghost { position: fixed; z-index: 40; pointer-events: none; opacity: .92; transform: rotate(-3deg) scale(.9); padding: 12px 16px; border-radius: 18px; background: #FFF4DB; border: 2px solid #D9B77A; font-family: 'Grandstander', system-ui, sans-serif; color: #3E2F27; box-shadow: 0 16px 30px -10px rgba(0, 0, 0, .35); }
+.scroll-ghost small { display: none; } .scroll-ghost b { font-size: 20px; }
+.mm .choices.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mm .reasons { display: grid; gap: 10px; }
+.mm .picked { display: flex; align-items: center; gap: 8px; justify-self: start; padding: 4px 14px; border-radius: 999px; background: var(--good-bg); border: 2px solid var(--good); color: var(--good); font-family: var(--f-display); font-weight: 700; font-size: 20px; }
+.mm .picked svg { width: 20px; height: 20px; }
+.mm .why { font-family: var(--f-display); font-weight: 700; font-size: 22px; }
+.mm .reason { text-align: left; min-height: 60px; padding: 10px 16px; font-size: 19px; font-weight: 600; line-height: 1.3; background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); }
+.mm .reason:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--ink); }
+.mm .reason.faded { opacity: .35; box-shadow: none; }
+.mm .reason.right { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+.mm .chests { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mm .chests.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mm .chest { display: grid; justify-items: center; gap: 4px; padding: 10px 6px 12px; background: var(--card); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink); }
+.mm .chest b { font-family: var(--f-display); font-size: 20px; }
+.mm .chest .chest-svg { width: 100%; max-width: 96px; height: auto; overflow: visible; }
+.mm .chest .lid { transform-origin: 10px 38px; transition: transform .35s cubic-bezier(.3, 1.5, .5, 1); }
+.mm .chest .gold { opacity: 0; transition: opacity .3s .15s; }
+.mm .chest.over, .mm .chest:hover { background: var(--sun-soft); }
+.mm .chest.over .lid { transform: rotate(-18deg); }
+.mm .chest.open { background: var(--good-bg); border-color: var(--good); }
+.mm .chest.open .lid { transform: rotate(-38deg); }
+.mm .chest.open .gold { opacity: 1; }
+.mm .chest.faded { opacity: .35; box-shadow: none; }
+.mm .tester { display: grid; gap: 12px; }
+.mm .tests { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mm .tbtn { min-height: 60px; font-family: var(--f-display); font-size: 24px; font-weight: 700; background: var(--card); border: 2px solid var(--tens-dk); color: var(--tens-dk); border-radius: 16px; box-shadow: 0 4px 0 var(--tens-dk); }
+.mm .tbtn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--tens-dk); }
+.mm .tbtn.done.ok { background: var(--good-bg); border-color: var(--good); color: var(--good); box-shadow: 0 4px 0 var(--good); }
+.mm .tbtn.done.bad { background: #FBE3E3; border-color: #A93E4F; color: #A93E4F; box-shadow: 0 4px 0 #A93E4F; }
+.mm .tlog { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; background: var(--paper); border: 2px dashed var(--edge); font-size: 19px; font-weight: 600; }
+.mm .tl.ok { color: var(--good); } .mm .tl.bad { color: #A93E4F; } .mm .tl.none { color: var(--ink-soft); font-weight: 500; }
+.mm .verdicts { display: grid; gap: 8px; }
+.mm .wait-note { font-weight: 600; color: var(--ink-soft); }
+.mm .verdicts .choice[disabled]:not(.faded) { opacity: .45; box-shadow: none; }
+@media (max-width: 560px) {
+  .mm .host { width: 84px; }
+  .mm .tests { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mm .chest b { font-size: 16px; }
+}
+/* the host's worked steps */
+.mm .work { display: grid; gap: 10px; }
+.mm .wstep { display: flex; align-items: center; gap: 14px; text-align: left; min-height: 60px; padding: 8px 16px; background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); font-family: var(--f-display); font-size: 24px; font-weight: 700; }
+.mm button.wstep:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--ink); }
+.mm .wstep i { flex: none; font-style: normal; font-size: 14px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); }
+.mm .wstep span { flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.mm .wstep .box { height: 1.5em; font-size: 26px; }
+.mm .wstep.ok { border-color: var(--good); box-shadow: 0 4px 0 var(--good); }
+.mm .wstep .tick { color: var(--good); }
+.mm .wstep.bad { border-color: #A93E4F; background: #FBE3E3; box-shadow: 0 4px 0 #A93E4F; }
+.mm .wstep[disabled] { opacity: .7; }
+.mm .wait-note.big { font-family: var(--f-display); font-size: 22px; color: var(--ink); padding: 8px 4px; }
 /* fitting the maths screen into the shared engine */
 #area.mm-area { background: none; border: 0; box-shadow: none; padding: 0; min-height: 0; }
 .mm { font-family: var(--f-body); font-size: 18px; line-height: 1.45; color: var(--ink); }

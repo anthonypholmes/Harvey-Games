@@ -18,13 +18,14 @@ To add another game, add an entry to the `GAMES` list in the `CONFIG` block at t
 
 A Year 2 (Key Stage 1) maths game for iPad, built for Harvey with help from Bonnie, the family's brown cockapoo.
 
-Five worlds:
+Six worlds:
 
 - **The Partitioning Park:** splitting numbers into tens and ones (for example 47 = 40 + 7), with base-ten blocks and counters.
 - **Number Bonds Burrow:** adding and taking away: number bonds to 10 and 20, tens facts to 100, 2-digit sums, three numbers and fact families.
 - **The Stepping Stone River:** number lines from 0 to 100. Harvey drags Bonnie along the line to find numbers.
 - **The Array Orchard:** equal groups, rows of apples and the 2, 5 and 10 times tables.
 - **The Sharing Pond:** sharing fairly, grouping, halves, thirds and quarters.
+- **Captain's Cove:** reasoning. Captain Croak, a pirate frog, makes conjectures (ideas that might be true). Harvey tests them, busts them or proves them.
 
 The player's name (entered on the Clubhouse page) is used in the game's title, throughout Bonnie's dialogue and in the story questions.
 
@@ -110,6 +111,21 @@ Word problems with the player's name and Bonnie come up in every level. The worl
 | 5 | Inverse Check | Using a times fact to solve a sharing fact, and back again |
 
 There are two more lily pads: **6 Thirds Island** (a third of an amount, which shape is cut into thirds, what fraction is shaded) and **7 Three Quarters** (three quarters of an amount and of a shape, and two quarters are the same as a half). They come from `worlds/y2-maths-sharing-fractions.js`.
+
+### Captain's Cove (6 levels)
+
+Captain Croak floats on his lily-pad raft and makes a claim, called a **conjecture**, in a speech scroll. Harvey decides whether he's right and says how he knows. Bonnie is still the helper.
+
+| | Level | What it practises |
+|---|---|---|
+| 1 | True or False? | Is the claim true? Then pick the best of 3 reasons |
+| 2 | Treasure Chests | Drag the claim into the Always, Sometimes or Never chest |
+| 3 | Test the Captain | Tap numbers to test a claim. One that doesn't fit busts it |
+| 4 | Spot the Mistake | Tap the wrong step in the Captain's working, then fix it |
+| 5 | Prove It! | The claim is true: prove it with blocks, a number line or a picture |
+| 6 | Odd One Out | Which of 4 numbers doesn't belong, and why? Any right answer counts |
+
+Every claim is made by code with its own check, so none is ever marked wrongly, and claims never contain their own answer. The world is in `worlds/y2-maths-captains-cove.js`; the Captain's drawing and name (`CAPTAIN`) are at the top. The claim screens (verdict and reason, treasure chests, the tester and the worked steps) are in the kit, so another world could have a host too. `tests/captains-cove-test.html` checks every kind of question. Tap the Captain and he says one of his lines.
 
 ## How Bonnie helps
 
@@ -197,7 +213,7 @@ This means:
 - **Clubhouse:** reads and writes only `meadow-save-v1` (name, Clubhouse sound) and shows each game's stars. It loads every world file so it can count them, so a new world file is added there too.
 - **Bonnie's dress-up:** the Bone Shop's first tab has three slots, so Bonnie can wear a hat, something on her face and something round her neck at once (`hat`, `face`, `neck` in the save). Items are listed in `HATS` in the engine, each with its `slot`, and drawn in `hatSVG`, `faceSVG` and `neckSVG`.
 - **The old beta addresses** (`/beta/index.html`, `/beta/meadow-maths.html`, `/beta/meadow-words.html`) now just send you to the live pages. `beta/sw.js` removes the beta's old offline copy and then removes itself.
-- **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world.
+- **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world. `tests/captains-cove-test.html` does the same for Captain's Cove: every claim's truth, every chest, every test that busts a claim, exactly one wrong step in the Captain's working, proofs that add up and don't give the answer away, and every right odd-one-out answer and reason.
 - **Checking the bone rules:** open `tests/bones-test.html`. It plays a pretend level many times with a pretend clock and checks the bones (5 plays in a day = 38, a new day, quitting, refreshing, a clock moved back, asking Bonnie, new stars, old saves). It uses its own test save and deletes it at the end. Run it after changing the bone rules.
 - **Try it:** `beta/core-test.html` has a small practice world. It uses its own practice save (`meadow-save-test`), so it changes nothing. Its "Test tools" box shows what would be copied from this device's saves.
 - **Going back to the old games:** the old pages are in git history (the commit before "Stage 7"). Putting them back needs no save changes, because the old saves were never touched; only progress made in the new games would be missing.
@@ -248,6 +264,7 @@ The Clubhouse and both games can play a recorded ElevenLabs voice for Bonnie ins
 - Prizes a grown-up adds or renames can't be recorded in advance. For those, Bonnie says "Hooray! Go and tell your grown-up what you unlocked!" in the recorded voice, and the prize name is shown on screen.
 - After editing the words in the game, run the script again. It only makes the new lines and removes clips that are no longer used. Changing the voice ID or model remakes everything.
 - **Meadow Maths** questions are full of numbers that change, so most of its lines use the device voice. Its greetings, its well-done lines and each world's fixed lines are recorded. A Maths world lists its fixed lines in `lines` (see `VOICE_LINES` in `worlds/y2-maths-number-bonds.js`); keep them word for word the same as the clues and steps.
+- **Captain Croak** (Captain's Cove) has his own voice, ID `PPzYpIqttlTYA83688JI`. His lines are the world's `HOST.lines`. Record them with `npm run voice -- --captain-voice PPzYpIqttlTYA83688JI` (add `--voice 4CrZuIW9am7gYAxgo2Af` to do Bonnie's new lines in the same run). His clips go in `audio/captain/`, listed in `audio/captain.json`, so they never mix with Bonnie's. Until they're recorded he uses the device voice, pitched lower.
 - `npm run voice -- --dry-run` lists every new line it would record and how many characters that costs, without the key and without making anything.
 - The reading speed setting only changes the device voice.
 - Some letter sounds came out as letter names ("lll" was read as "L, L, L"), so the script sends ElevenLabs a different spelling for those (`SAY_AS` in `tools/make-voice.mjs`). The device voice still uses the game's own spelling.

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Captain Croak Sketch</title>
+<style>
+  :root { --ink: #3E2F27; --soft: #7A6A5E; --paper: #FDFBF7; --line: #EADFCB; --pond: #CFE6F5; }
+  body { font-family: system-ui, sans-serif; margin: 24px 16px; color: var(--ink); background: var(--paper); }
+  h1 { font-size: 1.4rem; margin: 0 0 6px; }
+  p { margin: 0 0 16px; color: var(--soft); max-width: 640px; }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; }
+  figure { margin: 0; width: 220px; background: linear-gradient(180deg, #F4FAFE 0 62%, var(--pond) 62%); border: 2px solid var(--line); border-radius: 18px; padding: 10px 10px 6px; text-align: center; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { font-weight: 700; margin-top: 4px; }
+  figcaption small { display: block; font-weight: 400; color: var(--soft); margin-top: 2px; }
+  .bob { animation: bob 3s ease-in-out infinite; transform-origin: 50% 90%; }
+  @keyframes bob { 50% { transform: translateY(3px) rotate(-1deg); } }
+  @media (prefers-reduced-motion: reduce) { .bob { animation: none; } }
+</style>
+</head>
+<body>
+<h1>🐸 Captain Croak: a first sketch</h1>
+<p>Our own pirate frog for Captain's Cove, drawn flat like Bonnie. He floats on a lily-pad raft with a twig mast and a leaf sail. He wears a pirate hat with a gold lily badge (no skull) and a red neckerchief. He has three moods: making a conjecture, busted, and proud when his claim holds up.</p>
+<div class="row" id="row"></div>
+<script>
+const CAPTAIN = 'Captain Croak';   // the name lives in one place
+function croakSVG(mood = 'claim') {
+  const busted = mood === 'busted', proud = mood === 'proud';
+  const pupil = busted ? 'r="3.2"' : 'r="5"';
+  const mouth = busted
+    ? '<ellipse cx="100" cy="112" rx="9" ry="7" fill="#7A2E3B"/>'
+    : `<path d="M78 ${proud ? 106 : 108} Q100 ${proud ? 128 : 122} 122 ${proud ? 106 : 108}" fill="none" stroke="#2F5B2A" stroke-width="4" stroke-linecap="round"/>`;
+  // hat tips back and slips when busted
+  const hatT = busted ? 'rotate(-14 100 62) translate(-4 -6)' : 'rotate(-4 100 62)';
+  const arm = mood === 'claim'
+    ? '<path d="M128 128 Q150 112 158 90" fill="none" stroke="#5DA34B" stroke-width="10" stroke-linecap="round"/><circle cx="159" cy="86" r="7" fill="#5DA34B"/>'
+    : busted
+      ? '<path d="M126 130 Q148 120 150 98" fill="none" stroke="#5DA34B" stroke-width="10" stroke-linecap="round"/><circle cx="148" cy="94" r="7" fill="#5DA34B"/><path d="M72 130 Q52 120 50 98" fill="none" stroke="#5DA34B" stroke-width="10" stroke-linecap="round"/><circle cx="52" cy="94" r="7" fill="#5DA34B"/>'
+      : '<path d="M128 132 Q146 140 136 150" fill="none" stroke="#5DA34B" stroke-width="10" stroke-linecap="round"/><path d="M72 132 Q54 140 64 150" fill="none" stroke="#5DA34B" stroke-width="10" stroke-linecap="round"/>';
+  return `<svg viewBox="0 0 200 200" role="img" aria-label="${CAPTAIN}, ${mood}">
+    <!-- the lily-pad raft, with a twig mast and a leaf sail -->
+    <ellipse cx="100" cy="176" rx="86" ry="18" fill="#3F8B5C"/>
+    <path d="M100 176 L150 162 L156 172 Z" fill="#CFE6F5"/>
+    <ellipse cx="100" cy="172" rx="82" ry="15" fill="#6CB86A"/>
+    <path d="M100 172 L148 160 L154 168 Z" fill="#CFE6F5"/>
+    <path d="M30 168 q20 -6 40 0" fill="none" stroke="#4E9A50" stroke-width="2"/>
+    <rect x="30" y="92" width="4" height="78" rx="2" fill="#8A5A36"/>
+    <path d="M34 96 Q62 112 34 146 Z" fill="#9CCB6B"/><path d="M34 100 Q50 120 34 140" fill="none" stroke="#6E9F45" stroke-width="2"/>
+    <!-- body -->
+    <ellipse cx="100" cy="140" rx="40" ry="30" fill="#5DA34B"/>
+    <ellipse cx="100" cy="146" rx="26" ry="20" fill="#DCEFB5"/>
+    <ellipse cx="74" cy="164" rx="16" ry="7" fill="#4C8E3D"/><ellipse cx="126" cy="164" rx="16" ry="7" fill="#4C8E3D"/>
+    ${arm}
+    <!-- neckerchief -->
+    <path d="M74 122 Q100 134 126 122 L120 130 Q100 140 80 130 Z" fill="#D9534F"/>
+    <path d="M112 130 l10 14 l-12 -4 z" fill="#C2413D"/>
+    <!-- head -->
+    <ellipse cx="100" cy="100" rx="38" ry="28" fill="#5DA34B"/>
+    <circle cx="80" cy="78" r="15" fill="#5DA34B"/><circle cx="120" cy="78" r="15" fill="#5DA34B"/>
+    <circle cx="80" cy="78" r="10" fill="#fff"/><circle cx="120" cy="78" r="10" fill="#fff"/>
+    <circle cx="${busted ? 80 : 82}" cy="${busted ? 78 : 79}" ${pupil} fill="#2B2B2B"/><circle cx="${busted ? 120 : 122}" cy="${busted ? 78 : 79}" ${pupil} fill="#2B2B2B"/>
+    ${proud ? '<path d="M71 76 q9 -8 18 0" fill="none" stroke="#2B2B2B" stroke-width="3" stroke-linecap="round"/><path d="M111 76 q9 -8 18 0" fill="none" stroke="#2B2B2B" stroke-width="3" stroke-linecap="round"/>' : ''}
+    <circle cx="76" cy="106" r="5" fill="#F2A3A3" opacity=".7"/><circle cx="124" cy="106" r="5" fill="#F2A3A3" opacity=".7"/>
+    ${mouth}
+    ${busted ? '<path d="M150 60 l6 -10 M160 66 l10 -4 M146 52 l0 -12" stroke="#E0A500" stroke-width="3" stroke-linecap="round"/>' : ''}
+    <!-- pirate hat with a gold lily badge -->
+    <g transform="${hatT}">
+      <path d="M58 66 Q100 22 142 66 Q100 56 58 66 Z" fill="#2E2A3A"/>
+      <path d="M50 66 Q100 50 150 66 Q100 76 50 66 Z" fill="#3B3650"/>
+      <path d="M100 40 l4 8 l8 1 l-6 6 l2 8 l-8 -4 l-8 4 l2 -8 l-6 -6 l8 -1 z" fill="#FFC83D"/>
+    </g>
+  </svg>`;
+}
+const MOODS = [
+  ['claim', 'Making a conjecture', '“I conjecture that every number in the 5 times table ends in 5!”'],
+  ['busted', 'Busted!', '“Shiver me lily pads, you’ve busted my conjecture!”'],
+  ['proud', 'It holds up', '“Arr, my conjecture survived every test!”'],
+];
+document.getElementById('row').innerHTML = MOODS.map(([m, t, line]) => `<figure><div class="bob">${croakSVG(m)}</div><figcaption>${t}<small>${line}</small></figcaption></figure>`).join('');
+</script>
+</body>
+</html>

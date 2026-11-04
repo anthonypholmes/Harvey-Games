@@ -5,6 +5,9 @@
  * device's own British voice. BonnieVoice.whenQuiet(fn) runs fn once Bonnie has finished talking,
  * so a game can wait for her instead of cutting her off.
  *
+ * Other speakers (like Captain Croak in Captain's Cove) have their own clips in audio/<who>.json:
+ * say(text, { who: 'captain' }). With no clip their line uses the device voice at opts.pitch.
+ *
  * Each page sets the hooks: getName (the child's name), getAudio (its unlocked AudioContext),
  * enabled (sound on/off) and getRate (device voice speed). tools/make-voice.mjs runs this same file,
  * so the way lines are cut into pieces always matches the clips.
@@ -17,6 +20,8 @@
     getRate: () => .9,
     base: '',            // folder that holds audio/ ('../' for pages in a subfolder such as beta/)
     pack: null,          // audio/manifest.json once loaded
+    others: ['captain'], // other speakers with their own audio/<who>.json
+    packs: {},           // their lists once loaded
     device: null,        // the chosen device voice
     missing: new Set(),  // pieces with no clip (for checking a voice pack)
   };
@@ -72,10 +77,10 @@
     return out;
   };
   const pauseAfter = raw => /(\.\.\.|…)\s*$/.test(raw) ? .4 : /[.!?]["'”’)]*\s*$/.test(raw) ? .25 : /[,;:—–]\s*$/.test(raw) ? .12 : .04;
-  function plan(text) {
-    const a = V.pack && V.getAudio();
+  function plan(text, who) {
+    const pack = who ? V.packs[who] : V.pack, a = pack && V.getAudio();
     if (!a || (a.state !== 'running' && !(navigator.userActivation && navigator.userActivation.hasBeenActive))) return null;
-    const out = [], name = V.getName(), whole = V.pack.whole && V.pack.whole[String(name).toLowerCase()];
+    const out = [], name = who ? '' : V.getName(), whole = !who && V.pack.whole && V.pack.whole[String(name).toLowerCase()];
     for (const s of V.sentences(text)) {
       // A sentence with the name in it may be recorded whole for this name (sounds most natural)
       let group = null;
@@ -86,14 +91,14 @@
       for (const p of group || V.pieces(s.raw, name).map(p => ({ ...p, start: p.start + s.start }))) {
         const clean = V.cleanPiece(p.raw);
         if (!V.hasWords(clean)) { if (out.length) out[out.length - 1].pause = Math.max(out[out.length - 1].pause, pauseAfter(p.raw)); continue; }
-        const file = p.file || (p.name ? V.pack.names && V.pack.names[clean.toLowerCase()] : V.pack.clips[V.pieceKey(clean)]);
-        if (!file) { if (!p.name) V.missing.add(clean); return null; }
+        const file = p.file || (p.name ? pack.names && pack.names[clean.toLowerCase()] : pack.clips[V.pieceKey(clean)]);
+        if (!file) { if (!p.name) V.missing.add((who ? who + ': ' : '') + clean); return null; }
         out.push({ ...p, file: V.base + 'audio/' + file, pause: pauseAfter(p.raw) });
       }
     }
     return out.length ? out : null;
   }
-  V.hasClips = text => !!plan(String(text));
+  V.hasClips = (text, who) => !!plan(String(text), who);
 
   /* ---------- speaking ---------- */
   function cut() { // stop whatever is playing (waiters stay for the next line)
@@ -125,7 +130,7 @@
     speaking = true;
     // never wait forever if a voice forgets to say it has finished
     safety = setTimeout(() => finished(t, opts.onend), 2500 + text.length * 110 / Math.min(1, opts.rate || V.getRate()));
-    const p = plan(text);
+    const p = plan(text, opts.who);
     if (p) { playClips(p, opts, t); return { clip: true }; }
     return speakDevice(text, opts, t);
   };
@@ -190,13 +195,20 @@
       V.pack = m;
       setTimeout(saveForOffline, 4000);
     } catch (e) {}
+    await Promise.all(V.others.map(async who => {
+      try {
+        const res = await fetch(V.base + 'audio/' + who + '.json', { cache: 'no-cache' }); if (!res.ok) return;
+        const m = await res.json(); if (m && m.clips) V.packs[who] = m;
+      } catch (e) {}
+    }));
   };
   /* Save every clip into the offline cache in the background, a few at a time. */
   async function saveForOffline() {
     if (!V.pack || typeof caches === 'undefined' || navigator.onLine === false) return;
     try {
       const cache = await caches.open(AUDIO_CACHE);
-      const files = [...new Set([...Object.values(V.pack.clips), ...Object.values(V.pack.names || {}), ...Object.values(V.pack.whole || {}).flatMap(Object.values)])].map(f => V.base + 'audio/' + f);
+      const files = [...new Set([...Object.values(V.pack.clips), ...Object.values(V.pack.names || {}), ...Object.values(V.pack.whole || {}).flatMap(Object.values),
+        ...Object.values(V.packs).flatMap(pk => Object.values(pk.clips))])].map(f => V.base + 'audio/' + f);
       let k = 0;
       const worker = async () => { while (k < files.length) { const f = files[k++];
         try { if (!(await cache.match(f))) { const r = await fetch(f); if (r.ok) await cache.put(f, r); } } catch (e) {} } };
