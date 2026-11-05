@@ -156,7 +156,7 @@ The **Bone Shop** can be opened from the Clubhouse (the **Bone Shop** button und
 
 - **Real prizes:** set by grown-ups, shown in tiers. When he has enough bones he taps **Redeem**, and a grown-up holds a button for 3 seconds to say yes.
 - **Bonnie's hats:** Pirate Eyepatch (50), Party Hat (75), Wizard Hat (150), Crown (300). Bonnie wears the chosen hat everywhere, even on the number line.
-- **Meadow themes:** Daytime Meadow (free), Sunset Trail (100), Spooky Moonlit Night (250), Winter Snow (400).
+- **Meadow themes:** Daytime Meadow (free), Sunset Trail (100), Under the Sea (200), Spooky Moonlit Night (250), Christmas Lights (350), Winter Snow (400).
 
 The starter real-life prizes (you can edit, delete or add your own in the grown-ups panel):
 
