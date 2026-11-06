@@ -43,6 +43,8 @@ The Clubhouse is a Progressive Web App (PWA), so it can be installed and then pl
 2. Tap **Share → Add to Home Screen**. The icon is Bonnie with "Meadow Club".
 3. Open it from the home screen. It runs full screen, like an app.
 
+The Clubhouse page shows a small banner with these steps until it's added (or someone taps ✕). On Android phones and in Chrome on a computer the banner has an **Install** button instead, which adds it in one tap.
+
 After the first visit, all three pages, the icons and the fonts are saved on the iPad, so everything works offline. When the iPad is online, the newest version of each game loads automatically.
 
 **Saved progress and the home screen icon:** on iPad, an app added to the home screen usually keeps its own saved progress, separate from Safari. If the player has been using Safari until now, their bones and progress may not appear in the installed app. If so, a grown-up can set the bone balance in the grown-ups settings, and the name is entered again on the Clubhouse page.

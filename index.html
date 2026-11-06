@@ -18,6 +18,45 @@
     window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
   }
 </script>
+<script>
+/* "Put it on your Home Screen" banner.
+   iPad/iPhone: Safari can't be asked to add it, so we show how (Share, then Add to Home Screen).
+   Android/Chrome: the browser offers an install prompt, so the Install button adds it in one tap.
+   Hidden once it's on the Home Screen, inside app browsers (Instagram etc.), or after ✕. */
+(() => {
+  const KEY = 'meadow-a2hs-v1';
+  const ua = navigator.userAgent || '';
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // iPads say they're Macs
+  const inApp = /FBAN|FBAV|Instagram|TikTok|Snapchat|BytedanceWebview|\bX\/\d|Twitter/i.test(ua);
+  const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const closed = () => { try { return localStorage.getItem(KEY) === 'done'; } catch (e) { return false; } };
+  let prompt = null;
+  const shareIcon = '<svg class="share" viewBox="0 0 24 24" aria-label="Share" role="img"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  function show() {
+    const box = document.getElementById('a2hs'); if (!box) return;
+    const can = !installed() && !closed() && !inApp && (ios || prompt);
+    box.hidden = !can; if (!can) return;
+    document.getElementById('a2hsInstall').hidden = ios || !prompt;
+    document.getElementById('a2hsHow').innerHTML = ios
+      ? `Tap ${shareIcon} Share, then “Add to Home Screen”. It opens full screen and works offline.`
+      : 'It opens full screen, one tap away, and works offline.';
+  }
+  function done() { try { localStorage.setItem(KEY, 'done'); } catch (e) {} show(); }
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); prompt = e; show(); });
+  window.addEventListener('appinstalled', done);
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('a2hsClose').onclick = done;
+    document.getElementById('a2hsInstall').onclick = async () => {
+      if (!prompt) return;
+      prompt.prompt();
+      const r = await prompt.userChoice.catch(() => null);
+      prompt = null;
+      if (r && r.outcome === 'accepted') done(); else show();
+    };
+    show();
+  });
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -124,6 +163,19 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 .play-btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--leaf-dark)}
 .note{text-align:center;color:var(--on-bg);opacity:.8;font-size:.9rem;margin-top:14px}
 
+/* ---------- "Put it on your Home Screen" banner ---------- */
+.a2hs{display:flex;align-items:center;gap:14px;max-width:640px;margin:0 auto 22px;padding:12px 12px 12px 14px;background:var(--card);border:3px solid var(--card-edge);border-radius:22px;box-shadow:var(--shadow)}
+.a2hs img{width:54px;height:54px;border-radius:13px;flex:none;box-shadow:0 2px 6px rgba(74,59,44,.25)}
+.a2hs .txt{flex:1;min-width:0;line-height:1.35}
+.a2hs .txt b{display:block;font-size:1.1rem}
+.a2hs .txt span{font-family:var(--font-read);color:var(--ink-soft);font-size:.98rem}
+.a2hs .share{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;color:#2F7BF6}
+.a2hs .install{flex:none;padding:12px 18px;border-radius:14px;font-size:1.1rem;font-weight:700;color:#fff;background:var(--leaf);box-shadow:0 4px 0 var(--leaf-dark)}
+.a2hs .install:active{transform:translateY(3px);box-shadow:none}
+.a2hs .x{flex:none;width:44px;height:44px;border-radius:12px;font-size:1.2rem;color:var(--ink-soft)}
+.a2hs .x:active{background:var(--line)}
+@media (max-width:560px){.a2hs{flex-wrap:wrap}.a2hs .txt{flex-basis:calc(100% - 130px)}.a2hs .install{width:100%;order:3}}
+
 /* ---------- Meadow & critters ---------- */
 .meadow{position:fixed;left:0;right:0;bottom:0;height:90px;z-index:1;pointer-events:none;
   background:radial-gradient(14px 10px at 8% 30%,#F7D96B 40%,transparent 42%),radial-gradient(12px 9px at 27% 45%,#fff 40%,transparent 42%),
@@ -191,6 +243,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
       <div class="hint">Tap Bonnie to tickle her! 🐾 Bones from every game go in the same bone bowl.</div>
     </div>
   </section>
+
+  <aside class="a2hs" id="a2hs" hidden>
+    <img src="apple-touch-icon.png" alt="">
+    <div class="txt"><b>Put Meadow Club on your Home Screen</b><span id="a2hsHow"></span></div>
+    <button class="install" id="a2hsInstall" hidden>Install</button>
+    <button class="x" id="a2hsClose" aria-label="Not now">✕</button>
+  </aside>
 
   <form class="name-card" id="nameCard" autocomplete="off" hidden>
     <label for="nameIn" id="nameLabel">What’s your name?</label>
