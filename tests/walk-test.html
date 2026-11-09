@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Bonnie's Walk Test</title>
+<style>
+  #report { font-family: system-ui, sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; color: #3E2F27; }
+  #report h1 { font-size: 1.4rem; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+  #report small { color: #7A6A5E; }
+  #report table { border-collapse: collapse; font-size: .85rem; margin-top: 8px; }
+  #report td, #report th { border: 1px solid #EADFCB; padding: 3px 8px; text-align: left; }
+</style>
+</head>
+<body>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script src="../worlds/y2-english-phonics.js"></script>
+<script src="../worlds/y2-english-tricky-words.js"></script>
+<script src="../worlds/y2-english-sentences.js"></script>
+<script src="../worlds/y2-english-stories.js"></script>
+<script src="../worlds/y2-maths-kit.js"></script>
+<script src="../worlds/y2-maths-partitioning.js"></script>
+<script src="../worlds/y2-maths-number-bonds.js"></script>
+<script src="../worlds/y2-maths-number-lines.js"></script>
+<script src="../worlds/y2-maths-arrays.js"></script>
+<script src="../worlds/y2-maths-sharing.js"></script>
+<script src="../worlds/y2-maths-sharing-fractions.js"></script>
+<script src="../worlds/y2-maths-captains-cove.js"></script>
+<script>
+/* Bonnie's Walk checks (Stage 3): the mix, which questions can come up, can't fail, bones and the streak.
+   It uses the real worlds and its own save (meadow-save-walk-test), so the real games are never touched.
+   The save is deleted at the end. */
+(async () => {
+  const TEST_KEY = 'meadow-save-walk-test';
+  localStorage.removeItem(TEST_KEY);
+  localStorage.setItem(TEST_KEY, JSON.stringify({ version: 1, name: 'Harvey', sound: false, voice: false }));
+  Meadow.startGame({ subject: 'walk', title: "Bonnie's Walk", icon: '🐾', homeHref: '../index.html', assetBase: '../', walk: true, needName: false, saveKey: TEST_KEY });
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const day = d => () => new Date(2026, 10, d, 10, 0, 0); // 10am on the dth of November 2026
+  const save = () => Meadow.save.get();
+  const bones = () => save().bones;
+  const closeModals = () => document.querySelectorAll('.modal-bg').forEach(m => m.remove());
+  const reset = (d = 10, extra = s => {}) => { localStorage.setItem(TEST_KEY, JSON.stringify({ version: 1, name: 'Harvey', sound: false, voice: false })); Meadow.save.load(); Meadow.save.mutate(extra); Meadow.setClock(day(d)); };
+  const subjectOf = p => p.w.subject === 'maths' ? 'M' : 'E';
+  // play a whole walk: each question gets `wrongs` wrong answers first, then the right one
+  // start a walk and wait for its first question to be on screen
+  async function started() { Meadow.startWalk(); Meadow.walk.skipHello(); await sleep(20); }
+  async function walk({ wrongs = 0, ask = false } = {}) {
+    closeModals(); await started();
+    const log = [];
+    for (let i = 0; i < 5; i++) {
+      const r = Meadow.round(); if (!r) break;
+      if (ask && i === 0) Meadow.askedBonnie();
+      for (let k = 0; k < wrongs; k++) Meadow.wrong(null);
+      const stayed = Meadow.round().index === i;
+      Meadow.correct(null, { auto: false }); Meadow.next();
+      log.push({ i, stayed, tier: r.tier });
+    }
+    await sleep(50);
+    return log;
+  }
+
+  const results = [];
+  const check = (name, ok, detail) => results.push({ name, ok: !!ok, detail });
+  await sleep(1200); closeModals();
+
+  // 1. the mix and where questions come from (many planned walks, no playing)
+  const maths = Meadow.worlds('maths');
+  const allowed = (w, L) => w.walk !== false && (w.levels.indexOf(L) < 2 || Meadow.stars(w.id, L.id) > 0);
+  const seenLevels = {};
+  for (const [mix, order] of Object.entries(Meadow.walk.MIXES)) {
+    reset(10, s => { s.settings.walkMix = mix; });
+    let orderOk = 0, mathsOk = 0, easyOk = 0, quickOk = 0, noRepeat = 0, n = 60;
+    for (let k = 0; k < n; k++) {
+      const plan = Meadow.walk.plan();
+      if (plan.length === 5 && plan.map(subjectOf).join('') === order) orderOk++;
+      const m = plan.filter(p => p.w.subject === 'maths');
+      if (m.every(p => allowed(p.w, p.L))) mathsOk++;
+      if (m.every(p => p.q.eased === true)) easyOk++;
+      if (m.every(p => Meadow.walk.walkable(p.q))) quickOk++;
+      if (new Set(m.map(p => p.w.id + '/' + p.L.id)).size === m.length) noRepeat++;
+      m.forEach(p => { const k2 = `${p.w.name}: ${p.L.name} (${p.q.kind})`; seenLevels[k2] = (seenLevels[k2] || 0) + 1; });
+      Meadow.save.mutate(s => { const f = m[0]; if (f) s.walks.topic = f.w.id; }); // as a started walk does
+    }
+    check(`${mix}: always 5 questions in the order ${order}`, orderOk === n, `${orderOk} of ${n}`);
+    check(`${mix}: maths only from the first 2 levels of each world (no Captain's Cove)`, mathsOk === n, `${mathsOk} of ${n}`);
+    check(`${mix}: maths always with easy numbers`, easyOk === n, `${easyOk} of ${n}`);
+    check(`${mix}: maths only quick taps (number pad or tap an answer)`, quickOk === n, `${quickOk} of ${n}`);
+    check(`${mix}: never the same maths level twice in a walk`, noRepeat === n, `${noRepeat} of ${n}`);
+  }
+  // a starred maths level further on can come up too
+  reset(10, s => { s.settings.walkMix = 'more'; s.stars['y2-maths-arrays/times-tables-harvest'] = 2; });
+  let starredSeen = 0; for (let k = 0; k < 80; k++) if (Meadow.walk.plan().some(p => p.L.id === 'times-tables-harvest')) starredSeen++;
+  check('A maths level with a star can come up as well', starredSeen > 0, `in ${starredSeen} of 80 walks`);
+  // English: starred levels only (or each world's first level for a new player)
+  reset(10);
+  const firsts = Meadow.worlds('english').map(w => w.levels[0].id);
+  let engFirst = 0; for (let k = 0; k < 40; k++) if (Meadow.walk.plan().filter(p => p.w.subject === 'english').every(p => firsts.includes(p.L.id))) engFirst++;
+  check('New player: English comes from each world\'s first level', engFirst === 40, `${engFirst} of 40`);
+  reset(10, s => { s.stars['y2-english-stories/who'] = 3; s.stars['y2-english-phonics/ai-ay'] = 1; });
+  let engStar = 0; for (let k = 0; k < 40; k++) if (Meadow.walk.plan().filter(p => p.w.subject === 'english').every(p => ['who', 'ai-ay'].includes(p.L.id))) engStar++;
+  check('English comes from levels he has a star in', engStar === 40, `${engStar} of 40`);
+  // topics rotate: the first maths world changes from one walk to the next
+  reset(10); let changed = 0, prev = null;
+  for (let k = 0; k < 20; k++) { const f = Meadow.walk.plan().find(p => p.w.subject === 'maths').w.id; if (prev && f !== prev) changed++; prev = f; Meadow.save.mutate(s => { s.walks.topic = f; }); }
+  check('Each walk starts its maths with a different world from the last walk', changed === 19, `${changed} of 19`);
+
+  // 2. can't fail
+  reset(10);
+  const w1 = await walk({ wrongs: 6 });
+  check('Wrong answers never move the walk on: each question waits for the right answer', w1.length === 5 && w1.every(x => x.stayed), w1.map(x => x.stayed).join());
+  check('The walk ends after the 5th right answer, with the finish window', !!document.querySelector('.modal') && /Walk done/.test(document.querySelector('.modal').textContent), '');
+  check('A walk saves no stars and no help log', !Object.keys(save().stars).length && !Object.keys(save().logs).length, JSON.stringify({ stars: save().stars, logs: Object.keys(save().logs) }));
+  // the help climbs by itself on wrong answers (English) and stops at the top rung
+  reset(10, s => { s.settings.walkMix = 'gentle'; });
+  closeModals(); await started();
+  const tiers = []; for (let k = 0; k < 6; k++) { Meadow.wrong(null); tiers.push(Meadow.round().tier); }
+  check('English: each wrong answer moves Bonnie\'s help up a rung, up to "Watch Me!"', tiers.join() === '1,2,3,4,4,4', tiers.join());
+  check('…with a kind word, never "wrong"', /together/i.test(document.getElementById('bubble').textContent) && !/wrong/i.test(document.getElementById('bubble').textContent), document.getElementById('bubble').textContent.slice(0, 70));
+
+  // 3. bones follow v1.1 (2 normal walks a day)
+  reset(10); let b = bones(); await walk();
+  const first = bones() - b; b = bones(); await walk(); const second = bones() - b; b = bones(); await walk(); const third = bones() - b;
+  check('Walks 1 and 2 of the day: 5 answers + 5 walk bonus = 10 bones each', first === 10 && second === 10, `${first}, ${second}`);
+  check('Walk 3 of the day: just 3 extra walk bones', third === 3, `${third}`);
+  b = bones(); await walk({ ask: true }); const fourth = bones() - b;
+  check('Asking Bonnie still pays 1 bone in an extra walk (3 + 1)', fourth === 4, `${fourth}`);
+  Meadow.setClock(day(11)); b = bones(); await walk(); const nextDay = bones() - b;
+  check('A new day: normal walks again (10)', nextDay === 10, `${nextDay}`);
+  check('Walks count as one level, walk/daily, in the day\'s runs', save().daily.normalRuns['walk/daily'] === 1, JSON.stringify(save().daily.normalRuns));
+  check('Walks never touch a real level\'s daily runs', Object.keys(save().daily.normalRuns).join() === 'walk/daily', Object.keys(save().daily.normalRuns).join());
+
+  // 4. the walk streak
+  reset(10); await walk();
+  const st = () => save().walks.streak, info = () => Meadow.walkInfo();
+  check('First walk: a 1-day streak', st() === 1 && save().walks.last === '2026-11-10', `${st()} (${save().walks.last})`);
+  await walk(); check('A second walk the same day: still 1', st() === 1 && save().walks.days['2026-11-10'] === 2, `${st()}, days ${JSON.stringify(save().walks.days)}`);
+  Meadow.setClock(day(11)); await walk(); Meadow.setClock(day(12)); await walk();
+  check('Three days running: 3', st() === 3, `${st()}`);
+  check('The Clubhouse shows it while it\'s alive (today or yesterday)', info().streak === 3 && (Meadow.setClock(day(13)), info().streak === 3), `${info().streak}`);
+  Meadow.setClock(day(14));
+  check('A missed day: the Clubhouse quietly shows no streak', info().streak === 0 && st() === 3, `shows ${info().streak}, saved ${st()}`);
+  await walk(); check('…and the next walk starts again at 1', st() === 1, `${st()}`);
+  Meadow.setClock(day(9)); await walk();
+  check('Clock moved back: the streak and last day stay as they were', st() === 1 && save().walks.last === '2026-11-14', `${st()}, last ${save().walks.last}`);
+  Meadow.setClock(day(14));
+  check('Walked today shows "Another walk?" on the Clubhouse', info().walkedToday === true, String(info().walkedToday));
+  // old days are tidied after 90 days
+  Meadow.save.mutate(s => { s.walks.days['2026-07-01'] = 1; }); Meadow.setClock(day(15)); await walk();
+  check('Walk days older than 90 days are tidied away', !('2026-07-01' in save().walks.days), Object.keys(save().walks.days).join(', '));
+
+  // 5. old and broken saves
+  localStorage.setItem(TEST_KEY, JSON.stringify({ version: 1, name: 'Harvey', settings: { walkMix: 'lots' }, walks: { days: { bad: 3, '2026-11-01': 'x', '2026-11-02': 2 }, last: 'Tuesday', streak: -4 } }));
+  const s5 = Meadow.save.load();
+  check('A broken walk record is tidied, and an unknown mix becomes Gentle', s5.settings.walkMix === 'gentle' && s5.walks.last === null && s5.walks.streak === 0 && JSON.stringify(s5.walks.days) === '{"2026-11-02":2}', JSON.stringify({ mix: s5.settings.walkMix, walks: s5.walks }));
+  localStorage.setItem(TEST_KEY, JSON.stringify({ version: 1, name: 'Harvey' }));
+  const s6 = Meadow.save.load();
+  check('An old save loads with no walks and the Gentle mix', s6.settings.walkMix === 'gentle' && !Object.keys(s6.walks.days).length && s6.walks.streak === 0, JSON.stringify(s6.walks));
+
+  check('Only the test save was used', Meadow.save.key === TEST_KEY, Meadow.save.key);
+
+  Meadow.setClock(); closeModals();
+  localStorage.removeItem(TEST_KEY);
+  const failed = results.filter(r => !r.ok);
+  const rows = Object.entries(seenLevels).sort((a, b) => a[0].localeCompare(b[0])).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+  document.body.innerHTML = `<div id="report"><h1>🐾 Bonnie's Walk: Stage 3 checks</h1>
+    <p>Plans and plays walks with the real worlds and a pretend clock. Uses its own test save, which it deletes at the end.</p>
+    <div id="result" class="${failed.length ? 'fail' : 'pass'}">${failed.length ? `✗ ${failed.length} of ${results.length} checks failed` : `✓ All ${results.length} checks passed`}</div>
+    <ul>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name} <small>(${r.detail})</small></li>`).join('')}</ul>
+    <h2>Maths levels that came up in walks</h2><table><tr><th>Level (question kind)</th><th>Times</th></tr>${rows}</table></div>`;
+  window.TEST_RESULT = { passed: !failed.length, results };
+})();
+</script>
+</body>
+</html>

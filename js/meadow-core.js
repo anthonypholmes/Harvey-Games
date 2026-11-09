@@ -137,6 +137,11 @@ const LINES = {
   extraDone: '3 extra practice bones for you!',
   // maths levels start with 2 easy warm-up questions that don't count for stars
   warmUp: "Let's warm up with two easy ones, {N}!",
+  // Bonnie's Walk
+  walkStart: ['Walkies! Come on {N}, five quick questions on our walk!', "Woof! Lead the way, {N}! Let's see what we find on our walk."],
+  walkOops: ["Hmm, let's sniff that one out together!", "Ooh, tricky! Let's have another look together.", "Let's work it out together, {N}!"],
+  walkDone: ['What a lovely walk, {N}! Thank you for coming with me!', 'Walk done! My paws are so happy, {N}!', 'Hooray! We did the whole walk together, {N}!'],
+  walkStop: "Stop the walk? That's okay, I'll wait for you!",
   locked: 'Finish the level before to unlock this one!',
   shownAll: "I've shown you the answer, {N}! Now you have a go. 🐾",
   shopWelcome: 'Welcome to my shop, {N}! Bones from Meadow Maths and Meadow Words all go in the same bone bowl.',
@@ -182,6 +187,9 @@ function weekStart(d = clock()) {
   return localDay(x);
 }
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+/* A YYYY-MM-DD day moved by n days (local time). */
+function shiftDay(day, n) { const [y, m, d] = day.split('-').map(Number); return localDay(new Date(y, m - 1, d + n)); }
+const WALK_DAYS_KEPT = 90;
 const STAR_LOG_MAX = 500; // plenty for a year of new stars; the oldest go first
 const reduceMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const plural = (n, one, many = one + 's') => `${n} ${n === 1 ? one : many}`;
@@ -205,6 +213,7 @@ function blankSave() {
     settings: { unlockAll: {}, years: null },
     daily: { day: null, normalRuns: {} }, // Bones v1.1: normal runs per level today (local date)
     starLog: [], // each time a level's best stars went up: { key, from, to, day }
+    walks: { days: {}, last: null, streak: 0, topic: null }, // Bonnie's Walk: finished walks per day, the streak, the last walk's first maths world
   };
 }
 const cleanPrize = (r, i) => ({ id: String(r.id || 'p' + i), title: String(r.title || 'Prize').slice(0, 60), desc: String(r.desc || '').slice(0, 120), cost: int(r.cost, 1, 9999) || 1 });
@@ -234,10 +243,14 @@ function normalise(raw) {
   s.daily = { day: typeof d.day === 'string' && DAY_RE.test(d.day) ? d.day : null, normalRuns: runs };
   s.starLog = (Array.isArray(s.starLog) ? s.starLog : []).filter(e => isObj(e) && typeof e.key === 'string' && typeof e.day === 'string' && DAY_RE.test(e.day))
     .map(e => ({ key: e.key, from: int(e.from, 0, 3), to: int(e.to, 0, 3), day: e.day })).filter(e => e.to > e.from).slice(-STAR_LOG_MAX);
+  const wk = isObj(s.walks) ? s.walks : {}, wdays = {};
+  if (isObj(wk.days)) Object.entries(wk.days).forEach(([k, v]) => { v = int(v, 0, 999); if (DAY_RE.test(k) && v) wdays[k] = v; });
+  s.walks = { days: wdays, last: typeof wk.last === 'string' && DAY_RE.test(wk.last) ? wk.last : null, streak: int(wk.streak, 0, 9999),
+    topic: typeof wk.topic === 'string' ? wk.topic : null };
   const st = isObj(s.settings) ? s.settings : {};
   s.settings = { ...st, unlockAll: isObj(st.unlockAll) ? st.unlockAll : {},
     years: Array.isArray(st.years) && st.years.length ? [...new Set(st.years.map(Number).filter(Number.isFinite))] : null,
-    warmUps: st.warmUps !== false };
+    warmUps: st.warmUps !== false, walkMix: WALK_MIXES[st.walkMix] ? st.walkMix : 'gentle' };
   return s;
 }
 
@@ -627,7 +640,7 @@ function show(html) { hush(); const s = $('#screen'); s.innerHTML = html; window
 function renderHud() {
   if (!GAME || !$('#boneNum')) return;
   $('#boneNum').textContent = S.bones;
-  const title = `${nameOf()}'s ${GAME.title}`;
+  const title = GAME.walk ? GAME.title : `${nameOf()}'s ${GAME.title}`;
   $('#appTitle').textContent = title; document.title = title;
   $('#streakNum').textContent = streak;
   $('#streakChip').classList.toggle('hot', streak >= 3);
@@ -762,18 +775,23 @@ function startLevel(worldId, levelId) {
     </div>
     <div class="game-main ${full ? 'full' : ''}">
       <section class="card play-card" id="area"></section>
-      ${full ? '' : `<aside class="card dock">
-        <div class="bubble" id="bubble" aria-live="polite"></div>
-        ${bonnieHTML('', 'gameBonnie')}
-        <button class="btn small green" id="askBtn">🐾 Ask Bonnie</button>
-        <div class="ladder" title="Hint ladder"><span>Hints</span>${hintNames(w).map((_, i) => `<span class="rung" data-r="${i + 1}">${i + 1}</span>`).join('')}</div>
-      </aside>`}
+      ${full ? '' : dockHTML(w)}
     </div>`);
   $('#back').onclick = () => worldScreen(w.id);
   if (!full) { $('#gameBonnie').onclick = askBonnie; $('#askBtn').onclick = askBonnie; }
   nextQuestion();
 }
+/* Bonnie beside the question, with Ask Bonnie and the hint ladder (worlds that aren't full width). */
+function dockHTML(w) {
+  return `<aside class="card dock">
+        <div class="bubble" id="bubble" aria-live="polite"></div>
+        ${bonnieHTML('', 'gameBonnie')}
+        <button class="btn small green" id="askBtn">🐾 Ask Bonnie</button>
+        <div class="ladder" title="Hint ladder"><span>Hints</span>${hintNames(w).map((_, i) => `<span class="rung" data-r="${i + 1}">${i + 1}</span>`).join('')}</div>
+      </aside>`;
+}
 function renderPips() {
+  if (G && G.walk) return renderPath();
   if (!G || !$('#pips')) return;
   $('#pips').innerHTML = Array.from({ length: G.count }, (_, i) => `<span class="pip ${i < G.i ? 'done' : i === G.i && !G.qWarm ? 'now' : ''}"></span>`).join('');
   $$('.rung').forEach(r => r.classList.toggle('on', +r.dataset.r <= G.tier));
@@ -788,6 +806,7 @@ function later(fn, ms = 0) { const g = G, i = G && G.i; setTimeout(() => whenQui
 
 function nextQuestion() {
   if (!G) return;
+  if (G.walk) return walkStep();
   if (G.i >= G.count) return finishLevel();
   const warm = G.warm < G.warmN;
   Object.assign(G, { tier: 0, qTier: 0, busy: false, hints: [], qWarm: warm });
@@ -806,7 +825,7 @@ function nextQuestion() {
 function ctx() {
   const warm = !!G.qWarm;
   return { area: $('#area'), world: G.w, level: G.L, index: warm ? G.warm : G.i, count: warm ? G.warmN : G.count, eased: G.qEased, q: G.q,
-    warm, first: warm ? G.warm === 0 : G.i === 0 && !G.warmN,
+    warm, first: warm ? G.warm === 0 : G.i === 0 && !G.warmN, walk: !!G.walk,
     bubble, later, hints: list => { G.hints = list || []; } };
 }
 /* Bonnie's help ladder. A world can take over with onAsk(ctx) (Maths does). */
@@ -839,7 +858,7 @@ function correct(el, opts = {}) {
   if (!G || G.busy || G.done) return false;
   G.busy = true;
   const wasHelped = G.qTier >= helpFrom(G.w);
-  if (!G.qWarm) { // warm-ups don't count for stars, the help log or the quiet easing
+  if (!G.qWarm && !G.walk) { // warm-ups and walks don't count for stars, the help log or the quiet easing
     if (wasHelped) G.helps++;
     G.tiers[Math.min(G.qTier, G.tiers.length - 1)]++;
     if (G.qEased) G.eased++;
@@ -878,6 +897,7 @@ function isBusy() { return !G || G.busy || G.done; }
 function round() { return G ? { index: G.qWarm ? G.warm : G.i, count: G.qWarm ? G.warmN : G.count, warm: !!G.qWarm, tier: G.qTier, helped: G.qTier >= helpFrom(G.w), busy: G.busy } : null; }
 function wrong(msg, opts = {}) {
   if (!G || G.busy || G.done) return;
+  if (G.walk) return walkWrong(opts);
   if (!G.qWarm) G.mistakes++; // a warm-up mistake doesn't count
   streak = 0; renderHud(); sfx.wrong();
   animate($('#gameBonnie'), 'wiggle', 600);
@@ -922,6 +942,187 @@ function finishLevel() {
   });
   const eb = $('#endBonnie'); eb.style.margin = '0 auto'; animate(eb, 'happy', 600);
   say([msg, extra, G.extra ? LINES.extraDone : ''].filter(Boolean).join(' '));
+}
+
+/* =========================================================
+   BONNIE'S WALK: 5 quick questions, English and maths mixed
+   Nothing can be failed: no stars, no mistakes counted, and a wrong answer
+   just moves Bonnie's help up a rung until the answer is found.
+   Bones follow v1.1 under the id walk/daily: the first 2 walks a day pay
+   1 per right answer and a walk bonus; later walks pay 3 for finishing.
+   ========================================================= */
+const WALK_KEY = 'walk/daily';
+const WALK_MIXES = { gentle: 'EMEME', even: 'MEMEM', more: 'MMEMM' };
+const WALK_MIX_NAMES = { gentle: 'Gentle: 3 English, 2 maths', even: 'Even: 2 English, 3 maths', more: 'More maths: 1 English, 4 maths' };
+const WALK_BONUS = 5;
+/* Quick-tap questions only: the number pad or tap an answer (no dragging, building or breaking blocks). */
+const walkable = q => !!q && ((q.kind === 'boxes' && !q.inter) || q.kind === 'choice');
+/* English: any level with a star (normal difficulty); a new player gets each world's first level. */
+function walkEnglishPool() {
+  const ws = visibleWorlds('english').filter(w => w.walk !== false);
+  const ok = L => Array.isArray(L.items) && L.items.length;
+  const starred = ws.flatMap(w => w.levels.filter(L => ok(L) && starsOf(w, L) > 0).map(L => ({ w, L })));
+  return starred.length ? starred : ws.filter(w => ok(w.levels[0])).map(w => ({ w, L: w.levels[0] }));
+}
+/* Maths: the first 2 levels of each world, plus any level with a star (Captain's Cove has walk: false). */
+function walkMathsPool() {
+  return visibleWorlds('maths').filter(w => w.walk !== false)
+    .map(w => ({ w, levels: w.levels.filter((L, i) => typeof L.make === 'function' && (i < 2 || starsOf(w, L) > 0)) })).filter(x => x.levels.length);
+}
+/* An easy, quick-tap question from this maths level, or null if it has none. */
+function walkMaths(w, L) {
+  for (const type of L.seq ? shuffle([...new Set(L.seq)]) : [undefined]) for (let n = 0; n < 5; n++) {
+    const q = L.make({ eased: true, walk: true, fresh: true, index: 0, count: 1, level: L, world: w, type });
+    if (walkable(q)) return q;
+  }
+  return null;
+}
+/* The 5 stops: [{ w, L, q }] in the order of the mix. */
+function planWalk() {
+  const mix = WALK_MIXES[S.settings.walkMix] || WALK_MIXES.gentle;
+  const needM = [...mix].filter(c => c === 'M').length;
+  // maths: one level from each world in turn, starting after the world the last walk started with
+  let worlds = walkMathsPool();
+  const at = worlds.findIndex(x => x.w.id === S.walks.topic);
+  if (at >= 0) worlds = [...worlds.slice(at + 1), ...worlds.slice(0, at + 1)];
+  const maths = [], used = new Set();
+  for (let lap = 0; lap < 3 && maths.length < needM; lap++) for (const x of worlds) {
+    if (maths.length >= needM) break;
+    for (const L of shuffle(x.levels)) {
+      if (used.has(keyOf(x.w, L))) continue;
+      const q = walkMaths(x.w, L); if (!q) continue;
+      used.add(keyOf(x.w, L)); maths.push({ w: x.w, L, q }); break;
+    }
+  }
+  // English: different levels where possible, and never the same question twice
+  const eng = shuffle(walkEnglishPool()), seen = new Set();
+  let e = 0;
+  const english = () => {
+    if (!eng.length) return null;
+    const { w, L } = eng[e++ % eng.length];
+    const fresh = L.items.filter(it => !seen.has(it)), item = rand(fresh.length ? fresh : L.items);
+    seen.add(item); return { w, L, q: item };
+  };
+  const plan = [];
+  for (const c of mix) plan.push((c === 'M' ? maths.shift() : english()) || english() || maths.shift());
+  return plan.filter(Boolean);
+}
+function startWalk() {
+  S = load(); hush();
+  const plan = planWalk();
+  if (!plan.length) { show('<div class="card"><p>No questions for a walk yet.</p></div>'); return; }
+  const firstMaths = plan.find(p => p.w.subject === 'maths');
+  if (firstMaths) mutate(s => { s.walks.topic = firstMaths.w.id; });
+  const extra = runsToday(S, WALK_KEY) >= RULES.NORMAL_RUNS_PER_DAY;
+  G = { walk: true, plan, w: plan[0].w, L: plan[0].L, li: 0, key: WALK_KEY, i: 0, count: plan.length, items: null,
+    mistakes: 0, helps: 0, answerBones: 0, askBones: 0, asked: false, tiers: [0, 0, 0, 0, 0], eased: 0, done: false,
+    extra, counted: false, extraBones: 0, walkBones: 0, warmN: 0, warm: 0, tier: 0, qTier: 0, hints: [], busy: false };
+  show(`
+    ${extra ? '<div class="game-top"><div class="chip extra" id="extraChip" title="Walks after the first 2 today: no bones per answer, 3 bonus bones for finishing">🎯 Extra walk</div></div>' : ''}
+    <div class="card walk-path" id="walkPath" role="progressbar" aria-label="Bonnie's walk" aria-valuemin="0" aria-valuemax="${plan.length}" aria-valuenow="0">
+      <div class="walk-track" id="walkTrack">
+        ${plan.map((_, i) => `<div class="wstone" data-s="${i}"><span>🐾</span></div>`).join('')}
+        <div class="wbowl" title="The bone bowl at the end">🦴</div>
+        <div class="walker" id="walker" aria-hidden="true">${bonnieSVG()}</div>
+      </div>
+    </div>
+    <div id="walkQ"></div>`);
+  renderPath();
+  const hello = fmt(rand(LINES.walkStart));
+  $('#walkQ').innerHTML = `<div class="card walk-hello"><p>${esc(hello)}</p></div>`;
+  say(hello);
+  if (extra) whenQuiet(() => say(LINES.extraPractice));
+  const g = G; setTimeout(() => whenQuiet(() => { if (G === g && !G.done) walkStep(); }), 900);
+}
+/* Put Bonnie on the stone she's at, and colour the stones behind her. */
+function renderPath() {
+  const track = $('#walkTrack'); if (!G || !track) return;
+  $$('.wstone', track).forEach((s, i) => { s.classList.toggle('done', i < G.i); s.classList.toggle('now', i === G.i); });
+  const at = G.i < G.count ? $$('.wstone', track)[G.i] : $('.wbowl', track), wk = $('#walker');
+  if (at && wk) wk.style.transform = `translateX(${at.offsetLeft + at.offsetWidth / 2 - wk.offsetWidth / 2}px)`;
+  $('#walkPath').setAttribute('aria-valuenow', String(Math.min(G.i, G.count)));
+  $$('.rung').forEach(r => r.classList.toggle('on', +r.dataset.r <= G.tier));
+}
+/* Show the next stop's question in its own world's screen; the path stays put. */
+function walkStep() {
+  if (G.i >= G.count) return finishWalk();
+  const p = G.plan[G.i];
+  G.w = p.w; G.L = p.L; G.q = p.q; G.qEased = p.w.subject === 'maths';
+  Object.assign(G, { tier: 0, qTier: 0, busy: false, hints: [], qWarm: false });
+  const full = G.w.layout === 'full';
+  $('#walkQ').innerHTML = `<div class="game-main walk-in ${full ? 'full' : ''}"><section class="card play-card" id="area"></section>${full ? '' : dockHTML(G.w)}</div>`;
+  if (!full) { $('#gameBonnie').onclick = askBonnie; $('#askBtn').onclick = askBonnie; }
+  renderPath();
+  (G.L.play || G.w.play)(G.q, ctx());
+}
+/* A wrong answer in a walk: no mistake counted, a kind word, and Bonnie's help goes up a rung by itself.
+   (Maths climbs its own ladder and calls this quietly.) */
+function walkWrong(opts) {
+  streak = 0; renderHud(); sfx.wrong();
+  animate($('#gameBonnie'), 'wiggle', 600);
+  if (opts.quiet || G.w.onAsk) return;
+  const lead = fmt(rand(LINES.walkOops)), names = hintNames(G.w);
+  if (G.tier >= names.length) { bubble(`${esc(lead)} ${esc(fmt(LINES.shownAll))}`, false); say(lead); whenQuiet(() => say(LINES.shownAll)); return; }
+  const tier = G.tier + 1, fn = G.hints[tier - 1], txt = fn ? fn() : '';
+  helped(tier);
+  bubble(`${esc(lead)}<br><b>${names[tier - 1]}</b> ${txt}`, false);
+  say(lead);
+  const g = G, i = G.i, hint = document.createElement('div'); hint.innerHTML = `${names[tier - 1]}. ${txt}`;
+  whenQuiet(() => { if (G === g && G.i === i && !G.busy) say(hint.textContent); });
+}
+/* The walk is finished: the walk bonus (or the extra-walk bones), the streak and the paw stamp. */
+function recordWalk(s) {
+  const t = localDay(), w = s.walks;
+  w.days[t] = (w.days[t] || 0) + 1;
+  if (!w.last || t > w.last) { w.streak = w.last && shiftDay(w.last, 1) === t ? w.streak + 1 : 1; w.last = t; }
+  // the same day adds nothing; a clock moved back (t before last) changes nothing either
+  const keep = shiftDay(t, -WALK_DAYS_KEPT);
+  Object.keys(w.days).forEach(d => { if (d < keep) delete w.days[d]; });
+}
+function finishWalk() {
+  if (!G || G.done) return;
+  G.done = true; G.busy = true; hush();
+  const before = S.walks.streak, from = $('#walkPath');
+  renderPath();
+  if (G.extra) { G.extraBones = RULES.EXTRA_RUN_BONES; addBones(G.extraBones, from, 'extra walk!', recordWalk); }
+  else { G.walkBones = WALK_BONUS; addBones(G.walkBones, from, 'walk bonus!', recordWalk); }
+  const days = S.walks.streak, up = days > before && days >= 2;
+  confetti(); sfx.fanfare();
+  const msg = fmt(rand(LINES.walkDone));
+  const total = G.answerBones + G.askBones + G.extraBones + G.walkBones;
+  const parts = [G.extra ? `${G.extraBones} extra walk bones` : `${G.answerBones} for answers`];
+  if (G.walkBones) parts.push(`${G.walkBones} walk bonus`);
+  if (G.askBones) parts.push(`${G.askBones} for asking Bonnie`);
+  modal(`
+    ${bonnieHTML('', 'endBonnie')}
+    <div class="paw-stamp" aria-hidden="true">🐾</div>
+    <h2>Walk done!</h2>
+    <p>${esc(msg)}</p>
+    ${up ? `<p class="kind">🐾 ${days} days in a row!</p>` : ''}
+    <p class="earned"><b>🦴 ${total} bones</b> on our walk!</p>
+    <p class="note">${parts.join(' · ')}</p>
+    <div class="btns">
+      <button class="btn green" data-a="home">🏠 Back to the Clubhouse</button>
+      <button class="btn ghost" data-a="again">🐾 Another walk</button>
+    </div>`, a => { if (a === 'again') startWalk(); else location.href = GAME.homeHref; });
+  const eb = $('#endBonnie'); eb.style.margin = '0 auto'; animate(eb, 'happy', 600);
+  say([msg, G.extra ? LINES.extraDone : ''].filter(Boolean).join(' '));
+}
+/* Leaving part-way: Bonnie checks first. Bones already earned are kept. */
+function stopWalk(href) {
+  if (!G || !G.walk || G.done) { location.href = href; return; }
+  say(LINES.walkStop);
+  modal(`${bonnieHTML('small', 'stopBonnie')}<h2>Stop the walk?</h2><p>${esc(fmt(LINES.walkStop))}</p>
+    <div class="btns"><button class="btn green" data-a="stay">🐾 Keep walking</button><button class="btn ghost" data-a="go">Stop</button></div>`,
+    a => { if (a === 'go') location.href = href; });
+  const sb = $('#stopBonnie'); if (sb) sb.style.margin = '0 auto';
+}
+/* For the Clubhouse button: the streak to show (only while it's alive) and whether there's been a walk today. */
+function walkInfo() {
+  if (!S) S = load();
+  const t = localDay(), w = S.walks;
+  const alive = !!w.last && (w.last >= shiftDay(t, -1));
+  return { streak: alive ? w.streak : 0, walkedToday: !!w.days[t], mix: S.settings.walkMix };
 }
 
 /* =========================================================
@@ -1082,6 +1283,10 @@ function parentScreen() {
         <div class="row-btns" style="justify-content:flex-start;margin-top:8px">
           <button class="btn small" id="addPrize">+ Add prize</button>
           <button class="btn small ghost" id="resetPrizes">Use the starter prize list</button><span class="note" id="prizeOk" aria-live="polite"></span></div></section>
+      <section><h3>🐾 Bonnie's Walk</h3>
+        <p class="note">Five quick questions from the Clubhouse, mixing English and easy maths. Nothing can be failed. Choose the mix (it's the same in every game):</p>
+        ${Object.entries(WALK_MIX_NAMES).map(([k, v]) => `<label><input type="radio" name="walkMix" value="${k}" ${S.settings.walkMix === k ? 'checked' : ''}> ${esc(v)}</label>`).join('')}
+        <p class="note">Walk streak: ${plural(walkInfo().streak, 'day')} in a row.</p></section>
       <section><h3>Sound & voice</h3>
         <label><input type="checkbox" id="pSfx" ${S.sound ? 'checked' : ''}> Sound effects</label>
         <label><input type="checkbox" id="pVoice" ${S.voice ? 'checked' : ''}> Bonnie talks</label>
@@ -1135,6 +1340,7 @@ function parentScreen() {
     <div class="btns"><button class="btn berry" data-a="yes">Yes, replace</button><button class="btn ghost" data-a="no">Keep mine</button></div>`, a => {
     if (a === 'yes') { mutate(s => { s.rewards = STARTER_PRIZES.map(r => ({ ...r })); }); parentScreen(); } });
   $('#pSfx').onchange = e => mutate(s => { s.sound = e.target.checked; });
+  $$('[name="walkMix"]').forEach(r => r.onchange = () => { if (r.checked) mutate(s => { s.settings.walkMix = r.value; }); });
   $('#pVoice').onchange = e => { mutate(s => { s.voice = e.target.checked; }); if (!S.voice) hush(); };
   if ($('#pRead')) $('#pRead').onchange = e => mutate(s => { s.readAloud = e.target.checked; });
   $('#pRate').oninput = e => { $('#rateVal').textContent = e.target.value; };
@@ -1164,7 +1370,7 @@ function parentScreen() {
    ========================================================= */
 function spokenLines(game = GAME) {
   const out = new Set(), add = (...xs) => xs.forEach(x => x && out.add(fmt(x)));
-  add(LINES.extraPractice, LINES.extraDone, LINES.warmUp);
+  add(LINES.extraPractice, LINES.extraDone, LINES.warmUp, ...LINES.walkStart, ...LINES.walkOops, ...LINES.walkDone, LINES.walkStop);
   add(...LINES.praise, LINES.watched, ...LINES.oops, ...LINES.tickles, ...LINES.tickleEgg, ...Object.values(LINES.finish), LINES.already3, ...Object.values(LINES.stillBest),
     LINES.locked, LINES.shownAll, LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
   [1, 2, 3].forEach(st => [1, 2].forEach(p => { if (st <= p) add(fmt(LINES.finish[st]) + ' ' + LINES.stillBest[p]); }));
@@ -1282,6 +1488,25 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 .pip.now{background:var(--gold);border-color:#C99A2E;transform:scale(1.25)}
 .game-main{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;align-items:start}
 .game-main.full{grid-template-columns:minmax(0,1fr)}
+/* Bonnie's Walk: the path of paw stones */
+.walk-path{padding:12px 18px 8px;margin-bottom:14px;background:linear-gradient(180deg,#E8F5DA,#CFE8B6);border-color:#B9D79A}
+.walk-track{position:relative;display:flex;justify-content:space-between;align-items:flex-end;height:104px;padding:0 2%}
+.walk-track::before{content:"";position:absolute;left:3%;right:3%;bottom:14px;height:16px;border-radius:999px;background:repeating-linear-gradient(90deg,#E4C891 0 18px,#EBD3A3 18px 36px);box-shadow:inset 0 -3px 0 rgba(74,59,44,.1)}
+.wstone{position:relative;z-index:1;width:58px;height:40px;border-radius:50%;background:#F5EEDF;border:3px solid #D9C9A8;display:grid;place-items:center;font-size:1.25rem;box-shadow:0 3px 0 rgba(74,59,44,.15);transition:background .3s,border-color .3s}
+.wstone span{opacity:.18;transition:opacity .3s}
+.wstone.done{background:var(--gold);border-color:#C99A2E}
+.wstone.done span{opacity:1}
+.wstone.now{border-color:var(--leaf);box-shadow:0 0 0 5px rgba(107,163,104,.35),0 3px 0 rgba(74,59,44,.15)}
+.wbowl{position:relative;z-index:1;width:58px;height:46px;border-radius:12px 12px 26px 26px;background:var(--berry);border:3px solid var(--berry-dark);display:grid;place-items:center;font-size:1.4rem}
+.walker{position:absolute;left:0;bottom:38px;width:74px;height:74px;z-index:2;transition:transform .8s cubic-bezier(.45,1.35,.6,1);pointer-events:none}
+.walker svg{width:100%;height:100%;overflow:visible}
+.walk-hello{padding:28px;text-align:center;font-family:var(--font-read);font-size:1.3rem}
+.walk-in{animation:walkIn .35s ease-out}
+@keyframes walkIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.paw-stamp{font-size:3.2rem;line-height:1;margin:4px auto 0;width:84px;height:84px;display:grid;place-items:center;border-radius:50%;border:4px dashed var(--leaf);transform:rotate(-12deg);animation:stamp .5s ease-out}
+@keyframes stamp{from{transform:rotate(-12deg) scale(1.8);opacity:0}to{transform:rotate(-12deg) scale(1);opacity:1}}
+@media (max-width:560px){.wstone,.wbowl{width:44px;height:32px;font-size:1rem}.walker{width:56px;height:56px;bottom:30px}.walk-track{height:88px}}
+@media (prefers-reduced-motion:reduce){.walker,.wstone,.wstone span{transition:none}.walk-in,.paw-stamp{animation:none}}
 .play-card{padding:22px;min-height:440px}
 .dock{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px}
 .bubble{background:#fff;border:2px solid var(--card-edge);border-radius:18px;padding:12px 14px;font-family:var(--font-read);font-size:1.08rem;line-height:1.35;position:relative;width:100%;min-height:64px}
@@ -1439,15 +1664,21 @@ function startGame(opts = {}) {
       <main id="screen"></main>
     </div>`);
   if (window.BonnieVoice) Object.assign(window.BonnieVoice, { base: GAME.assetBase || '', getName: nameOf, getAudio: ac, getRate: () => S.voiceRate || .9, enabled: () => S.voice !== false });
-  $('#homeLink').onclick = () => { shopFromClub = false; homeScreen(); };
-  $('#shopBtn').onclick = () => { sfx.pop(); shopScreen({ welcome: true }); };
+  if (GAME.walk) { // Bonnie's Walk: no shop or world list here, and leaving part-way asks first
+    $('#shopBtn').style.display = 'none'; $('#homeLink').style.cursor = 'default';
+    const club = $('.hud a.icon-btn'); club.onclick = e => { e.preventDefault(); stopWalk(GAME.homeHref); };
+  } else {
+    $('#homeLink').onclick = () => { shopFromClub = false; homeScreen(); };
+    $('#shopBtn').onclick = () => { sfx.pop(); shopScreen({ welcome: true }); };
+  }
   $('#frog').addEventListener('click', e => { const f = e.currentTarget; animate(f, 'boing', 700); sfx.ribbit(); hearts(f, '💚', 2); });
   document.addEventListener('pointerdown', () => ac(), { once: true });
   window.addEventListener('storage', e => { if (e.key === KEY || e.key === null) { S = load(); renderHud(); applyTheme(); } });
   applyTheme(); renderHud(); Voice().load();
   // game.html#shop opens the Bone Shop straight away (the Clubhouse links there)
   // game.html#grownups opens the grown-ups area (after the sum check): the Clubhouse links there
-  if (location.hash === '#shop') { shopFromClub = true; shopScreen({ welcome: true }); }
+  if (GAME.walk) startWalk();
+  else if (location.hash === '#shop') { shopFromClub = true; shopScreen({ welcome: true }); }
   else if (location.hash === '#grownups') { parentFromClub = true; homeScreen(); parentGate(); }
   else homeScreen();
 }
@@ -1459,6 +1690,8 @@ window.Meadow = {
   registerWorld, addLevels, worlds: subjectWorlds, world: worldById, visibleWorlds, shownYears, levelUnlocked, starSummary, starsThisWeek, weekStart,
   // play
   startGame, startLevel, correct, wrong, helped, askedBonnie, next, finishLevel, bubble, later, learner, isBusy, round,
+  startWalk, walkInfo, walk: { MIXES: WALK_MIXES, KEY: WALK_KEY, BONUS: WALK_BONUS, walkable, plan: () => { S = load(); return planWalk(); }, stop: stopWalk,
+    skipHello: () => { if (G && G.walk && !G.done && !$('#area')) walkStep(); } }, // tests: show the first question now
   // save
   save: { get key() { return KEY; }, load: () => (S = load()), get: () => S, mutate, migrate, readOld, normalise, catchUp, oldPrint },
   stars: (worldId, levelId) => { if (!S) S = load(); return S.stars[worldId + '/' + levelId] || 0; },

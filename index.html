@@ -163,6 +163,21 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 .play-btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--leaf-dark)}
 .note{text-align:center;color:var(--on-bg);opacity:.8;font-size:.9rem;margin-top:14px}
 
+/* ---------- Bonnie's Walk button ---------- */
+.walk-btn{position:relative;display:flex;align-items:center;gap:16px;max-width:760px;margin:0 auto 22px;padding:16px 20px;border-radius:26px;overflow:hidden;
+  color:#2F4A22;background:linear-gradient(180deg,#E6F5D3,#BFE19F);border:3px solid #8FC46B;box-shadow:0 6px 0 #6E9F45,0 14px 26px rgba(74,59,44,.14)}
+.walk-btn::before{content:"";position:absolute;left:96px;right:20px;bottom:14px;height:12px;border-radius:999px;opacity:.75;
+  background:repeating-linear-gradient(90deg,#E4C891 0 16px,transparent 16px 30px)}
+.walk-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #6E9F45}
+.walk-btn .wb-bonnie{width:76px;height:76px;flex:none;position:relative;z-index:1}
+.walk-btn .wb-bonnie svg{width:100%;height:100%;overflow:visible}
+.walk-btn .wb-txt{flex:1;min-width:0;position:relative;z-index:1;padding-bottom:12px}
+.walk-btn .wb-txt b{display:block;font-size:clamp(1.5rem,4vw,2rem);line-height:1.1}
+.walk-btn .wb-txt small{font-size:1.05rem;font-weight:600;opacity:.85}
+.walk-btn .wb-streak{position:relative;z-index:1;flex:none;background:#fff;border:2px solid #8FC46B;border-radius:999px;padding:6px 12px;font-weight:700;font-size:.95rem;white-space:nowrap}
+.walk-btn .wb-go{position:relative;z-index:1;flex:none;font-size:1.3rem;font-weight:700;color:#fff;background:var(--leaf);border-radius:16px;padding:10px 18px;box-shadow:0 4px 0 var(--leaf-dark);animation:pulse 2s ease-in-out infinite}
+@media (max-width:560px){.walk-btn{flex-wrap:wrap}.walk-btn .wb-go{display:none}.walk-btn .wb-streak{order:3;margin-left:92px}}
+
 /* ---------- "Put it on your Home Screen" banner ---------- */
 .a2hs{display:flex;align-items:center;gap:14px;max-width:640px;margin:0 auto 22px;padding:12px 12px 12px 14px;background:var(--card);border:3px solid var(--card-edge);border-radius:22px;box-shadow:var(--shadow)}
 .a2hs img{width:54px;height:54px;border-radius:13px;flex:none;box-shadow:0 2px 6px rgba(74,59,44,.25)}
@@ -243,6 +258,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
       <div class="hint">Tap Bonnie to tickle her! 🐾 Bones from every game go in the same bone bowl.</div>
     </div>
   </section>
+
+  <a class="walk-btn" id="walkBtn" href="bonnies-walk.html" hidden>
+    <span class="wb-bonnie" id="walkBonnie" aria-hidden="true"></span>
+    <span class="wb-txt"><b>🐾 Bonnie's Walk</b><small id="walkSub">5 quick questions</small></span>
+    <span class="wb-streak" id="walkStreak" hidden></span>
+    <span class="wb-go" aria-hidden="true">Let's go!</span>
+  </a>
 
   <aside class="a2hs" id="a2hs" hidden>
     <img src="apple-touch-icon.png" alt="">
@@ -361,6 +383,13 @@ function render() {
   const asking = !S.hasName || editingName;
   document.getElementById('nameCard').hidden = !asking;
   document.getElementById('cabinets').hidden = asking;
+  // Bonnie's Walk: the streak shows from 2 days in a row; a missed day just drops it
+  const walk = Meadow.walkInfo(), wb = document.getElementById('walkBtn');
+  wb.hidden = asking;
+  document.getElementById('walkBonnie').innerHTML = bonnieSVG();
+  document.getElementById('walkSub').textContent = walk.walkedToday ? 'Another walk?' : '5 quick questions';
+  const ws = document.getElementById('walkStreak');
+  ws.hidden = walk.streak < 2; ws.textContent = `${'🐾'.repeat(Math.min(walk.streak, 3))} ${walk.streak} days in a row!`;
   document.querySelectorAll('[data-shop]').forEach(a => { a.hidden = asking; });
   document.getElementById('changeName').hidden = asking || !S.hasName;
   document.getElementById('nameCancel').hidden = !S.hasName;
@@ -405,10 +434,11 @@ const LINES = {
   hello: 'Hi {N}! Welcome to your Meadow Clubhouse! Pick a game to play.',
   greetBones: ['Welcome back, {N}! Look at all the bones in your bowl! Which game shall we play?', "Woof! Hi {N}! Pick a game and let's earn more bones!"],
   shop: "Let's go shopping!",
+  walk: "Walkies! Let's go!",
   greetStart: ['Hello {N}! Welcome to the Meadow Clubhouse! Pick a game to start earning bones.', 'Woof! Hi {N}! Shall we play some maths or some words today?'],
 };
 function clubhouseLines() {
-  return [LINES.askName, LINES.newName, LINES.hello, LINES.shop, ...LINES.greetBones, ...LINES.greetStart, ...TICKLES,
+  return [LINES.askName, LINES.newName, LINES.hello, LINES.shop, LINES.walk, ...LINES.greetBones, ...LINES.greetStart, ...TICKLES,
     ...CONFIG.GAMES.filter(g => g.href && !g.soon).map(g => `Let's play ${g.name}!`)].map(fmtN);
 }
 const TICKLES = [...Meadow.LINES.tickles, ...Meadow.LINES.tickleEgg]; // the same tickle lines as the games
@@ -451,6 +481,7 @@ document.getElementById('frog').addEventListener('click', e => {
   const f = e.currentTarget; f.classList.remove('boing'); void f.offsetWidth; f.classList.add('boing');
   tone(180, .08, 'sawtooth', .08); tone(160, .12, 'sawtooth', .08, .1); hearts(f, '💚', 2);
 });
+document.getElementById('walkBtn').addEventListener('click', e => { e.preventDefault(); goTo('bonnies-walk.html', LINES.walk); });
 document.getElementById('soundBtn').addEventListener('click', () => {
   soundOn = !soundOn; Meadow.save.mutate(s => { s.clubSound = soundOn; });
   if (!soundOn) BonnieVoice.hush();

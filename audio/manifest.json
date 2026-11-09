@@ -1491,7 +1491,26 @@
   "8bd5b8bf": "clips/8bd5b8bf-4crzui.mp3",
   "93cc87c7": "clips/93cc87c7-4crzui.mp3",
   "be9ff090": "clips/be9ff090-4crzui.mp3",
-  "992d73c5": "clips/992d73c5-4crzui.mp3"
+  "992d73c5": "clips/992d73c5-4crzui.mp3",
+  "b7a34c9e": "clips/b7a34c9e-4crzui.mp3",
+  "3f4acf29": "clips/3f4acf29-4crzui.mp3",
+  "9c5f210e": "clips/9c5f210e-4crzui.mp3",
+  "113ded2e": "clips/113ded2e-4crzui.mp3",
+  "77375cc5": "clips/77375cc5-4crzui.mp3",
+  "60557f4e": "clips/60557f4e-4crzui.mp3",
+  "26918b60": "clips/26918b60-4crzui.mp3",
+  "30dcba12": "clips/30dcba12-4crzui.mp3",
+  "da4f61cc": "clips/da4f61cc-4crzui.mp3",
+  "adbe07c4": "clips/adbe07c4-4crzui.mp3",
+  "79de3e60": "clips/79de3e60-4crzui.mp3",
+  "5dda3c87": "clips/5dda3c87-4crzui.mp3",
+  "8a3a8153": "clips/8a3a8153-4crzui.mp3",
+  "2bd57eee": "clips/2bd57eee-4crzui.mp3",
+  "b991dd1a": "clips/b991dd1a-4crzui.mp3",
+  "f9d0c857": "clips/f9d0c857-4crzui.mp3",
+  "4076b878": "clips/4076b878-4crzui.mp3",
+  "3b8777de": "clips/3b8777de-4crzui.mp3",
+  "b1d3f2f5": "clips/b1d3f2f5-4crzui.mp3"
  },
  "names": {
   "harvey": "names/harvey-4crzui.mp3",
@@ -3090,9 +3109,28 @@
   "8bd5b8bf": "Try a few different pairs.",
   "93cc87c7": "Try sharing an even number, then an odd one.",
   "be9ff090": "Try two big ones, then two small ones.",
-  "992d73c5": "Let's warm up with two easy ones,"
+  "992d73c5": "Let's warm up with two easy ones,",
+  "b7a34c9e": "Walkies!",
+  "3f4acf29": "Let's go!",
+  "9c5f210e": "Come on",
+  "113ded2e": "five quick questions on our walk!",
+  "77375cc5": "Lead the way,",
+  "60557f4e": "Let's see what we find on our walk.",
+  "26918b60": "Hmm, let's sniff that one out together!",
+  "30dcba12": "Ooh, tricky!",
+  "da4f61cc": "Let's have another look together.",
+  "adbe07c4": "Let's work it out together,",
+  "79de3e60": "What a lovely walk,",
+  "5dda3c87": "Thank you for coming with me!",
+  "8a3a8153": "Walk done!",
+  "2bd57eee": "My paws are so happy,",
+  "b991dd1a": "Hooray!",
+  "f9d0c857": "We did the whole walk together,",
+  "4076b878": "Stop the walk?",
+  "3b8777de": "That's okay, I'll wait for you!",
+  "b1d3f2f5": "Shall we go for a walk?"
  },
- "made": "2026-11-09T09:36:50.618Z",
+ "made": "2026-11-09T09:52:58.023Z",
  "said": {
   "11b54859": "Nnn...",
   "38deadf5": "rrrr.",
@@ -3161,7 +3199,13 @@
    "3b37d64e": "whole/harvey/3b37d64e-4crzui.mp3",
    "ed29c7a4": "whole/harvey/ed29c7a4-4crzui.mp3",
    "3fdb500c": "whole/harvey/3fdb500c-4crzui.mp3",
-   "cab83220": "whole/harvey/cab83220-4crzui.mp3"
+   "cab83220": "whole/harvey/cab83220-4crzui.mp3",
+   "c1b498eb": "whole/harvey/c1b498eb-4crzui.mp3",
+   "aae3ad20": "whole/harvey/aae3ad20-4crzui.mp3",
+   "01a2beaf": "whole/harvey/01a2beaf-4crzui.mp3",
+   "4b2b5973": "whole/harvey/4b2b5973-4crzui.mp3",
+   "745847ed": "whole/harvey/745847ed-4crzui.mp3",
+   "b4cbf386": "whole/harvey/b4cbf386-4crzui.mp3"
   },
   "rex": {
    "10271631": "whole/rex/10271631-4crzui.mp3",
@@ -3223,7 +3267,13 @@
    "3b37d64e": "whole/rex/3b37d64e-4crzui.mp3",
    "ed29c7a4": "whole/rex/ed29c7a4-4crzui.mp3",
    "3fdb500c": "whole/rex/3fdb500c-4crzui.mp3",
-   "cab83220": "whole/rex/cab83220-4crzui.mp3"
+   "cab83220": "whole/rex/cab83220-4crzui.mp3",
+   "c1b498eb": "whole/rex/c1b498eb-4crzui.mp3",
+   "aae3ad20": "whole/rex/aae3ad20-4crzui.mp3",
+   "01a2beaf": "whole/rex/01a2beaf-4crzui.mp3",
+   "4b2b5973": "whole/rex/4b2b5973-4crzui.mp3",
+   "745847ed": "whole/rex/745847ed-4crzui.mp3",
+   "b4cbf386": "whole/rex/b4cbf386-4crzui.mp3"
   },
   "samantha": {
    "10271631": "whole/samantha/10271631-4crzui.mp3",
@@ -3285,7 +3335,13 @@
    "3b37d64e": "whole/samantha/3b37d64e-4crzui.mp3",
    "ed29c7a4": "whole/samantha/ed29c7a4-4crzui.mp3",
    "3fdb500c": "whole/samantha/3fdb500c-4crzui.mp3",
-   "cab83220": "whole/samantha/cab83220-4crzui.mp3"
+   "cab83220": "whole/samantha/cab83220-4crzui.mp3",
+   "c1b498eb": "whole/samantha/c1b498eb-4crzui.mp3",
+   "aae3ad20": "whole/samantha/aae3ad20-4crzui.mp3",
+   "01a2beaf": "whole/samantha/01a2beaf-4crzui.mp3",
+   "4b2b5973": "whole/samantha/4b2b5973-4crzui.mp3",
+   "745847ed": "whole/samantha/745847ed-4crzui.mp3",
+   "b4cbf386": "whole/samantha/b4cbf386-4crzui.mp3"
   },
   "anthony": {
    "10271631": "whole/anthony/10271631-4crzui.mp3",
@@ -3347,7 +3403,13 @@
    "3b37d64e": "whole/anthony/3b37d64e-4crzui.mp3",
    "ed29c7a4": "whole/anthony/ed29c7a4-4crzui.mp3",
    "3fdb500c": "whole/anthony/3fdb500c-4crzui.mp3",
-   "cab83220": "whole/anthony/cab83220-4crzui.mp3"
+   "cab83220": "whole/anthony/cab83220-4crzui.mp3",
+   "c1b498eb": "whole/anthony/c1b498eb-4crzui.mp3",
+   "aae3ad20": "whole/anthony/aae3ad20-4crzui.mp3",
+   "01a2beaf": "whole/anthony/01a2beaf-4crzui.mp3",
+   "4b2b5973": "whole/anthony/4b2b5973-4crzui.mp3",
+   "745847ed": "whole/anthony/745847ed-4crzui.mp3",
+   "b4cbf386": "whole/anthony/b4cbf386-4crzui.mp3"
   },
   "alaya": {
    "10271631": "whole/alaya/10271631-4crzui.mp3",
@@ -3409,7 +3471,13 @@
    "3b37d64e": "whole/alaya/3b37d64e-4crzui.mp3",
    "ed29c7a4": "whole/alaya/ed29c7a4-4crzui.mp3",
    "3fdb500c": "whole/alaya/3fdb500c-4crzui.mp3",
-   "cab83220": "whole/alaya/cab83220-4crzui.mp3"
+   "cab83220": "whole/alaya/cab83220-4crzui.mp3",
+   "c1b498eb": "whole/alaya/c1b498eb-4crzui.mp3",
+   "aae3ad20": "whole/alaya/aae3ad20-4crzui.mp3",
+   "01a2beaf": "whole/alaya/01a2beaf-4crzui.mp3",
+   "4b2b5973": "whole/alaya/4b2b5973-4crzui.mp3",
+   "745847ed": "whole/alaya/745847ed-4crzui.mp3",
+   "b4cbf386": "whole/alaya/b4cbf386-4crzui.mp3"
   },
   "rory": {
    "10271631": "whole/rory/10271631-4crzui.mp3",
@@ -3471,7 +3539,13 @@
    "3b37d64e": "whole/rory/3b37d64e-4crzui.mp3",
    "ed29c7a4": "whole/rory/ed29c7a4-4crzui.mp3",
    "3fdb500c": "whole/rory/3fdb500c-4crzui.mp3",
-   "cab83220": "whole/rory/cab83220-4crzui.mp3"
+   "cab83220": "whole/rory/cab83220-4crzui.mp3",
+   "c1b498eb": "whole/rory/c1b498eb-4crzui.mp3",
+   "aae3ad20": "whole/rory/aae3ad20-4crzui.mp3",
+   "01a2beaf": "whole/rory/01a2beaf-4crzui.mp3",
+   "4b2b5973": "whole/rory/4b2b5973-4crzui.mp3",
+   "745847ed": "whole/rory/745847ed-4crzui.mp3",
+   "b4cbf386": "whole/rory/b4cbf386-4crzui.mp3"
   }
  },
  "wholeTexts": {
@@ -3535,7 +3609,13 @@
    "3b37d64e": "Nailed it, Harvey!",
    "ed29c7a4": "Well done, Harvey!",
    "3fdb500c": "You came back for more, Harvey!",
-   "cab83220": "Let's warm up with two easy ones, Harvey!"
+   "cab83220": "Let's warm up with two easy ones, Harvey!",
+   "c1b498eb": "Come on Harvey, five quick questions on our walk!",
+   "aae3ad20": "Lead the way, Harvey!",
+   "01a2beaf": "Let's work it out together, Harvey!",
+   "4b2b5973": "What a lovely walk, Harvey!",
+   "745847ed": "My paws are so happy, Harvey!",
+   "b4cbf386": "We did the whole walk together, Harvey!"
   },
   "rex": {
    "10271631": "Mum and Rex went to the shop.",
@@ -3597,7 +3677,13 @@
    "3b37d64e": "Nailed it, Rex!",
    "ed29c7a4": "Well done, Rex!",
    "3fdb500c": "You came back for more, Rex!",
-   "cab83220": "Let's warm up with two easy ones, Rex!"
+   "cab83220": "Let's warm up with two easy ones, Rex!",
+   "c1b498eb": "Come on Rex, five quick questions on our walk!",
+   "aae3ad20": "Lead the way, Rex!",
+   "01a2beaf": "Let's work it out together, Rex!",
+   "4b2b5973": "What a lovely walk, Rex!",
+   "745847ed": "My paws are so happy, Rex!",
+   "b4cbf386": "We did the whole walk together, Rex!"
   },
   "samantha": {
    "10271631": "Mum and Samantha went to the shop.",
@@ -3659,7 +3745,13 @@
    "3b37d64e": "Nailed it, Samantha!",
    "ed29c7a4": "Well done, Samantha!",
    "3fdb500c": "You came back for more, Samantha!",
-   "cab83220": "Let's warm up with two easy ones, Samantha!"
+   "cab83220": "Let's warm up with two easy ones, Samantha!",
+   "c1b498eb": "Come on Samantha, five quick questions on our walk!",
+   "aae3ad20": "Lead the way, Samantha!",
+   "01a2beaf": "Let's work it out together, Samantha!",
+   "4b2b5973": "What a lovely walk, Samantha!",
+   "745847ed": "My paws are so happy, Samantha!",
+   "b4cbf386": "We did the whole walk together, Samantha!"
   },
   "anthony": {
    "10271631": "Mum and Anthony went to the shop.",
@@ -3721,7 +3813,13 @@
    "3b37d64e": "Nailed it, Anthony!",
    "ed29c7a4": "Well done, Anthony!",
    "3fdb500c": "You came back for more, Anthony!",
-   "cab83220": "Let's warm up with two easy ones, Anthony!"
+   "cab83220": "Let's warm up with two easy ones, Anthony!",
+   "c1b498eb": "Come on Anthony, five quick questions on our walk!",
+   "aae3ad20": "Lead the way, Anthony!",
+   "01a2beaf": "Let's work it out together, Anthony!",
+   "4b2b5973": "What a lovely walk, Anthony!",
+   "745847ed": "My paws are so happy, Anthony!",
+   "b4cbf386": "We did the whole walk together, Anthony!"
   },
   "alaya": {
    "10271631": "Mum and Alaya went to the shop.",
@@ -3783,7 +3881,13 @@
    "3b37d64e": "Nailed it, Alaya!",
    "ed29c7a4": "Well done, Alaya!",
    "3fdb500c": "You came back for more, Alaya!",
-   "cab83220": "Let's warm up with two easy ones, Alaya!"
+   "cab83220": "Let's warm up with two easy ones, Alaya!",
+   "c1b498eb": "Come on Alaya, five quick questions on our walk!",
+   "aae3ad20": "Lead the way, Alaya!",
+   "01a2beaf": "Let's work it out together, Alaya!",
+   "4b2b5973": "What a lovely walk, Alaya!",
+   "745847ed": "My paws are so happy, Alaya!",
+   "b4cbf386": "We did the whole walk together, Alaya!"
   },
   "rory": {
    "10271631": "Mum and Rory went to the shop.",
@@ -3845,7 +3949,13 @@
    "3b37d64e": "Nailed it, Rory!",
    "ed29c7a4": "Well done, Rory!",
    "3fdb500c": "You came back for more, Rory!",
-   "cab83220": "Let's warm up with two easy ones, Rory!"
+   "cab83220": "Let's warm up with two easy ones, Rory!",
+   "c1b498eb": "Come on Rory, five quick questions on our walk!",
+   "aae3ad20": "Lead the way, Rory!",
+   "01a2beaf": "Let's work it out together, Rory!",
+   "4b2b5973": "What a lovely walk, Rory!",
+   "745847ed": "My paws are so happy, Rory!",
+   "b4cbf386": "We did the whole walk together, Rory!"
   }
  }
 }

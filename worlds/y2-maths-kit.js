@@ -628,7 +628,7 @@ function renderGame() {
   S.ctx.area.innerHTML = `<div class="mm" id="mm">
     <div class="play">
       <div class="mcard stage">
-        <div class="lvl-name">${S.ctx.warm ? `<span class="warm-chip">🔥 Warm-up ${S.ctx.index + 1} of ${S.ctx.count}</span> ${esc(S.ctx.level.name)}` : `${esc(S.ctx.level.name)} · Question ${S.ctx.index + 1} of ${S.ctx.count}`}</div>
+        ${S.ctx.walk ? '' : `<div class="lvl-name">${S.ctx.warm ? `<span class="warm-chip">🔥 Warm-up ${S.ctx.index + 1} of ${S.ctx.count}</span> ${esc(S.ctx.level.name)}` : `${esc(S.ctx.level.name)} · Question ${S.ctx.index + 1} of ${S.ctx.count}`}</div>`}
         ${quest ? `<div class="quest">${PAW}<span>${esc(quest)}</span></div>` : ''}
         <div class="prompt-row">
           <div class="prompt">${q.prompt}</div>
@@ -1107,6 +1107,7 @@ function world(d) {
     id: d.id, subject: 'maths', year: d.year || 2, name: d.name, tag: d.tag, icon: d.icon, color: d.color, tint: d.tint, intro: d.intro,
     layout: 'full', helpFrom: 2, hintNames: ['A clue', 'Step by step', 'Glowing buttons'], tierNames: TIER_NAMES, praise: PRAISE,
     warmUps: d.warmUps !== false, // 2 easy warm-up questions before each level (not Captain's Cove)
+    walk: d.walk !== false,       // can appear in Bonnie's Walk (not Captain's Cove)
     lines: d.lines, host: d.host,   // fixed lines for tools/make-voice.mjs to record (lines with changing numbers use the device voice)
     levels: d.levels.map((L, i) => wrapLevel(L, d.ids[i])),
     play,
