@@ -190,6 +190,8 @@ const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 /* A YYYY-MM-DD day moved by n days (local time). */
 function shiftDay(day, n) { const [y, m, d] = day.split('-').map(Number); return localDay(new Date(y, m - 1, d + n)); }
 const WALK_DAYS_KEPT = 90;
+const STARTS_DAYS_KEPT = 90, STARTS_MAX = 2000; // level starts, for the grown-ups "this week" panel
+const START_VIAS = ['map', 'again', 'next'];     // how a level was started: its stone on the map, or Play again / Next level
 const STAR_LOG_MAX = 500; // plenty for a year of new stars; the oldest go first
 const reduceMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const plural = (n, one, many = one + 's') => `${n} ${n === 1 ? one : many}`;
@@ -243,6 +245,8 @@ function normalise(raw) {
   s.daily = { day: typeof d.day === 'string' && DAY_RE.test(d.day) ? d.day : null, normalRuns: runs };
   s.starLog = (Array.isArray(s.starLog) ? s.starLog : []).filter(e => isObj(e) && typeof e.key === 'string' && typeof e.day === 'string' && DAY_RE.test(e.day))
     .map(e => ({ key: e.key, from: int(e.from, 0, 3), to: int(e.to, 0, 3), day: e.day })).filter(e => e.to > e.from).slice(-STAR_LOG_MAX);
+  s.levelStarts = (Array.isArray(s.levelStarts) ? s.levelStarts : []).filter(e => isObj(e) && typeof e.key === 'string' && typeof e.day === 'string' && DAY_RE.test(e.day))
+    .map(e => ({ key: e.key, day: e.day, via: START_VIAS.includes(e.via) ? e.via : 'map' })).slice(-STARTS_MAX);
   const wk = isObj(s.walks) ? s.walks : {}, wdays = {};
   if (isObj(wk.days)) Object.entries(wk.days).forEach(([k, v]) => { v = int(v, 0, 999); if (DAY_RE.test(k) && v) wdays[k] = v; });
   s.walks = { days: wdays, last: typeof wk.last === 'string' && DAY_RE.test(wk.last) ? wk.last : null, streak: int(wk.streak, 0, 9999),
@@ -748,10 +752,11 @@ function hintNames(w) { return w.hintNames || DEFAULT_HINTS; }
 function helpFrom(w) { return w.helpFrom || hintNames(w).length; }
 function tierNames(w) { return w.tierNames || ['On their own', ...hintNames(w)]; }
 
-function startLevel(worldId, levelId) {
+function startLevel(worldId, levelId, via = 'map') {
   const w = worldById(worldId), li = w ? w.levels.findIndex(L => L.id === levelId) : -1;
   if (li < 0) return homeScreen();
   const L = w.levels[li];
+  recordStart(keyOf(w, L), via);
   const count = L.count || (L.seq && L.seq.length) || w.perLevel || (L.items ? 6 : 8);
   const key = keyOf(w, L);
   S = load();
@@ -943,8 +948,8 @@ function finishLevel() {
       <button class="btn ghost" data-a="again">Play again</button>
       <button class="btn ghost" data-a="map">${esc(w.name)}</button>
     </div>`, a => {
-    if (a === 'next') startLevel(w.id, w.levels[li + 1].id);
-    else if (a === 'again') startLevel(w.id, L.id);
+    if (a === 'next') startLevel(w.id, w.levels[li + 1].id, 'next');
+    else if (a === 'again') startLevel(w.id, L.id, 'again');
     else worldScreen(w.id);
   });
   const eb = $('#endBonnie'); eb.style.margin = '0 auto'; animate(eb, 'happy', 600);
@@ -1259,6 +1264,76 @@ function parentGate() {
   const inp = $('#gateAns', bg); inp.focus();
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') $('[data-a="ok"]', bg).click(); });
 }
+/* Level starts (kept 90 days): every start is his own choice, because walks never start a level. */
+function recordStart(key, via) {
+  mutate(s => {
+    const t = localDay(), keep = shiftDay(t, -STARTS_DAYS_KEPT);
+    s.levelStarts = s.levelStarts.filter(e => e.day >= keep);
+    s.levelStarts.push({ key, day: t, via: START_VIAS.includes(via) ? via : 'map' });
+  });
+}
+/* Which game a save key belongs to, and a name for it (worlds from the other game may not be loaded on this page). */
+const keySubject = k => { const w = worldById(k.split('/')[0]); return w ? w.subject : /-maths-/.test(k) ? 'maths' : /-english-/.test(k) ? 'english' : null; };
+const prettyId = id => { const s = String(id || '').replace(/^y\d+-(maths|english)-/, '').replace(/-/g, ' '); return s.charAt(0).toUpperCase() + s.slice(1); };
+function keyName(k) {
+  const [wid, lid] = k.split('/'), w = worldById(wid), L = w && w.levels.find(x => x.id === lid);
+  return { world: w ? w.name : prettyId(wid), level: L ? L.name : prettyId(lid) };
+}
+/* The grown-ups "this week" numbers, all from the save. Weeks run Monday to Sunday (local time).
+   A day after today (a clock moved back) is never counted. */
+function weekReport() {
+  if (!S) S = load();
+  const today = localDay(), ws = weekStart();
+  const spans = [
+    { id: 'week', label: 'This week', from: ws, to: today },
+    { id: 'last', label: 'Last week', from: shiftDay(ws, -7), to: shiftDay(ws, -1) },
+    { id: 'four', label: 'Last 4 weeks', from: shiftDay(ws, -21), to: today },
+  ];
+  const inSpan = (d, sp) => d >= sp.from && d <= sp.to;
+  const mathsStarts = S.levelStarts.filter(e => keySubject(e.key) === 'maths');
+  spans.forEach(sp => {
+    sp.walks = Object.entries(S.walks.days).filter(([d]) => inSpan(d, sp)).reduce((n, [, v]) => n + v, 0);
+    const ms = mathsStarts.filter(e => inSpan(e.day, sp));
+    sp.mathsStarts = ms.length; sp.mathsDays = new Set(ms.map(e => e.day)).size; sp.mathsLevels = new Set(ms.map(e => e.key)).size;
+    sp.stars = { english: 0, maths: 0 };
+    S.starLog.filter(e => inSpan(e.day, sp)).forEach(e => { const sub = keySubject(e.key); if (sub in sp.stars) sp.stars[sub] += e.to - e.from; });
+  });
+  // this week's maths levels, most started first
+  const opened = {};
+  mathsStarts.filter(e => inSpan(e.day, spans[0])).forEach(e => { opened[e.key] = (opened[e.key] || 0) + 1; });
+  const openedList = Object.entries(opened).map(([key, n]) => ({ key, n, ...keyName(key) })).sort((a, b) => b.n - a.n);
+  // maths topics where the step card or glowing buttons (tiers 2 and 3) were needed most, from each level's last play
+  const topics = {};
+  Object.entries(S.logs).forEach(([key, l]) => {
+    if (keySubject(key) !== 'maths' || !l || !Array.isArray(l.tiers)) return;
+    const wid = key.split('/')[0], helped = int(l.tiers[2]) + int(l.tiers[3]), total = l.tiers.reduce((n, v) => n + int(v), 0);
+    const tp = topics[wid] || (topics[wid] = { id: wid, world: keyName(key).world, helped: 0, total: 0, worst: null });
+    tp.helped += helped; tp.total += total;
+    if (helped && (!tp.worst || helped > tp.worst.helped)) tp.worst = { level: keyName(key).level, helped };
+  });
+  const help = Object.values(topics).filter(x => x.helped).sort((a, b) => b.helped - a.helped || a.total - b.total).slice(0, 3);
+  return { today, weekFrom: ws, spans, streak: walkInfo().streak, opened: openedList, help };
+}
+function weekPanelHTML() {
+  const r = weekReport(), [y, m, d] = r.weekFrom.split('-').map(Number);
+  const monday = new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  const row = (label, f) => `<tr><th>${label}</th>${r.spans.map(sp => `<td>${f(sp)}</td>`).join('')}</tr>`;
+  return `<section class="week-panel"><h3>📅 This week</h3>
+    <p class="note">From ${esc(monday)} to today. Every maths level counted here was opened by ${esc(nameOf())} from the map: walks never open a level.</p>
+    <div class="log-wrap"><table class="log week"><thead><tr><th></th>${r.spans.map(sp => `<th>${sp.label}</th>`).join('')}</tr></thead><tbody>
+      ${row('🐾 Walks finished', sp => sp.walks)}
+      ${row('🔢 Maths levels opened', sp => sp.mathsStarts ? `${sp.mathsStarts} <small>(${plural(sp.mathsLevels, 'level')}, ${plural(sp.mathsDays, 'day')})</small>` : '0')}
+      ${row('⭐ New stars: English', sp => sp.stars.english)}
+      ${row('⭐ New stars: Maths', sp => sp.stars.maths)}
+    </tbody></table></div>
+    <p>Walk streak: <b>${plural(r.streak, 'day')}</b> in a row.</p>
+    <h4>Maths opened this week</h4>
+    ${r.opened.length ? `<ul class="week-list">${r.opened.map(o => `<li>${esc(o.world)}: <b>${esc(o.level)}</b> ${o.n > 1 ? `<small>× ${o.n}</small>` : ''}</li>`).join('')}</ul>` : `<p class="note">None yet this week.</p>`}
+    <h4>Where Bonnie's help was needed most in maths</h4>
+    ${r.help.length ? `<ul class="week-list">${r.help.map(h => `<li><b>${esc(h.world)}</b>: ${plural(h.helped, 'question')} needed the step card or glowing buttons${h.worst ? `, most in ${esc(h.worst.level)}` : ''}</li>`).join('')}</ul>
+      <p class="note">From the last play of each maths level (the table further down has the detail).</p>` : `<p class="note">No maths question has needed the step card or glowing buttons yet.</p>`}
+  </section>`;
+}
 function logTable(w) {
   const names = tierNames(w);
   const rows = w.levels.map((L, i) => { const l = S.logs[keyOf(w, L)]; if (!l) return '';
@@ -1279,6 +1354,7 @@ function parentScreen() {
       ${(GAME.otherGames || []).length ? `<div class="row-btns" style="justify-content:flex-start">${GAME.otherGames.map(g => `<a class="btn small ghost" href="${esc(g.href)}#grownups">${esc(g.icon || '')} ${esc(g.title)} settings →</a>`).join('')}</div>` : ''}
       <section><h3>Child</h3>
         <p>Playing as <b>${esc(nameOf())}</b>. To change the name, use <b>Change name</b> on the <a href="${esc(GAME.homeHref)}">Clubhouse</a> page.</p></section>
+      ${weekPanelHTML()}
       <section><h3>Bones 🦴 <span class="chip bones" style="display:inline-flex" id="pBones">${S.bones}</span></h3>
         <p class="note">In each level, the first 2 plays each day pay 1 bone for each right answer. Plays after that on the same day are extra practice: no bones per answer, but 3 bonus bones for finishing. Asking Bonnie for help pays 1 bone once per play, in any play. Each new best star pays 3 bones (only stars better than the best so far). Practice is never limited, and five different levels in a day all pay normally.</p>
         <div class="row-btns" style="justify-content:flex-start">
@@ -1583,6 +1659,8 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 .prize-row .pdesc{grid-column:2/4}
 .redeem{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
 .log-wrap{overflow-x:auto}
+.log.week td{font-weight:700;font-size:1.05rem}.log.week td small{font-weight:500;color:var(--ink-soft,#7A6A5E);font-size:.8rem}
+.week-list{margin:4px 0 8px 1.2em;padding:0}.week-list li{margin:4px 0}
 .log{border-collapse:collapse;font-size:.9rem;min-width:100%}
 .log th,.log td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
 .modal-bg{position:fixed;inset:0;background:rgba(58,45,30,.45);z-index:80;display:grid;place-items:center;padding:16px;animation:fade .2s;overflow-y:auto}
@@ -1711,6 +1789,7 @@ window.Meadow = {
   // play
   startGame, startLevel, correct, wrong, helped, askedBonnie, next, finishLevel, bubble, later, learner, isBusy, round,
   teach: { at: teachAt, CHANCE: TEACH_LEVEL_CHANCE }, // Teach Bonnie (for the tests)
+  weekReport, weekPanel: () => weekPanelHTML(), // the grown-ups "this week" numbers, and the panel
   startWalk, walkInfo, walk: { MIXES: WALK_MIXES, KEY: WALK_KEY, BONUS: WALK_BONUS, walkable, plan: () => { S = load(); return planWalk(); }, stop: stopWalk,
     skipHello: () => { if (G && G.walk && !G.done && !$('#area')) walkStep(); } }, // tests: show the first question now
   // save

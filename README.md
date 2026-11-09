@@ -211,6 +211,25 @@ A big **🐾 Bonnie's Walk** button sits at the top of the Clubhouse, above the 
   - Stopping a walk part-way (🏠 asks first) keeps the bones earned but doesn't count for the streak.
 - **The page** is `bonnies-walk.html`. It loads every world file, so a new world file is added there too.
 
+## The grown-ups "This week" panel
+
+At the top of Grown-ups (in every game) a **📅 This week** panel shows the check-in numbers, so there's no need to export the save:
+
+- **A table with three columns:** this week (Monday to today), last week, and the last 4 weeks. Its rows:
+  - **Walks finished**
+  - **Maths levels opened:** how many starts, how many different levels, and on how many days. Every one of these was Harvey's own choice from the map, because walks never open a level.
+  - **New stars**, for English and for Maths
+- **The walk streak.**
+- **Maths opened this week:** each level, most opened first.
+- **Where Bonnie's help was needed most in maths:** the 3 maths worlds where the step card or glowing buttons were used most, and the level where it happened most. This comes from the last play of each level (the same numbers as the "How each answer was reached" table further down).
+- **How it's counted:**
+  - Each level start is saved in `levelStarts` as `{ key, day, via }`. `via` is `map` (its stone), `again` (Play again) or `next` (Next level).
+  - Starts older than 90 days are cleared when a new level starts.
+  - Weeks run Monday to Sunday, local time.
+  - A day after today (a clock moved back) is never counted.
+  - Working out the numbers never changes the save.
+  - On a game page that hasn't loaded the other game's worlds, their names are made from their ids (for example "Number bonds").
+
 ## Teach Bonnie
 
 Now and then Bonnie has a go at a maths question herself, and Harvey checks her. It makes him the expert.
@@ -286,6 +305,12 @@ This means:
 - **Bonnie's dress-up:** the Bone Shop's first tab has three slots, so Bonnie can wear a hat, something on her face and something round her neck at once (`hat`, `face`, `neck` in the save). Items are listed in `HATS` in the engine, each with its `slot`, and drawn in `hatSVG`, `faceSVG` and `neckSVG`.
 - **The old beta folder** has gone. Its old offline copy is cleared by the live `sw.js`.
 - **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world. `tests/captains-cove-test.html` does the same for Captain's Cove: every claim's truth, every chest, every test that busts a claim, exactly one wrong step in the Captain's working, proofs that add up and don't give the answer away, and every right odd-one-out answer and reason.
+- **Checking the "This week" panel:** open `tests/week-test.html`. It checks:
+  - level starts are saved with the date and how, old saves load fine, and broken entries are dropped
+  - walks never count as opening a level, and starts older than 90 days are cleared
+  - every number in the panel, across a week boundary and with a clock moved back
+
+  It uses its own test save and deletes it at the end.
 - **Checking Teach Bonnie:** open `tests/teach-test.html`. It makes about 2,000 Teach Bonnie questions from every maths level and checks:
   - Bonnie's wrong answers are never right, and she's right about 1 time in 3
   - only single-number questions are used, and never Captain's Cove
