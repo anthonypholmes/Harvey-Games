@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>This Week Test</title>
+<style>
+  #report { font-family: system-ui, sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; color: #3E2F27; }
+  #report h1 { font-size: 1.4rem; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+  #report small { color: #7A6A5E; }
+</style>
+</head>
+<body>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script src="../worlds/y2-english-phonics.js"></script>
+<script src="../worlds/y2-english-tricky-words.js"></script>
+<script src="../worlds/y2-english-sentences.js"></script>
+<script src="../worlds/y2-english-stories.js"></script>
+<script src="../worlds/y2-maths-kit.js"></script>
+<script src="../worlds/y2-maths-partitioning.js"></script>
+<script src="../worlds/y2-maths-number-bonds.js"></script>
+<script src="../worlds/y2-maths-number-lines.js"></script>
+<script src="../worlds/y2-maths-arrays.js"></script>
+<script src="../worlds/y2-maths-sharing.js"></script>
+<script src="../worlds/y2-maths-sharing-fractions.js"></script>
+<script src="../worlds/y2-maths-captains-cove.js"></script>
+<script>
+/* Grown-ups "this week" checks (Stage 5): level starts are recorded (and trimmed), walks never count as opening
+   a level, and the panel's numbers across week boundaries and a clock moved back.
+   It uses its own save (meadow-save-week-test) and deletes it at the end. */
+(async () => {
+  const TEST_KEY = 'meadow-save-week-test';
+  const blank = { version: 1, name: 'Harvey', sound: false, voice: false };
+  localStorage.setItem(TEST_KEY, JSON.stringify(blank));
+  Meadow.startGame({ subject: 'walk', title: "Bonnie's Walk", icon: '🐾', homeHref: '../index.html', assetBase: '../', walk: true, needName: false, saveKey: TEST_KEY });
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const save = () => Meadow.save.get();
+  const closeModals = () => document.querySelectorAll('.modal-bg').forEach(m => m.remove());
+  const day = (m, d) => () => new Date(2026, m - 1, d, 10, 0, 0);
+  const reset = (extra = {}) => { localStorage.setItem(TEST_KEY, JSON.stringify({ ...blank, ...extra })); Meadow.save.load(); };
+  const results = [];
+  const check = (name, ok, detail) => results.push({ name, ok: !!ok, detail });
+  await sleep(1200); closeModals();
+
+  // 1. old saves load fine, and bad entries are dropped
+  reset({ name: 'Harvey', stars: { 'y2-maths-arrays/bone-groups': 2 } });
+  check('An old save loads with no level starts, and keeps its name and stars', Array.isArray(save().levelStarts) && !save().levelStarts.length && save().name === 'Harvey' && save().stars['y2-maths-arrays/bone-groups'] === 2, JSON.stringify(save().levelStarts));
+  reset({ levelStarts: [{ key: 'y2-maths-arrays/bone-groups', day: '2026-11-09', via: 'map' }, { key: 'x', day: 'Monday' }, { day: '2026-11-09' }, 'junk', { key: 'y2-maths-arrays/grid', day: '2026-11-09', via: 'teleport' }] });
+  check('Broken level starts are dropped, an unknown "via" becomes map', save().levelStarts.length === 2 && save().levelStarts[1].via === 'map', JSON.stringify(save().levelStarts));
+
+  // 2. starting levels records them; walks never do
+  reset({ settings: { warmUps: false } }); Meadow.setClock(day(11, 11));
+  Meadow.startLevel('y2-maths-number-bonds', 'bonds-10'); await sleep(10);
+  Meadow.startLevel('y2-maths-number-bonds', 'bonds-10', 'again'); await sleep(10);
+  Meadow.startLevel('y2-english-phonics', 'ai-ay', 'next'); await sleep(10);
+  const ls = save().levelStarts;
+  check('Each level start is saved with the date and how', ls.length === 3 && ls[0].key === 'y2-maths-number-bonds/bonds-10' && ls[0].day === '2026-11-11' && ls[0].via === 'map' && ls[1].via === 'again' && ls[2].via === 'next', JSON.stringify(ls));
+  closeModals(); Meadow.startWalk(); Meadow.walk.skipHello(); await sleep(20);
+  for (let i = 0; i < 5; i++) { Meadow.correct(null, { auto: false }); Meadow.next(); }
+  await sleep(30); closeModals();
+  check('A walk never counts as opening a level', save().levelStarts.length === 3, `${save().levelStarts.length} starts`);
+
+  // 3. kept for 90 days
+  reset({ levelStarts: [{ key: 'y2-maths-arrays/bone-groups', day: '2026-08-01', via: 'map' }, { key: 'y2-maths-arrays/bone-groups', day: '2026-08-20', via: 'map' }] });
+  Meadow.setClock(day(11, 11)); Meadow.startLevel('y2-maths-arrays', 'bone-groups'); await sleep(10); closeModals();
+  check('Level starts older than 90 days are cleared, newer ones kept', save().levelStarts.map(e => e.day).join() === '2026-08-20,2026-11-11', save().levelStarts.map(e => e.day).join());
+
+  // 4. the numbers, on Wednesday 11 November 2026 (the week started Monday 9th)
+  const NB = 'y2-maths-number-bonds', AR = 'y2-maths-arrays';
+  reset({
+    walks: { days: { '2026-10-18': 4, '2026-10-20': 1, '2026-11-08': 1, '2026-11-09': 2, '2026-11-11': 1, '2026-11-12': 5 }, last: '2026-11-11', streak: 3 },
+    levelStarts: [
+      { key: NB + '/bonds-10', day: '2026-11-09', via: 'map' }, { key: NB + '/bonds-10', day: '2026-11-09', via: 'again' },
+      { key: AR + '/bone-groups', day: '2026-11-10', via: 'map' }, { key: AR + '/bone-groups', day: '2026-11-08', via: 'map' },
+      { key: 'y2-english-phonics/ai-ay', day: '2026-11-10', via: 'map' }, { key: NB + '/bonds-20', day: '2026-11-13', via: 'map' },
+    ],
+    starLog: [
+      { key: 'y2-english-phonics/ai-ay', from: 0, to: 2, day: '2026-11-10' }, { key: NB + '/bonds-10', from: 1, to: 2, day: '2026-11-09' },
+      { key: AR + '/bone-groups', from: 0, to: 2, day: '2026-11-08' }, { key: AR + '/bone-groups', from: 2, to: 3, day: '2026-11-12' },
+    ],
+    logs: { [NB + '/bonds-10']: { tiers: [3, 1, 2, 2], eased: 0, when: '9 Nov' }, [NB + '/bonds-20']: { tiers: [6, 0, 1, 0] }, [AR + '/bone-groups']: { tiers: [5, 1, 1, 0] }, 'y2-english-phonics/ai-ay': { tiers: [0, 0, 0, 0, 6] } },
+  });
+  Meadow.setClock(day(11, 11));
+  const before = localStorage.getItem(TEST_KEY);
+  const r = Meadow.weekReport(), [wk, last, four] = r.spans;
+  check('The week starts on Monday', r.weekFrom === '2026-11-09', r.weekFrom);
+  check('Walks this week (a day after today is never counted)', wk.walks === 3, `${wk.walks}`);
+  check('Walks last week (Sunday 8th is last week)', last.walks === 1, `${last.walks}`);
+  check('Walks in the last 4 weeks (from Monday 19 October)', four.walks === 5, `${four.walks}`);
+  check('Walk streak', r.streak === 3, `${r.streak}`);
+  check('Maths levels opened this week: 3 starts, 2 levels, 2 days (English not counted)', wk.mathsStarts === 3 && wk.mathsLevels === 2 && wk.mathsDays === 2, JSON.stringify([wk.mathsStarts, wk.mathsLevels, wk.mathsDays]));
+  check('Maths levels opened last week', last.mathsStarts === 1, `${last.mathsStarts}`);
+  check('New stars this week, per game', wk.stars.english === 2 && wk.stars.maths === 1, JSON.stringify(wk.stars));
+  check('New stars last week, per game', last.stars.english === 0 && last.stars.maths === 2, JSON.stringify(last.stars));
+  check('This week\'s maths levels, most opened first', r.opened.length === 2 && r.opened[0].key === NB + '/bonds-10' && r.opened[0].n === 2 && r.opened[0].level === 'Bonds to 10', JSON.stringify(r.opened.map(o => [o.level, o.n])));
+  check('Where help was needed most: step card + glowing buttons, by world', r.help.length === 2 && r.help[0].world === 'Number Bonds Burrow' && r.help[0].helped === 5 && r.help[0].worst.level === 'Bonds to 10' && r.help[1].helped === 1, JSON.stringify(r.help.map(h => [h.world, h.helped, h.worst && h.worst.level])));
+  check('Working out the numbers never changes the save', localStorage.getItem(TEST_KEY) === before, '');
+
+  // 5. a week boundary: on Monday 16th everything above becomes "last week"
+  Meadow.setClock(day(11, 16));
+  const r2 = Meadow.weekReport();
+  check('Next Monday: this week starts empty', r2.spans[0].walks === 0 && r2.spans[0].mathsStarts === 0 && r2.spans[0].stars.maths === 0, JSON.stringify(r2.spans[0]));
+  check('…and last week now holds 9th to 15th (including the 12th and 13th)', r2.spans[1].walks === 8 && r2.spans[1].mathsStarts === 4 && r2.spans[1].stars.maths === 2, JSON.stringify([r2.spans[1].walks, r2.spans[1].mathsStarts, r2.spans[1].stars]));
+
+  // 6. a clock moved back: nothing in its future counts, nothing breaks
+  Meadow.setClock(day(11, 5));
+  const r3 = Meadow.weekReport();
+  check('A clock moved back: days after "today" are not counted', r3.spans[0].walks === 0 && r3.spans[2].walks === 5 && r3.spans[0].mathsStarts === 0, JSON.stringify([r3.spans[0].walks, r3.spans[2].walks]));
+
+  // 7. the panel draws
+  Meadow.setClock(day(11, 11));
+  const div = document.createElement('div'); div.innerHTML = Meadow.weekPanel();
+  const txt = div.textContent;
+  check('The panel shows the week, walks, maths opened, stars and help', /This week/.test(txt) && /Monday 9 November/.test(txt) && /Walks finished/.test(txt) && /Maths levels opened/.test(txt) && /New stars: Maths/.test(txt) && /Bonds to 10/.test(txt) && /Number Bonds Burrow/.test(txt), txt.replace(/\s+/g, ' ').slice(0, 160));
+  reset(); const empty = document.createElement('div'); empty.innerHTML = Meadow.weekPanel();
+  check('With nothing played, the panel says so kindly', /None yet this week/.test(empty.textContent) && /No maths question has needed/.test(empty.textContent), '');
+
+  Meadow.setClock(); closeModals(); localStorage.removeItem(TEST_KEY);
+  const bad = results.filter(x => !x.ok);
+  document.body.innerHTML = `<div id="report"><h1>Grown-ups "This week" Test</h1>
+    <div id="result" class="${bad.length ? 'fail' : 'pass'}">${bad.length ? `${bad.length} of ${results.length} checks failed` : `All ${results.length} checks passed`}</div>
+    <ul>${results.map(x => `<li class="${x.ok ? '' : 'bad'}">${x.ok ? '✓' : '✗'} ${x.name} <small>${x.detail || ''}</small></li>`).join('')}</ul></div>`;
+  window.TEST_DONE = { passed: results.length - bad.length, total: results.length, bad: bad.map(x => x.name + ' ' + (x.detail || '')) };
+})();
+</script>
+</body>
+</html>
