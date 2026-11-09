@@ -150,6 +150,36 @@ const SCOUT_LEADS = ['Bonnie sniffed out a clue!', 'Bonnie’s tail got in the w
 const TEAM_LEADS = ['Team Bonnie, go!', 'Bonnie needs your help!', 'Let’s do it together!'];
 const TIER_NAMES = ['Solo', 'After a clue', 'Step by step', 'Guided taps'];
 
+/* ---------- Teach Bonnie: Bonnie has a go and he checks her ----------
+   Any question with one whole-number answer box can become one (the core asks for it with make({ teach: true })).
+   Step 1: "That's right, Bonnie!" or "Oops, Bonnie!". Step 2, after Oops: he types the right answer on the pad.
+   She's wrong about 2 times in 3, with a slip a child really makes, and never wrong by accident onto the answer. */
+const TEACH = {
+  ask: ['I’ve been practising! Am I right, {N}?', 'I’m not sure about this one. Am I right?', 'Let me have a go. Is that right, {N}?', 'I had a try at this one. Can you check it for me?'],
+  oops: ['Oh! Thank you for checking. Can you show me the right answer?', 'Hmm, I mixed something up, didn’t I? What should it be?'],
+  taught: ['You’re a brilliant teacher, {N}!', 'Of course! Thank you for showing me, {N}!', 'Now I get it. Thank you, {N}!'],
+  phew: ['Phew! Thank you for checking my working, {N}!', 'Hooray, I got one right! Thank you for checking, {N}!'],
+  sure: 'Hmm, are you sure? Let’s count it together.',
+  didIt: 'Let’s check. I think I did get it this time!',
+};
+const TEACH_LINES = [...TEACH.ask, ...TEACH.oops, ...TEACH.taught, ...TEACH.phew, TEACH.sure, TEACH.didIt];
+// Bonnie's slips: off by one, off by ten (or forgetting to exchange), the digits swapped. Never the answer itself.
+function teachSlips(c) {
+  const s = new Set(near(c));
+  if (c >= 10) { s.add(c + 10); s.add(c - 10); }
+  const t = Math.floor(c / 10), o = c % 10;
+  if (c >= 10 && c <= 99 && o && t !== o) s.add(o * 10 + t);
+  return [...s].filter(v => Number.isInteger(v) && v >= 0 && v !== c);
+}
+const teachable = q => !!q && q.kind === 'boxes' && !q.inter && !q.claim && !q.work && q.type !== 'split'
+  && Array.isArray(q.answer) && q.answer.length === 1 && Number.isInteger(q.answer[0]) && q.answer[0] >= 0;
+function teachify(q) {
+  const c = q.answer[0], right = Math.random() < 1 / 3;
+  q.teach = { right, said: right ? c : pick(teachSlips(c)) };
+  return q;
+}
+const teaching = () => !!(S && S.q.teach && S.tstage === 0); // waiting for "right" or "oops"
+
 const DEFS = {};        // the world files' own settings (clue and steps), by world id
 let S = null;           // the question on screen
 let askedLevel = false; // has Bonnie been asked yet this level (the first ask earns a bone)
@@ -171,15 +201,17 @@ function play(q, ctx) {
   clearSkip();
   S = { q, ctx, values: Array(q.boxes || 1).fill(''), active: 0, locked: false, busy: false,
     tier: 0, steps: null, step: 0, solved: new Set(), tried: new Set(), cluePoint: null, zone: null,
-    vstage: 0, vpick: null, vtried: new Set(), tested: [], mood: 'claim', wstage: 0, wtried: new Set() };
+    vstage: 0, vpick: null, vtried: new Set(), tested: [], mood: 'claim', wstage: 0, wtried: new Set(), tstage: 0 };
+  if (q.teach) S.values[0] = String(q.teach.said);
   if (q.inter === 'break') { q.counts = countsOf(q.n); q.broke = 0; }
   S.pos = q.line ? (q.line.pawn === 'sit' ? q.line.sitAt : q.line.start) : null;
   ctx.area.classList.add('mm-area');
   renderGame();
   const st = Meadow.save.get();
-  if (st && st.readAloud) say(readOut(q));
+  if (q.teach) { const line = S.teachAsk; U.whenQuiet(() => { if (S && S.q === q && teaching()) say(line); }); }
+  else if (st && st.readAloud) say(readOut(q));
 }
-const readOut = q => (q.claim ? `${q.claim.text}. ` : '') + q.prompt;
+const readOut = q => (q.claim ? `${q.claim.text}. ` : '') + q.prompt + (q.teach && S && S.tstage === 0 ? ` Bonnie thinks it’s ${q.teach.said}. Is she right?` : '');
 
 /* ---------- answer boxes ---------- */
 const unsolvedBoxes = () => S.values.map((_, i) => i).filter(i => !S.solved.has(i));
@@ -334,6 +366,7 @@ function applyGuide() {
   if (q.kind === 'grid') return spot(gridOk(q.vis) ? 'key-check' : `cell-${q.vis.tr}-${q.vis.tc}`);
   if (q.kind === 'choice' || q.kind === 'chests') return spot(`choice-${q.answer[0]}`);
   if (q.kind === 'verdict') return spot(S.vstage === 0 ? `vpick-${q.verdict.right[0]}` : `vreason-${reasonsNow().answer}`);
+  if (teaching()) return spot(`teach-${q.teach.right ? 1 : 0}`);
   if (q.kind === 'steps' && S.wstage === 0) return spot(`wstep-${q.work.wrong}`);
   if (q.kind === 'tester') {
     const t = q.tests, untried = i => !S.tested.includes(i);
@@ -623,12 +656,13 @@ function questFor(q) {
 
 function renderGame() {
   const q = S.q, quest = questFor(q);
-  const hello = S.ctx.warm ? 'Warm-up time! These ones are easy.' : (S.ctx.first ?? S.ctx.index === 0) ? (q.claim ? 'Let’s test the Captain’s conjecture!' : `Woof! Let’s go, ${esc(NAME())}!`)
+  if (q.teach) S.teachAsk = fresh(TEACH.ask);
+  const hello = q.teach ? `<span><span class="big">I think it’s ${q.teach.said}!</span>${esc(U.fmt(S.teachAsk))}</span>` : S.ctx.warm ? 'Warm-up time! These ones are easy.' : (S.ctx.first ?? S.ctx.index === 0) ? (q.claim ? 'Let’s test the Captain’s conjecture!' : `Woof! Let’s go, ${esc(NAME())}!`)
     : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'verdict' ? 'Is the Captain right?' : q.kind === 'chests' ? 'Which chest does it go in?' : q.kind === 'tester' ? 'Tap a number to test it!' : q.kind === 'steps' ? 'Which step is wrong?' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
   S.ctx.area.innerHTML = `<div class="mm" id="mm">
     <div class="play">
       <div class="mcard stage">
-        ${S.ctx.walk ? '' : `<div class="lvl-name">${S.ctx.warm ? `<span class="warm-chip">🔥 Warm-up ${S.ctx.index + 1} of ${S.ctx.count}</span> ${esc(S.ctx.level.name)}` : `${esc(S.ctx.level.name)} · Question ${S.ctx.index + 1} of ${S.ctx.count}`}</div>`}
+        ${S.ctx.walk ? '' : `<div class="lvl-name">${S.ctx.warm ? `<span class="warm-chip">🔥 Warm-up ${S.ctx.index + 1} of ${S.ctx.count}</span> ${esc(S.ctx.level.name)}` : `${q.teach ? '<span class="warm-chip teach-chip">🎓 Teach Bonnie</span> ' : ''}${esc(S.ctx.level.name)} · Question ${S.ctx.index + 1} of ${S.ctx.count}`}</div>`}
         ${quest ? `<div class="quest">${PAW}<span>${esc(quest)}</span></div>` : ''}
         <div class="prompt-row">
           <div class="prompt">${q.prompt}</div>
@@ -667,6 +701,10 @@ function renderControls() {
       ${st.action ? `<div class="mstep-wait">${PAW} ${st.wait || 'Tap it up there!'}</div>`
         : `<div class="chips${st.words ? ' words' : ''}">${st.choices.map((c, i) => `<button class="mchip${st.words ? ' word' : ''}" type="button" data-chip="${i}">${c}</button>`).join('')}</div>`}
     </div>`;
+  } else if (teaching()) {
+    const b = (v, label) => `<button class="choice${S.tried.has('teach-' + v) ? ' faded' : ''}" type="button" data-teach="${v}" data-t="teach-${v}" ${S.tried.has('teach-' + v) ? 'disabled' : ''}>${label}</button>`;
+    el.innerHTML = `<div class="teach"><div class="teach-card">${PAW}<span>Bonnie’s answer</span><b>${q.teach.said}</b></div>
+      <div class="choices wordy">${b(1, 'That’s right, Bonnie!')}${b(0, 'Oops, Bonnie!')}</div></div>`;
   } else if (q.kind === 'steps' && S.wstage === 0) {
     el.innerHTML = '<div class="wait-note big">Tap the step with the mistake.</div>';
   } else if (q.kind === 'boxes' || q.kind === 'steps') {
@@ -711,6 +749,7 @@ function paintBoxes() {
     const i = +b.dataset.box;
     b.textContent = S.values[i] || '';
     b.classList.toggle('good', S.solved.has(i));
+    b.classList.toggle('bonnie', teaching());
     b.classList.toggle('active', i === S.active && !S.locked && !S.solved.has(i));
   });
 }
@@ -728,7 +767,7 @@ function redrawVisual(popFrom) {
 
 /* ---------- answering ---------- */
 function press(key) {
-  if (!live()) return;
+  if (!live() || teaching()) return;
   const q = S.q;
   if (key === 'check') return onCheck();
   if (!(q.kind === 'boxes' || (q.kind === 'steps' && S.wstage === 1)) || S.tier === 2) return;
@@ -861,6 +900,29 @@ function vreason(i, btn) {
   S.vtried.add(i); btn.classList.add('faded'); btn.disabled = true;
   raise('wrong');
 }
+// he says she's right (yes = 1) or "Oops" (0)
+function teachPick(yes, btn) {
+  if (!live() || !teaching()) return;
+  const q = S.q, t = q.teach;
+  if (!!yes === t.right) {
+    btn.classList.add('right');
+    if (t.right) return win();
+    tone([660, 880], .07, 'triangle', .1);
+    toPad();
+    const line = U.fmt(fresh(TEACH.oops));
+    feedback('info', `<span><span class="big">Oops, Bonnie!</span>${esc(line)}</span>`);
+    return say(line);
+  }
+  S.tried.add('teach-' + (yes ? 1 : 0)); btn.classList.add('faded'); btn.disabled = true;
+  if (yes) { toPad(); return raise('wrong', TEACH.sure); } // she was wrong: work it out together, with the usual help
+  // she was right after all: one mistake, then he agrees with her
+  Meadow.wrong(null, { quiet: true });
+  showVisual(); renderControls(); spot('teach-1');
+  feedback('help', `<span><span class="big">Let’s check.</span>I think I did get it this time!</span>`);
+  say(TEACH.didIt);
+}
+// from checking Bonnie to typing the right answer
+function toPad() { S.tstage = 1; S.values[0] = ''; S.active = 0; renderControls(); paintBoxes(); updateAsk(); }
 const testerReady = () => S.tested.length >= 2 || S.tested.some(i => !S.q.tests[i].ok);
 function testerHTML(q) {
   return `<div class="tests">${q.tests.map((t, i) => `<button class="tbtn${S.tested.includes(i) ? (t.ok ? ' done ok' : ' done bad') : ''}" type="button" data-test="${i}" data-t="test-${i}">${esc(t.label)}</button>`).join('')}</div>
@@ -952,7 +1014,8 @@ function win() {
     if (S.q.kind === 'chests') { const c = inMM(`.chest[data-choice="${S.q.answer[0]}"]`); if (c) c.classList.add('open'); }
     setHost(ct === false ? 'busted' : 'holds'); hostSpeak(fresh(ct === false ? h.says.busted : ct === 'sometimes' ? h.says.sometimes : h.says.holds));
   }
-  Meadow.correct(origin, { praise: S.tier === 0 ? pick(PRAISE) : pick(TEAM) });
+  const praise = S.q.teach ? fresh(S.tstage === 0 ? TEACH.phew : TEACH.taught) : S.tier === 0 ? pick(PRAISE) : pick(TEAM);
+  Meadow.correct(origin, { praise });
 }
 
 /* ---------- little extras ---------- */
@@ -1001,7 +1064,8 @@ document.addEventListener('click', e => {
   }
   if (b.id === 'mmSay') return say(readOut(S.q));
   if (b.dataset.g || b.dataset.gBowl !== undefined || b.dataset.gHole !== undefined) return gAction(b);
-  if (b.id === 'mmAsk') { if (live()) raise('ask'); return; }
+  if (b.id === 'mmAsk') { if (live()) { if (teaching()) toPad(); raise('ask'); } return; }
+  if (b.dataset.teach !== undefined) return teachPick(+b.dataset.teach, b);
   if (b.dataset.chip !== undefined) return chooseStep(+b.dataset.chip, b);
   if (b.dataset.key) return press(b.dataset.key);
   if (b.dataset.box !== undefined) {
@@ -1090,11 +1154,14 @@ function wrapLevel(L, id) {
   let used = new Set();
   return {
     id, name: L.name, blurb: L.blurb, eg: L.eg, seq: L.seq, quest: L.quest,
-    make: ({ eased, index, type, fresh }) => {
+    make: ({ eased, index, type, fresh, teach }) => {
       if (fresh ?? index === 0) used = new Set(); // fresh: the first question of a run (warm-ups come first)
       let q, guard = 0;
       do { q = L.make(type, index, eased); guard++; } while (used.has(q.key) && guard < 60);
+      // teach: try a few more for one with a single number answer; if this level has none, it stays a normal question
+      for (let k = 0; teach && !teachable(q) && k < 12; k++) { const q2 = L.make(type, index, eased); if (!used.has(q2.key)) q = q2; }
       used.add(q.key); q.eased = !!eased;
+      if (teach && teachable(q)) teachify(q);
       return q;
     },
   };
@@ -1108,7 +1175,8 @@ function world(d) {
     layout: 'full', helpFrom: 2, hintNames: ['A clue', 'Step by step', 'Glowing buttons'], tierNames: TIER_NAMES, praise: PRAISE,
     warmUps: d.warmUps !== false, // 2 easy warm-up questions before each level (not Captain's Cove)
     walk: d.walk !== false,       // can appear in Bonnie's Walk (not Captain's Cove)
-    lines: d.lines, host: d.host,   // fixed lines for tools/make-voice.mjs to record (lines with changing numbers use the device voice)
+    teach: d.teach !== false,     // Teach Bonnie questions can come up (not Captain's Cove)
+    lines: ctx => [...(d.lines ? d.lines(ctx) || [] : []), ...TEACH_LINES], host: d.host,   // fixed lines for tools/make-voice.mjs to record (lines with changing numbers use the device voice)
     levels: d.levels.map((L, i) => wrapLevel(L, d.ids[i])),
     play,
   };
@@ -1423,6 +1491,13 @@ const CSS = String.raw`
 .mm .tlog { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; background: var(--paper); border: 2px dashed var(--edge); font-size: 19px; font-weight: 600; }
 .mm .tl.ok { color: var(--good); } .mm .tl.bad { color: #A93E4F; } .mm .tl.none { color: var(--ink-soft); font-weight: 500; }
 .mm .verdicts { display: grid; gap: 8px; }
+.mm .teach .choices { grid-template-columns: 1fr; }
+.mm .box.bonnie, .mm .box.bonnie.active { border-style: dashed; border-color: var(--fur-dk); background: var(--fur-bg); color: var(--fur-dk); }
+.mm .teach { display: grid; gap: 10px; }
+.mm .teach-card { display: flex; align-items: center; gap: 10px; background: var(--fur-bg); border: 3px dashed var(--fur-dk); border-radius: 16px; padding: 10px 14px; color: var(--fur-dk); font-weight: 700; }
+.mm .teach-card svg { width: 26px; height: 26px; flex: none; }
+.mm .teach-card b { margin-left: auto; font-family: var(--f-display); font-size: 34px; color: var(--ink); }
+.mm .warm-chip.teach-chip { background: #EFE3F7; color: #5b2c9c; }
 .mm .wait-note { font-weight: 600; color: var(--ink-soft); }
 .mm .verdicts .choice[disabled]:not(.faded) { opacity: .45; box-shadow: none; }
 @media (max-width: 560px) {
@@ -1463,6 +1538,7 @@ window.MeadowMaths = {
   world, addLevels, SHAPES, rand, pick, shuffle, NAME, PL, len, pow, countsOf, partsOf, joinAnd, placeList, nameCount, colorNum, near, makesChoices,
   rd, fmtN, range, pick3, JUMPS, jumpOpts, gq, fillStep, shareDone, gridOk, shapeSVG, frac, sum, PRAISE, TIER_NAMES,
   burrow, burrowCount, burrowFull, burrowPlaced,
+  teach: { slips: teachSlips, teachable, LINES: TEACH_LINES }, // Teach Bonnie (for the tests)
   // repaint the picture after a step changes it (the burrow and other pictures, or the place value blocks)
   redraw: () => { if (!S || !root()) return; if (S.q.vis) redrawG(); else if (S.q.mode) redrawVisual(); },
   peek: () => S,   // the question on screen, read only (for the browser tests)
