@@ -211,6 +211,27 @@ A big **🐾 Bonnie's Walk** button sits at the top of the Clubhouse, above the 
   - Stopping a walk part-way (🏠 asks first) keeps the bones earned but doesn't count for the streak.
 - **The page** is `bonnies-walk.html`. It loads every world file, so a new world file is added there too.
 
+## Teach Bonnie
+
+Now and then Bonnie has a go at a maths question herself, and Harvey checks her. It makes him the expert.
+
+- **What he sees:**
+  - A 🎓 **Teach Bonnie** chip, and Bonnie's answer in a dashed box: "I think it's 9! I had a try at this one. Can you check it for me?"
+  - Two buttons: **That's right, Bonnie!** and **Oops, Bonnie!**
+  - After **Oops**, the answer box empties: "Can you show me the right answer?" He types it on the usual number pad, and Bonnie says "You're a brilliant teacher, Harvey!"
+  - If she was right and he agrees: "Phew! Thank you for checking my working!"
+- **If he gets the check wrong:**
+  - He says she's right when she isn't: "Hmm, are you sure? Let's count it together." The pad appears and Bonnie's help goes up a rung, as for any wrong answer.
+  - He says "Oops" when she was right: "Let's check. I think I did get it this time!" Then he taps **That's right**.
+  - **Ask Bonnie** while checking her means "let's work it out together": the pad appears with the help.
+- **Bonnie's answers:** she's wrong about 2 times in 3, with a slip a child really makes (off by one, off by ten or forgetting to exchange, or the digits swapped). Her wrong answer is never the right one by accident.
+- **Which questions:** any maths question with one whole-number answer box, in any world except Captain's Cove (`teach: false`). Number Lines has none, so it never gets one.
+- **How often:**
+  - **Maths levels:** about one level in two gets one Teach Bonnie question, never the first question and never a warm-up. If the chosen question can't be one, the next question that can is used. It counts like any other question: a wrong check is a mistake, help counts as help, and the right answer pays its bone.
+  - **Bonnie's Walk:** one maths stop per walk, from his second walk ever (the very first walk stays simple). Nothing can be failed there, as with the rest of the walk.
+- **Grown-ups:** under **🐾 Bonnie's Walk**, the **Teach Bonnie questions** box (on by default) turns it off everywhere. It's saved as `settings.teachBonnie`.
+- **Where it lives:** the maths kit (`worlds/y2-maths-kit.js`) turns a question into a Teach Bonnie one when the core asks with `make({ teach: true })`. The core (`js/meadow-core.js`) decides when to ask. No world file has its own Teach Bonnie code.
+
 ## Warm-ups and hiding the gap
 
 These make starting maths feel safe (the maths confidence pack, Stage 2: see `docs/MATHS_CONFIDENCE_PLAN.md`).
@@ -265,6 +286,14 @@ This means:
 - **Bonnie's dress-up:** the Bone Shop's first tab has three slots, so Bonnie can wear a hat, something on her face and something round her neck at once (`hat`, `face`, `neck` in the save). Items are listed in `HATS` in the engine, each with its `slot`, and drawn in `hatSVG`, `faceSVG` and `neckSVG`.
 - **The old beta folder** has gone. Its old offline copy is cleared by the live `sw.js`.
 - **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world. `tests/captains-cove-test.html` does the same for Captain's Cove: every claim's truth, every chest, every test that busts a claim, exactly one wrong step in the Captain's working, proofs that add up and don't give the answer away, and every right odd-one-out answer and reason.
+- **Checking Teach Bonnie:** open `tests/teach-test.html`. It makes about 2,000 Teach Bonnie questions from every maths level and checks:
+  - Bonnie's wrong answers are never right, and she's right about 1 time in 3
+  - only single-number questions are used, and never Captain's Cove
+  - about half of levels get one, never as the first question
+  - one per walk from the second walk, none on the first walk, none with the setting off
+  - the taps (right, oops, the pad, the kind lines), and that a wrong check counts as a mistake in a level
+
+  It uses its own test save and deletes it at the end.
 - **Checking Bonnie's Walk:** open `tests/walk-test.html`. It plans hundreds of walks with the real worlds and checks:
   - every mix's order
   - that maths only comes from the allowed levels, with easy numbers and quick taps

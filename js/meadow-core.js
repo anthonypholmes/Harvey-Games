@@ -250,7 +250,7 @@ function normalise(raw) {
   const st = isObj(s.settings) ? s.settings : {};
   s.settings = { ...st, unlockAll: isObj(st.unlockAll) ? st.unlockAll : {},
     years: Array.isArray(st.years) && st.years.length ? [...new Set(st.years.map(Number).filter(Number.isFinite))] : null,
-    warmUps: st.warmUps !== false, walkMix: WALK_MIXES[st.walkMix] ? st.walkMix : 'gentle' };
+    warmUps: st.warmUps !== false, teachBonnie: st.teachBonnie !== false, walkMix: WALK_MIXES[st.walkMix] ? st.walkMix : 'gentle' };
   return s;
 }
 
@@ -765,6 +765,7 @@ function startLevel(worldId, levelId) {
   G.warmN = !G.items && w.warmUps && S.settings.warmUps ? 2 : 0; G.warm = 0;
   G.warmTypes = L.seq ? shuffle([...new Set(L.seq)]).slice(0, 2) : [];
   while (G.warmTypes.length < G.warmN) G.warmTypes.push(L.seq ? G.warmTypes[0] : undefined);
+  G.teachAt = !G.items && w.teach && S.settings.teachBonnie ? teachAt(G.count) : -1; G.taught = false;
   const full = w.layout === 'full';
   show(`
     <div class="game-top">
@@ -781,6 +782,10 @@ function startLevel(worldId, levelId) {
   if (!full) { $('#gameBonnie').onclick = askBonnie; $('#askBtn').onclick = askBonnie; }
   nextQuestion();
 }
+/* Teach Bonnie in a maths level: which question (from the 2nd on) asks for one, or -1 for none (about half of levels).
+   If that question can't be one (it isn't a single number answer), the next ones are asked instead. */
+function teachAt(count) { return count > 1 && Math.random() < TEACH_LEVEL_CHANCE ? 1 + Math.floor(Math.random() * (count - 1)) : -1; }
+const TEACH_LEVEL_CHANCE = 0.5;
 /* Bonnie beside the question, with Ask Bonnie and the hint ladder (worlds that aren't full width). */
 function dockHTML(w) {
   return `<aside class="card dock">
@@ -815,7 +820,9 @@ function nextQuestion() {
   // fresh: the first question of the run (a world can start its "no repeats" list again)
   const q = G.items ? G.items[G.i] : warm
     ? G.L.make({ eased: true, warm: true, fresh: G.warm === 0, index: G.warm, count: G.warmN, level: G.L, world: G.w, type: G.warmTypes[G.warm] })
-    : G.L.make({ eased, fresh: G.i === 0 && !G.warmN, index: G.i, count: G.count, level: G.L, world: G.w, type: G.L.seq ? G.L.seq[G.i] : undefined });
+    : G.L.make({ eased, fresh: G.i === 0 && !G.warmN, index: G.i, count: G.count, level: G.L, world: G.w, type: G.L.seq ? G.L.seq[G.i] : undefined,
+      teach: !G.taught && G.teachAt > 0 && G.i >= G.teachAt });
+  if (q && q.teach) G.taught = true;
   G.q = q; G.qEased = !G.items && !warm && eased;
   (G.L.play || G.w.play)(q, ctx());
   if (G.extra && G.i === 0 && G.warm === 0) bubble(esc(fmt(LINES.extraPractice)));
@@ -970,13 +977,16 @@ function walkMathsPool() {
     .map(w => ({ w, levels: w.levels.filter((L, i) => typeof L.make === 'function' && (i < 2 || starsOf(w, L) > 0)) })).filter(x => x.levels.length);
 }
 /* An easy, quick-tap question from this maths level, or null if it has none. */
-function walkMaths(w, L) {
-  for (const type of L.seq ? shuffle([...new Set(L.seq)]) : [undefined]) for (let n = 0; n < 5; n++) {
-    const q = L.make({ eased: true, walk: true, fresh: true, index: 0, count: 1, level: L, world: w, type });
-    if (walkable(q)) return q;
-  }
+function walkMaths(w, L, teach = false) {
+  const types = L.seq ? shuffle([...new Set(L.seq)]) : [undefined];
+  const mk = (type, tb) => L.make({ eased: true, walk: true, fresh: true, index: 0, count: 1, level: L, world: w, type, teach: tb });
+  // teach: a Teach Bonnie question if this level can make one, otherwise a normal one
+  if (teach && w.teach) for (const type of types) for (let n = 0; n < 3; n++) { const q = mk(type, true); if (walkable(q) && q.teach) return q; }
+  for (const type of types) for (let n = 0; n < 5; n++) { const q = mk(type, false); if (walkable(q)) return q; }
   return null;
 }
+/* Has he finished a walk before? (The very first walk stays simple: no Teach Bonnie.) */
+const walkedBefore = () => !!(S.walks.last || Object.keys(S.walks.days).length);
 /* The 5 stops: [{ w, L, q }] in the order of the mix. */
 function planWalk() {
   const mix = WALK_MIXES[S.settings.walkMix] || WALK_MIXES.gentle;
@@ -986,13 +996,21 @@ function planWalk() {
   const at = worlds.findIndex(x => x.w.id === S.walks.topic);
   if (at >= 0) worlds = [...worlds.slice(at + 1), ...worlds.slice(0, at + 1)];
   const maths = [], used = new Set();
+  // Teach Bonnie: one maths stop, chosen at random (if that level can't make one, the next maths stop tries)
+  let teachFrom = S.settings.teachBonnie && walkedBefore() && needM ? Math.floor(Math.random() * needM) : Infinity, taught = false;
   for (let lap = 0; lap < 3 && maths.length < needM; lap++) for (const x of worlds) {
     if (maths.length >= needM) break;
     for (const L of shuffle(x.levels)) {
       if (used.has(keyOf(x.w, L))) continue;
-      const q = walkMaths(x.w, L); if (!q) continue;
+      const q = walkMaths(x.w, L, !taught && maths.length >= teachFrom); if (!q) continue;
+      if (q.teach) taught = true;
       used.add(keyOf(x.w, L)); maths.push({ w: x.w, L, q }); break;
     }
+  }
+  // the chosen stop's level had no single-number questions: try the earlier stops' levels
+  for (let i = 0; !taught && teachFrom < Infinity && i < maths.length; i++) {
+    const m = maths[i], q = walkMaths(m.w, m.L, true);
+    if (q && q.teach) { m.q = q; taught = true; }
   }
   // English: different levels where possible, and never the same question twice
   const eng = shuffle(walkEnglishPool()), seen = new Set();
@@ -1032,7 +1050,7 @@ function startWalk() {
   $('#walkQ').innerHTML = `<div class="card walk-hello"><p>${esc(hello)}</p></div>`;
   say(hello);
   if (extra) whenQuiet(() => say(LINES.extraPractice));
-  const g = G; setTimeout(() => whenQuiet(() => { if (G === g && !G.done) walkStep(); }), 900);
+  const g = G; setTimeout(() => whenQuiet(() => { if (G === g && !G.done && !$('#area')) walkStep(); }), 900); // (skipHello may have shown it already)
 }
 /* Put Bonnie on the stone she's at, and colour the stones behind her. */
 function renderPath() {
@@ -1286,7 +1304,8 @@ function parentScreen() {
       <section><h3>🐾 Bonnie's Walk</h3>
         <p class="note">Five quick questions from the Clubhouse, mixing English and easy maths. Nothing can be failed. Choose the mix (it's the same in every game):</p>
         ${Object.entries(WALK_MIX_NAMES).map(([k, v]) => `<label><input type="radio" name="walkMix" value="${k}" ${S.settings.walkMix === k ? 'checked' : ''}> ${esc(v)}</label>`).join('')}
-        <p class="note">Walk streak: ${plural(walkInfo().streak, 'day')} in a row.</p></section>
+        <p class="note">Walk streak: ${plural(walkInfo().streak, 'day')} in a row.</p>
+        <label><input type="checkbox" id="pTeach" ${S.settings.teachBonnie ? 'checked' : ''}> Teach Bonnie questions: now and then Bonnie has a go at a maths question and ${esc(fmt('{N}'))} checks her answer (once in a walk from the second walk on, and in about half of maths levels)</label></section>
       <section><h3>Sound & voice</h3>
         <label><input type="checkbox" id="pSfx" ${S.sound ? 'checked' : ''}> Sound effects</label>
         <label><input type="checkbox" id="pVoice" ${S.voice ? 'checked' : ''}> Bonnie talks</label>
@@ -1353,6 +1372,7 @@ function parentScreen() {
   });
   $('#pUnlock').onchange = e => mutate(s => { s.settings.unlockAll[subj] = e.target.checked; });
   if ($('#pWarm')) $('#pWarm').onchange = e => mutate(s => { s.settings.warmUps = e.target.checked; });
+  if ($('#pTeach')) $('#pTeach').onchange = e => mutate(s => { s.settings.teachBonnie = e.target.checked; });
   $('#backupBtn').onclick = () => window.MeadowBackup && window.MeadowBackup.open();
   $('#resetProg').onclick = () => modal(`<h2>Reset ${esc(GAME.title)} stars?</h2><p>All stars in ${esc(GAME.title)} will be cleared. Bones and prizes are kept.</p>
     <div class="btns"><button class="btn berry" data-a="yes">Reset</button><button class="btn ghost" data-a="no">Cancel</button></div>`, a => {
@@ -1690,6 +1710,7 @@ window.Meadow = {
   registerWorld, addLevels, worlds: subjectWorlds, world: worldById, visibleWorlds, shownYears, levelUnlocked, starSummary, starsThisWeek, weekStart,
   // play
   startGame, startLevel, correct, wrong, helped, askedBonnie, next, finishLevel, bubble, later, learner, isBusy, round,
+  teach: { at: teachAt, CHANCE: TEACH_LEVEL_CHANCE }, // Teach Bonnie (for the tests)
   startWalk, walkInfo, walk: { MIXES: WALK_MIXES, KEY: WALK_KEY, BONUS: WALK_BONUS, walkable, plan: () => { S = load(); return planWalk(); }, stop: stopWalk,
     skipHello: () => { if (G && G.walk && !G.done && !$('#area')) walkStep(); } }, // tests: show the first question now
   // save

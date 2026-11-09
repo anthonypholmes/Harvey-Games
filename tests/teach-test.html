@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Teach Bonnie Test</title>
+<style>
+  #report { font-family: system-ui, sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; color: #3E2F27; }
+  #report h1 { font-size: 1.4rem; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+  #report small { color: #7A6A5E; }
+  #report table { border-collapse: collapse; font-size: .85rem; margin-top: 8px; }
+  #report td, #report th { border: 1px solid #EADFCB; padding: 3px 8px; text-align: left; }
+</style>
+</head>
+<body>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script src="../worlds/y2-english-phonics.js"></script>
+<script src="../worlds/y2-english-tricky-words.js"></script>
+<script src="../worlds/y2-english-sentences.js"></script>
+<script src="../worlds/y2-english-stories.js"></script>
+<script src="../worlds/y2-maths-kit.js"></script>
+<script src="../worlds/y2-maths-partitioning.js"></script>
+<script src="../worlds/y2-maths-number-bonds.js"></script>
+<script src="../worlds/y2-maths-number-lines.js"></script>
+<script src="../worlds/y2-maths-arrays.js"></script>
+<script src="../worlds/y2-maths-sharing.js"></script>
+<script src="../worlds/y2-maths-sharing-fractions.js"></script>
+<script src="../worlds/y2-maths-captains-cove.js"></script>
+<script>
+/* Teach Bonnie checks (Stage 4): Bonnie's wrong answers are never right, how often she has a go,
+   the walk's Teach Bonnie stop, and the taps (right / oops / typing the answer).
+   It uses its own save (meadow-save-teach-test), so the real games are never touched. The save is deleted at the end. */
+(async () => {
+  const TEST_KEY = 'meadow-save-teach-test';
+  const blank = { version: 1, name: 'Harvey', sound: false, voice: false };
+  localStorage.setItem(TEST_KEY, JSON.stringify(blank));
+  Meadow.startGame({ subject: 'walk', title: "Bonnie's Walk", icon: '🐾', homeHref: '../index.html', assetBase: '../', walk: true, needName: false, saveKey: TEST_KEY });
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const save = () => Meadow.save.get();
+  const closeModals = () => document.querySelectorAll('.modal-bg').forEach(m => m.remove());
+  const reset = (extra = s => {}) => { localStorage.setItem(TEST_KEY, JSON.stringify(blank)); Meadow.save.load(); Meadow.save.mutate(extra); };
+  const walkedBefore = s => { s.walks.last = '2026-11-01'; s.walks.days = { '2026-11-01': 1 }; };
+  const T = MeadowMaths.teach, peek = () => MeadowMaths.peek();
+  const tap = sel => { const b = document.querySelector(sel); if (b) b.click(); return !!b; };
+  const results = [];
+  const check = (name, ok, detail) => results.push({ name, ok: !!ok, detail });
+  await sleep(1200); closeModals();
+
+  // 1. Bonnie's slips are never the answer
+  let slipsBad = 0, slipsEmpty = 0;
+  for (let c = 0; c <= 2000; c++) { const s = T.slips(c); if (!s.length) slipsEmpty++; if (s.some(v => v === c || v < 0 || !Number.isInteger(v))) slipsBad++; }
+  check('Bonnie\'s slips (0 to 2000) are never the right answer, never negative', slipsBad === 0 && slipsEmpty === 0, `${slipsBad} bad, ${slipsEmpty} with none`);
+  check('The slips are off by one, off by ten and swapped digits', JSON.stringify(T.slips(47)) === JSON.stringify([46, 48, 57, 37, 74]), JSON.stringify(T.slips(47)));
+
+  // 2. every maths level, made as Teach Bonnie questions many times
+  const maths = Meadow.worlds('maths');
+  let made = 0, wrongOk = 0, rightOk = 0, rights = 0, kindOk = 0, cove = 0;
+  const canTeach = {};
+  for (const w of maths) for (const L of w.levels) {
+    if (typeof L.make !== 'function') continue;
+    for (let k = 0; k < 120; k++) {
+      const type = L.seq ? L.seq[k % L.seq.length] : undefined;
+      const q = L.make({ eased: k % 2 === 0, fresh: k === 0, index: k % 8, count: 8, level: L, world: w, type, teach: true });
+      if (!q.teach) continue;
+      if (w.teach === false) cove++;
+      made++; canTeach[`${w.name}: ${L.name}`] = (canTeach[`${w.name}: ${L.name}`] || 0) + 1;
+      if (T.teachable(q)) kindOk++;
+      if (q.teach.right) { rights++; if (q.teach.said === q.answer[0]) rightOk++; }
+      else if (q.teach.said !== q.answer[0] && q.teach.said >= 0) wrongOk++;
+    }
+  }
+  check(`Teach Bonnie made ${made} questions across the maths levels`, made > 1000, `${Object.keys(canTeach).length} levels can make one`);
+  check('When Bonnie is wrong, her answer is never accidentally right', wrongOk === made - rights, `${wrongOk} of ${made - rights}`);
+  check('When Bonnie is right, her answer is the answer', rightOk === rights, `${rightOk} of ${rights}`);
+  check('Bonnie is wrong about 2 times in 3', rights / made > .28 && rights / made < .39, `right ${(100 * rights / made).toFixed(1)}% of the time`);
+  check('Only questions with one whole-number answer box become Teach Bonnie questions', kindOk === made, `${kindOk} of ${made}`);
+  check('Captain\'s Cove never has one', cove === 0, `${cove}`);
+  // without teach: true, never
+  let plain = 0; for (const w of maths) for (const L of w.levels) for (let k = 0; k < 10; k++) if (L.make({ eased: true, index: k, type: L.seq ? L.seq[k % L.seq.length] : undefined }).teach) plain++;
+  check('A question is only a Teach Bonnie question when asked for', plain === 0, `${plain}`);
+
+  // 3. how often in levels: about half, never the first question
+  let none = 0, first = 0, past = 0, n = 6000;
+  for (let k = 0; k < n; k++) { const a = Meadow.teach.at(8); if (a < 0) none++; else { if (a === 0) first++; if (a >= 8) past++; } }
+  check('In maths levels: about one level in two gets one', none / n > .46 && none / n < .54, `${(100 * none / n).toFixed(1)}% get none`);
+  check('…never as the first question, always inside the level', first === 0 && past === 0, `first ${first}, past the end ${past}`);
+  check('A one-question level never gets one', [0, 1, 2, 3, 4].every(() => Meadow.teach.at(1) === -1), '');
+
+  // 4. walks: none on the very first walk, then exactly one maths stop
+  reset();
+  let firstWalk = 0; for (let k = 0; k < 60; k++) if (Meadow.walk.plan().some(p => p.q.teach)) firstWalk++;
+  check('The very first walk has no Teach Bonnie question', firstWalk === 0, `${firstWalk} of 60`);
+  for (const mix of Object.keys(Meadow.walk.MIXES)) {
+    reset(s => { walkedBefore(s); s.settings.walkMix = mix; });
+    let one = 0, onMaths = 0; const n2 = 60;
+    for (let k = 0; k < n2; k++) { const p = Meadow.walk.plan(), t = p.filter(x => x.q.teach); if (t.length === 1) one++; if (t.every(x => x.w.subject === 'maths')) onMaths++; }
+    check(`${mix}: from the second walk, exactly one Teach Bonnie question per walk, on a maths stop`, one === n2 && onMaths === n2, `${one} of ${n2}`);
+  }
+  reset(s => { walkedBefore(s); s.settings.teachBonnie = false; });
+  let off = 0; for (let k = 0; k < 40; k++) if (Meadow.walk.plan().some(p => p.q.teach)) off++;
+  check('With the grown-ups setting off: no Teach Bonnie in walks', off === 0, `${off} of 40`);
+  check('The setting is on by default for an old save', (() => { reset(); return save().settings.teachBonnie === true; })(), '');
+
+  // 5. the taps, in a real walk: right / oops, then typing the answer
+  const seen = { right: false, wrong: false };
+  let flowOk = { boxShows: true, waits: true, padAfterOops: true, padAfterSure: true, didIt: true, endsRight: true };
+  async function toTeach() {
+    closeModals(); Meadow.startWalk(); Meadow.walk.skipHello(); await sleep(20);
+    for (let i = 0; i < 5; i++) {
+      if (peek() && peek().q.teach && peek().ctx.area.isConnected) return true;
+      Meadow.correct(null, { auto: false }); Meadow.next(); await sleep(5);
+    }
+    return false;
+  }
+  async function typeAnswer() {
+    const a = String(peek().q.answer[0]);
+    for (const d of a) tap(`#mm [data-key="${d}"]`);
+    tap('#mm [data-key="check"]'); await sleep(10);
+  }
+  for (let run = 0; run < 30 && !(seen.right && seen.wrong && run > 6); run++) {
+    reset(s => { walkedBefore(s); s.settings.walkMix = 'more'; });
+    if (!(await toTeach())) continue;
+    const t = peek().q.teach, i0 = Meadow.round().index;
+    if (document.querySelector('#mm .box') && document.querySelector('#mm .box').textContent !== String(t.said)) flowOk.boxShows = false;
+    if (!document.querySelector('#mm .teach-card') || document.querySelector('#mm .teach-card b').textContent !== String(t.said)) flowOk.boxShows = false;
+    if (t.right) {
+      seen.right = true;
+      if (run % 2) { // he says "Oops" by mistake: she says she did get it, and the walk waits
+        tap('#mm [data-teach="0"]'); await sleep(10);
+        if (Meadow.round().index !== i0 || Meadow.round().busy) flowOk.waits = false;
+        if (!/did get it/.test(document.querySelector('#mm #bubble').textContent)) flowOk.didIt = false;
+      }
+      tap('#mm [data-teach="1"]'); await sleep(10);
+      if (!Meadow.round().busy) flowOk.endsRight = false;
+    } else {
+      seen.wrong = true;
+      if (run % 2) { // he says she's right by mistake: work it out together on the pad
+        tap('#mm [data-teach="1"]'); await sleep(10);
+        if (Meadow.round().index !== i0 || Meadow.round().busy) flowOk.waits = false;
+        if (!document.querySelector('#mm #pad') || peek().tier < 1) flowOk.padAfterSure = false;
+      } else {
+        tap('#mm [data-teach="0"]'); await sleep(500);
+        if (!document.querySelector('#mm #pad') || peek().values[0] !== '' || peek().tier !== 0) flowOk.padAfterOops = false;
+      }
+      await typeAnswer();
+      if (!Meadow.round().busy) flowOk.endsRight = false;
+    }
+  }
+  check('Walk: both kinds came up (Bonnie right, and Bonnie wrong)', seen.right && seen.wrong, JSON.stringify(seen));
+  check('Bonnie\'s number shows in the answer box and on her card', flowOk.boxShows, '');
+  check('A wrong check never moves the walk on', flowOk.waits, '');
+  check('"Oops, Bonnie!" when she\'s wrong: the number pad, empty, with no help used', flowOk.padAfterOops, '');
+  check('"That\'s right" when she\'s wrong: the pad, and Bonnie\'s help goes up a rung', flowOk.padAfterSure, '');
+  check('"Oops" when she was right: "I think I did get it this time!"', flowOk.didIt, '');
+  check('Every Teach Bonnie question ends with the right answer', flowOk.endsRight, '');
+
+  // 6. in a maths level it counts: a wrong check is a mistake (2 mistakes = 2 stars, not 3)
+  reset(s => { s.settings.warmUps = false; });
+  closeModals();
+  const rnd = Math.random; Math.random = () => .1; // teachAt(8) → question 2
+  Meadow.startLevel('y2-maths-number-bonds', 'bonds-10');
+  Math.random = rnd; await sleep(20);
+  const firstNotTeach = !peek().q.teach;
+  Meadow.correct(null, { auto: false }); Meadow.next(); await sleep(10);
+  const levelTeach = !!peek().q.teach;
+  if (levelTeach) {
+    tap(`#mm [data-teach="${peek().q.teach.right ? 0 : 1}"]`); await sleep(10); // the wrong check
+    Meadow.correct(null, { auto: false }); Meadow.next();
+  }
+  for (let i = 2; i < 30 && !save().stars['y2-maths-number-bonds/bonds-10']; i++) { if (i === 4) Meadow.wrong(null); Meadow.correct(null, { auto: false }); Meadow.next(); }
+  await sleep(50);
+  check('Maths level: the first question is never Teach Bonnie, the chosen one is', firstNotTeach && levelTeach, `first plain ${firstNotTeach}, question 2 teach ${levelTeach}`);
+  check('Maths level: a wrong check counts as a mistake (with one more: 2 stars)', save().stars['y2-maths-number-bonds/bonds-10'] === 2, `stars ${save().stars['y2-maths-number-bonds/bonds-10']}`);
+  // and with the setting off, a level never has one
+  reset(s => { s.settings.warmUps = false; s.settings.teachBonnie = false; });
+  closeModals(); Math.random = () => .1; Meadow.startLevel('y2-maths-number-bonds', 'bonds-10'); Math.random = rnd; await sleep(20);
+  let anyOff = false; for (let i = 0; i < 12 && !document.querySelector('.modal-bg'); i++) { if (peek().q.teach) anyOff = true; Meadow.correct(null, { auto: false }); Meadow.next(); }
+  check('Maths level with the setting off: no Teach Bonnie', !anyOff, '');
+
+  // 7. the lines are listed for recording
+  const lines = Meadow.spokenLines({ subject: 'maths' });
+  check('Teach Bonnie\'s lines are in the voice list', T.LINES.every(l => lines.includes(Meadow.ui.fmt(l))), `${T.LINES.length} lines`);
+
+  closeModals(); localStorage.removeItem(TEST_KEY);
+  const bad = results.filter(r => !r.ok);
+  document.body.innerHTML = `<div id="report"><h1>Teach Bonnie Test</h1>
+    <div id="result" class="${bad.length ? 'fail' : 'pass'}">${bad.length ? `${bad.length} of ${results.length} checks failed` : `All ${results.length} checks passed`}</div>
+    <ul>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name} <small>${r.detail || ''}</small></li>`).join('')}</ul>
+    <h2>Levels that can make a Teach Bonnie question</h2>
+    <table><tr><th>Level</th><th>Made (of 120 asked)</th></tr>${Object.entries(canTeach).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table></div>`;
+  window.TEST_DONE = { passed: results.length - bad.length, total: results.length, bad: bad.map(r => r.name + ' ' + (r.detail || '')) };
+})();
+</script>
+</body>
+</html>
