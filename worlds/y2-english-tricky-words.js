@@ -22,7 +22,7 @@ const TRICKY = [
     tw('said', 'Bonnie ___ hello to the frog.', ['sed', 'sayd'], "'said' has 'ai' in the middle, but it sneakily says 'e'!"),
     tw('have', 'I ___ a red ball.', ['hav', 'haf'], "'have' ends with a quiet 'e'. English words don't like to end in 'v'!"),
     tw('like', 'Bonnie and I ___ bones.', ['lik', 'liek'], "'like' has a magic 'e' at the end: l-i-k-e."),
-    tw('come', 'Please ___ to my party.', ['cum', 'kom'], "'come' sounds like 'cum' but it's spelt c-o-m-e. Tricky!"),
+    tw('come', 'Please ___ to my party.', ['kum', 'cume'], "'come' sounds like 'kum' but it's spelt c-o-m-e. Tricky!"),
     tw('some', 'Can I have ___ cake?', ['sum', 'som'], "'some' is spelt s-o-m-e, just like 'come'!"),
     tw('were', 'We ___ playing in the meadow.', ['wer', 'wur'], "'were' starts like 'we' and has an 'e' at the end: w-e-r-e.")] },
   { title: 'Where & There', items: [

@@ -123,6 +123,14 @@
   V.say = (text, opts = {}) => {
     cut();
     text = String(text);
+    // A page that talks as soon as it opens (Bonnie's Walk) can beat the clip list: wait for it (up to 2.5s)
+    // so the first line is Bonnie's recorded voice too, not the device voice.
+    if (!V.pack && V.loading && !opts.afterLoad && V.enabled()) {
+      const t = token; speaking = true;
+      const go = () => { if (t === token) { speaking = false; V.say(text, { ...opts, afterLoad: true }); } };
+      Promise.race([V.loading, new Promise(r => setTimeout(r, 2500))]).then(go, go);
+      return null;
+    }
     // Browsers keep a new page silent until it's tapped: remember the line and say it on the first tap.
     pending = navigator.userActivation && !navigator.userActivation.hasBeenActive ? [text, opts] : null;
     const t = token;
@@ -188,7 +196,8 @@
   }
 
   /* ---------- loading the clips ---------- */
-  V.load = async () => {
+  V.load = () => (V.loading = loadPacks());
+  async function loadPacks() {
     try {
       const res = await fetch(V.base + 'audio/manifest.json', { cache: 'no-cache' }); if (!res.ok) return;
       const m = await res.json(); if (!m || !m.clips) return;
@@ -201,7 +210,7 @@
         const m = await res.json(); if (m && m.clips) V.packs[who] = m;
       } catch (e) {}
     }));
-  };
+  }
   /* Save every clip into the offline cache in the background, a few at a time. */
   async function saveForOffline() {
     if (!V.pack || typeof caches === 'undefined' || navigator.onLine === false) return;

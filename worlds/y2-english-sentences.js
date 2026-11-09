@@ -38,6 +38,11 @@ const SENTENCES = [
     sn('where is my teddy', '?'), sn('what a huge spider', '!'), sn('my dog is called bonnie', '.', { proper: ['bonnie'] }),
     sn('can we go to the beach', '?')] },
 ];
+/* Words that always need a capital, in every sentence: names (Bonnie, and every word of the child's own name),
+   days, months, places and 'I'. A sentence's own proper list adds more. */
+const ALWAYS_CAPS = ['i', 'bonnie', 'sam', 'london', 'christmas', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'january', 'february', 'april', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+const properOf = raw => [...new Set([...ALWAYS_CAPS, ...[...raw.proper, ...(raw.w.includes('{N}') ? ['{N}'] : [])].flatMap(x => fmt(x).toLowerCase().split(' '))])];
 const SENT_PROMPTS = { caps: 'Tap the words that need a capital letter!', punct: 'Which punctuation mark goes at the end?', order: 'Drag the words into the right order, then add the end mark!', all: 'Order the words, tap Aa for capitals, then add the end mark!' };
 const CSS = `
 /* ---------- Sentence meadow ---------- */
@@ -69,7 +74,7 @@ const CSS = `
 function playSentence(raw, ctx) {
   const L = ctx.level, mode = L.mode;
   const words = fmt(raw.w).toLowerCase().split(' ');
-  const proper = [...raw.proper.map(x => fmt(x).toLowerCase()), 'i'];
+  const proper = properOf(raw);
   const accepted = [words, ...raw.alts.map(a => fmt(a).toLowerCase().split(' '))];
   const needsCap = (w, pos) => pos === 0 || proper.includes(w);
   const show1 = (w, capped) => capped ? cap1(w) : w;
@@ -129,6 +134,8 @@ function playSentence(raw, ctx) {
     if (!st.punct) return bubble('Don\'t forget the punctuation mark at the end!');
     const seq = st.line.map(id => tokens[id].w);
     const orderOK = accepted.some(a => a.join(' ') === seq.join(' '));
+    // Word Order: capitals aren't his job there, so a repeated word ("the ... the") never fails on them
+    if (mode === 'order' && orderOK) { st.line.forEach((id, pos) => tokens[id].capped = needsCap(tokens[id].w, pos)); draw(); }
     const capsOK = st.line.every((id, pos) => tokens[id].capped === needsCap(tokens[id].w, pos));
     const pOK = st.punct === raw.p;
     if (orderOK && capsOK && pOK) {
@@ -180,7 +187,7 @@ function lines() {
   hint(2, 'Your capitals look great! Tap Check.'); hint(2, "I've taken away one punctuation mark that doesn't fit.");
   SENTENCES.forEach(L => { hint(1, esc(L.tip)); L.items.forEach(raw => {
     const words = fmt(raw.w).toLowerCase().split(' ');
-    const proper = [...raw.proper.map(x => fmt(x).toLowerCase()), 'i'];
+    const proper = properOf(raw);
     const needsCap = (w, pos) => pos === 0 || proper.includes(w);
     const correctText = words.map((w, i) => needsCap(w, i) ? cap1(w) : w).join(' ') + raw.p;
     add(correctText);

@@ -161,6 +161,8 @@ const rand = a => a[Math.floor(Math.random() * a.length)];
 const randInt = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* A name always starts with a capital, like Bonnie's: "harvey" → "Harvey", "mary-jane o'neil" → "Mary-Jane O'Neil". */
+const nameCase = n => String(n).replace(/(^|[\s'’-])(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase());
 const nameOf = () => (S && S.name) || 'friend';
 const fmt = s => String(s).replaceAll('{N}', nameOf());
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -223,7 +225,7 @@ const cleanPrize = (r, i) => ({ id: String(r.id || 'p' + i), title: String(r.tit
 function normalise(raw) {
   const s = Object.assign(blankSave(), isObj(raw) ? raw : {});
   s.version = SAVE_VERSION;
-  s.name = typeof s.name === 'string' && s.name.trim() ? s.name.trim().slice(0, 30) : null;
+  s.name = typeof s.name === 'string' && s.name.trim() ? nameCase(s.name.trim().slice(0, 30)) : null;
   s.bones = int(s.bones, 0, 99999);
   // the eyepatch used to be worn as a hat: it moves to the face slot
   if (slotKey(s.hat) === 'face' && !s.face) s.face = s.hat;
@@ -902,7 +904,7 @@ function correct(el, opts = {}) {
   return true;
 }
 /* Go to the next question (after correct() with auto:false). */
-function next() { if (!G || G.done) return; if (G.qWarm) G.warm++; else G.i++; nextQuestion(); }
+function next() { if (!G || G.done) return; if (G.inDig) { G.inDig = false; G.dig.done = true; } else if (G.qWarm) G.warm++; else G.i++; nextQuestion(); }
 /* For worlds: is a right answer being celebrated (or the level over)? */
 function isBusy() { return !G || G.busy || G.done; }
 /* For worlds: the question being played. helped: Bonnie's help has reached the level that counts as help. */
@@ -1030,6 +1032,95 @@ function planWalk() {
   for (const c of mix) plan.push((c === 'M' ? maths.shift() : english()) || english() || maths.shift());
   return plan.filter(Boolean);
 }
+/* ---------- The dig: a surprise detour on some walks ----------
+   From the second walk on, about one walk in two, Bonnie sniffs something between two stops and runs off the path.
+   Three dirt mounds and one quick question: dig the mound with the answer to find treasure. A wrong mound turns up
+   an old sock and Bonnie's help goes up a rung, as on any walk question. It's a bonus, not one of the 5 stops.
+   Everything Bonnie says here has no numbers in it, so it's all recorded in her own voice. */
+const DIG = {
+  chance: .5,
+  intro: ["Sniff sniff! I can smell treasure, {N}! Which mound should I dig?", "Ooh, wait! Something's buried here! Let's go off the path!", "Woof! A secret dig spot! Help me pick the right mound, {N}!"],
+  ask: 'Dig the mound with the answer!',
+  rhymeAsk: w => `Which mound rhymes with ${w}?`,
+  treasure: [['🦴', 'a golden bone'], ['🎾', 'my lost ball'], ['🧸', 'a teddy bear'], ['💎', 'a shiny jewel'], ['🪙', 'a gold coin'], ['👑', 'a tiny crown']],
+  junk: [['🧦', 'an old sock'], ['🥾', 'a muddy boot'], ['🪱', 'a wiggly worm'], ['🍂', 'some soggy leaves']],
+  found: name => `We found ${name}! Brilliant digging, {N}!`,
+  oops: name => `Ha! Just ${name}!`,
+  names: ['Sniff Clue', 'Paw Help', 'Watch Me!'],
+  clue: {
+    bond: 'Hold up the first number on your fingers. How many more fingers make ten?',
+    double: 'Double means two lots the same. Add the number to itself!',
+    plus10: 'Adding ten makes the tens digit one bigger. The ones stay the same!',
+    take: 'Start at the big number and count back.',
+    rhyme: 'Say each word out loud. Which one ends with the same sound?',
+  },
+  dug: 'I dug up a wrong one for you!',
+  glow: 'Dig the glowing mound!',
+};
+const RHYMES = { bone: ['phone', 'cone', 'stone'], cat: ['hat', 'mat', 'bat'], dig: ['pig', 'wig', 'big'], ball: ['wall', 'tall', 'hall'],
+  bee: ['tree', 'three', 'sea'], sun: ['fun', 'run', 'bun'], dog: ['frog', 'log', 'fog'], cake: ['lake', 'snake', 'rake'] };
+/* One dig question: { kind, text (shown), answer, opts (3 mounds), ask (what Bonnie says) } */
+function makeDig() {
+  const r = n => Math.floor(Math.random() * n);
+  // the answer and two near misses (never below 0, never the answer twice)
+  const three = (ans, near) => { const s = new Set([ans]); for (const d of shuffle(near)) { if (s.size >= 3) break; if (ans + d >= 0) s.add(ans + d); } return shuffle([...s]); };
+  const kind = rand(['bond', 'double', 'plus10', 'take', 'rhyme', 'rhyme']);
+  if (kind === 'rhyme') {
+    const keys = Object.keys(RHYMES), w = rand(keys), right = rand(RHYMES[w]);
+    const others = shuffle(keys.filter(k => k !== w)).slice(0, 2).map(k => rand([k, ...RHYMES[k]]));
+    return { kind, text: `Which word rhymes with <b>${w}</b>?`, answer: right, opts: shuffle([right, ...others]), ask: DIG.rhymeAsk(w) };
+  }
+  if (kind === 'bond') { const a = 1 + r(9); return { kind, text: `What goes with <b>${a}</b> to make <b>10</b>?`, answer: 10 - a, opts: three(10 - a, [1, -1, 2, -2]), ask: DIG.ask }; }
+  if (kind === 'double') { const n = 1 + r(10); return { kind, text: `What is double <b>${n}</b>?`, answer: 2 * n, opts: three(2 * n, [1, -1, 2, -2, -n]), ask: DIG.ask }; }
+  if (kind === 'plus10') { const n = 11 + r(79); return { kind, text: `<b>${n}</b> + 10 = ?`, answer: n + 10, opts: three(n + 10, [1, -1, -10, 10]), ask: DIG.ask }; }
+  const a = 5 + r(6), b = 1 + r(a - 1);
+  return { kind: 'take', text: `Bonnie had <b>${a}</b> bones and ate <b>${b}</b>. How many are left?`, answer: a - b, opts: three(a - b, [1, -1, 2, b]), ask: DIG.ask };
+}
+function playDig(q) {
+  const area = $('#area');
+  area.innerHTML = `<div class="dig">
+    <div class="dig-head"><span class="dig-nose" aria-hidden="true">👃</span> Bonnie smells treasure!</div>
+    <p class="dig-q">${q.text}</p>
+    <div class="dig-field">${q.opts.map((v, i) => `<button class="mound" type="button" data-i="${i}" aria-label="Dig here: ${esc(String(v))}">
+      <span class="heap" aria-hidden="true"></span><span class="find" aria-hidden="true"></span><span class="stake">${esc(String(v))}</span></button>`).join('')}</div>
+    <p class="dig-tip">Tap a mound to dig!</p>
+  </div>`;
+  const mounds = $$('.mound', area), rightAt = q.opts.indexOf(q.answer);
+  function dig(m, right) {
+    m.disabled = true; m.classList.add('dug', right ? 'treasure' : 'junk');
+    const item = rand(right ? DIG.treasure : DIG.junk);
+    $('.find', m).textContent = item[0];
+    for (let k = 0; k < 8; k++) { // clods of earth fly up
+      const c = document.createElement('i'); c.className = 'clod';
+      c.style.setProperty('--dx', `${Math.round(Math.random() * 140 - 70)}px`); c.style.setProperty('--dy', `${Math.round(-50 - Math.random() * 60)}px`);
+      c.style.animationDelay = `${k * 30}ms`; m.appendChild(c); setTimeout(() => c.remove(), 1100);
+    }
+    tone(180, .08, 'sawtooth', .05); tone(140, .1, 'triangle', .08, 0, .08);
+    return item;
+  }
+  mounds.forEach((m, i) => { m.onclick = () => {
+    if (isBusy() || m.disabled) return;
+    const right = i === rightAt, item = dig(m, right);
+    if (right) { mounds.forEach(x => x.classList.remove('glow')); correct(m, { praise: DIG.found(item[1]) }); }
+    else wrong(null, { lead: DIG.oops(item[1]) });
+  }; });
+  ctx().hints([
+    () => esc(DIG.clue[q.kind]),
+    () => { const w = mounds.find((m, i) => i !== rightAt && !m.disabled); if (w) dig(w, false); return esc(DIG.dug); },
+    () => { mounds[rightAt].classList.add('glow'); return esc(DIG.glow); },
+  ]);
+  bubble(esc(fmt(rand(DIG.intro))));
+  later(() => say(q.ask), 200);
+}
+const DIG_WORLD = { id: 'walk-dig', subject: 'walk', name: 'Secret dig', icon: '🕳️', hintNames: DIG.names, praise: [], play: playDig };
+const DIG_LEVEL = { id: 'dig', name: 'Secret dig' };
+/* Every line the dig can say (for tools/make-voice.mjs) */
+function digLines() {
+  // the help: a clue (1), digging up a wrong mound (2), the glow (3); "Name text" from Ask Bonnie, "Name. text" after a wrong mound
+  const tiers = [Object.values(DIG.clue), [DIG.dug], [DIG.glow]];
+  return [...DIG.intro, DIG.ask, ...Object.keys(RHYMES).map(DIG.rhymeAsk), ...DIG.treasure.map(x => DIG.found(x[1])), ...DIG.junk.map(x => DIG.oops(x[1])),
+    ...DIG.names.flatMap((n, i) => tiers[i].flatMap(c => [`${n} ${c}`, `${n}. ${c}`]))];
+}
 function startWalk() {
   S = load(); hush();
   const plan = planWalk();
@@ -1039,41 +1130,76 @@ function startWalk() {
   const extra = runsToday(S, WALK_KEY) >= RULES.NORMAL_RUNS_PER_DAY;
   G = { walk: true, plan, w: plan[0].w, L: plan[0].L, li: 0, key: WALK_KEY, i: 0, count: plan.length, items: null,
     mistakes: 0, helps: 0, answerBones: 0, askBones: 0, asked: false, tiers: [0, 0, 0, 0, 0], eased: 0, done: false,
-    extra, counted: false, extraBones: 0, walkBones: 0, warmN: 0, warm: 0, tier: 0, qTier: 0, hints: [], busy: false };
+    extra, counted: false, extraBones: 0, walkBones: 0, warmN: 0, warm: 0, tier: 0, qTier: 0, hints: [], busy: false,
+    // the surprise dig: before stop 2 to 5, from the second walk on (the very first walk stays simple)
+    dig: plan.length > 1 && walkedBefore() && Math.random() < DIG.chance ? { at: 1 + Math.floor(Math.random() * (plan.length - 1)), q: makeDig(), done: false } : null, inDig: false };
   show(`
     ${extra ? '<div class="game-top"><div class="chip extra" id="extraChip" title="Walks after the first 2 today: no bones per answer, 3 bonus bones for finishing">🎯 Extra walk</div></div>' : ''}
     <div class="card walk-path" id="walkPath" role="progressbar" aria-label="Bonnie's walk" aria-valuemin="0" aria-valuemax="${plan.length}" aria-valuenow="0">
+      <div class="walk-sky" aria-hidden="true"><span class="sun"></span><span class="cloud c1"></span><span class="cloud c2"></span><span class="hill h1"></span><span class="hill h2"></span>
+        <span class="deco" style="left:17%">🌳</span><span class="deco small" style="left:37%">🌷</span><span class="deco" style="left:55%">🌲</span><span class="deco small" style="left:74%">🌼</span></div>
       <div class="walk-track" id="walkTrack">
-        ${plan.map((_, i) => `<div class="wstone" data-s="${i}"><span>🐾</span></div>`).join('')}
-        <div class="wbowl" title="The bone bowl at the end">🦴</div>
-        <div class="walker" id="walker" aria-hidden="true">${bonnieSVG()}</div>
+        <svg class="walk-line" aria-hidden="true"><path class="trail"/><path class="trail-mid"/><path class="trail-done"/><path class="trail-dig"/></svg>
+        ${plan.map((p, i) => `<div class="wstone" data-s="${i}" title="${esc(p.w.name)}"><span class="wicon">${p.w.icon || '🐾'}</span><span class="wpaw">🐾</span></div>`).join('')}
+        <div class="wbowl" title="Home, and the bone bowl"><span>🏡</span><b>🦴</b></div>
+        ${G.dig ? '<div class="wdig" id="wdig" aria-hidden="true"><span class="mini-heap"></span><span class="sniff">❗</span></div>' : ''}
+        <div class="walker" id="walker" aria-hidden="true"><div class="walker-bob">${bonnieSVG()}</div></div>
       </div>
     </div>
     <div id="walkQ"></div>`);
   renderPath();
   const hello = fmt(rand(LINES.walkStart));
-  $('#walkQ').innerHTML = `<div class="card walk-hello"><p>${esc(hello)}</p></div>`;
+  $('#walkQ').innerHTML = `<div class="card walk-hello"><div class="walk-hello-in">${bonnieHTML('', 'helloBonnie')}<div><p>${esc(hello)}</p>
+    <div class="walk-stops">${plan.map(p => `<span title="${esc(p.w.name)}">${p.w.icon || '🐾'}</span>`).join('<i>·</i>')}<i>·</i><span>🏡</span></div></div></div></div>`;
+  animate($('#helloBonnie'), 'happy', 600);
   say(hello);
   if (extra) whenQuiet(() => say(LINES.extraPractice));
   const g = G; setTimeout(() => whenQuiet(() => { if (G === g && !G.done && !$('#area')) walkStep(); }), 900); // (skipHello may have shown it already)
 }
 /* Put Bonnie on the stone she's at, and colour the stones behind her. */
+const mid = el => [el.offsetLeft + el.offsetWidth / 2, el.offsetTop + el.offsetHeight / 2];
+// a smooth line through the points (Catmull-Rom as curves)
+const smoothPath = p => p.reduce((d, [x, y], i) => {
+  if (!i) return `M${x},${y}`;
+  const p0 = p[i - 2] || p[i - 1], p1 = p[i - 1], p3 = p[i + 1] || [x, y];
+  return d + ` C${p1[0] + (x - p0[0]) / 6},${p1[1] + (y - p0[1]) / 6} ${x - (p3[0] - p1[0]) / 6},${y - (p3[1] - p1[1]) / 6} ${x},${y}`;
+}, '');
 function renderPath() {
   const track = $('#walkTrack'); if (!G || !track) return;
-  $$('.wstone', track).forEach((s, i) => { s.classList.toggle('done', i < G.i); s.classList.toggle('now', i === G.i); });
-  const at = G.i < G.count ? $$('.wstone', track)[G.i] : $('.wbowl', track), wk = $('#walker');
-  if (at && wk) wk.style.transform = `translateX(${at.offsetLeft + at.offsetWidth / 2 - wk.offsetWidth / 2}px)`;
+  const stones = $$('.wstone', track), bowl = $('.wbowl', track), dig = $('#wdig', track);
+  stones.forEach((s, i) => { s.classList.toggle('done', i < G.i); s.classList.toggle('now', i === G.i && !G.inDig); });
+  const pts = [...stones, bowl].map(mid), svg = $('.walk-line', track);
+  svg.setAttribute('width', track.clientWidth); svg.setAttribute('height', track.clientHeight);
+  $$('.trail, .trail-mid', svg).forEach(p => p.setAttribute('d', smoothPath(pts)));
+  $('.trail-done', svg).setAttribute('d', G.i > 0 ? smoothPath(pts.slice(0, Math.min(G.i, G.count) + 1)) : '');
+  // the dig spot sits beside the path, between the stop before it and the stop after
+  if (dig && G.dig) {
+    const a = pts[G.dig.at - 1], b = pts[G.dig.at], x = (a[0] + b[0]) / 2 + 14, y = (a[1] + b[1]) / 2 - 26;
+    dig.style.left = `${x - dig.offsetWidth / 2}px`; dig.style.top = `${y - dig.offsetHeight / 2}px`;
+    const on = G.inDig || G.dig.done;
+    dig.classList.toggle('on', on); dig.classList.toggle('dug', G.dig.done); $('.sniff', dig).textContent = G.dig.done ? '✨' : '❗';
+    $('.trail-dig', svg).setAttribute('d', on ? `M${x - 14},${(a[1] + b[1]) / 2} Q${x - 20},${y + 14} ${x},${y + 8}` : '');
+  }
+  const at = G.inDig && dig ? dig : G.i < G.count ? stones[G.i] : bowl, wk = $('#walker');
+  if (at && wk) {
+    // on a stone she stands on it; at the dig she stands just beside the mound, digging
+    const x = at === dig ? at.offsetLeft - wk.offsetWidth * .72 : at.offsetLeft + at.offsetWidth / 2 - wk.offsetWidth / 2;
+    const y = at === dig ? at.offsetTop + at.offsetHeight - wk.offsetHeight + 6 : at.offsetTop + at.offsetHeight * .6 - wk.offsetHeight, to = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
+    if (wk.style.transform && wk.style.transform.replace(/\s/g, '') !== to) { wk.classList.remove('trot'); void wk.offsetWidth; wk.classList.add('trot'); }
+    wk.style.transform = to;
+  }
   $('#walkPath').setAttribute('aria-valuenow', String(Math.min(G.i, G.count)));
   $$('.rung').forEach(r => r.classList.toggle('on', +r.dataset.r <= G.tier));
 }
 /* Show the next stop's question in its own world's screen; the path stays put. */
 function walkStep() {
   if (G.i >= G.count) return finishWalk();
-  const p = G.plan[G.i];
+  G.inDig = !!(G.dig && !G.dig.done && G.i === G.dig.at);
+  const p = G.inDig ? { w: DIG_WORLD, L: DIG_LEVEL, q: G.dig.q } : G.plan[G.i];
   G.w = p.w; G.L = p.L; G.q = p.q; G.qEased = p.w.subject === 'maths';
   Object.assign(G, { tier: 0, qTier: 0, busy: false, hints: [], qWarm: false });
   const full = G.w.layout === 'full';
-  $('#walkQ').innerHTML = `<div class="game-main walk-in ${full ? 'full' : ''}"><section class="card play-card" id="area"></section>${full ? '' : dockHTML(G.w)}</div>`;
+  $('#walkQ').innerHTML = `<div class="game-main walk-in ${full ? 'full' : ''} ${G.inDig ? 'digging' : ''}"><section class="card play-card" id="area"></section>${full ? '' : dockHTML(G.w)}</div>`;
   if (!full) { $('#gameBonnie').onclick = askBonnie; $('#askBtn').onclick = askBonnie; }
   renderPath();
   (G.L.play || G.w.play)(G.q, ctx());
@@ -1084,7 +1210,7 @@ function walkWrong(opts) {
   streak = 0; renderHud(); sfx.wrong();
   animate($('#gameBonnie'), 'wiggle', 600);
   if (opts.quiet || G.w.onAsk) return;
-  const lead = fmt(rand(LINES.walkOops)), names = hintNames(G.w);
+  const lead = fmt(opts.lead || rand(LINES.walkOops)), names = hintNames(G.w);
   if (G.tier >= names.length) { bubble(`${esc(lead)} ${esc(fmt(LINES.shownAll))}`, false); say(lead); whenQuiet(() => say(LINES.shownAll)); return; }
   const tier = G.tier + 1, fn = G.hints[tier - 1], txt = fn ? fn() : '';
   helped(tier);
@@ -1467,6 +1593,7 @@ function parentScreen() {
 function spokenLines(game = GAME) {
   const out = new Set(), add = (...xs) => xs.forEach(x => x && out.add(fmt(x)));
   add(LINES.extraPractice, LINES.extraDone, LINES.warmUp, ...LINES.walkStart, ...LINES.walkOops, ...LINES.walkDone, LINES.walkStop);
+  if (!game || game.walk) add(...digLines());
   add(...LINES.praise, LINES.watched, ...LINES.oops, ...LINES.tickles, ...LINES.tickleEgg, ...Object.values(LINES.finish), LINES.already3, ...Object.values(LINES.stillBest),
     LINES.locked, LINES.shownAll, LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
   [1, 2, 3].forEach(st => [1, 2].forEach(p => { if (st <= p) add(fmt(LINES.finish[st]) + ' ' + LINES.stillBest[p]); }));
@@ -1584,25 +1711,99 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 .pip.now{background:var(--gold);border-color:#C99A2E;transform:scale(1.25)}
 .game-main{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;align-items:start}
 .game-main.full{grid-template-columns:minmax(0,1fr)}
-/* Bonnie's Walk: the path of paw stones */
-.walk-path{padding:12px 18px 8px;margin-bottom:14px;background:linear-gradient(180deg,#E8F5DA,#CFE8B6);border-color:#B9D79A}
-.walk-track{position:relative;display:flex;justify-content:space-between;align-items:flex-end;height:104px;padding:0 2%}
-.walk-track::before{content:"";position:absolute;left:3%;right:3%;bottom:14px;height:16px;border-radius:999px;background:repeating-linear-gradient(90deg,#E4C891 0 18px,#EBD3A3 18px 36px);box-shadow:inset 0 -3px 0 rgba(74,59,44,.1)}
-.wstone{position:relative;z-index:1;width:58px;height:40px;border-radius:50%;background:#F5EEDF;border:3px solid #D9C9A8;display:grid;place-items:center;font-size:1.25rem;box-shadow:0 3px 0 rgba(74,59,44,.15);transition:background .3s,border-color .3s}
-.wstone span{opacity:.18;transition:opacity .3s}
-.wstone.done{background:var(--gold);border-color:#C99A2E}
-.wstone.done span{opacity:1}
-.wstone.now{border-color:var(--leaf);box-shadow:0 0 0 5px rgba(107,163,104,.35),0 3px 0 rgba(74,59,44,.15)}
-.wbowl{position:relative;z-index:1;width:58px;height:46px;border-radius:12px 12px 26px 26px;background:var(--berry);border:3px solid var(--berry-dark);display:grid;place-items:center;font-size:1.4rem}
-.walker{position:absolute;left:0;bottom:38px;width:74px;height:74px;z-index:2;transition:transform .8s cubic-bezier(.45,1.35,.6,1);pointer-events:none}
+/* Bonnie's Walk: a little meadow scene with a winding trail of stepping stones */
+.walk-path{position:relative;overflow:hidden;padding:0;margin-bottom:14px;border-color:#A9CF8A;background:linear-gradient(180deg,#BFE6F7 0%,#DDF2FA 42%,#CBE8AE 62%,#B3DB91 100%)}
+.walk-sky{position:absolute;inset:0;pointer-events:none}
+.walk-sky .sun{position:absolute;right:7%;top:12px;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle,#FFE79A 55%,#FFD25A 56%);box-shadow:0 0 0 8px rgba(255,226,120,.35),0 0 0 18px rgba(255,226,120,.15);animation:sunPulse 4s ease-in-out infinite}
+.walk-sky .cloud{position:absolute;height:16px;border-radius:999px;background:#fff;opacity:.9;animation:cloudDrift 38s linear infinite}
+.walk-sky .cloud::before,.walk-sky .cloud::after{content:"";position:absolute;background:#fff;border-radius:50%}
+.walk-sky .cloud::before{width:22px;height:22px;left:10px;top:-11px}.walk-sky .cloud::after{width:16px;height:16px;left:26px;top:-7px}
+.walk-sky .c1{width:58px;top:22px;left:14%}.walk-sky .c2{width:44px;top:44px;left:58%;animation-duration:52s;animation-delay:-20s;opacity:.75}
+.walk-sky .hill{position:absolute;bottom:-60px;border-radius:50%;background:#A6D37E}
+.walk-sky .h1{left:-10%;width:65%;height:150px;background:#B6DD8E}.walk-sky .h2{right:-12%;width:70%;height:170px;background:#9FCD76}
+.walk-sky .deco{position:absolute;bottom:64%;font-size:1.6rem;line-height:1;filter:drop-shadow(0 2px 0 rgba(60,90,40,.15))}
+.walk-sky .deco.small{font-size:1.1rem;bottom:60%}
+.walk-track{position:relative;display:flex;justify-content:space-between;align-items:flex-end;height:150px;padding:0 3% 14px}
+.walk-line{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.walk-line path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.walk-line .trail{stroke:#D6B57C;stroke-width:24}
+.walk-line .trail-mid{stroke:#E9D2A2;stroke-width:14}
+.walk-line .trail-done{stroke:#C99A2E;stroke-width:5;stroke-dasharray:1 13;opacity:.85}
+.walk-line .trail-dig{stroke:#9A6A3A;stroke-width:4;stroke-dasharray:2 9;opacity:.8}
+.wstone{position:relative;z-index:1;width:62px;height:42px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFFDF7,#EDE3CF);border:3px solid #CDB991;display:grid;place-items:center;box-shadow:0 4px 0 rgba(74,59,44,.18);transition:background .35s,border-color .35s,transform .35s}
+.wstone:nth-of-type(even){margin-bottom:34px}
+.wstone .wicon{font-size:1.25rem;line-height:1;transition:opacity .3s,transform .3s}
+.wstone .wpaw{position:absolute;font-size:1.2rem;opacity:0;transform:scale(.4) rotate(-20deg);transition:opacity .3s,transform .4s cubic-bezier(.3,1.6,.5,1)}
+.wstone.done{background:radial-gradient(circle at 40% 35%,#FFE9A8,var(--gold));border-color:#C99A2E}
+.wstone.done .wicon{opacity:0;transform:scale(.5)}
+.wstone.done .wpaw{opacity:1;transform:scale(1) rotate(-12deg)}
+.wstone.now{border-color:var(--leaf);transform:scale(1.08);animation:stoneGlow 1.6s ease-in-out infinite}
+.wbowl{position:relative;z-index:1;width:64px;height:58px;display:grid;place-items:center;margin-bottom:8px}
+.wbowl span{font-size:2.3rem;line-height:1;filter:drop-shadow(0 3px 0 rgba(74,59,44,.18))}
+.wbowl b{position:absolute;right:-6px;bottom:-2px;font-size:1.1rem;background:var(--berry);border:2px solid var(--berry-dark);border-radius:8px 8px 14px 14px;padding:1px 4px;line-height:1.1}
+.wdig{position:absolute;z-index:1;width:52px;height:30px;opacity:0;transform:scale(.3);transition:opacity .3s,transform .45s cubic-bezier(.3,1.6,.5,1)}
+.wdig.on{opacity:1;transform:scale(1)}
+.wdig .mini-heap{position:absolute;inset:6px 0 0;border-radius:50% 50% 40% 40%/80% 80% 30% 30%;background:linear-gradient(180deg,#A9773F,#7E5430)}
+.wdig .sniff{position:absolute;left:50%;top:-26px;transform:translateX(-50%);font-size:1.2rem;animation:sniffBob .7s ease-in-out infinite alternate}
+.wdig.dug .mini-heap{inset:14px 2px 0;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#3E2A18 45%,#7E5430 47%)}
+.wdig.dug .sniff{animation:none;font-size:1rem}
+.walker{position:absolute;left:0;top:0;width:78px;height:78px;z-index:3;transition:transform .85s cubic-bezier(.45,1.25,.6,1);pointer-events:none}
+.walker-bob{width:100%;height:100%}
+.walker.trot .walker-bob{animation:trot .85s ease-in-out}
 .walker svg{width:100%;height:100%;overflow:visible}
-.walk-hello{padding:28px;text-align:center;font-family:var(--font-read);font-size:1.3rem}
+.walk-hello{padding:22px 24px}
+.walk-hello-in{display:flex;align-items:center;gap:18px;justify-content:center;font-family:var(--font-read);font-size:1.3rem;text-align:left}
+.walk-hello-in .bonnie{width:110px;height:110px;flex:none}
+.walk-hello-in p{margin:0 0 10px}
+.walk-stops{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:1.5rem}
+.walk-stops i{font-style:normal;color:var(--ink-soft);font-size:1rem}
 .walk-in{animation:walkIn .35s ease-out}
 @keyframes walkIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes trot{0%,100%{transform:translateY(0) rotate(0)}20%{transform:translateY(-12px) rotate(-4deg)}40%{transform:translateY(0) rotate(0)}60%{transform:translateY(-9px) rotate(4deg)}80%{transform:translateY(0)}}
+@keyframes stoneGlow{0%,100%{box-shadow:0 0 0 4px rgba(107,163,104,.35),0 4px 0 rgba(74,59,44,.18)}50%{box-shadow:0 0 0 9px rgba(107,163,104,.18),0 4px 0 rgba(74,59,44,.18)}}
+@keyframes sunPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes cloudDrift{from{transform:translateX(0)}50%{transform:translateX(60px)}to{transform:translateX(0)}}
+@keyframes sniffBob{from{transform:translate(-50%,0)}to{transform:translate(-50%,-6px)}}
+/* the walk in the other themes */
+body[data-theme="night"] .walk-path{background:linear-gradient(180deg,#2B3266 0%,#3C4583 45%,#476B55 63%,#3D5E49 100%);border-color:#56609A}
+body[data-theme="night"] .walk-sky .sun{background:radial-gradient(circle at 35% 40%,#FFF8DC 55%,#E8DEB6 56%);box-shadow:0 0 0 8px rgba(255,248,220,.12)}
+body[data-theme="night"] .walk-sky .cloud,body[data-theme="night"] .walk-sky .cloud::before,body[data-theme="night"] .walk-sky .cloud::after{background:#8C93C4}
+body[data-theme="night"] .walk-sky .h1{background:#4E7A5D}body[data-theme="night"] .walk-sky .h2{background:#41694F}
+body[data-theme="snow"] .walk-path,body[data-theme="christmas"] .walk-path{background:linear-gradient(180deg,#CFE4F5 0%,#E8F2FA 45%,#F4F8FC 63%,#E3EDF5 100%);border-color:#BFD3E6}
+body[data-theme="snow"] .walk-sky .h1,body[data-theme="christmas"] .walk-sky .h1{background:#FFFFFF}
+body[data-theme="snow"] .walk-sky .h2,body[data-theme="christmas"] .walk-sky .h2{background:#EEF4FA}
+body[data-theme="sea"] .walk-path{background:linear-gradient(180deg,#BCEBF2 0%,#DDF6F8 42%,#F3E2B8 62%,#EBD49C 100%);border-color:#9ED3D8}
+body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .walk-sky .h2{background:#F1DEAE}
+/* the dig */
+.dig{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.dig-head{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:#7E5430;background:#F6E7CF;border:2px dashed #C9A16E;border-radius:999px;padding:6px 16px}
+.dig-nose{display:inline-block;animation:sniffBob .5s ease-in-out infinite alternate}
+.dig-q{font-family:var(--font-read);font-size:clamp(1.5rem,3.6vw,2.1rem);margin:6px 0 4px;line-height:1.35}
+.dig-field{display:flex;justify-content:center;align-items:flex-end;gap:clamp(12px,4vw,34px);width:100%;padding:70px 10px 10px;border-radius:24px;background:radial-gradient(ellipse at 50% 120%,#9ECB78 0 60%,transparent 61%),linear-gradient(180deg,transparent 40%,#BFE0A0 40%)}
+.mound{position:relative;width:clamp(96px,22vw,150px);height:clamp(110px,22vw,150px);background:none;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mound .heap{position:absolute;left:0;right:0;bottom:22px;height:62%;border-radius:50% 50% 42% 42%/78% 78% 28% 28%;background:radial-gradient(circle at 35% 30%,#B98550 0 22%,transparent 23%),linear-gradient(180deg,#A9773F,#7A5030);box-shadow:inset 0 -8px 0 rgba(0,0,0,.12),0 6px 0 rgba(74,59,44,.15);transition:transform .45s cubic-bezier(.3,1.5,.5,1),height .45s,border-radius .45s,background .3s}
+.mound .heap::before{content:"";position:absolute;left:18%;top:-8px;width:16px;height:12px;background:radial-gradient(ellipse at 50% 100%,#6BA368 60%,transparent 62%)}
+.mound .stake{position:absolute;left:50%;bottom:0;transform:translateX(-50%);min-width:64px;padding:6px 12px;font-family:var(--font-read);font-weight:700;font-size:clamp(1.3rem,3vw,1.7rem);color:#3B2A1A;background:linear-gradient(180deg,var(--wood-light),var(--wood));border-bottom:5px solid var(--wood-dark);border-radius:10px;box-shadow:0 4px 8px rgba(74,59,44,.2);z-index:2}
+.mound .find{position:absolute;left:50%;bottom:44%;transform:translate(-50%,20px) scale(.2);font-size:clamp(2.2rem,6vw,3rem);opacity:0;z-index:1;transition:transform .5s cubic-bezier(.3,1.7,.5,1) .15s,opacity .2s .15s}
+.mound:not(.dug):hover .heap,.mound:not(.dug):focus-visible .heap{transform:translateY(-4px) scale(1.03)}
+.mound:not(.dug):active .heap{transform:scale(.96)}
+.mound.dug{cursor:default}
+.mound.dug .heap{height:28%;border-radius:50%;background:radial-gradient(ellipse at 50% 45%,#3E2A18 0 48%,#7E5430 50%,#A9773F 100%)}
+.mound.dug .find{opacity:1;transform:translate(-50%,0) scale(1)}
+.mound.treasure .find{bottom:58%;font-size:clamp(2.8rem,7vw,3.6rem);filter:drop-shadow(0 0 10px rgba(255,214,90,.95)) drop-shadow(0 0 3px #fff);animation:treasure 1.2s ease-in-out .6s infinite alternate}
+.mound.treasure::after{content:"✨";position:absolute;left:50%;bottom:86%;transform:translateX(-50%);font-size:1.6rem;animation:sniffBob .6s ease-in-out infinite alternate}
+.mound.treasure .stake{background:linear-gradient(180deg,#BFE3A8,var(--leaf));border-color:var(--leaf-dark)}
+.mound.junk{opacity:.55}
+.mound.junk .find{filter:grayscale(.2)}
+.mound.glow .heap{box-shadow:0 0 0 7px rgba(242,193,78,.75),inset 0 -8px 0 rgba(0,0,0,.12)}
+.mound .clod{position:absolute;left:50%;bottom:40%;width:10px;height:9px;border-radius:40%;background:#8A5D34;z-index:3;animation:clod .8s ease-out forwards}
+.dig-tip{margin:2px 0 0;color:var(--ink-soft);font-family:var(--font-read)}
+@keyframes clod{0%{transform:translate(0,0) scale(1);opacity:1}60%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.6) rotate(90deg);opacity:0}}
+@keyframes treasure{from{transform:translate(-50%,0) rotate(-6deg)}to{transform:translate(-50%,-6px) rotate(6deg)}}
 .paw-stamp{font-size:3.2rem;line-height:1;margin:4px auto 0;width:84px;height:84px;display:grid;place-items:center;border-radius:50%;border:4px dashed var(--leaf);transform:rotate(-12deg);animation:stamp .5s ease-out}
 @keyframes stamp{from{transform:rotate(-12deg) scale(1.8);opacity:0}to{transform:rotate(-12deg) scale(1);opacity:1}}
-@media (max-width:560px){.wstone,.wbowl{width:44px;height:32px;font-size:1rem}.walker{width:56px;height:56px;bottom:30px}.walk-track{height:88px}}
-@media (prefers-reduced-motion:reduce){.walker,.wstone,.wstone span{transition:none}.walk-in,.paw-stamp{animation:none}}
+@media (max-width:560px){.wstone,.wbowl{width:44px;height:32px}.wstone .wicon,.wstone .wpaw{font-size:.95rem}.wstone:nth-of-type(even){margin-bottom:24px}.wbowl span{font-size:1.7rem}.walker{width:58px;height:58px}.walk-track{height:122px}.walk-sky .deco{font-size:1.2rem}.walk-hello-in{flex-direction:column;text-align:center}.walk-hello-in .bonnie{width:84px;height:84px}.walk-stops{justify-content:center}}
+@media (prefers-reduced-motion:reduce){.walker,.wstone,.wstone .wicon,.wstone .wpaw,.wdig,.mound .heap,.mound .find{transition:none}.walk-in,.paw-stamp,.walker.trot .walker-bob,.wstone.now,.walk-sky .sun,.walk-sky .cloud,.wdig .sniff,.dig-nose,.mound.treasure .find,.mound .clod{animation:none}}
 .play-card{padding:22px;min-height:440px}
 .dock{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px}
 .bubble{background:#fff;border:2px solid var(--card-edge);border-radius:18px;padding:12px 14px;font-family:var(--font-read);font-size:1.08rem;line-height:1.35;position:relative;width:100%;min-height:64px}
@@ -1771,6 +1972,7 @@ function startGame(opts = {}) {
   }
   $('#frog').addEventListener('click', e => { const f = e.currentTarget; animate(f, 'boing', 700); sfx.ribbit(); hearts(f, '💚', 2); });
   document.addEventListener('pointerdown', () => ac(), { once: true });
+  if (GAME.walk) window.addEventListener('resize', () => { if (G && G.walk) renderPath(); });
   window.addEventListener('storage', e => { if (e.key === KEY || e.key === null) { S = load(); renderHud(); applyTheme(); } });
   applyTheme(); renderHud(); Voice().load();
   // game.html#shop opens the Bone Shop straight away (the Clubhouse links there)
@@ -1789,9 +1991,11 @@ window.Meadow = {
   // play
   startGame, startLevel, correct, wrong, helped, askedBonnie, next, finishLevel, bubble, later, learner, isBusy, round,
   teach: { at: teachAt, CHANCE: TEACH_LEVEL_CHANCE }, // Teach Bonnie (for the tests)
+  nameCase, // "harvey" → "Harvey"
   weekReport, weekPanel: () => weekPanelHTML(), // the grown-ups "this week" numbers, and the panel
   startWalk, walkInfo, walk: { MIXES: WALK_MIXES, KEY: WALK_KEY, BONUS: WALK_BONUS, walkable, plan: () => { S = load(); return planWalk(); }, stop: stopWalk,
-    skipHello: () => { if (G && G.walk && !G.done && !$('#area')) walkStep(); } }, // tests: show the first question now
+    skipHello: () => { if (G && G.walk && !G.done && !$('#area')) walkStep(); }, // tests: show the first question now
+    dig: DIG, makeDig, digLines }, // the surprise dig (tests set dig.chance)
   // save
   save: { get key() { return KEY; }, load: () => (S = load()), get: () => S, mutate, migrate, readOld, normalise, catchUp, oldPrint },
   stars: (worldId, levelId) => { if (!S) S = load(); return S.stars[worldId + '/' + levelId] || 0; },
