@@ -45,7 +45,7 @@ The Clubhouse is a Progressive Web App (PWA), so it can be installed and then pl
 
 The Clubhouse page shows a small banner with these steps until it's added (or someone taps ✕). On Android phones and in Chrome on a computer the banner has an **Install** button instead, which adds it in one tap.
 
-After the first visit, all three pages, the icons and the fonts are saved on the iPad, so everything works offline. When the iPad is online, the newest version of each game loads automatically.
+After the first visit, all four pages (including Bonnie's Walk), the icons and the fonts are saved on the iPad, so everything works offline. When the iPad is online, the newest version of each game loads automatically.
 
 **Saved progress and the home screen icon:** on iPad, an app added to the home screen usually keeps its own saved progress, separate from Safari. If the player has been using Safari until now, their bones and progress may not appear in the installed app. If so, a grown-up can set the bone balance in the grown-ups settings, and the name is entered again on the Clubhouse page.
 
@@ -180,6 +180,37 @@ Hats and themes are bought once and kept. He can swap between the ones he owns f
 - After 5 seconds without a tap, a butterfly or frog wanders across, or Bonnie wiggles her ears.
 - Tapping Bonnie tickles her.
 
+## Bonnie's Walk
+
+A big **🐾 Bonnie's Walk** button sits at the top of the Clubhouse, above the game cards. A walk is 5 quick questions, English and maths mixed, on a meadow path. It's there so maths turns up inside something friendly, instead of Harvey having to choose it.
+
+- **The path:**
+  - Bonnie stands on 5 paw stones, with the bone bowl at the end.
+  - Each right answer turns a stone gold, and Bonnie trots on to the next one.
+  - The question underneath is drawn by its own world (the English card, or the maths screen), but there are no "English" or "Maths" labels.
+- **Nothing can be failed:**
+  - There are no stars and no mistakes.
+  - A wrong answer gets a kind word ("Hmm, let's sniff that one out together!"), and Bonnie's help moves up a rung by itself. For English that ends with Watch Me!, and for maths with glowing buttons.
+  - The walk only moves on after a right answer.
+- **The questions:**
+  - **English:** a random level he has at least one star in, at normal difficulty. A new player gets each English world's first level.
+  - **Maths:** only the first 2 levels of each maths world, plus any maths level he already has a star in, always with easy numbers.
+  - **Quick taps only:** the number pad or tapping an answer. Dragging along a number line, building grids or blocks, and Captain's Cove never come up.
+  - Each walk starts its maths with a different world from the last walk, and never uses the same maths level twice.
+- **The mix:** in Grown-ups (in either game) under **🐾 Bonnie's Walk**:
+  - **Gentle** (the default): English, maths, English, maths, English.
+  - **Even:** maths, English, maths, English, maths.
+  - **More maths:** maths, maths, English, maths, maths.
+- **Bones** (Bones v1.1, under the id `walk/daily`):
+  - The first 2 walks each day pay 1 bone per right answer plus a **5-bone walk bonus**, so 10 in all.
+  - Later walks that day are extra walks: 3 bones for finishing.
+  - Asking Bonnie pays 1 bone in any walk.
+- **The streak:**
+  - The button shows "🐾 3 days in a row!" from 2 days on.
+  - A missed day quietly drops it (no sad message), and the next walk starts again at 1.
+  - Stopping a walk part-way (🏠 asks first) keeps the bones earned but doesn't count for the streak.
+- **The page** is `bonnies-walk.html`. It loads every world file, so a new world file is added there too.
+
 ## Warm-ups and hiding the gap
 
 These make starting maths feel safe (the maths confidence pack, Stage 2: see `docs/MATHS_CONFIDENCE_PLAN.md`).
@@ -221,7 +252,7 @@ This means:
 
 ## The shared engine
 
-`js/meadow-core.js` is the shared engine all three pages use: one save (`meadow-save-v1`), the star and bone rules, the world map, the level-complete screen, the Bone Shop, the grown-ups area and Bonnie. The pages themselves are short: `index.html` (the Clubhouse), `meadow-maths.html` and `meadow-words.html` each load the engine and their world files.
+`js/meadow-core.js` is the shared engine the game pages and Bonnie's Walk use: one save (`meadow-save-v1`), the star and bone rules, the world map, the level-complete screen, the Bone Shop, the grown-ups area and Bonnie. The pages themselves are short: `index.html` (the Clubhouse), `meadow-maths.html` and `meadow-words.html` each load the engine and their world files.
 
 - **Old saves are only read.** The first time the engine runs, it copies `harvey-splitter-v1`, `meadowWords_english_v1` and `meadowClubhouse_sound` into `meadow-save-v1`. Words stars carry over. A Maths level that was done becomes 1 star. The old keys are never changed, so they stay as the rollback.
 - **Catching up with the old saves.** Each time it loads, the engine checks whether the old saves have changed since it last looked (for example, the old games played offline on an iPad that still had them saved). If so it copies the new progress across: the best stars of both, every dress-up item owned in either, and the bones the old game earned or spent since. A save made in the beta, before go-live, takes the live bones instead, because beta bones were only for trying things out.
@@ -230,10 +261,18 @@ This means:
 - **Counting plays:** the save keeps `daily: { day, normalRuns: { 'worldId/levelId': n } }`, using the device's local date. A play is counted when it pays its first answer bone, in the same save, so quitting part-way uses one up, leaving before answering doesn't, and a refresh can't pay twice. A new day starts the counts again; if the clock goes backwards, the stored day and counts are kept.
 - **Meadow Words:** its four worlds are in `worlds/y2-english-*.js`.
 - **Meadow Maths:** `worlds/y2-maths-kit.js` is the question screen the maths worlds share: the number pad, the pictures (including the burrow frame), the number line and Bonnie's help ladder (a clue, then the step card, then glowing buttons). The worlds themselves are in `worlds/y2-maths-*.js`. Only the step card and the glowing buttons count as help for stars; a clue does not. Two helped questions in a row quietly switch to easier numbers until two clean ones in a row.
-- **Clubhouse:** reads and writes only `meadow-save-v1` (name, Clubhouse sound) and shows each game's stars. It loads every world file so it can count them, so a new world file is added there too.
+- **Clubhouse:** reads and writes only `meadow-save-v1` (name, Clubhouse sound), and shows each game's new stars this week and the walk streak. It loads every world file so it can count them, so a new world file is added there too.
 - **Bonnie's dress-up:** the Bone Shop's first tab has three slots, so Bonnie can wear a hat, something on her face and something round her neck at once (`hat`, `face`, `neck` in the save). Items are listed in `HATS` in the engine, each with its `slot`, and drawn in `hatSVG`, `faceSVG` and `neckSVG`.
 - **The old beta folder** has gone. Its old offline copy is cleared by the live `sw.js`.
 - **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world. `tests/captains-cove-test.html` does the same for Captain's Cove: every claim's truth, every chest, every test that busts a claim, exactly one wrong step in the Captain's working, proofs that add up and don't give the answer away, and every right odd-one-out answer and reason.
+- **Checking Bonnie's Walk:** open `tests/walk-test.html`. It plans hundreds of walks with the real worlds and checks:
+  - every mix's order
+  - that maths only comes from the allowed levels, with easy numbers and quick taps
+  - that wrong answers never move a walk on
+  - the bones (2 normal walks a day, then extra walks)
+  - the streak (including a missed day and a clock moved back)
+
+  It also lists which maths levels came up. It uses its own test save and deletes it at the end.
 - **Checking warm-ups and "this week":** open `tests/confidence-test.html`. It plays a pretend level with a pretend clock and checks that warm-ups come first, use easy numbers, pay bones and never change the stars, that new stars are logged and counted from Monday to Sunday (including a clock moved back), and the New! badges. It uses its own test save and deletes it at the end.
 - **Checking the bone rules:** open `tests/bones-test.html`. It plays a pretend level many times with a pretend clock and checks the bones (5 plays in a day = 38, a new day, quitting, refreshing, a clock moved back, asking Bonnie, new stars, old saves). It uses its own test save and deletes it at the end. Run it after changing the bone rules.
 - **Try it:** `tests/core-test.html` has a small practice world. It uses its own practice save (`meadow-save-test`), so it changes nothing. Its "Test tools" box shows what would be copied from this device's saves.

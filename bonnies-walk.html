@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bonnie's Walk</title>
+<!-- Install as an app (PWA): works offline from the home screen -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FDFBF7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Meadow Club">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Bonnie's Walk: 5 quick questions from Meadow Words and Meadow Maths, on the shared engine.
+     It saves only to meadow-save-v1. The questions come from the world files below. -->
+<script src="bonnie-voice.js"></script>
+<script src="meadow-backup.js"></script>
+<script src="js/meadow-core.js"></script>
+<!-- every English world, then the maths kit and the maths worlds (keep in step with the two game pages) -->
+<script src="worlds/y2-english-phonics.js"></script>
+<script src="worlds/y2-english-tricky-words.js"></script>
+<script src="worlds/y2-english-sentences.js"></script>
+<script src="worlds/y2-english-stories.js"></script>
+<script src="worlds/y2-maths-kit.js"></script>
+<script src="worlds/y2-maths-partitioning.js"></script>
+<script src="worlds/y2-maths-number-bonds.js"></script>
+<script src="worlds/y2-maths-number-lines.js"></script>
+<script src="worlds/y2-maths-arrays.js"></script>
+<script src="worlds/y2-maths-sharing.js"></script>
+<script src="worlds/y2-maths-sharing-fractions.js"></script>
+<script src="worlds/y2-maths-captains-cove.js"></script>
+<script>
+Meadow.startGame({
+  subject: 'walk', title: "Bonnie's Walk", icon: '🐾', homeHref: 'index.html', walk: true, greets: [],
+  testVoice: 'Hello {N}! Shall we go for a walk?',
+});
+</script>
+</body>
+</html>

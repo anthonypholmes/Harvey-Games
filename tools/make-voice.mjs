@@ -36,7 +36,7 @@ const AUDIO = path.join(ROOT, 'audio');
 const MANIFEST = path.join(AUDIO, 'manifest.json');
 const NAME_TOKEN = 'Qqchildnameqq'; // stands in for the child's name while listing lines
 // Pages built on the shared engine (js/meadow-core.js) whose lines are recorded too.
-const CORE_PAGES = ['meadow-words.html', 'meadow-maths.html'];
+const CORE_PAGES = ['meadow-words.html', 'meadow-maths.html', 'bonnies-walk.html'];
 
 const args = process.argv.slice(2);
 const opt = n => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
