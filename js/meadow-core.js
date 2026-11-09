@@ -135,6 +135,8 @@ const LINES = {
   // Bones v1.1: the 3rd and later plays of a level in a day
   extraPractice: "You came back for more, {N}! This one's extra practice. Finish it for 3 bonus bones!",
   extraDone: '3 extra practice bones for you!',
+  // maths levels start with 2 easy warm-up questions that don't count for stars
+  warmUp: "Let's warm up with two easy ones, {N}!",
   locked: 'Finish the level before to unlock this one!',
   shownAll: "I've shown you the answer, {N}! Now you have a go. 🐾",
   shopWelcome: 'Welcome to my shop, {N}! Bones from Meadow Maths and Meadow Words all go in the same bone bowl.',
@@ -173,6 +175,14 @@ function runsToday(s, key) {
   const t = localDay(), d = s.daily;
   return d.day && t <= d.day ? d.normalRuns[key] || 0 : 0;
 }
+/* The Monday that starts this week (local date), as YYYY-MM-DD. */
+function weekStart(d = clock()) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return localDay(x);
+}
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const STAR_LOG_MAX = 500; // plenty for a year of new stars; the oldest go first
 const reduceMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const plural = (n, one, many = one + 's') => `${n} ${n === 1 ? one : many}`;
 const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -194,6 +204,7 @@ function blankSave() {
     stars: {}, logs: {},
     settings: { unlockAll: {}, years: null },
     daily: { day: null, normalRuns: {} }, // Bones v1.1: normal runs per level today (local date)
+    starLog: [], // each time a level's best stars went up: { key, from, to, day }
   };
 }
 const cleanPrize = (r, i) => ({ id: String(r.id || 'p' + i), title: String(r.title || 'Prize').slice(0, 60), desc: String(r.desc || '').slice(0, 120), cost: int(r.cost, 1, 9999) || 1 });
@@ -220,10 +231,13 @@ function normalise(raw) {
   s.logs = isObj(s.logs) ? s.logs : {};
   const d = isObj(s.daily) ? s.daily : {}, runs = {};
   if (isObj(d.normalRuns)) Object.entries(d.normalRuns).forEach(([k, v]) => { v = int(v, 0, 99); if (v) runs[k] = v; });
-  s.daily = { day: typeof d.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.day) ? d.day : null, normalRuns: runs };
+  s.daily = { day: typeof d.day === 'string' && DAY_RE.test(d.day) ? d.day : null, normalRuns: runs };
+  s.starLog = (Array.isArray(s.starLog) ? s.starLog : []).filter(e => isObj(e) && typeof e.key === 'string' && typeof e.day === 'string' && DAY_RE.test(e.day))
+    .map(e => ({ key: e.key, from: int(e.from, 0, 3), to: int(e.to, 0, 3), day: e.day })).filter(e => e.to > e.from).slice(-STAR_LOG_MAX);
   const st = isObj(s.settings) ? s.settings : {};
   s.settings = { ...st, unlockAll: isObj(st.unlockAll) ? st.unlockAll : {},
-    years: Array.isArray(st.years) && st.years.length ? [...new Set(st.years.map(Number).filter(Number.isFinite))] : null };
+    years: Array.isArray(st.years) && st.years.length ? [...new Set(st.years.map(Number).filter(Number.isFinite))] : null,
+    warmUps: st.warmUps !== false };
   return s;
 }
 
@@ -382,6 +396,14 @@ function starSummary(subject) {
   const ws = visibleWorlds(subject);
   return { earned: ws.reduce((n, w) => n + worldStars(w), 0), possible: ws.reduce((n, w) => n + w.levels.length * 3, 0) };
 }
+/* For the Clubhouse cards: stars gained this week (Monday to today, local time) in the years being shown. */
+function starsThisWeek(subject) {
+  if (!S) S = load();
+  const from = weekStart(), to = localDay(), ids = visibleWorlds(subject).map(w => w.id + '/');
+  return S.starLog.filter(e => e.day >= from && e.day <= to && ids.some(p => e.key.startsWith(p))).reduce((n, e) => n + e.to - e.from, 0);
+}
+/* A level counts as played once it has been finished (its stars or its help log). */
+const playedLevel = (w, L) => starsOf(w, L) > 0 || !!S.logs[keyOf(w, L)];
 
 /* =========================================================
    QUIET DIFFICULTY (from Meadow Maths)
@@ -692,7 +714,7 @@ function worldScreen(id) {
             <div class="num" style="background:${w.color || 'var(--leaf)'}">${un ? l + 1 : '🔒'}</div>
             <div><div class="lt">Level ${l + 1}: ${esc(L.name)}</div>
             ${L.blurb ? `<div class="lb">${esc(L.blurb)}${L.eg ? ` <span class="eg">${esc(L.eg)}</span>` : ''}</div>` : ''}
-            <div class="ls" aria-label="${plural(st, 'star')}">${'⭐'.repeat(st)}${'☆'.repeat(3 - st)}</div></div>
+            ${playedLevel(w, L) ? `<div class="ls" aria-label="${plural(st, 'star')}">${'⭐'.repeat(st)}${'☆'.repeat(3 - st)}</div>` : un ? '<div class="new-badge">New!</div>' : ''}</div>
           </button>`; }).join('')}
       </div>
     </div>`);
@@ -726,6 +748,10 @@ function startLevel(worldId, levelId) {
     mistakes: 0, helps: 0, answerBones: 0, askBones: 0, asked: false, tiers: tierNames(w).map(() => 0), eased: 0, done: false,
     extra, counted: false, extraBones: 0 };
   G.count = G.items ? G.items.length : count;
+  // maths warm-ups: 2 easy questions of this level's own types first; they don't count for stars
+  G.warmN = !G.items && w.warmUps && S.settings.warmUps ? 2 : 0; G.warm = 0;
+  G.warmTypes = L.seq ? shuffle([...new Set(L.seq)]).slice(0, 2) : [];
+  while (G.warmTypes.length < G.warmN) G.warmTypes.push(L.seq ? G.warmTypes[0] : undefined);
   const full = w.layout === 'full';
   show(`
     <div class="game-top">
@@ -749,7 +775,7 @@ function startLevel(worldId, levelId) {
 }
 function renderPips() {
   if (!G || !$('#pips')) return;
-  $('#pips').innerHTML = Array.from({ length: G.count }, (_, i) => `<span class="pip ${i < G.i ? 'done' : i === G.i ? 'now' : ''}"></span>`).join('');
+  $('#pips').innerHTML = Array.from({ length: G.count }, (_, i) => `<span class="pip ${i < G.i ? 'done' : i === G.i && !G.qWarm ? 'now' : ''}"></span>`).join('');
   $$('.rung').forEach(r => r.classList.toggle('on', +r.dataset.r <= G.tier));
 }
 function bubble(text, speak = true) {
@@ -763,17 +789,24 @@ function later(fn, ms = 0) { const g = G, i = G && G.i; setTimeout(() => whenQui
 function nextQuestion() {
   if (!G) return;
   if (G.i >= G.count) return finishLevel();
-  Object.assign(G, { tier: 0, qTier: 0, busy: false, hints: [] });
+  const warm = G.warm < G.warmN;
+  Object.assign(G, { tier: 0, qTier: 0, busy: false, hints: [], qWarm: warm });
   renderPips();
-  const eased = learner.rung < 0;
-  const q = G.items ? G.items[G.i] : G.L.make({ eased, index: G.i, count: G.count, level: G.L, world: G.w, type: G.L.seq ? G.L.seq[G.i] : undefined });
-  G.q = q; G.qEased = !G.items && eased;
+  const eased = warm || learner.rung < 0;
+  // fresh: the first question of the run (a world can start its "no repeats" list again)
+  const q = G.items ? G.items[G.i] : warm
+    ? G.L.make({ eased: true, warm: true, fresh: G.warm === 0, index: G.warm, count: G.warmN, level: G.L, world: G.w, type: G.warmTypes[G.warm] })
+    : G.L.make({ eased, fresh: G.i === 0 && !G.warmN, index: G.i, count: G.count, level: G.L, world: G.w, type: G.L.seq ? G.L.seq[G.i] : undefined });
+  G.q = q; G.qEased = !G.items && !warm && eased;
   (G.L.play || G.w.play)(q, ctx());
-  if (G.extra && G.i === 0) bubble(esc(fmt(LINES.extraPractice)));
+  if (G.extra && G.i === 0 && G.warm === 0) bubble(esc(fmt(LINES.extraPractice)));
+  if (warm && G.warm === 0 && !G.extra) say(LINES.warmUp);
 }
 /* What a world's play() gets, besides the Meadow API. */
 function ctx() {
-  return { area: $('#area'), world: G.w, level: G.L, index: G.i, count: G.count, eased: G.qEased, q: G.q,
+  const warm = !!G.qWarm;
+  return { area: $('#area'), world: G.w, level: G.L, index: warm ? G.warm : G.i, count: warm ? G.warmN : G.count, eased: G.qEased, q: G.q,
+    warm, first: warm ? G.warm === 0 : G.i === 0 && !G.warmN,
     bubble, later, hints: list => { G.hints = list || []; } };
 }
 /* Bonnie's help ladder. A world can take over with onAsk(ctx) (Maths does). */
@@ -806,10 +839,12 @@ function correct(el, opts = {}) {
   if (!G || G.busy || G.done) return false;
   G.busy = true;
   const wasHelped = G.qTier >= helpFrom(G.w);
-  if (wasHelped) G.helps++;
-  G.tiers[Math.min(G.qTier, G.tiers.length - 1)]++;
-  if (G.qEased) G.eased++;
-  learner.note(wasHelped);
+  if (!G.qWarm) { // warm-ups don't count for stars, the help log or the quiet easing
+    if (wasHelped) G.helps++;
+    G.tiers[Math.min(G.qTier, G.tiers.length - 1)]++;
+    if (G.qEased) G.eased++;
+    learner.note(wasHelped);
+  }
   sfx.correct(); shakeScreen();
   if (!wasHelped) {
     streak++;
@@ -836,14 +871,15 @@ function correct(el, opts = {}) {
   return true;
 }
 /* Go to the next question (after correct() with auto:false). */
-function next() { if (!G || G.done) return; G.i++; nextQuestion(); }
+function next() { if (!G || G.done) return; if (G.qWarm) G.warm++; else G.i++; nextQuestion(); }
 /* For worlds: is a right answer being celebrated (or the level over)? */
 function isBusy() { return !G || G.busy || G.done; }
 /* For worlds: the question being played. helped: Bonnie's help has reached the level that counts as help. */
-function round() { return G ? { index: G.i, count: G.count, tier: G.qTier, helped: G.qTier >= helpFrom(G.w), busy: G.busy } : null; }
+function round() { return G ? { index: G.qWarm ? G.warm : G.i, count: G.qWarm ? G.warmN : G.count, warm: !!G.qWarm, tier: G.qTier, helped: G.qTier >= helpFrom(G.w), busy: G.busy } : null; }
 function wrong(msg, opts = {}) {
   if (!G || G.busy || G.done) return;
-  G.mistakes++; streak = 0; renderHud(); sfx.wrong();
+  if (!G.qWarm) G.mistakes++; // a warm-up mistake doesn't count
+  streak = 0; renderHud(); sfx.wrong();
   animate($('#gameBonnie'), 'wiggle', 600);
   if (!opts.quiet) bubble(fmt(msg || rand(LINES.oops))); // msg may contain <b> (worlds escape their own words)
 }
@@ -854,7 +890,8 @@ function finishLevel() {
   const { w, L, li, key } = G;
   const stars = RULES.starsFor({ mistakes: G.mistakes, helps: G.helps });
   let prev = 0;
-  mutate(s => { prev = s.stars[key] || 0; s.stars[key] = Math.max(prev, stars); s.logs[key] = { tiers: G.tiers, eased: G.eased, when: todayGB() }; });
+  mutate(s => { prev = s.stars[key] || 0; s.stars[key] = Math.max(prev, stars); s.logs[key] = { tiers: G.tiers, eased: G.eased, when: todayGB() };
+    if (stars > prev) s.starLog.push({ key, from: prev, to: stars, day: localDay() }); });
   const bonus = RULES.starBonus(stars, prev), newStars = Math.max(0, stars - prev);
   if (G.extra) { G.extraBones = RULES.EXTRA_RUN_BONES; addBones(G.extraBones, $('#area'), 'extra practice!'); }
   if (bonus) addBones(bonus, $('#area'), 'star bonus!');
@@ -1058,6 +1095,7 @@ function parentScreen() {
         <p class="note" id="yearsNow">Showing in ${esc(GAME.title)}: ${shownYears(subj).map(y => 'Year ' + y).join(' + ')}</p></section>` : ''}
       <section><h3>Progress in ${esc(GAME.title)}</h3>
         <label><input type="checkbox" id="pUnlock" ${S.settings.unlockAll[subj] ? 'checked' : ''}> Open all levels in ${esc(GAME.title)}</label>
+        ${sworlds.some(w => w.warmUps) ? `<label><input type="checkbox" id="pWarm" ${S.settings.warmUps ? 'checked' : ''}> Maths warm-ups: each level starts with 2 easy questions that don't count for stars</label>` : ''}
         ${sworlds.map(w => `<div class="note">${w.icon || ''} ${esc(w.name)} (Year ${w.year}): ⭐ ${worldStars(w)} / ${w.levels.length * 3}</div>`).join('')}
         <div class="row-btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small berry" id="resetProg">Reset ${esc(GAME.title)} stars</button></div>
         <p class="note">Resetting clears this game's stars only. Bones, hats, prizes and the other games are kept.</p></section>
@@ -1108,12 +1146,14 @@ function parentScreen() {
     $('#yearsNow').textContent = `Showing in ${GAME.title}: ${shownYears(subj).map(y => 'Year ' + y).join(' + ')}`;
   });
   $('#pUnlock').onchange = e => mutate(s => { s.settings.unlockAll[subj] = e.target.checked; });
+  if ($('#pWarm')) $('#pWarm').onchange = e => mutate(s => { s.settings.warmUps = e.target.checked; });
   $('#backupBtn').onclick = () => window.MeadowBackup && window.MeadowBackup.open();
   $('#resetProg').onclick = () => modal(`<h2>Reset ${esc(GAME.title)} stars?</h2><p>All stars in ${esc(GAME.title)} will be cleared. Bones and prizes are kept.</p>
     <div class="btns"><button class="btn berry" data-a="yes">Reset</button><button class="btn ghost" data-a="no">Cancel</button></div>`, a => {
     if (a !== 'yes') return;
     const prefixes = sworlds.map(w => w.id + '/');
-    mutate(s => { [s.stars, s.logs].forEach(o => Object.keys(o).forEach(k => { if (prefixes.some(p => k.startsWith(p))) delete o[k]; })); });
+    mutate(s => { [s.stars, s.logs].forEach(o => Object.keys(o).forEach(k => { if (prefixes.some(p => k.startsWith(p))) delete o[k]; }));
+      s.starLog = s.starLog.filter(e => !prefixes.some(p => e.key.startsWith(p))); });
     parentScreen();
   });
 }
@@ -1124,7 +1164,7 @@ function parentScreen() {
    ========================================================= */
 function spokenLines(game = GAME) {
   const out = new Set(), add = (...xs) => xs.forEach(x => x && out.add(fmt(x)));
-  add(LINES.extraPractice, LINES.extraDone);
+  add(LINES.extraPractice, LINES.extraDone, LINES.warmUp);
   add(...LINES.praise, LINES.watched, ...LINES.oops, ...LINES.tickles, ...LINES.tickleEgg, ...Object.values(LINES.finish), LINES.already3, ...Object.values(LINES.stillBest),
     LINES.locked, LINES.shownAll, LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
   [1, 2, 3].forEach(st => [1, 2].forEach(p => { if (st <= p) add(fmt(LINES.finish[st]) + ' ' + LINES.stillBest[p]); }));
@@ -1230,6 +1270,7 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 .stone .lb{font-family:var(--font-read);color:var(--ink-soft);font-size:.95rem}
 .stone .eg{white-space:nowrap;background:#fff;border-radius:8px;padding:0 6px}
 .stone .ls{font-size:1.2rem;letter-spacing:2px}
+.stone .new-badge{display:inline-block;margin-top:4px;padding:2px 12px;border-radius:999px;background:var(--gold);color:var(--ink);font-weight:700;font-size:.95rem;box-shadow:0 2px 0 rgba(74,59,44,.18)}
 .stone.locked{opacity:.55;filter:grayscale(.6)}
 .stone.bad{animation:shake .45s}
 .game-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
@@ -1415,7 +1456,7 @@ window.Meadow = {
   version: SAVE_VERSION,
   RULES, HATS, SLOTS, THEMES, STARTER_PRIZES, OLD_IDS, OLD_KEYS, LINES,
   // content
-  registerWorld, addLevels, worlds: subjectWorlds, world: worldById, visibleWorlds, shownYears, levelUnlocked, starSummary,
+  registerWorld, addLevels, worlds: subjectWorlds, world: worldById, visibleWorlds, shownYears, levelUnlocked, starSummary, starsThisWeek, weekStart,
   // play
   startGame, startLevel, correct, wrong, helped, askedBonnie, next, finishLevel, bubble, later, learner, isBusy, round,
   // save

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Maths Confidence Test</title>
+<style>
+  #report { font-family: system-ui, sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; color: #3E2F27; }
+  #report h1 { font-size: 1.4rem; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+  #report small { color: #7A6A5E; }
+</style>
+</head>
+<body>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script>
+/* Maths confidence pack checks (Stage 2): warm-ups, the star log, "new stars this week" and New! badges.
+   It plays a pretend level with a pretend clock, using its own save (meadow-save-confidence-test),
+   so the real games are never touched. The save is deleted at the end. */
+(async () => {
+  const TEST_KEY = 'meadow-save-confidence-test', W = 'test-warm', W2 = 'test-plain';
+  const made = []; // every make() call, to check what warm-ups ask for
+  const level = id => ({ id, name: id, count: 6, seq: ['a', 'b', 'c', 'a', 'b', 'c'], make: o => { made.push({ ...o, level: undefined, world: undefined }); return {}; } });
+  const play = (q, ctx) => { ctx.area.textContent = (ctx.warm ? 'Warm-up ' : 'Question ') + (ctx.index + 1); };
+  Meadow.registerWorld({ id: W, subject: 'test', year: 2, name: 'Warm Meadow', icon: '🔥', warmUps: true, play, levels: ['one', 'two', 'three'].map(level) });
+  Meadow.registerWorld({ id: W2, subject: 'test', year: 2, name: 'Plain Meadow', icon: '🌼', play, levels: ['one'].map(level) });
+  localStorage.removeItem(TEST_KEY);
+  Meadow.startGame({ subject: 'test', title: 'Confidence Test', icon: '🔥', homeHref: '../index.html', assetBase: '../', needName: false, saveKey: TEST_KEY });
+
+  const day = d => () => new Date(2026, 10, d, 10, 0, 0); // 10am on the dth of November 2026 (the 9th and 16th are Mondays)
+  const save = () => Meadow.save.get();
+  const bones = () => save().bones;
+  const closeModals = () => document.querySelectorAll('.modal-bg').forEach(m => m.remove());
+  function fresh(d) { localStorage.removeItem(TEST_KEY); Meadow.save.load(); Meadow.save.mutate(s => { s.sound = false; s.voice = false; }); Meadow.setClock(day(d)); made.length = 0; return bones(); }
+  // play a level: warmWrong/warmHelp happen in each warm-up; realWrong mistakes in the first real question
+  function run({ w = W, lvl = 'one', warmWrong = 0, warmHelp = 0, realWrong = 0 } = {}) {
+    closeModals();
+    Meadow.startLevel(w, lvl);
+    const seen = [];
+    for (let guard = 0; guard < 20; guard++) {
+      const r = Meadow.round(); if (!r || document.querySelector('.modal-bg')) break;
+      seen.push(r.warm ? 'W' : 'Q');
+      if (r.warm) { for (let i = 0; i < warmWrong; i++) Meadow.wrong(null, { quiet: true }); if (warmHelp) Meadow.helped(warmHelp); }
+      else if (seen.filter(x => x === 'Q').length === 1) for (let i = 0; i < realWrong; i++) Meadow.wrong(null, { quiet: true });
+      Meadow.correct(null, { auto: false }); Meadow.next();
+    }
+    return seen.join('');
+  }
+  const stars = (w = W, lvl = 'one') => save().stars[w + '/' + lvl] || 0;
+
+  const results = [];
+  const check = (name, ok, detail) => results.push({ name, ok: !!ok, detail });
+
+  // 1. warm-ups come first, 2 of them, then the level's 6 questions
+  let b0 = fresh(10);
+  const order = run();
+  check('A maths level starts with 2 warm-ups, then its 6 questions', order === 'WWQQQQQQ', order);
+  check('Warm-ups ask for easy numbers of the level\'s own types', made.slice(0, 2).every(m => m.warm && m.eased && ['a', 'b', 'c'].includes(m.type)) && made.slice(2).every(m => !m.warm),
+    made.slice(0, 2).map(m => `${m.type} eased:${m.eased}`).join(', '));
+  check('Only the first warm-up starts the "no repeats" list', made.map(m => !!m.fresh).join() === 'true,false,false,false,false,false,false,false', made.map(m => !!m.fresh).join());
+  check('Warm-up answers pay bones as normal (8 answers + 9 star bonus)', bones() - b0 === 17, `paid ${bones() - b0}`);
+
+  // 2. mistakes and help in warm-ups don't change the stars
+  fresh(10); run({ warmWrong: 3, warmHelp: 3 });
+  check('3 mistakes and full help in each warm-up: still 3 stars', stars() === 3, `${stars()} stars`);
+  const log = save().logs[W + '/one'];
+  check('Warm-ups are left out of the help log', log && log.tiers.reduce((a, b) => a + b, 0) === 6, JSON.stringify(log && log.tiers));
+  fresh(10); run({ realWrong: 2 });
+  check('…but 2 mistakes in a real question still give 2 stars', stars() === 2, `${stars()} stars`);
+
+  // 3. the grown-ups switch, and worlds without warm-ups
+  fresh(10); Meadow.save.mutate(s => { s.settings.warmUps = false; });
+  check('Warm-ups switched off: no warm-ups', run() === 'QQQQQQ', 'played ' + (Meadow.save.get().stars[W + '/one'] ? 'ok' : '?'));
+  fresh(10);
+  check('A world without warm-ups (English, Captain\'s Cove) has none', run({ w: W2 }) === 'QQQQQQ', '');
+  check('Warm-ups are on in a new save', Meadow.save.get().settings.warmUps === true, String(Meadow.save.get().settings.warmUps));
+
+  // 4. extra practice runs: warm-ups don't pay answer bones either
+  b0 = fresh(10); run(); run(); let b = bones(); run();
+  check('3rd play in a day: warm-ups included, just the 3 extra practice bones', bones() - b === 3, `paid ${bones() - b}`);
+
+  // 5. the star log and "new stars this week" (Monday to Sunday)
+  fresh(8); run({ realWrong: 2 }); // Sunday 8th: 2 stars
+  check('A new best star is logged with the day', JSON.stringify(save().starLog) === JSON.stringify([{ key: W + '/one', from: 0, to: 2, day: '2026-11-08' }]), JSON.stringify(save().starLog));
+  check('Sunday: 2 new stars this week', Meadow.starsThisWeek('test') === 2, Meadow.starsThisWeek('test'));
+  Meadow.setClock(day(9));
+  check('Monday: a new week starts at 0', Meadow.starsThisWeek('test') === 0, Meadow.starsThisWeek('test'));
+  run(); // Monday: 2 → 3 stars
+  run({ lvl: 'two', realWrong: 2 }); // Monday: 0 → 2
+  run({ lvl: 'two', realWrong: 2 }); // same stars again: nothing logged
+  check('Monday: 1 + 2 = 3 new stars; a replay with the same stars adds nothing', Meadow.starsThisWeek('test') === 3 && save().starLog.length === 3, `${Meadow.starsThisWeek('test')} (log ${save().starLog.length})`);
+  Meadow.setClock(day(15));
+  check('Sunday 15th: still the same week (3)', Meadow.starsThisWeek('test') === 3, Meadow.starsThisWeek('test'));
+  Meadow.setClock(day(16));
+  check('Monday 16th: the next week (0)', Meadow.starsThisWeek('test') === 0, Meadow.starsThisWeek('test'));
+  Meadow.setClock(day(7));
+  check('Clock moved back to before the stars: none counted, nothing lost', Meadow.starsThisWeek('test') === 0 && save().starLog.length === 3, `${Meadow.starsThisWeek('test')}, log ${save().starLog.length}`);
+  check('Weeks start on Monday', Meadow.weekStart(new Date(2026, 10, 15)) === '2026-11-09' && Meadow.weekStart(new Date(2026, 10, 9)) === '2026-11-09', Meadow.weekStart(new Date(2026, 10, 15)));
+
+  // 6. the New! badge on the level map
+  fresh(10); closeModals(); Meadow.worldMap(W);
+  const badges = () => [...document.querySelectorAll('.stone')].map(s => s.querySelector('.new-badge') ? 'new' : s.querySelector('.ls') ? 'stars' : 'none');
+  check('Never played: New! (locked levels show nothing)', badges().join() === 'new,none,none', badges().join());
+  run(); closeModals(); Meadow.worldMap(W);
+  check('After a play: stars, and the next level is New!', badges().join() === 'stars,new,none', badges().join());
+
+  // 7. old and broken saves
+  const before = JSON.parse(localStorage.getItem(TEST_KEY)); delete before.starLog; delete before.settings.warmUps; localStorage.setItem(TEST_KEY, JSON.stringify(before));
+  const s7 = Meadow.save.load();
+  check('An old save loads with an empty star log and warm-ups on', Array.isArray(s7.starLog) && !s7.starLog.length && s7.settings.warmUps === true, JSON.stringify({ log: s7.starLog, warm: s7.settings.warmUps }));
+  localStorage.setItem(TEST_KEY, JSON.stringify({ ...before, starLog: [{ key: 'x/y', from: 1, to: 3, day: '2026-11-10' }, { key: 'x/y', from: 2, to: 1, day: '2026-11-10' }, { key: 'x/z', from: 0, to: 2, day: 'Tuesday' }, 'junk'] }));
+  const s8 = Meadow.save.load();
+  check('A broken star log is tidied', s8.starLog.length === 1 && s8.starLog[0].to === 3, JSON.stringify(s8.starLog));
+
+  check('Only the test save was used', Meadow.save.key === TEST_KEY, Meadow.save.key);
+
+  Meadow.setClock(); closeModals();
+  localStorage.removeItem(TEST_KEY);
+  const failed = results.filter(r => !r.ok);
+  document.body.innerHTML = `<div id="report"><h1>🔥 Maths confidence: Stage 2 checks</h1>
+    <p>Warm-ups, the star log, "new stars this week" and the New! badges, with a pretend level and a pretend clock. Uses its own test save, which it deletes at the end.</p>
+    <div id="result" class="${failed.length ? 'fail' : 'pass'}">${failed.length ? `✗ ${failed.length} of ${results.length} checks failed` : `✓ All ${results.length} checks passed`}</div>
+    <ul>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name} <small>(${r.detail})</small></li>`).join('')}</ul></div>`;
+  window.TEST_RESULT = { passed: !failed.length, results };
+})();
+</script>
+</body>
+</html>
