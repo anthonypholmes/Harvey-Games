@@ -639,6 +639,7 @@ const COVE_ICON = `<svg viewBox="0 0 64 64" width="1em" height="1em" style="vert
 </svg>`;
 
 Meadow.registerWorld(M.world({
+  warmUps: false, // reasoning questions don't suit a warm-up
   id: 'y2-maths-captains-cove', name: 'Captain’s Cove', tag: 'Is the Captain right?', icon: COVE_ICON, color: '#3D7FB3', tint: '#E4F0F8',
   intro: `Test the Captain’s conjectures and prove it! ${CAPTAIN} makes bold claims. A <b>conjecture</b> is an idea that might be true. Is the Captain right?`,
   ids: ['true-false', 'always-sometimes-never', 'test-the-captain', 'spot-the-mistake', 'prove-it', 'odd-one-out'],

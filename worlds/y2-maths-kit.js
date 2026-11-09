@@ -167,7 +167,7 @@ const K = {
 };
 
 function play(q, ctx) {
-  if (ctx.index === 0) askedLevel = false;
+  if (ctx.first ?? ctx.index === 0) askedLevel = false;
   clearSkip();
   S = { q, ctx, values: Array(q.boxes || 1).fill(''), active: 0, locked: false, busy: false,
     tier: 0, steps: null, step: 0, solved: new Set(), tried: new Set(), cluePoint: null, zone: null,
@@ -623,12 +623,12 @@ function questFor(q) {
 
 function renderGame() {
   const q = S.q, quest = questFor(q);
-  const hello = S.ctx.index === 0 ? (q.claim ? 'Let’s test the Captain’s conjecture!' : `Woof! Let’s go, ${esc(NAME())}!`)
+  const hello = S.ctx.warm ? 'Warm-up time! These ones are easy.' : (S.ctx.first ?? S.ctx.index === 0) ? (q.claim ? 'Let’s test the Captain’s conjecture!' : `Woof! Let’s go, ${esc(NAME())}!`)
     : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'verdict' ? 'Is the Captain right?' : q.kind === 'chests' ? 'Which chest does it go in?' : q.kind === 'tester' ? 'Tap a number to test it!' : q.kind === 'steps' ? 'Which step is wrong?' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
   S.ctx.area.innerHTML = `<div class="mm" id="mm">
     <div class="play">
       <div class="mcard stage">
-        <div class="lvl-name">${esc(S.ctx.level.name)} · Question ${S.ctx.index + 1} of ${S.ctx.count}</div>
+        <div class="lvl-name">${S.ctx.warm ? `<span class="warm-chip">🔥 Warm-up ${S.ctx.index + 1} of ${S.ctx.count}</span> ${esc(S.ctx.level.name)}` : `${esc(S.ctx.level.name)} · Question ${S.ctx.index + 1} of ${S.ctx.count}`}</div>
         ${quest ? `<div class="quest">${PAW}<span>${esc(quest)}</span></div>` : ''}
         <div class="prompt-row">
           <div class="prompt">${q.prompt}</div>
@@ -1090,8 +1090,8 @@ function wrapLevel(L, id) {
   let used = new Set();
   return {
     id, name: L.name, blurb: L.blurb, eg: L.eg, seq: L.seq, quest: L.quest,
-    make: ({ eased, index, type }) => {
-      if (index === 0) used = new Set();
+    make: ({ eased, index, type, fresh }) => {
+      if (fresh ?? index === 0) used = new Set(); // fresh: the first question of a run (warm-ups come first)
       let q, guard = 0;
       do { q = L.make(type, index, eased); guard++; } while (used.has(q.key) && guard < 60);
       used.add(q.key); q.eased = !!eased;
@@ -1106,6 +1106,7 @@ function world(d) {
   return {
     id: d.id, subject: 'maths', year: d.year || 2, name: d.name, tag: d.tag, icon: d.icon, color: d.color, tint: d.tint, intro: d.intro,
     layout: 'full', helpFrom: 2, hintNames: ['A clue', 'Step by step', 'Glowing buttons'], tierNames: TIER_NAMES, praise: PRAISE,
+    warmUps: d.warmUps !== false, // 2 easy warm-up questions before each level (not Captain's Cove)
     lines: d.lines, host: d.host,   // fixed lines for tools/make-voice.mjs to record (lines with changing numbers use the device voice)
     levels: d.levels.map((L, i) => wrapLevel(L, d.ids[i])),
     play,
@@ -1444,6 +1445,7 @@ const CSS = String.raw`
 #area.mm-area { background: none; border: 0; box-shadow: none; padding: 0; min-height: 0; }
 .mm { font-family: var(--f-body); font-size: 18px; line-height: 1.45; color: var(--ink); }
 .mm .num.main .d { display: inline-block; }
+.mm .warm-chip { display: inline-block; padding: 2px 10px; margin-right: 6px; border-radius: 999px; background: var(--sun-soft); border: 2px solid var(--sun); color: var(--ink); letter-spacing: .03em; }
 .mm .lvl-name { font-family: var(--f-display); font-weight: 600; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: -8px; }
 .mm .buddy .bonnie { width: 104px; height: 104px; }
 .mm .nl-dog { width: 72px; }

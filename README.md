@@ -180,6 +180,24 @@ Hats and themes are bought once and kept. He can swap between the ones he owns f
 - After 5 seconds without a tap, a butterfly or frog wanders across, or Bonnie wiggles her ears.
 - Tapping Bonnie tickles her.
 
+## Warm-ups and hiding the gap
+
+These make starting maths feel safe (the maths confidence pack, Stage 2: see `docs/MATHS_CONFIDENCE_PLAN.md`).
+
+- **Maths warm-ups:**
+  - Every maths level starts with **2 warm-up questions**: the level's own kinds of question with easy numbers, marked with a 🔥 **Warm-up** chip.
+  - Warm-ups don't count for stars: their mistakes and help are ignored, and they're left out of the help table.
+  - They pay answer bones like any other question, under the usual Bones v1.1 rules.
+  - There are no warm-ups in Meadow Words or Captain's Cove.
+  - Grown-ups can switch them off in the Meadow Maths settings (**Maths warm-ups**).
+- **Clubhouse cards:**
+  - Each card shows **⭐ N new stars this week** (Monday to Sunday) instead of the total.
+  - With none yet this week, it shows **Ready when you are! 🐾**.
+  - When every star in a game is won, it shows **All mastered 🏆**.
+  - The full totals are still in the grown-ups area.
+- **Level maps:** a level that has never been played shows a gold **New!** badge instead of three empty stars. Levels with stars look the same as before.
+- **The star log:** each time a level's best stars go up, the save notes the level, the old and new stars and the date (`starLog`). This is what "this week" counts. Resetting a game's stars clears its part of the log too.
+
 ## For grown-ups
 
 Tap the faded gear icon in the top-right of the home screen and answer the times-table question. From there you can:
@@ -189,7 +207,7 @@ Tap the faded gear icon in the top-right of the home screen and answer the times
 - add, edit or delete prizes (title, description and cost)
 - see which prizes have been claimed, with dates
 - see a table for each level: how many answers were solo, after a clue, step by step or guided, and how many questions were made easier
-- turn sound, read-aloud and "open all levels" on or off, or reset progress
+- turn sound, read-aloud, "open all levels" and maths warm-ups on or off, or reset progress
 
 ## Saved progress
 
@@ -216,6 +234,7 @@ This means:
 - **Bonnie's dress-up:** the Bone Shop's first tab has three slots, so Bonnie can wear a hat, something on her face and something round her neck at once (`hat`, `face`, `neck` in the save). Items are listed in `HATS` in the engine, each with its `slot`, and drawn in `hatSVG`, `faceSVG` and `neckSVG`.
 - **The old beta folder** has gone. Its old offline copy is cleared by the live `sw.js`.
 - **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world. `tests/captains-cove-test.html` does the same for Captain's Cove: every claim's truth, every chest, every test that busts a claim, exactly one wrong step in the Captain's working, proofs that add up and don't give the answer away, and every right odd-one-out answer and reason.
+- **Checking warm-ups and "this week":** open `tests/confidence-test.html`. It plays a pretend level with a pretend clock and checks that warm-ups come first, use easy numbers, pay bones and never change the stars, that new stars are logged and counted from Monday to Sunday (including a clock moved back), and the New! badges. It uses its own test save and deletes it at the end.
 - **Checking the bone rules:** open `tests/bones-test.html`. It plays a pretend level many times with a pretend clock and checks the bones (5 plays in a day = 38, a new day, quitting, refreshing, a clock moved back, asking Bonnie, new stars, old saves). It uses its own test save and deletes it at the end. Run it after changing the bone rules.
 - **Try it:** `tests/core-test.html` has a small practice world. It uses its own practice save (`meadow-save-test`), so it changes nothing. Its "Test tools" box shows what would be copied from this device's saves.
 - **Going back to the old games:** the old pages are in git history (the commit before "Stage 7"). Putting them back needs no save changes, because the old saves were never touched; only progress made in the new games would be missing.

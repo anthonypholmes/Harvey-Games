@@ -341,10 +341,15 @@ function hearts(el, emoji = '💖', n = 4) {
 }
 
 /* ---------- render ---------- */
+/* The card shows this week's new stars, not the total, so a near-empty game doesn't look like a gap.
+   (The grown-ups area keeps the full totals.) */
 function progressFor(game) {
   if (!game.progress) return '';
   const { earned, possible } = Meadow.starSummary(game.progress);
-  return possible ? `⭐ ${earned} of ${possible} stars` : '';
+  if (!possible) return '';
+  if (earned >= possible) return 'All mastered 🏆';
+  const week = Meadow.starsThisWeek(game.progress);
+  return week ? `⭐ ${week} new ${week === 1 ? 'star' : 'stars'} this week` : 'Ready when you are! 🐾';
 }
 function render() {
   S = loadShared();
