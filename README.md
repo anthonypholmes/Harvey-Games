@@ -8,7 +8,9 @@ An arcade home page linking Harvey's learning games. Bones earned in any game go
 | `meadow-maths.html` | **Harvey's Meadow Maths** (described below). |
 | `meadow-words.html` | **Harvey's Meadow Words**: Year 2 English, with Phonics Forest, Tricky Word Trail, Sentence Meadow and Bonnie's Story Nook. |
 
-The player's name is entered on the Clubhouse page the first time it opens (and changed there with **✏️ Change name**). Every game uses it in titles and in Bonnie's dialogue. If a game is opened before a name has been entered, it sends the player to the Clubhouse first.
+The player's name is entered on the Clubhouse page the first time it opens (and changed there with **✏️ Change name**). Every game uses it in titles and in Bonnie's dialogue. It always starts with a capital letter, like Bonnie's ("harvey" is saved and shown as "Harvey", "mary-jane" as "Mary-Jane"), and a saved name typed in lowercase is put right the next time a page opens.
+
+In Sentence Meadow's capital letters questions, Bonnie, every word of the player's own name, the days, the months (but not "may" and "march", which are ordinary words too), London, Sam, Christmas and "I" always need a capital, in every sentence (`ALWAYS_CAPS` in `worlds/y2-english-sentences.js`). In Word Order the capitals aren't his job, so putting a repeated word ("the … the") in the other spot never counts against him. If a game is opened before a name has been entered, it sends the player to the Clubhouse first.
 
 Every game has a 🏠 button that goes back to the Clubhouse. All games share one save (`meadow-save-v1` in `localStorage`): bones, the player's name, Bonnie's dress-up, themes, the real-life prize list, the record of bones spent and every level's stars. (The old games saved to `harvey-splitter-v1` and `meadowWords_english_v1`; those are kept, read only.)
 
@@ -185,13 +187,20 @@ Hats and themes are bought once and kept. He can swap between the ones he owns f
 A big **🐾 Bonnie's Walk** button sits at the top of the Clubhouse, above the game cards. A walk is 5 quick questions, English and maths mixed, on a meadow path. It's there so maths turns up inside something friendly, instead of Harvey having to choose it.
 
 - **The path:**
-  - Bonnie stands on 5 paw stones, with the bone bowl at the end.
-  - Each right answer turns a stone gold, and Bonnie trots on to the next one.
+  - A little meadow scene (sky, sun, drifting clouds, hills) with a winding trail of 5 stepping stones and Bonnie's house and bone bowl at the end. The night, snow, Christmas and sea themes have their own colours (the night sky has a moon).
+  - Each stone shows the icon of the game its question comes from, so he can see what's coming.
+  - Each right answer turns a stone gold with a paw print, the walked part of the trail fills with paw dots, and Bonnie trots (with a little hop) to the next stone.
   - The question underneath is drawn by its own world (the English card, or the maths screen), but there are no "English" or "Maths" labels.
 - **Nothing can be failed:**
   - There are no stars and no mistakes.
   - A wrong answer gets a kind word ("Hmm, let's sniff that one out together!"), and Bonnie's help moves up a rung by itself. For English that ends with Watch Me!, and for maths with glowing buttons.
   - The walk only moves on after a right answer.
+- **The surprise dig:**
+  - From his second walk ever, about one walk in two, Bonnie sniffs something between two stops (before stop 2, 3, 4 or 5). A ❗ dig spot pops up beside the path and she runs off to it.
+  - Three dirt mounds with signs, and one quick question: a bond to 10, a double, add 10, a "Bonnie ate some bones" take-away, or which word rhymes (bone, cat, dig, ball, bee, sun, dog, cake).
+  - The right mound: earth flies up and she finds treasure (a golden bone, her lost ball, a teddy, a jewel, a coin or a tiny crown), and 1 answer bone, as for any walk answer.
+  - A wrong mound turns up something silly (an old sock, a muddy boot, a worm, soggy leaves), and her help goes up a rung: a clue, then she digs up a wrong mound herself, then the right one glows.
+  - It's a bonus, not one of the 5 stops: the walk is still 5 stops. Everything she says in it has no numbers, so it's all in her recorded voice.
 - **The questions:**
   - **English:** a random level he has at least one star in, at normal difficulty. A new player gets each English world's first level.
   - **Maths:** only the first 2 levels of each maths world, plus any maths level he already has a star in, always with easy numbers.
@@ -326,7 +335,16 @@ This means:
   - the bones (2 normal walks a day, then extra walks)
   - the streak (including a missed day and a clock moved back)
 
-  It also lists which maths levels came up. It uses its own test save and deletes it at the end.
+  It also lists which maths levels came up. It uses its own test save and deletes it at the end. (It switches the surprise dig off, so every walk is 5 screens.)
+- **Checking the surprise dig:** open `tests/dig-test.html`. It makes 600 dig questions and checks:
+  - 3 different mounds with the answer among them, no numbers below 0, and rhymes that rhyme (and wrong ones that don't)
+  - no dig on the very first walk, and exactly one, between two stops, on later walks
+  - that the dig never uses up a stop
+  - the mounds: a wrong one, the 3 help steps, the right one and its bone
+  - the winding trail and the icons on the stones
+  - that every dig line is on the voice list
+
+  It uses its own test save and deletes it at the end.
 - **Checking warm-ups and "this week":** open `tests/confidence-test.html`. It plays a pretend level with a pretend clock and checks that warm-ups come first, use easy numbers, pay bones and never change the stars, that new stars are logged and counted from Monday to Sunday (including a clock moved back), and the New! badges. It uses its own test save and deletes it at the end.
 - **Checking the bone rules:** open `tests/bones-test.html`. It plays a pretend level many times with a pretend clock and checks the bones (5 plays in a day = 38, a new day, quitting, refreshing, a clock moved back, asking Bonnie, new stars, old saves). It uses its own test save and deletes it at the end. Run it after changing the bone rules.
 - **Try it:** `tests/core-test.html` has a small practice world. It uses its own practice save (`meadow-save-test`), so it changes nothing. Its "Test tools" box shows what would be copied from this device's saves.
@@ -377,7 +395,8 @@ The Clubhouse and both games can play a recorded ElevenLabs voice for Bonnie ins
 - Names marked with `*` in `tools/names.txt` (Harvey, Rex, Samantha, Anthony, Alaya and Rory) have every sentence containing their name recorded in one go, so there's no join around the name. That's about 52 sentences, or roughly 1,500 characters, per name. Other names are joined in, with the quiet ends of each clip trimmed so the joins are short.
 - Prizes a grown-up adds or renames can't be recorded in advance. For those, Bonnie says "Hooray! Go and tell your grown-up what you unlocked!" in the recorded voice, and the prize name is shown on screen.
 - After editing the words in the game, run the script again. It only makes the new lines and removes clips that are no longer used. Changing the voice ID or model remakes everything.
-- **Meadow Maths** questions are full of numbers that change, so most of its lines use the device voice. Its greetings, its well-done lines and each world's fixed lines are recorded. A Maths world lists its fixed lines in `lines` (see `VOICE_LINES` in `worlds/y2-maths-number-bonds.js`); keep them word for word the same as the clues and steps.
+- **Meadow Maths** questions are full of numbers that change. Its greetings, its well-done lines, each world's fixed lines (`lines`, see `VOICE_LINES` in `worlds/y2-maths-number-bonds.js`) and every clue and step-card sentence with no number in it are recorded. The kit finds those by making lots of questions for every level (`helpLines` in `worlds/y2-maths-kit.js`, with a fixed run of "random" numbers so the list is the same every time). A line with a number in it ("What goes with 4 to make 6?", "Is it 99?! Oops, silly me.") still uses the device voice: there are thousands of versions, so recording them all isn't worth it. The same goes for **Read questions aloud** in Grown-ups, which reads each maths question with its numbers.
+- **The very first line on a page** (for example "Walkies!" when Bonnie's Walk opens) waits up to 2.5 seconds for the clip list to load, so it's in Bonnie's voice too, not the device voice.
 - **Captain Croak** (Captain's Cove) has his own voice, ID `PPzYpIqttlTYA83688JI`. His lines are the world's `HOST.lines`. Record them with `npm run voice -- --captain-voice PPzYpIqttlTYA83688JI` (add `--voice 4CrZuIW9am7gYAxgo2Af` to do Bonnie's new lines in the same run). His clips go in `audio/captain/`, listed in `audio/captain.json`, so they never mix with Bonnie's. Until they're recorded he uses the device voice, pitched lower.
 - `npm run voice -- --dry-run` lists every new line it would record and how many characters that costs, without the key and without making anything.
 - The reading speed setting only changes the device voice.

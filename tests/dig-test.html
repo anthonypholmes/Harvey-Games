@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Dig Test</title>
+<style>
+  #report { font-family: system-ui, sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; color: #3E2F27; }
+  #report h1 { font-size: 1.4rem; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+  #report small { color: #7A6A5E; }
+</style>
+</head>
+<body>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script src="../worlds/y2-english-phonics.js"></script>
+<script src="../worlds/y2-english-tricky-words.js"></script>
+<script src="../worlds/y2-english-sentences.js"></script>
+<script src="../worlds/y2-english-stories.js"></script>
+<script src="../worlds/y2-maths-kit.js"></script>
+<script src="../worlds/y2-maths-partitioning.js"></script>
+<script src="../worlds/y2-maths-number-bonds.js"></script>
+<script src="../worlds/y2-maths-number-lines.js"></script>
+<script src="../worlds/y2-maths-arrays.js"></script>
+<script src="../worlds/y2-maths-sharing.js"></script>
+<script src="../worlds/y2-maths-sharing-fractions.js"></script>
+<script src="../worlds/y2-maths-captains-cove.js"></script>
+<script>
+/* The surprise dig in Bonnie's Walk: the questions, when it comes up, that it never counts as a stop,
+   the mounds (a wrong one, the help, the right one) and its lines for the voice recorder.
+   It uses its own save (meadow-save-dig-test) and deletes it at the end. */
+(async () => {
+  const TEST_KEY = 'meadow-save-dig-test';
+  const blank = { version: 1, name: 'Harvey', sound: false, voice: false };
+  localStorage.setItem(TEST_KEY, JSON.stringify(blank));
+  Meadow.startGame({ subject: 'walk', title: "Bonnie's Walk", icon: '🐾', homeHref: '../index.html', assetBase: '../', walk: true, needName: false, saveKey: TEST_KEY });
+  const D = Meadow.walk.dig;
+  D.chance = 0;
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const save = () => Meadow.save.get();
+  const closeModals = () => document.querySelectorAll('.modal-bg').forEach(m => m.remove());
+  const walked = { walks: { days: { '2026-11-08': 1 }, last: '2026-11-08', streak: 1 } };
+  const reset = (extra = {}) => { localStorage.setItem(TEST_KEY, JSON.stringify({ ...blank, ...extra })); Meadow.save.load(); };
+  const results = [];
+  const check = (name, ok, detail) => results.push({ name, ok: !!ok, detail });
+  await sleep(1200); closeModals();
+
+  // 1. the questions
+  const qs = Array.from({ length: 600 }, () => Meadow.walk.makeDig());
+  const badQ = qs.filter(q => q.opts.length !== 3 || new Set(q.opts.map(String)).size !== 3 || !q.opts.includes(q.answer)
+    || (q.kind !== 'rhyme' && q.opts.some(v => !Number.isInteger(v) || v < 0)));
+  check('600 dig questions: 3 different mounds, one is the answer, no numbers below 0', !badQ.length, badQ.slice(0, 2).map(q => q.text + ' ' + q.opts).join(' / '));
+  const kinds = new Set(qs.map(q => q.kind));
+  check('Every kind of dig question comes up (bonds, doubles, add 10, take away, rhymes)', ['bond', 'double', 'plus10', 'take', 'rhyme'].every(k => kinds.has(k)), [...kinds].join());
+  const ends = w => w.replace(/^[^aeiou]*/, '');
+  const badRhyme = qs.filter(q => q.kind === 'rhyme').filter(q => {
+    const w = q.text.match(/<b>(\w+)<\/b>/)[1];
+    return ends(q.answer) !== ends(w) && !(w === 'bee' && /ee|ea/.test(q.answer)) || q.opts.filter(o => o !== q.answer).some(o => ends(o) === ends(w));
+  });
+  check('Rhymes: the answer rhymes, the other two don\'t', !badRhyme.length, badRhyme.slice(0, 2).map(q => q.text + ' ' + q.opts).join(' / '));
+  check('What Bonnie says never has a number in it (so it\'s all recorded)', qs.every(q => !/\d/.test(q.ask)), '');
+
+  // 2. when it comes up
+  D.chance = 1; reset();
+  closeModals(); Meadow.startWalk(); Meadow.walk.skipHello(); await sleep(20);
+  let digs = 0;
+  for (let i = 0; i < 8 && Meadow.round(); i++) { if (document.querySelector('.dig')) digs++; Meadow.correct(null, { auto: false }); Meadow.next(); }
+  check('The very first walk never has a dig', digs === 0, `${digs}`);
+  closeModals();
+
+  // 3. a walk with a dig: it's an extra, never one of the 5 stops
+  reset(walked);
+  closeModals(); Meadow.startWalk(); Meadow.walk.skipHello(); await sleep(20);
+  const seen = [];
+  for (let i = 0; i < 8 && document.querySelector('#area') && !document.querySelector('.modal-bg'); i++) {
+    const dig = !!document.querySelector('.dig');
+    seen.push({ dig, index: Meadow.round().index, stones: document.querySelectorAll('.wstone.done').length });
+    Meadow.correct(null, { auto: false }); Meadow.next(); await sleep(5);
+  }
+  await sleep(30);
+  const at = seen.findIndex(s => s.dig);
+  check('From the second walk on (chance set to always): one dig, between two stops', seen.filter(s => s.dig).length === 1 && at >= 1 && at <= 5, JSON.stringify(seen.map(s => s.dig ? 'D' : s.index)));
+  check('The dig doesn\'t use up a stop: still 5 stops, then the walk ends', seen.length === 6 && !!document.querySelector('.modal-bg') && /Walk done/.test(document.querySelector('.modal-bg').textContent), `${seen.length} screens`);
+  check('The stop after the dig is the same stop number as the dig', at > 0 && seen[at].index === seen[at + 1].index, JSON.stringify(seen[at]) + JSON.stringify(seen[at + 1]));
+  closeModals();
+
+  // 4. the mounds
+  async function toDig() {
+    reset(walked); closeModals(); Meadow.startWalk(); Meadow.walk.skipHello(); await sleep(20);
+    for (let i = 0; i < 6 && !document.querySelector('.dig'); i++) { Meadow.correct(null, { auto: false }); Meadow.next(); await sleep(5); }
+    return document.querySelector('.dig');
+  }
+  await toDig();
+  const q = (() => { const ms = [...document.querySelectorAll('.mound')]; return { ms, labels: ms.map(m => m.querySelector('.stake').textContent) }; })();
+  const qa = document.querySelector('.dig-q').textContent;
+  const onScreen = Meadow.round();
+  // find the answer from the question on screen
+  const nums = (qa.match(/\d+/g) || []).map(Number);
+  let ans = null;
+  if (/make 10/.test(qa)) ans = 10 - nums[0]; else if (/double/.test(qa)) ans = 2 * nums[0]; else if (/\+ 10/.test(qa)) ans = nums[0] + 10; else if (/ate/.test(qa)) ans = nums[0] - nums[1];
+  const rightI = ans !== null ? q.labels.indexOf(String(ans)) : -1;
+  const wrongI = [0, 1, 2].find(i => i !== rightI);
+  const bonesBefore = save().bones;
+  if (ans !== null) {
+    q.ms[wrongI].click(); await sleep(10);
+    check('A wrong mound: something silly dug up, it can\'t be dug again, and Bonnie\'s help goes up', q.ms[wrongI].classList.contains('junk') && q.ms[wrongI].disabled && Meadow.round().tier === 1 && !!document.querySelector('.dig'), `tier ${Meadow.round().tier}`);
+    document.querySelector('#askBtn').click(); await sleep(10);
+    check('Help 2 digs up the other wrong mound', q.ms.filter((m, i) => i !== rightI).every(m => m.disabled) && !q.ms[rightI].disabled, q.ms.map(m => m.className).join(' | '));
+    document.querySelector('#askBtn').click(); await sleep(10);
+    check('Help 3 makes the right mound glow', q.ms[rightI].classList.contains('glow'), '');
+    q.ms[rightI].click(); await sleep(10);
+    check('The right mound: treasure, and an answer bone', q.ms[rightI].classList.contains('treasure') && save().bones === bonesBefore + Meadow.RULES.ASK_BONES + Meadow.RULES.ANSWER_BONES, `${bonesBefore} → ${save().bones} (asking Bonnie, then the answer)`);
+  } else {
+    // a rhyme: tap each mound until treasure
+    for (const m of q.ms) { if (!document.querySelector('.dig') || m.disabled) continue; m.click(); await sleep(10); if (m.classList.contains('treasure')) break; }
+    check('A rhyme dig: tapping mounds finds the treasure in the end', q.ms.some(m => m.classList.contains('treasure')), qa);
+  }
+  check('The dig spot on the path shows while digging', document.querySelector('#wdig.on'), '');
+  closeModals();
+
+  // 5. the path
+  reset(walked); D.chance = 0; closeModals(); Meadow.startWalk(); Meadow.walk.skipHello(); await sleep(30);
+  const d0 = document.querySelector('.walk-line .trail').getAttribute('d');
+  check('The winding trail is drawn through every stop', /^M[\d.]+,[\d.]+( C[\d.,\s-]+){5}$/.test(d0), d0.slice(0, 60));
+  check('Each stop shows its game\'s icon', [...document.querySelectorAll('.wstone .wicon')].every(e => e.textContent.trim()), '');
+  check('No dig on the path when the walk has none', !document.querySelector('#wdig'), '');
+  Meadow.correct(null, { auto: false }); Meadow.next(); await sleep(20);
+  check('After a stop: its stone has a golden paw and the walked trail grows', document.querySelector('.wstone.done') && document.querySelector('.walk-line .trail-done').getAttribute('d').length > 5, '');
+  closeModals();
+
+  // 6. the voice list
+  const lines = Meadow.walk.digLines(), all = Meadow.spokenLines();
+  const missing = lines.filter(l => !all.includes(l.replaceAll('{N}', save().name || 'friend')));
+  check('Every dig line is on the voice list, none has a number', !missing.length && lines.every(l => !/\d/.test(l)), `${lines.length} lines ${missing.slice(0, 2).join(' / ')}`);
+
+  Meadow.setClock(); closeModals(); localStorage.removeItem(TEST_KEY);
+  const bad = results.filter(x => !x.ok);
+  document.body.innerHTML = `<div id="report"><h1>Bonnie's Walk: the Dig Test</h1>
+    <div id="result" class="${bad.length ? 'fail' : 'pass'}">${bad.length ? `${bad.length} of ${results.length} checks failed` : `All ${results.length} checks passed`}</div>
+    <ul>${results.map(x => `<li class="${x.ok ? '' : 'bad'}">${x.ok ? '✓' : '✗'} ${x.name} <small>${x.detail || ''}</small></li>`).join('')}</ul></div>`;
+  window.TEST_DONE = { passed: results.length - bad.length, total: results.length, bad: bad.map(x => x.name + ' ' + (x.detail || '')) };
+})();
+</script>
+</body>
+</html>

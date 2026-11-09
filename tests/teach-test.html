@@ -42,6 +42,7 @@
   const blank = { version: 1, name: 'Harvey', sound: false, voice: false };
   localStorage.setItem(TEST_KEY, JSON.stringify(blank));
   Meadow.startGame({ subject: 'walk', title: "Bonnie's Walk", icon: '🐾', homeHref: '../index.html', assetBase: '../', walk: true, needName: false, saveKey: TEST_KEY });
+  Meadow.walk.dig.chance = 0; // the surprise dig has its own test (dig-test.html)
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const save = () => Meadow.save.get();

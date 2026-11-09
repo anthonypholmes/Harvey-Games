@@ -445,7 +445,7 @@ const TICKLES = [...Meadow.LINES.tickles, ...Meadow.LINES.tickleEgg]; // the sam
 
 /* ---------- the player's name (used by every game) ---------- */
 let editingName = false;
-function saveName(v) { Meadow.save.mutate(s => { s.name = v; }); }
+function saveName(v) { Meadow.save.mutate(s => { s.name = Meadow.nameCase(v); }); }
 function openNameCard() {
   editingName = true; render(); greet();
   const inp = document.getElementById('nameIn'); inp.value = S.childName; document.getElementById('nameMsg').textContent = '';

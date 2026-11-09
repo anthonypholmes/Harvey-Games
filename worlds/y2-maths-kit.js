@@ -181,6 +181,7 @@ function teachify(q) {
 const teaching = () => !!(S && S.q.teach && S.tstage === 0); // waiting for "right" or "oops"
 
 const DEFS = {};        // the world files' own settings (clue and steps), by world id
+const RAW = {};         // each world's levels as the world file wrote them (for helpLines)
 let S = null;           // the question on screen
 let askedLevel = false; // has Bonnie been asked yet this level (the first ask earns a bone)
 
@@ -249,6 +250,41 @@ function stepsFor(q) {
 // tell the core how far up the ladder this question went
 function setTier(t) { S.tier = t; Meadow.helped(t); }
 
+/* ---------- every help line, for recording Bonnie's voice ----------
+   Clues and step cards are built from each question's numbers, so they're listed by making lots of questions for
+   every level with a fixed run of "random" numbers (the same list every time, so the recorder only records new ones).
+   Only sentences with no numbers in them are listed: those with numbers ("What goes with 4 to make 6?") come in
+   thousands of versions, so they (and any line that has one) still use the device voice. */
+const HELP_FIXED = ['Tap the glowing buttons.', 'Drag Bonnie into the green glow.', 'Have another look.'];
+function helpLines(worldId, per = 60) {
+  const out = new Set(), keep = S, random = Math.random;
+  let seed = 0x9E3779B9;
+  Math.random = () => { seed = (seed + 0x6D2B79F5) >>> 0; let x = seed; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+  const add = s => { if (typeof s === 'string' && s.trim()) out.add(s); };
+  try {
+    for (const L of RAW[worldId] || []) for (const type of L.seq ? [...new Set(L.seq)] : [undefined]) for (const eased of [false, true]) for (let k = 0; k < per; k++) {
+      try {
+        const q = L.make(type, k % 10, eased);
+        S = { q, ctx: { world: { id: worldId }, area: { isConnected: false } }, values: Array(q.boxes || 1).fill(''), active: 0, tier: 0, steps: null, step: 0,
+          solved: new Set(), tried: new Set(), vstage: 0, vtried: new Set(), tested: [], wstage: 0, wtried: new Set(), tstage: 0 };
+        if (q.inter === 'break') { q.counts = countsOf(q.n); q.broke = 0; }
+        S.pos = q.line ? (q.line.pawn === 'sit' ? q.line.sitAt : q.line.start) : null;
+        add((clueFor(q) || {}).say);
+        if (q.verdict) add(q.verdict.why);
+        for (const st of stepsFor(q) || []) {
+          if (!st) continue;
+          add(st.say);
+          // Bonnie's silly guess before a step (see advanceSteps)
+          if (!st.action && !st.words && !st.onShow && st.choices && /^-?\d+$/.test(String(st.answer))) {
+            const n = +st.answer;
+            [n * 10, 100, 1000, n + 50, 99].filter(x => x !== n && !st.choices.map(String).includes(String(x))).forEach(x => add(`Is it ${x}?! Oops, silly me.`));
+          }
+        }
+      } catch (e) { /* a question that needs the screen to work out its help: skipped */ }
+    }
+  } finally { Math.random = random; S = keep; }
+  return [...new Set([...out].flatMap(l => l.split(/(?<=[.!?…])\s+/)).filter(s => /[a-z]/i.test(s) && !/\d/.test(s)))];
+}
 const glowMsg = () => (S.q.kind === 'line' ? 'Drag Bonnie into the green glow.' : 'Tap the glowing buttons.');
 // move one rung up the help ladder; source is 'ask' or 'wrong'
 function raise(source, lead) {
@@ -1167,16 +1203,17 @@ function wrapLevel(L, id) {
   };
 }
 // more levels for a maths world another file made (Stage 6: thirds and three quarters)
-function addLevels(worldId, d) { return Meadow.addLevels(worldId, d.levels.map((L, i) => wrapLevel(L, d.ids[i]))); }
+function addLevels(worldId, d) { (RAW[worldId] || (RAW[worldId] = [])).push(...d.levels); return Meadow.addLevels(worldId, d.levels.map((L, i) => wrapLevel(L, d.ids[i]))); }
 function world(d) {
-  DEFS[d.id] = d;
+  DEFS[d.id] = d; RAW[d.id] = [...d.levels, ...(RAW[d.id] || [])];
   return {
     id: d.id, subject: 'maths', year: d.year || 2, name: d.name, tag: d.tag, icon: d.icon, color: d.color, tint: d.tint, intro: d.intro,
     layout: 'full', helpFrom: 2, hintNames: ['A clue', 'Step by step', 'Glowing buttons'], tierNames: TIER_NAMES, praise: PRAISE,
     warmUps: d.warmUps !== false, // 2 easy warm-up questions before each level (not Captain's Cove)
     walk: d.walk !== false,       // can appear in Bonnie's Walk (not Captain's Cove)
     teach: d.teach !== false,     // Teach Bonnie questions can come up (not Captain's Cove)
-    lines: ctx => [...(d.lines ? d.lines(ctx) || [] : []), ...TEACH_LINES], host: d.host,   // fixed lines for tools/make-voice.mjs to record (lines with changing numbers use the device voice)
+    // every line for tools/make-voice.mjs to record: the world's own, Teach Bonnie, and the help ladder's clues and step cards
+    lines: ctx => [...(d.lines ? d.lines(ctx) || [] : []), ...TEACH_LINES, ...HELP_FIXED, ...helpLines(d.id)], host: d.host,
     levels: d.levels.map((L, i) => wrapLevel(L, d.ids[i])),
     play,
   };
@@ -1539,6 +1576,7 @@ window.MeadowMaths = {
   rd, fmtN, range, pick3, JUMPS, jumpOpts, gq, fillStep, shareDone, gridOk, shapeSVG, frac, sum, PRAISE, TIER_NAMES,
   burrow, burrowCount, burrowFull, burrowPlaced,
   teach: { slips: teachSlips, teachable, LINES: TEACH_LINES }, // Teach Bonnie (for the tests)
+  helpLines, // every clue and step-card line a world can say (for the voice recorder)
   // repaint the picture after a step changes it (the burrow and other pictures, or the place value blocks)
   redraw: () => { if (!S || !root()) return; if (S.q.vis) redrawG(); else if (S.q.mode) redrawVisual(); },
   peek: () => S,   // the question on screen, read only (for the browser tests)
