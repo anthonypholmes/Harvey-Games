@@ -18,7 +18,7 @@
     getAudio: () => null,
     enabled: () => true,
     getRate: () => .9,
-    base: '',            // folder that holds audio/ ('../' for pages in a subfolder such as beta/)
+    base: '',            // folder that holds audio/ ('../' for pages in a subfolder such as tests/)
     pack: null,          // audio/manifest.json once loaded
     others: ['captain'], // other speakers with their own audio/<who>.json
     packs: {},           // their lists once loaded
