@@ -449,3 +449,5 @@ This branch is the version for the App Store. The live site on `main` stays as i
 - **No family recordings.** `audio/whole/` is gone, and no names are recorded whole (`tools/names.txt` has no `*`). Every name is joined in.
 - **Fonts are bundled** in `fonts/` (Fredoka, Nunito, Andika, all SIL Open Font License), so nothing loads from Google. Run `sh tools/get-fonts.sh` once to download the font files.
 - **Inside the app** (Capacitor), `window.MEADOW_IN_APP` is true: no service worker, no "Add to Home Screen" banner, and Bonnie's clips aren't downloaded again, because they're already in the app.
+- **Saves are kept safe** by `js/app-storage.js`, which copies every Meadow save into the app's own storage and puts it back if iOS ever clears the web view.
+- **Making the app:** see `docs/APP_SETUP.md`. In short: `npm install`, `npx cap add ios` once, then `npm run app:sync` and `npm run app:open`.

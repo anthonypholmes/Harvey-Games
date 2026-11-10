@@ -7,3 +7,6 @@
 
 # Tools
 node_modules/
+
+# App Store app: made by npm run app:build
+app-www/

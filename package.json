@@ -1,13 +1,25 @@
 {
   "name": "harvey-games",
   "private": true,
-  "description": "Tools for Harvey's Meadow Clubhouse. The games themselves need no build step.",
+  "description": "Tools for Harvey's Meadow Clubhouse and the App Store app. The website itself needs no build step.",
   "type": "module",
   "scripts": {
     "voice": "node --env-file=.env.local tools/make-voice.mjs",
-    "voice:check": "node tools/make-voice.mjs --dry-run"
+    "voice:check": "node tools/make-voice.mjs --dry-run",
+    "app:build": "node tools/build-app.mjs",
+    "app:sync": "node tools/build-app.mjs && npx cap sync ios",
+    "app:open": "npx cap open ios"
   },
   "devDependencies": {
-    "@elevenlabs/elevenlabs-js": "^2.75.0"
+    "@elevenlabs/elevenlabs-js": "^2.75.0",
+    "@capacitor/cli": "^8.0.0"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/preferences": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
