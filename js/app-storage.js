@@ -1,4 +1,4 @@
-/* Meadow save keeper for the App Store app.
+/* App Store app helpers: keeps pages clear of the status bar, and keeps the saves safe.
  *
  * On the website this file does nothing. Inside the app (Capacitor) the games still save to
  * localStorage as usual, but iOS can clear a web view's storage when the iPad runs low on space.
@@ -10,6 +10,12 @@
 (function () {
   const cap = window.Capacitor;
   if (!(cap && cap.isNativePlatform && cap.isNativePlatform())) return;
+
+  // Keep every page clear of the iPad's clock and battery bar (and the rounded corners in landscape).
+  document.documentElement.classList.add('in-app');
+  const css = document.createElement('style');
+  css.textContent = 'html.in-app{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}';
+  (document.head || document.documentElement).appendChild(css);
   const P = (cap.Plugins && cap.Plugins.Preferences) || (cap.registerPlugin && cap.registerPlugin('Preferences'));
   if (!P) return;
 
