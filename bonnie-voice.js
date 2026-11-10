@@ -213,6 +213,7 @@
   }
   /* Save every clip into the offline cache in the background, a few at a time. */
   async function saveForOffline() {
+    if (window.MEADOW_IN_APP) return; // the App Store app already has every clip on the iPad
     if (!V.pack || typeof caches === 'undefined' || navigator.onLine === false) return;
     try {
       const cache = await caches.open(AUDIO_CACHE);

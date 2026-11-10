@@ -54,7 +54,7 @@ function croakSVG(mood = 'claim') {
 // The Captain speaks in his own recorded voice (audio/captain.json, made by tools/make-voice.mjs --captain-voice).
 // Each list is a bag: he says every line in it once before any comes round again.
 const HOST = { name: CAPTAIN, who: 'captain', svg: croakSVG, says: {
-  busted: [   // after Harvey shows his conjecture is wrong
+  busted: [   // after the player shows his conjecture is wrong
     'Shiver me lily pads, you’ve busted my conjecture!',
     'Blow me down! You busted it!',
     'Arr, you caught me out!',
@@ -63,7 +63,7 @@ const HOST = { name: CAPTAIN, who: 'captain', svg: croakSVG, says: {
     'Well spotted, matey! I was wrong.',
     'Into the pond with that conjecture!',
   ],
-  holds: [    // after Harvey shows it's true
+  holds: [    // after the player shows it's true
     'Arr, my conjecture holds up!',
     'Ho ho! I was right all along!',
     'Treasure! You proved me right!',

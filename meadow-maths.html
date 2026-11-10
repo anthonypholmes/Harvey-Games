@@ -14,12 +14,13 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <script>
-  if ('serviceWorker' in navigator) {
+  // Inside the App Store app (Capacitor) the files are already on the iPad, so no service worker.
+  window.MEADOW_IN_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if (!window.MEADOW_IN_APP && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
   }
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="fonts/fonts.css" rel="stylesheet">
 </head>
 <body>
 <!-- Meadow Maths on the shared engine. It saves only to meadow-save-v1 and only reads the old saves. -->

@@ -2,14 +2,14 @@
  *
  * Pages and scripts: network first, so a newly uploaded game shows up straight away
  *   when online; the saved copy is used when offline (or the network is slow).
- * Everything else (icons, fonts): cache first, then network.
+ * Everything else (icons, the bundled fonts): cache first, then network.
  * Bonnie's recorded voice (audio/): clips are cache first in their own cache, which
  *   survives updates; audio/manifest.json (and captain.json) is network first so new clips are found.
  *   Meadow Words saves every clip in the background, so the voice works offline too.
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v17';
+const CACHE_VERSION = 'meadow-club-v18';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -39,11 +39,8 @@ const CORE_ASSETS = [
   './icon-512.png',
   './apple-touch-icon.png',
 ];
-// Google Fonts stylesheets used by the pages (keep in step with their <link> tags).
-const FONT_CSS = [
-  'https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap',
-  'https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap',
-];
+// The bundled fonts (fonts/). Saved separately so a missing font file never stops the install.
+const FONT_FILES = ['./fonts/fonts.css', './fonts/Fredoka.ttf', './fonts/Nunito.ttf', './fonts/Andika-Regular.ttf', './fonts/Andika-Bold.ttf'];
 const NETWORK_TIMEOUT_MS = 4000;
 
 self.addEventListener('install', event => {
@@ -68,13 +65,9 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // Google Fonts: keep a copy so the games look the same offline.
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    event.respondWith(cacheFirst(req, FONT_CACHE));
-    return;
-  }
   if (url.origin !== self.location.origin) return;
 
+  if (url.pathname.includes('/fonts/')) { event.respondWith(cacheFirst(req, FONT_CACHE)); return; }
   if (url.pathname.includes('/audio/')) {
     event.respondWith(url.pathname.endsWith('.json') ? networkFirst(req, AUDIO_CACHE, false) : cacheFirst(req, AUDIO_CACHE));
     return;
@@ -84,20 +77,13 @@ self.addEventListener('fetch', event => {
   event.respondWith(isPage ? networkFirst(req) : cacheFirst(req, CACHE_VERSION));
 });
 
-// Save each font stylesheet and the font files it points to, so every game looks right offline.
+// Save the bundled fonts, so every game looks right offline.
 async function precacheFonts() {
   const cache = await caches.open(FONT_CACHE);
-  await Promise.all(FONT_CSS.map(async cssUrl => {
-    const res = await fetch(cssUrl, { mode: 'cors' });
-    if (!res.ok) return;
-    const css = await res.clone().text();
-    await cache.put(cssUrl, res);
-    const fontUrls = [...css.matchAll(/url\((https:[^)]+)\)/g)].map(m => m[1]);
-    await Promise.all(fontUrls.map(async u => {
-      if (await cache.match(u)) return;
-      const f = await fetch(u, { mode: 'cors' });
-      if (f.ok) await cache.put(u, f);
-    }));
+  await Promise.all(FONT_FILES.map(async u => {
+    if (await cache.match(u)) return;
+    const res = await fetch(u);
+    if (res.ok) await cache.put(u, res);
   }));
 }
 
@@ -118,8 +104,7 @@ async function networkFirst(req, cacheName = CACHE_VERSION, homeFallback = true)
 
 async function cacheFirst(req, cacheName) {
   const cache = await caches.open(cacheName);
-  // Fonts: ignore Vary so a copy saved at install still matches the page's own request.
-  const cached = await cache.match(req, cacheName === FONT_CACHE ? { ignoreVary: true } : { ignoreSearch: true });
+  const cached = await cache.match(req, { ignoreSearch: true });
   if (cached) return cached;
   try {
     const res = await fetch(req);

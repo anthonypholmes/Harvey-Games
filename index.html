@@ -14,7 +14,9 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <script>
-  if ('serviceWorker' in navigator) {
+  // Inside the App Store app (Capacitor) the files are already on the iPad: no service worker, no Home Screen banner.
+  window.MEADOW_IN_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if (!window.MEADOW_IN_APP && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
   }
 </script>
@@ -34,7 +36,7 @@
   const shareIcon = '<svg class="share" viewBox="0 0 24 24" aria-label="Share" role="img"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   function show() {
     const box = document.getElementById('a2hs'); if (!box) return;
-    const can = !installed() && !closed() && !inApp && (ios || prompt);
+    const can = !window.MEADOW_IN_APP && !installed() && !closed() && !inApp && (ios || prompt);
     box.hidden = !can; if (!can) return;
     document.getElementById('a2hsInstall').hidden = ios || !prompt;
     document.getElementById('a2hsHow').innerHTML = ios
@@ -57,8 +59,7 @@
   });
 })();
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="fonts/fonts.css" rel="stylesheet">
 <style>
 /* =========================================================
    Meadow Clubhouse — arcade home page on the shared engine.

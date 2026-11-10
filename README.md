@@ -441,3 +441,11 @@ git push
 - Each page is a single HTML file with plain JavaScript. There is nothing to install or build.
 - The only outside requests are the two Google Fonts (Fredoka and Nunito). The game still works without them, using fallback fonts.
 - Bonnie's voice uses the device's built-in speech, or recorded clips (see above). The game picks the most natural British English voice available, preferring enhanced or premium ones. On an iPad you can download a better voice in **Settings → Accessibility → Spoken Content → Voices → English → (UK voices)**. If speech isn't available, Bonnie plays a short chime instead.
+
+## The App Store build (`app-store` branch)
+
+This branch is the version for the App Store. The live site on `main` stays as it is.
+
+- **No family recordings.** `audio/whole/` is gone, and no names are recorded whole (`tools/names.txt` has no `*`). Every name is joined in.
+- **Fonts are bundled** in `fonts/` (Fredoka, Nunito, Andika, all SIL Open Font License), so nothing loads from Google. Run `sh tools/get-fonts.sh` once to download the font files.
+- **Inside the app** (Capacitor), `window.MEADOW_IN_APP` is true: no service worker, no "Add to Home Screen" banner, and Bonnie's clips aren't downloaded again, because they're already in the app.

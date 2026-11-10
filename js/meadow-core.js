@@ -1942,9 +1942,9 @@ function startGame(opts = {}) {
   S = load();
   if (GAME.needName && !S.name) { location.replace(GAME.homeHref); return; }
   addStyle(CSS, 'meadow-core-css');
-  if (!$('link[href*="fonts.googleapis.com"]')) {
+  if (!$('link[href*="fonts/fonts.css"]')) {
     const l = document.createElement('link'); l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@400;500;600;700&display=swap';
+    l.href = 'fonts/fonts.css';
     document.head.appendChild(l);
   }
   document.body.insertAdjacentHTML('afterbegin', `
