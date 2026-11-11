@@ -24,10 +24,12 @@
     packs: {},           // their lists once loaded
     device: null,        // the chosen device voice
     missing: new Set(),  // pieces with no clip (for checking a voice pack)
+    why: '',             // why the last line used the device voice (shown in the console, for fixing the app)
   };
   const AUDIO_CACHE = 'meadow-club-audio-v1'; // must match sw.js
   const hasSpeech = () => typeof speechSynthesis !== 'undefined';
   const inApp = () => typeof window !== 'undefined' && !!window.MEADOW_IN_APP; // the App Store app (Capacitor)
+  const because = (why, text) => { V.why = why; if (typeof console !== 'undefined') console.warn('[Bonnie] device voice: ' + why + ' | ' + String(text).slice(0, 60)); };
   let token = 0, nodes = [], speaking = false, waiters = [], safety = null, utter = null, pending = null;
   if (typeof document !== 'undefined') document.addEventListener('pointerdown', () => {
     const p = pending; pending = null; V.getAudio(); // unlocks sound
@@ -88,7 +90,9 @@
   const pauseAfter = raw => /(\.\.\.|…)\s*$/.test(raw) ? .4 : /[.!?]["'”’)]*\s*$/.test(raw) ? .25 : /[,;:—–]\s*$/.test(raw) ? .12 : .04;
   function plan(text, who) {
     const pack = who ? V.packs[who] : V.pack, a = pack && V.getAudio();
-    if (!a || (a.state !== 'running' && !inApp() && !(navigator.userActivation && navigator.userActivation.hasBeenActive))) return null;
+    if (!pack) { V.why = 'clip list not loaded'; return null; }
+    if (!a) { V.why = 'no audio'; return null; }
+    if (a.state !== 'running' && !inApp() && !(navigator.userActivation && navigator.userActivation.hasBeenActive)) { V.why = 'not tapped yet (' + a.state + ')'; return null; }
     const out = [], name = who ? '' : V.getName(), whole = !who && V.pack.whole && V.pack.whole[String(name).toLowerCase()];
     for (const s of V.sentences(text)) {
       // A sentence with the name in it may be recorded whole for this name (sounds most natural)
@@ -101,7 +105,7 @@
         const clean = V.cleanPiece(p.raw);
         if (!V.hasWords(clean)) { if (out.length) out[out.length - 1].pause = Math.max(out[out.length - 1].pause, pauseAfter(p.raw)); continue; }
         const file = p.file || (p.name ? pack.names && pack.names[clean.toLowerCase()] : pack.clips[V.pieceKey(clean)]);
-        if (!file) { if (!p.name) V.missing.add((who ? who + ': ' : '') + clean); return null; }
+        if (!file) { if (!p.name) V.missing.add((who ? who + ': ' : '') + clean); V.why = 'no clip for "' + clean + '"'; return null; }
         out.push({ ...p, file: V.base + 'audio/' + file, pause: pauseAfter(p.raw) });
       }
     }
@@ -149,6 +153,7 @@
     safety = setTimeout(() => finished(t, opts.onend), 2500 + text.length * 110 / Math.min(1, opts.rate || V.getRate()));
     const p = plan(text, opts.who);
     if (p) { playClips(p, opts, t); return { clip: true }; }
+    if (inApp()) because(V.why, text);
     return speakDevice(text, opts, t);
   };
   function speakDevice(text, opts, t) {
@@ -185,13 +190,13 @@
   async function playClips(p, opts, t) {
     let list;
     try { list = await Promise.all(p.map(x => clipBuffer(x.file))); }
-    catch (e) { if (t === token) speakDevice(p.map(x => x.raw).join(''), opts, t); return; }
+    catch (e) { because('clip failed to load or decode: ' + (e && (e.message || e.name) || e), p.map(x => x.file).join(' ')); if (t === token) speakDevice(p.map(x => x.raw).join(''), opts, t); return; }
     if (t !== token) return;
     const ctx = V.getAudio();
     if (ctx.state !== 'running') {
       try { await Promise.race([ctx.resume(), new Promise(r => setTimeout(r, 400))]); } catch (e) {}
       if (t !== token) return;
-      if (ctx.state !== 'running') { speakDevice(p.map(x => x.raw).join(''), opts, t); return; }
+      if (ctx.state !== 'running') { because('sound would not start (' + ctx.state + ')', p.map(x => x.raw).join('')); speakDevice(p.map(x => x.raw).join(''), opts, t); return; }
     }
     const a = ctx, slow = (opts.rate || 1) < .8 ? 1.6 : 1;
     let at = a.currentTime + .04;
