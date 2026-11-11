@@ -27,11 +27,20 @@
   };
   const AUDIO_CACHE = 'meadow-club-audio-v1'; // must match sw.js
   const hasSpeech = () => typeof speechSynthesis !== 'undefined';
+  const inApp = () => typeof window !== 'undefined' && !!window.MEADOW_IN_APP; // the App Store app (Capacitor)
   let token = 0, nodes = [], speaking = false, waiters = [], safety = null, utter = null, pending = null;
   if (typeof document !== 'undefined') document.addEventListener('pointerdown', () => {
     const p = pending; pending = null; V.getAudio(); // unlocks sound
     if (p) setTimeout(() => V.say(p[0], p[1]), 0);   // a tap that makes Bonnie speak will talk over this, which is fine
   }, { capture: true, once: true });
+  if (typeof document !== 'undefined') {
+    const unlock = () => {
+      const a = V.getAudio();
+      if (a && a.state === 'running') { ['touchend', 'click'].forEach(e => document.removeEventListener(e, unlock, true)); return; }
+      if (a && a.resume) a.resume().catch(() => {});
+    };
+    ['touchend', 'click'].forEach(e => document.addEventListener(e, unlock, true));
+  }
   const bufs = new Map(); // file -> decoded AudioBuffer (small, most-recent-first cache)
 
   /* ---------- device voice ---------- */
@@ -79,7 +88,7 @@
   const pauseAfter = raw => /(\.\.\.|…)\s*$/.test(raw) ? .4 : /[.!?]["'”’)]*\s*$/.test(raw) ? .25 : /[,;:—–]\s*$/.test(raw) ? .12 : .04;
   function plan(text, who) {
     const pack = who ? V.packs[who] : V.pack, a = pack && V.getAudio();
-    if (!a || (a.state !== 'running' && !(navigator.userActivation && navigator.userActivation.hasBeenActive))) return null;
+    if (!a || (a.state !== 'running' && !inApp() && !(navigator.userActivation && navigator.userActivation.hasBeenActive))) return null;
     const out = [], name = who ? '' : V.getName(), whole = !who && V.pack.whole && V.pack.whole[String(name).toLowerCase()];
     for (const s of V.sentences(text)) {
       // A sentence with the name in it may be recorded whole for this name (sounds most natural)
@@ -178,7 +187,13 @@
     try { list = await Promise.all(p.map(x => clipBuffer(x.file))); }
     catch (e) { if (t === token) speakDevice(p.map(x => x.raw).join(''), opts, t); return; }
     if (t !== token) return;
-    const a = V.getAudio(), slow = (opts.rate || 1) < .8 ? 1.6 : 1;
+    const ctx = V.getAudio();
+    if (ctx.state !== 'running') {
+      try { await Promise.race([ctx.resume(), new Promise(r => setTimeout(r, 400))]); } catch (e) {}
+      if (t !== token) return;
+      if (ctx.state !== 'running') { speakDevice(p.map(x => x.raw).join(''), opts, t); return; }
+    }
+    const a = ctx, slow = (opts.rate || 1) < .8 ? 1.6 : 1;
     let at = a.currentTime + .04;
     p.forEach((x, k) => {
       const c = list[k], src = a.createBufferSource(); src.buffer = c.buf; src.connect(a.destination); src.start(at, c.from, c.dur); nodes.push(src);
@@ -213,7 +228,7 @@
   }
   /* Save every clip into the offline cache in the background, a few at a time. */
   async function saveForOffline() {
-    if (window.MEADOW_IN_APP) return; // the App Store app already has every clip on the iPad
+    if (inApp()) return; // the App Store app already has every clip on the iPad
     if (!V.pack || typeof caches === 'undefined' || navigator.onLine === false) return;
     try {
       const cache = await caches.open(AUDIO_CACHE);

@@ -11,6 +11,8 @@
   const cap = window.Capacitor;
   if (!(cap && cap.isNativePlatform && cap.isNativePlatform())) return;
 
+  window.MEADOW_IN_APP = true;
+
   // Keep every page clear of the iPad's clock and battery bar (and the rounded corners in landscape).
   document.documentElement.classList.add('in-app');
   const css = document.createElement('style');
