@@ -169,8 +169,10 @@
   }
   async function clipBuffer(file) {
     if (bufs.has(file)) { const b = bufs.get(file); bufs.delete(file); bufs.set(file, b); return b; }
-    const res = await fetch(file); if (!res.ok) throw new Error('clip ' + res.status);
+    // In the app, Capacitor serves sound files with no status code (it reads as 0) even though the file arrives fine.
+    const res = await fetch(file); if (!res.ok && !(inApp() && res.status === 0)) throw new Error('clip ' + res.status);
     const data = await res.arrayBuffer(), a = V.getAudio();
+    if (!data.byteLength) throw new Error('clip empty');
     const buf = await new Promise((ok, bad) => { const pr = a.decodeAudioData(data, ok, bad); if (pr && pr.then) pr.then(ok, bad); });
     const clip = trim(buf);
     bufs.set(file, clip); if (bufs.size > 80) bufs.delete(bufs.keys().next().value);

@@ -43,9 +43,12 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - `docs/APP_SETUP.md` is the step-by-step Mac guide.
 - The app **runs in the iPad simulator**. The Clubhouse, Bonnie's Walk and the games load.
 
-## The open problem: Bonnie uses the device voice, not the ElevenLabs clips
+## Solved: Bonnie used the device voice, not the ElevenLabs clips ✅
 
-- In the simulator, lines with no numbers (such as "Woof! Hi Harvey! Pick a game…") still use the **device text-to-speech voice**.
+- **Fixed 11 November 2026, confirmed by ear in the simulator.** Cause: Capacitor serves media files (mp3 and so on) without an HTTP status, so `fetch` reports status 0 and `res.ok` false even though the file arrives. `clipBuffer()` in `bonnie-voice.js` now accepts status 0 inside the app, provided the file isn't empty.
+- The console log can be read without Safari: `xcrun simctl launch --console-pty booted uk.co.holmeshouse.meadow`.
+- The notes below are the history of the problem, kept for reference.
+- In the simulator, lines with no numbers (such as "Woof! Hi Harvey! Pick a game…") used the **device text-to-speech voice**.
 - Lines **with numbers always use the device voice by design**, on the website too, because there are no number clips yet (that's Phase 3). Don't confuse the two.
 - What's been tried in `bonnie-voice.js`:
   - In the app, `plan()` no longer needs `navigator.userActivation`.
@@ -66,7 +69,7 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 
 ## What comes next (the plan)
 
-1. **Finish Phase 2:** fix the voice. Then check offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
+1. **Finish Phase 2:** the voice is fixed. Still to check: offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
 2. **Phase 3, number voice:** record number clips (0 to 1,000) and joining words ("plus", "take away", "makes" and so on) with ElevenLabs. Join them like names so maths lines use Bonnie's voice. Run `npm run voice:check` first to see the credit cost.
 3. **Phase 4, free taster and unlock:** padlocks on the paid worlds, an unlock screen behind the existing grown-ups gate, one non-consumable in-app purchase (the RevenueCat Capacitor plugin is the easiest route), Restore Purchases, Family Sharing, and sandbox testing.
 4. **Phase 5, child profiles:** up to 4, each with its own name, bones, stars and Bonnie outfit. Move the existing save into the first profile.
