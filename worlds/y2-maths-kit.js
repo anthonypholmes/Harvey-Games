@@ -256,7 +256,13 @@ function setTier(t) { S.tier = t; Meadow.helped(t); }
    Only sentences with no numbers in them are listed: those with numbers ("What goes with 4 to make 6?") come in
    thousands of versions, so they (and any line that has one) still use the device voice. */
 const HELP_FIXED = ['Tap the glowing buttons.', 'Drag Bonnie into the green glow.', 'Have another look.'];
-function helpLines(worldId, per = 60) {
+const helpLines = (worldId, per) => helpSentences(worldId, per).filter(s => !/\d/.test(s));
+/* The sentences with numbers in them. They are not recorded whole: the recorder cuts them at each number and records
+   the words in between once ("What goes with", "to make"), and Bonnie's voice joins those up with number clips. */
+const numberLines = (worldId, per) => [...helpSentences(worldId, per).filter(s => /\d/.test(s)), 'Bonnie thinks it’s 5. Is she right?', 'Those do make 5!'];
+const HELP_SEEN = {};
+function helpSentences(worldId, per = 60) {
+  if (HELP_SEEN[worldId + '/' + per]) return HELP_SEEN[worldId + '/' + per];
   const out = new Set(), keep = S, random = Math.random;
   let seed = 0x9E3779B9;
   Math.random = () => { seed = (seed + 0x6D2B79F5) >>> 0; let x = seed; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
@@ -269,6 +275,7 @@ function helpLines(worldId, per = 60) {
           solved: new Set(), tried: new Set(), vstage: 0, vtried: new Set(), tested: [], wstage: 0, wtried: new Set(), tstage: 0 };
         if (q.inter === 'break') { q.counts = countsOf(q.n); q.broke = 0; }
         S.pos = q.line ? (q.line.pawn === 'sit' ? q.line.sitAt : q.line.start) : null;
+        add(q.prompt); if (q.claim) add(q.claim.text + '.'); // read out by the speaker button (readOut)
         add((clueFor(q) || {}).say);
         if (q.verdict) add(q.verdict.why);
         for (const st of stepsFor(q) || []) {
@@ -283,7 +290,7 @@ function helpLines(worldId, per = 60) {
       } catch (e) { /* a question that needs the screen to work out its help: skipped */ }
     }
   } finally { Math.random = random; S = keep; }
-  return [...new Set([...out].flatMap(l => l.split(/(?<=[.!?…])\s+/)).filter(s => /[a-z]/i.test(s) && !/\d/.test(s)))];
+  return (HELP_SEEN[worldId + '/' + per] = [...new Set([...out].flatMap(l => l.split(/(?<=[.!?…])\s+/)).filter(s => /[a-z]/i.test(s)))]);
 }
 const glowMsg = () => (S.q.kind === 'line' ? 'Drag Bonnie into the green glow.' : 'Tap the glowing buttons.');
 // move one rung up the help ladder; source is 'ask' or 'wrong'
@@ -1214,6 +1221,7 @@ function world(d) {
     teach: d.teach !== false,     // Teach Bonnie questions can come up (not Captain's Cove)
     // every line for tools/make-voice.mjs to record: the world's own, Teach Bonnie, and the help ladder's clues and step cards
     lines: ctx => [...(d.lines ? d.lines(ctx) || [] : []), ...TEACH_LINES, ...HELP_FIXED, ...helpLines(d.id)], host: d.host,
+    numberLines: () => numberLines(d.id), // sentences with numbers: recorded as joined-up pieces
     levels: d.levels.map((L, i) => wrapLevel(L, d.ids[i])),
     play,
   };
@@ -1576,6 +1584,7 @@ window.MeadowMaths = {
   rd, fmtN, range, pick3, JUMPS, jumpOpts, gq, fillStep, shareDone, gridOk, shapeSVG, frac, sum, PRAISE, TIER_NAMES,
   burrow, burrowCount, burrowFull, burrowPlaced,
   teach: { slips: teachSlips, teachable, LINES: TEACH_LINES }, // Teach Bonnie (for the tests)
+  numberLines,
   helpLines, // every clue and step-card line a world can say (for the voice recorder)
   // repaint the picture after a step changes it (the burrow and other pictures, or the place value blocks)
   redraw: () => { if (!S || !root()) return; if (S.q.vis) redrawG(); else if (S.q.mode) redrawVisual(); },

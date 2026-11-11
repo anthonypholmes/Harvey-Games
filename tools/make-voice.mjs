@@ -17,6 +17,7 @@
  *   --names "Harvey,Sam"  extra child names to record (as well as tools/names.txt; *Name records whole sentences)
  *   --list-voices         list the voices on your account and stop
  *   --dry-run             count lines and characters, no API key needed, nothing written
+ *   --numbers-to 100      record number clips only up to here (default 1000, plus 2000 to 9000 for the thousands)
  *   --limit 20            make at most this many new clips (handy for trying a voice cheaply)
  *
  * Optional env: ELEVENLABS_MODEL (default eleven_v4).
@@ -122,13 +123,16 @@ function loadPages() {
     }
     const hosts = vm.runInContext('Meadow.hostLines ? Meadow.hostLines() : {}', c);
     for (const [who, ls] of Object.entries(hosts)) (hostLines[who] ||= new Set()) && ls.forEach(l => hostLines[who].add(l));
+    vm.runInContext('Meadow.numberLines ? Meadow.numberLines() : []', c).forEach(l => numberLines.add(l));
     return vm.runInContext('Meadow.spokenLines()', c);
   };
+  const numberLines = new Set(); // sentences with numbers in them (cut at the numbers, see bonnie-voice.js)
   const hostLines = {}; // other speakers' lines: { captain: Set }
   const call = (f, ...a) => vm.runInContext(`BonnieVoice.${f}(${a.map(x => JSON.stringify(x)).join(',')})`, ctx);
   const lines = [...new Set([...run('index.html', 'clubhouseLines'), ...CORE_PAGES.flatMap(runCore)])];
   return {
-    lines, hosts: Object.fromEntries(Object.entries(hostLines).map(([k, v]) => [k, [...v]])),
+    lines, numberLines: [...numberLines], numberParts: text => call('numberParts', text),
+    hosts: Object.fromEntries(Object.entries(hostLines).map(([k, v]) => [k, [...v]])),
     pieces: (text, name) => call('pieces', text, name),
     sentences: text => call('sentences', text),
     template: (s, name) => call('template', s, name),
@@ -154,6 +158,44 @@ for (const line of game.lines) {
   }
 }
 
+/* Sentences with numbers: the words between the numbers are clips like any other ("What goes with", "to make"),
+   the maths signs are clips of their words ("plus"), and the numbers are their own clips (audio/numbers/). */
+const SIGN_WORDS = { '+': 'plus', '=': 'equals', '×': 'times', '÷': 'divided by', '−': 'take away', '?': 'what?' };
+const plurals = new Set(); // numbers said as "fives" ("Count in 5s")
+let numberBits = 0;
+const want = text => { const k = game.key(text); if (!wanted.has(k)) numberBits++; else if (wanted.get(k) !== text) { collisions++; console.warn('! two phrases share a key:', wanted.get(k), '|', text); } wanted.set(k, text); };
+for (const line of game.numberLines) {
+  for (const p of game.pieces(line, NAME_TOKEN)) {
+    if (p.name) continue;
+    const whole = game.clean(p.raw);
+    if (!game.hasWords(whole) || wanted.has(game.key(whole))) continue; // already recorded whole
+    if (!/\d/.test(whole)) { want(whole); continue; }
+    const parts = game.numberParts(p.raw);
+    if (!parts) { console.warn('! a number in a shape with no clips, left to the device voice:', whole); continue; }
+    for (const x of parts) {
+      if (x.kind === 'num') { if (x.plural) plurals.add(x.n); continue; }
+      const text = x.kind === 'sign' ? SIGN_WORDS[x.raw] : game.clean(x.raw);
+      if (game.hasWords(text)) want(text);
+    }
+  }
+}
+if (game.numberLines.length) want('and'); // "two thousand and five"
+
+/* Number clips: 0 to 1000 whole, then 2000 to 9000 (2463 is "two thousand" + "four hundred and sixty-three"). */
+const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+const numberWords = n => n < 20 ? ONES[n] : n < 100 ? TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : '')
+  : n < 1000 ? ONES[Math.floor(n / 100)] + ' hundred' + (n % 100 ? ' and ' + numberWords(n % 100) : '')
+  : ONES[Math.floor(n / 1000)] + ' thousand' + (n % 1000 ? (n % 1000 < 100 ? ' and ' : ' ') + numberWords(n % 1000) : '');
+const pluralWords = n => { const w = numberWords(n); return /six$/.test(w) ? w + 'es' : /y$/.test(w) ? w.slice(0, -1) + 'ies' : w + 's'; };
+const NUMBER_MAX = opt('--numbers-to') ? Math.max(0, parseInt(opt('--numbers-to'), 10)) : 1000;
+const numbersWanted = new Map(); // "17" -> "seventeen", "5s" -> "fives"
+if (game.numberLines.length) {
+  for (let n = 0; n <= NUMBER_MAX; n++) numbersWanted.set(String(n), numberWords(n));
+  if (NUMBER_MAX >= 1000) for (let n = 2000; n <= 9000; n += 1000) numbersWanted.set(String(n), numberWords(n));
+  [...plurals].sort((a, b) => a - b).forEach(n => numbersWanted.set(n + 's', pluralWords(n)));
+}
+
 // Sentences that contain the name, for names recorded whole: key -> sentence with {N}
 const wantedWhole = new Map();
 for (const line of game.lines) for (const s of game.sentences(line)) {
@@ -169,17 +211,19 @@ if (fs.existsSync(MANIFEST)) {
 }
 manifest.texts = manifest.texts || {}; manifest.names = manifest.names || {}; manifest.said = manifest.said || {};
 manifest.whole = manifest.whole || {}; manifest.wholeTexts = manifest.wholeTexts || {};
+manifest.numbers = manifest.numbers || {};
 if (!DRY && VOICE && (manifest.voice !== VOICE || manifest.model !== MODEL)) {
   if (Object.keys(manifest.clips).length) console.log('Voice or model changed: making every clip again.');
-  manifest = { voice: VOICE, model: MODEL, clips: {}, names: {}, texts: {}, said: {}, whole: {}, wholeTexts: {} };
+  manifest = { voice: VOICE, model: MODEL, clips: {}, names: {}, texts: {}, said: {}, whole: {}, wholeTexts: {}, numbers: {} };
 }
 const exists = f => f && fs.existsSync(path.join(AUDIO, f));
 const todo = [...wanted].filter(([k, t]) => !(exists(manifest.clips[k]) && manifest.texts[k] === t && (manifest.said[k] || t) === sayAs(t)));
 const namesTodo = NAMES.filter(n => !exists(manifest.names[n.toLowerCase()]));
 const wholeTodo = WHOLE.flatMap(n => [...wantedWhole].map(([k, tmpl]) => ({ n, k, text: tmpl.replaceAll('{N}', n) })))
   .filter(({ n, k, text }) => !(exists((manifest.whole[n.toLowerCase()] || {})[k]) && (manifest.wholeTexts[n.toLowerCase()] || {})[k] === text));
+const numbersTodo = [...numbersWanted].filter(([n]) => !exists(manifest.numbers[n]));
 const chars = todo.reduce((a, [, t]) => a + sayAs(t).length, 0) + namesTodo.reduce((a, n) => a + n.length, 0)
-  + wholeTodo.reduce((a, w) => a + w.text.length, 0);
+  + wholeTodo.reduce((a, w) => a + w.text.length, 0) + numbersTodo.reduce((a, [, w]) => a + w.length, 0);
 
 /* Captain Croak (and any other speaker a world's host names): his own pieces, list and folder */
 const CAPTAIN_VOICE = opt('--captain-voice') || process.env.ELEVENLABS_CAPTAIN_VOICE_ID;
@@ -196,12 +240,14 @@ if (!DRY && CAPTAIN_VOICE && (capMan.voice !== CAPTAIN_VOICE || capMan.model !==
 }
 const capTodo = [...capWanted].filter(([k, t]) => !(exists(capMan.clips[k]) && capMan.texts[k] === t));
 
-console.log(`Lines: ${game.lines.length}  ·  pieces: ${wanted.size}  ·  new clips needed: ${todo.length + namesTodo.length + wholeTodo.length}  ·  characters: ${chars}`);
+console.log(`Lines: ${game.lines.length}  ·  pieces: ${wanted.size}  ·  new clips needed: ${todo.length + namesTodo.length + wholeTodo.length + numbersTodo.length}  ·  characters: ${chars}`);
+if (game.numberLines.length) console.log(`Numbers: ${game.numberLines.length} sentences with numbers  ·  joining pieces: ${numberBits}  ·  number clips: ${numbersWanted.size} (new: ${numbersTodo.length}, ${numbersTodo.reduce((a, [, w]) => a + w.length, 0)} characters)`);
 if (DRY) {
   // show what would be recorded, so new lines can be checked before paying for them
   todo.forEach(([, t]) => console.log('  new: ' + t));
   wholeTodo.forEach(w => console.log(`  new (${w.n}): ${w.text}`));
   namesTodo.forEach(n => console.log('  new name: ' + n));
+  if (numbersTodo.length) console.log(`  new numbers: ${numbersTodo.length} (${numbersTodo.slice(0, 3).map(([, w]) => w).join(', ')} … ${numbersTodo.at(-1)[1]})`);
   const all = [...wanted.values()].reduce((a, t) => a + t.length, 0);
   console.log(`(A full set from scratch is about ${all} characters.)`);
   console.log(`Captain Croak: ${capWanted.size} pieces  ·  new clips needed: ${capTodo.length}  ·  characters: ${capTodo.reduce((a, [, t]) => a + t.length, 0)}`);
@@ -210,7 +256,7 @@ if (DRY) {
   process.exit(0);
 }
 if (!VOICE && !CAPTAIN_VOICE) { console.error('Choose a voice with --voice <id> and/or --captain-voice <id> (see --list-voices), or use --dry-run.'); process.exit(1); }
-const client = await elevenLabs();
+if (!KEY) { console.error('No ELEVENLABS_API_KEY. Run with `npm run voice -- ...` so .env.local is loaded.'); process.exit(1); }
 
 /* ---------- 3. Make the clips ---------- */
 const tag = VOICE.slice(0, 6).toLowerCase();
@@ -218,17 +264,32 @@ const slug = s => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').
 fs.mkdirSync(path.join(AUDIO, 'clips'), { recursive: true });
 fs.mkdirSync(path.join(AUDIO, 'names'), { recursive: true });
 fs.mkdirSync(path.join(AUDIO, 'whole'), { recursive: true });
+fs.mkdirSync(path.join(AUDIO, 'numbers'), { recursive: true });
 const saveManifest = () => {
   manifest.made = new Date().toISOString();
   fs.writeFileSync(MANIFEST, JSON.stringify(manifest, null, 1) + '\n');
 };
 
+/* One clip, straight from the ElevenLabs web API (the SDK is only used for --list-voices: it is 24,000 files and
+   can take minutes to load from a folder that iCloud is syncing). Busy or failed tries are repeated a few times. */
 async function tts(text, voice = VOICE) {
-  const audio = await client.textToSpeech.convert(voice, {
-    text, modelId: MODEL, outputFormat: 'mp3_44100_64', voiceSettings: VOICE_SETTINGS,
-    ...(MODEL.startsWith('eleven_multilingual_v2') ? {} : { languageCode: 'en' }),
+  const vs = VOICE_SETTINGS, body = JSON.stringify({
+    text, model_id: MODEL,
+    voice_settings: { stability: vs.stability, similarity_boost: vs.similarityBoost, ...(vs.style == null ? {} : { style: vs.style, use_speaker_boost: vs.useSpeakerBoost }) },
+    ...(MODEL.startsWith('eleven_multilingual_v2') ? {} : { language_code: 'en' }),
   });
-  return Buffer.from(await new Response(audio).arrayBuffer()); // convert() gives a web stream
+  for (let attempt = 0; ; attempt++) {
+    let res, problem;
+    try {
+      res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice)}?output_format=mp3_44100_64`,
+        { method: 'POST', headers: { 'xi-api-key': KEY, 'content-type': 'application/json', accept: 'audio/mpeg' }, body, signal: AbortSignal.timeout(60000) });
+      if (res.ok) { const buf = Buffer.from(await res.arrayBuffer()); if (buf.length > 200) return buf; problem = 'empty clip'; }
+      else problem = `${res.status} ${(await res.text()).slice(0, 300)}`;
+    } catch (e) { problem = e.name + ': ' + e.message; }
+    const again = !res || res.status === 429 || res.status >= 500 || res.ok;
+    if (!again || attempt >= 5) throw new Error(`ElevenLabs would not make "${text}": ${problem}`);
+    await new Promise(r => setTimeout(r, 1500 * 2 ** attempt));
+  }
 }
 
 let made = 0;
@@ -250,6 +311,14 @@ if (VOICE) try {
     console.log(`  ${String(made).padStart(4)}  ${text.length > 70 ? text.slice(0, 67) + '…' : text}`);
     if (made % 25 === 0) saveManifest();
   }
+  // the joining pieces above come first, so a small --limit trial can already say whole sums with the numbers it reaches
+  for (const [n, words] of numbersTodo) {
+    if (made >= LIMIT) break;
+    const file = `numbers/${n}-${tag}.mp3`;
+    fs.writeFileSync(path.join(AUDIO, file), await tts(words.charAt(0).toUpperCase() + words.slice(1) + '.'));
+    manifest.numbers[n] = file; made++;
+    if (made % 25 === 0) { saveManifest(); console.log(`  ${String(made).padStart(4)}  numbers up to ${words}`); }
+  }
   for (const { n, k, text } of wholeTodo) {
     if (made >= LIMIT) break;
     const nl = n.toLowerCase(), file = `whole/${slug(n)}/${k}-${tag}.mp3`;
@@ -267,13 +336,14 @@ if (VOICE) try {
     if (!wholeNames.has(nl)) { delete manifest.whole[nl]; delete manifest.wholeTexts[nl]; continue; }
     for (const k of Object.keys(manifest.whole[nl])) if (!wantedWhole.has(k)) { delete manifest.whole[nl][k]; delete manifest.wholeTexts[nl][k]; }
   }
-  const keep = new Set([...Object.values(manifest.clips), ...Object.values(manifest.names), ...Object.values(manifest.whole).flatMap(Object.values)]);
+  for (const n of Object.keys(manifest.numbers)) if (!numbersWanted.has(n)) delete manifest.numbers[n];
+  const keep = new Set([...Object.values(manifest.clips), ...Object.values(manifest.names), ...Object.values(manifest.numbers), ...Object.values(manifest.whole).flatMap(Object.values)]);
   const sweep = dir => { for (const f of fs.readdirSync(path.join(AUDIO, dir), { withFileTypes: true })) {
     const rel = `${dir}/${f.name}`;
     if (f.isDirectory()) { sweep(rel); if (!fs.readdirSync(path.join(AUDIO, rel)).length) fs.rmdirSync(path.join(AUDIO, rel)); }
     else if (f.name.endsWith('.mp3') && !keep.has(rel)) fs.unlinkSync(path.join(AUDIO, rel));
   } };
-  ['clips', 'names', 'whole'].forEach(sweep);
+  ['clips', 'names', 'whole', 'numbers'].forEach(sweep);
   saveManifest();
 }
 let capMade = 0;
@@ -299,5 +369,5 @@ if (CAPTAIN_VOICE) {
   console.log(`Captain: made ${capMade} clip(s).${capLeft > 0 ? ` ${capLeft} still to make — run again to carry on.` : ' All done.'}`);
 }
 if (!VOICE) process.exit(0);
-const left = todo.length + namesTodo.length + wholeTodo.length - made;
+const left = todo.length + namesTodo.length + wholeTodo.length + numbersTodo.length - made;
 console.log(`Made ${made} clip(s).${left > 0 ? ` ${left} still to make — run again to carry on.` : ' All done.'}${collisions ? ` (${collisions} key clashes — see warnings)` : ''}`);

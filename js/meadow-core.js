@@ -1607,6 +1607,13 @@ function spokenLines(game = GAME) {
   });
   return [...out];
 }
+/* Sentences with numbers in them, from each world's numberLines(). tools/make-voice.mjs cuts them at the numbers and
+   records the words in between, so Bonnie's voice can join them up with number clips. */
+function numberLines(game = GAME) {
+  const out = new Set();
+  WORLDS.filter(w => !game || w.subject === game.subject).forEach(w => { if (w.numberLines) (w.numberLines() || []).forEach(x => x && out.add(fmt(x))); });
+  return [...out];
+}
 /* Lines other speakers say, by who: { captain: [...] } (a world's host: { who, lines }) */
 function hostLines(game = GAME) {
   const out = {};
@@ -2004,7 +2011,7 @@ window.Meadow = {
   // UI kit for world files
   ui: { $, $$, esc, fmt, rand, randInt, shuffle, wait, plural, reduceMotion, say, hush, whenQuiet, sfx, tone, ac, animate, hearts, banner, confetti,
     shakeScreen, tickle, tickleEgg, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show },
-  spokenLines, hostLines,
+  spokenLines, hostLines, numberLines,
   // tests only: pretend the date is something else (fn returns a Date; leave it out to go back to the real clock)
   setClock: fn => { clock = typeof fn === 'function' ? fn : () => new Date(); },
 };

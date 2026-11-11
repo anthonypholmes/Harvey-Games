@@ -67,10 +67,21 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
   - "interrupted" or suspended state: recreate the AudioContext after a tap, or revisit the AVAudioSession setup in AppDelegate
   - manifest failure: check the Capacitor scheme fetch
 
+## Phase 3: number voice ✅ (done 11 November 2026)
+
+- **How it works:** a sentence with numbers ("What goes with 4 to make 6?") is cut at each number and maths sign. The words in between ("What goes with", "to make") are ordinary clips, signs are clips of their words (+ "plus", = "equals", × "times", − "take away", a lone ? "what?"), and each number is its own clip in `audio/numbers/`, listed under `numbers` in `audio/manifest.json`. A sentence that already has a whole recording still uses it.
+- **Code:** `numberParts`, `numberFiles` and `numberPlan` in `bonnie-voice.js`. `numberLines` in `worlds/y2-maths-kit.js` and `js/meadow-core.js` lists the number sentences (questions, clues, step cards) for the recorder. `tools/make-voice.mjs` records the joining pieces and the numbers.
+- **Numbers recorded:** 0 to 1,000 whole, then 2,000 to 9,000, plus plurals in use ("fives"). 2,463 plays as "two thousand" + "four hundred and sixty-three". Anything bigger, or shapes like 2.5, stays on the device voice. `--numbers-to 100` records fewer.
+- **Recorded:** 1,018 number clips (17 MB in `audio/numbers/`) and 388 word pieces. It cost about 12,100 credits for about 30,500 characters: `eleven_v4` billed roughly 0.4 credits a character on this account. 2,827 credits were left of November's 40,000.
+- **Coverage:** of 7,669 sampled number sentences, all play as clips except Bonnie's silly guesses of 10,000 or more ("Is it 90000?!"). Sentences the sampler doesn't list (for example a question's on-screen tip) and numbers in shapes like 2.5 still use the device voice, as do names with no name clip.
+- **Sound:** Anthony listened to the trial (numbers to 20): slightly unnatural at the joins, but fine.
+- The recorder calls the ElevenLabs web API directly. Loading the SDK (24,000 files) took many minutes from this iCloud-synced folder; it is only used for `--list-voices` now.
+- `npm run voice:check` should again report "new clips needed: 0".
+
 ## What comes next (the plan)
 
 1. **Finish Phase 2:** the voice is fixed. Checked in the simulator on 11 November 2026: saves survive a full close (bones 13 → 14 kept, and the Preferences copy matched), the Clubhouse and Bonnie's Walk lay out correctly in portrait and landscape, and the app files contain no internet addresses. Still to do on the real iPad through TestFlight: a true Airplane Mode test, and a look at the other game pages in landscape. Original list: offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
-2. **Phase 3, number voice:** record number clips (0 to 1,000) and joining words ("plus", "take away", "makes" and so on) with ElevenLabs. Join them like names so maths lines use Bonnie's voice. Run `npm run voice:check` first to see the credit cost.
+2. **Phase 3, number voice (done, see above):** record number clips (0 to 1,000) and joining words ("plus", "take away", "makes" and so on) with ElevenLabs. Join them like names so maths lines use Bonnie's voice. Run `npm run voice:check` first to see the credit cost.
 3. **Phase 4, free taster and unlock:** padlocks on the paid worlds, an unlock screen behind the existing grown-ups gate, one non-consumable in-app purchase (the RevenueCat Capacitor plugin is the easiest route), Restore Purchases, Family Sharing, and sandbox testing.
 4. **Phase 5, child profiles:** up to 4, each with its own name, bones, stars and Bonnie outfit. Move the existing save into the first profile.
 5. **Phase 6, store listing:** App Store Connect, Small Business Program (15%), Kids category, a privacy policy on holmeshouse.co.uk, a support page, iPad screenshots, a description leading with "Year 2 / KS1", basic accessibility, and a real app icon (currently Capacitor's placeholder).

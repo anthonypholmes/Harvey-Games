@@ -87,6 +87,41 @@
     cutInto(out, text.slice(from), from);
     return out;
   };
+  /* ---------- numbers ----------
+     A sentence with numbers in it ("What goes with 4 to make 6?") comes in thousands of versions, so it is not
+     recorded whole. It is cut at each number and maths sign: the words in between are ordinary clips, the signs
+     are clips of their words ("plus"), and each number is its own clip from pack.numbers. */
+  V.SIGNS = { '+': 'plus', '=': 'equals', '×': 'times', '÷': 'divided by', '−': 'take away', '?': 'what?' };
+  /* [{raw, start, kind: 'word' | 'num' | 'sign', n, plural, say}]; raw keeps spacing so offsets add up.
+     null if a number is in a shape there are no clips for (2.5, 1st, 007). */
+  V.numberParts = text => {
+    const out = [], re = /(\d+)(s(?![\p{L}\p{N}]))?|[+=×÷−]|(?<=\s)\?(?=\s|$)/gu;
+    let from = 0, m;
+    const word = to => { if (to > from) out.push({ raw: text.slice(from, to), start: from, kind: 'word' }); };
+    while ((m = re.exec(text))) {
+      const end = m.index + m[0].length;
+      if (m[1]) {
+        const before = text[m.index - 1], after = text[end];
+        if (isL(before) || isL(after) || (m[1].length > 1 && m[1][0] === '0') || /[.,]\d/.test(text.slice(end, end + 2)) || /\d[.,]$/.test(text.slice(0, m.index))) return null;
+        word(m.index); out.push({ raw: m[0], start: m.index, kind: 'num', n: +m[1], plural: !!m[2] });
+      } else { word(m.index); out.push({ raw: m[0], start: m.index, kind: 'sign', say: V.SIGNS[m[0]] }); }
+      from = end;
+    }
+    word(text.length);
+    return out;
+  };
+  /* The clip or clips for a number: its own recording, or (1001 to 9999) "two thousand" + ["and"] + the rest. */
+  V.numberFiles = (pack, n, plural) => {
+    const N = pack && pack.numbers; if (!N) return null;
+    if (plural) return N[n + 's'] ? [N[n + 's']] : null;
+    if (N[n]) return [N[n]];
+    if (n > 1000 && n < 10000) {
+      const th = N[Math.floor(n / 1000) * 1000], r = n % 1000, and = pack.clips[V.pieceKey('and')];
+      if (!th || !N[r]) return null;
+      return r >= 100 ? [th, N[r]] : and ? [th, and, N[r]] : null;
+    }
+    return null;
+  };
   const pauseAfter = raw => /(\.\.\.|…)\s*$/.test(raw) ? .4 : /[.!?]["'”’)]*\s*$/.test(raw) ? .25 : /[,;:—–]\s*$/.test(raw) ? .12 : .04;
   function plan(text, who) {
     const pack = who ? V.packs[who] : V.pack, a = pack && V.getAudio();
@@ -105,9 +140,30 @@
         const clean = V.cleanPiece(p.raw);
         if (!V.hasWords(clean)) { if (out.length) out[out.length - 1].pause = Math.max(out[out.length - 1].pause, pauseAfter(p.raw)); continue; }
         const file = p.file || (p.name ? pack.names && pack.names[clean.toLowerCase()] : pack.clips[V.pieceKey(clean)]);
+        if (!file && !p.name && /\d/.test(clean) && pack.numbers) { // no recording of the whole piece: join it up from words and numbers
+          const bits = numberPlan(pack, p);
+          if (bits) { out.push(...bits); continue; }
+        }
         if (!file) { if (!p.name) V.missing.add((who ? who + ': ' : '') + clean); V.why = 'no clip for "' + clean + '"'; return null; }
         out.push({ ...p, file: V.base + 'audio/' + file, pause: pauseAfter(p.raw) });
       }
+    }
+    return out.length ? out : null;
+  }
+  function numberPlan(pack, p) {
+    const parts = V.numberParts(p.raw), out = []; if (!parts) return null;
+    const miss = what => { V.missing.add(what); V.why = 'no clip for "' + what + '"'; return null; };
+    for (const x of parts) {
+      const at = { raw: x.raw, start: p.start + x.start, name: false }, add = (file, pause) => out.push({ ...at, file: V.base + 'audio/' + file, pause });
+      if (x.kind === 'num') {
+        const files = V.numberFiles(pack, x.n, x.plural); if (!files) return miss(x.raw);
+        files.forEach((f, i) => add(f, i < files.length - 1 ? 0 : .04));
+        continue;
+      }
+      const clean = x.kind === 'sign' ? x.say : V.cleanPiece(x.raw);
+      if (x.kind === 'word' && !V.hasWords(clean)) { if (out.length) out[out.length - 1].pause = Math.max(out[out.length - 1].pause, pauseAfter(x.raw)); continue; }
+      const file = pack.clips[V.pieceKey(clean)]; if (!file) return miss(clean);
+      add(file, x.kind === 'sign' ? .04 : pauseAfter(x.raw));
     }
     return out.length ? out : null;
   }
@@ -239,7 +295,7 @@
     if (!V.pack || typeof caches === 'undefined' || navigator.onLine === false) return;
     try {
       const cache = await caches.open(AUDIO_CACHE);
-      const files = [...new Set([...Object.values(V.pack.clips), ...Object.values(V.pack.names || {}), ...Object.values(V.pack.whole || {}).flatMap(Object.values),
+      const files = [...new Set([...Object.values(V.pack.clips), ...Object.values(V.pack.names || {}), ...Object.values(V.pack.numbers || {}), ...Object.values(V.pack.whole || {}).flatMap(Object.values),
         ...Object.values(V.packs).flatMap(pk => Object.values(pk.clips))])].map(f => V.base + 'audio/' + f);
       let k = 0;
       const worker = async () => { while (k < files.length) { const f = files[k++];
