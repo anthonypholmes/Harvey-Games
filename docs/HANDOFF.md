@@ -1,0 +1,83 @@
+# Meadow Clubhouse App Store project: handoff
+
+**Last updated:** 11 November 2026
+**Repo:** `anthonypholmes/Harvey-Games`. Work happens on the **`app-store`** branch. `main` is the live website (holmeshouse.co.uk) and must not be touched.
+**Owner:** Anthony. He isn't a developer, so explain steps plainly, give commands to paste, and do the technical work yourself where you can.
+
+## The goal
+
+Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an **iPad app**: a free download with a taster, plus one in-app purchase that unlocks everything (about £3.99).
+
+- Free: Bonnie's Walk, the first maths world (Partitioning Park) and the first English world (Phonics Forest)
+- Kids category, age band 6–8, no ads, no tracking, "Data Not Collected"
+- Rough timeline: about 17 weeks at evenings-and-weekends pace. Don't promise an earlier date.
+
+## Anthony's setup
+
+- **Intel MacBook Pro, macOS Sequoia 15.8**, with **Xcode 26.3**. That's the newest Xcode that runs on Sequoia, and Xcode 26 builds are accepted by App Store Connect.
+- Xcode 27 is Apple silicon only. For updates from around spring 2027, plan on a cloud build service (Capgo Build, Codemagic or GitHub Actions macOS) or an M-series Mac.
+- **His iPad's iPadOS is newer than Xcode 26.3 supports**, so he can't run the app on it from Xcode. Testing happens in the **iPad simulator** for now, and on the real iPad through **TestFlight** once the paid Apple Developer Program is approved (about £79 a year; he's been advised to enrol).
+- **Known simulator bug:** the iOS 26.3 simulator shows all emoji as "?" boxes. Apple fixed this in Xcode 26.4, which needs Tahoe. Real devices are fine, so ignore it.
+- Node 22+ and npm 11 are installed. An npm cache permissions error was fixed with `sudo chown`.
+- ElevenLabs Starter plan ($6 a month), which covers commercial use.
+- GitHub Desktop for commits, pulls and pushes.
+
+## Done so far (all on `app-store`)
+
+### Phase 1: make it shippable ✅
+- Removed `audio/whole/` (whole-sentence recordings with family names: harvey, anthony, samantha, rex, alaya, rory). `manifest.json` `whole` and `wholeTexts` are now empty, and `tools/names.txt` has no `*` names. Names are still joined in from `audio/names/` (105 names).
+- Fonts are bundled in `fonts/` (Fredoka, Nunito, Andika, under the OFL licence, fetched with `tools/get-fonts.sh`). There are no Google Fonts requests now, and `sw.js` caches the local fonts.
+- Website-only features switch off inside the app (`window.MEADOW_IN_APP`): no service worker, no "Add to Home Screen" banner, and no background clip download.
+- The starter prizes were left as they are. They're generic and parents can edit them, and their voice lines are already recorded.
+
+### Phase 2: the iPad app (Capacitor 8), in progress
+- `capacitor.config.json`: app ID `uk.co.holmeshouse.meadow`, name "Meadow Clubhouse", `webDir: app-www`.
+- `tools/build-app.mjs` copies only the game files into `app-www/` (git-ignored, about 1,850 files, 37 MB).
+- npm scripts: `app:build`, `app:sync` (build plus `npx cap sync ios`) and `app:open`.
+- `ios/` Xcode project committed (Swift Package Manager, no CocoaPods). Set to **iPad only** (`TARGETED_DEVICE_FAMILY = 2`).
+- `ios/App/App/AppDelegate.swift` sets the AVAudioSession category to `.playback`, so sound plays and the silent switch doesn't mute Bonnie.
+- `js/app-storage.js` is loaded first on every page and only runs inside the app. It:
+  - sets `window.MEADOW_IN_APP = true`
+  - adds safe-area padding so pages clear the status bar (**confirmed fixed**)
+  - mirrors every `meadow*` / `harvey*` localStorage key into Capacitor Preferences, and restores them and reloads if iOS clears the web view's storage
+- `docs/APP_SETUP.md` is the step-by-step Mac guide.
+- The app **runs in the iPad simulator**. The Clubhouse, Bonnie's Walk and the games load.
+
+## The open problem: Bonnie uses the device voice, not the ElevenLabs clips
+
+- In the simulator, lines with no numbers (such as "Woof! Hi Harvey! Pick a game…") still use the **device text-to-speech voice**.
+- Lines **with numbers always use the device voice by design**, on the website too, because there are no number clips yet (that's Phase 3). Don't confuse the two.
+- What's been tried in `bonnie-voice.js`:
+  - In the app, `plan()` no longer needs `navigator.userActivation`.
+  - Sound is unlocked on `touchend` and `click` as well as `pointerdown`.
+  - `playClips()` resumes the AudioContext first, and only falls back to the device voice if it won't start.
+- In Chrome with a fake `window.Capacitor`, the logic correctly chooses clips. So the cause is specific to iOS or the simulator.
+- **Diagnostics added:** inside the app, every fallback logs `[Bonnie] device voice: <reason>` to the console. `BonnieVoice.why` holds the last reason. Possible reasons:
+  - `clip list not loaded`: `audio/manifest.json` fetch failed
+  - `no audio`
+  - `no clip for "…"`
+  - `clip failed to load or decode: …`: fetch or `decodeAudioData` failed
+  - `sound would not start (<state>)`: AudioContext not running, possibly "interrupted"
+- **Next step:** run the app in the simulator, open the Safari Web Inspector (Develop → Simulator → localhost → Console), tap, open the Clubhouse, and read the `[Bonnie] device voice:` lines. Then fix the cause. Claude Code on the Mac can also try `xcrun simctl spawn booted log stream` to read the logs directly.
+- Ideas depending on the reason:
+  - decode failure: check the MP3s decode in WKWebView, or try `new Audio()` as a fallback
+  - "interrupted" or suspended state: recreate the AudioContext after a tap, or revisit the AVAudioSession setup in AppDelegate
+  - manifest failure: check the Capacitor scheme fetch
+
+## What comes next (the plan)
+
+1. **Finish Phase 2:** fix the voice. Then check offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
+2. **Phase 3, number voice:** record number clips (0 to 1,000) and joining words ("plus", "take away", "makes" and so on) with ElevenLabs. Join them like names so maths lines use Bonnie's voice. Run `npm run voice:check` first to see the credit cost.
+3. **Phase 4, free taster and unlock:** padlocks on the paid worlds, an unlock screen behind the existing grown-ups gate, one non-consumable in-app purchase (the RevenueCat Capacitor plugin is the easiest route), Restore Purchases, Family Sharing, and sandbox testing.
+4. **Phase 5, child profiles:** up to 4, each with its own name, bones, stars and Bonnie outfit. Move the existing save into the first profile.
+5. **Phase 6, store listing:** App Store Connect, Small Business Program (15%), Kids category, a privacy policy on holmeshouse.co.uk, a support page, iPad screenshots, a description leading with "Year 2 / KS1", basic accessibility, and a real app icon (currently Capacitor's placeholder).
+6. **Phase 7:** TestFlight with 5–10 families.
+7. **Phase 8:** submit, launch, and get early reviews.
+
+## Working notes
+- After any change to the game files: `npm run app:sync`, then ▶ in Xcode.
+- The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove). They all pass. Re-run them after changes.
+- `npm run voice:check` (dry run) should report "new clips needed: 0" unless lines changed.
+- Commit as Anthony. Never commit `app-www/`, `node_modules/` or `.env.local`.
+- Delete stray macOS duplicates such as "config 2.xml" if they appear.
+- Anthony tends to work in bursts. Keep each step small enough to finish in one sitting, and don't compress the timeline.
