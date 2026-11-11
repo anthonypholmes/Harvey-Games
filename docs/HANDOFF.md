@@ -69,7 +69,7 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 
 ## What comes next (the plan)
 
-1. **Finish Phase 2:** the voice is fixed. Still to check: offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
+1. **Finish Phase 2:** the voice is fixed. Checked in the simulator on 11 November 2026: saves survive a full close (bones 13 → 14 kept, and the Preferences copy matched), the Clubhouse and Bonnie's Walk lay out correctly in portrait and landscape, and the app files contain no internet addresses. Still to do on the real iPad through TestFlight: a true Airplane Mode test, and a look at the other game pages in landscape. Original list: offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
 2. **Phase 3, number voice:** record number clips (0 to 1,000) and joining words ("plus", "take away", "makes" and so on) with ElevenLabs. Join them like names so maths lines use Bonnie's voice. Run `npm run voice:check` first to see the credit cost.
 3. **Phase 4, free taster and unlock:** padlocks on the paid worlds, an unlock screen behind the existing grown-ups gate, one non-consumable in-app purchase (the RevenueCat Capacitor plugin is the easiest route), Restore Purchases, Family Sharing, and sandbox testing.
 4. **Phase 5, child profiles:** up to 4, each with its own name, bones, stars and Bonnie outfit. Move the existing save into the first profile.
