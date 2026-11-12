@@ -21,9 +21,9 @@
   const P = (cap.Plugins && cap.Plugins.Preferences) || (cap.registerPlugin && cap.registerPlugin('Preferences'));
   if (!P) return;
 
-  const MAIN = 'meadow-save-v1';
+  const isSave = k => /^meadow-save-v1(-p\d+)?$/.test(String(k)); // a player's save (there can be up to 4)
   const ours = k => /^(meadow|harvey)/.test(String(k)); // every key the games use starts like this
-  const hadSave = (() => { try { return !!localStorage.getItem(MAIN); } catch (e) { return false; } })();
+  const hadSave = (() => { try { for (let i = 0; i < localStorage.length; i++) if (isSave(localStorage.key(i))) return true; return false; } catch (e) { return false; } })();
   let ready = false; // nothing is copied until we know whether a restore is needed
 
   const proto = Storage.prototype, set = proto.setItem, remove = proto.removeItem;
@@ -50,7 +50,7 @@
       if (!hadSave) {
         const { keys } = await P.keys();
         const saved = keys.filter(ours);
-        if (saved.includes(MAIN)) {
+        if (saved.some(isSave)) {
           // The web view lost its saves: put back the app's copy, then start the page again.
           for (const k of saved) {
             const { value } = await P.get({ key: k });

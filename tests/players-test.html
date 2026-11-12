@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Players Test</title>
+<style>
+  #report { position: relative; z-index: 50; max-width: 900px; margin: 16px auto 140px; padding: 16px; font-family: system-ui, sans-serif; background: #FDFBF7; border: 2px solid #EADFCB; border-radius: 18px; color: #3E2F27; }
+  #report h1 { font-size: 1.3rem; margin: 0 0 6px; }
+  #report p { margin: 0 0 12px; color: #7A6A5E; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+</style>
+</head>
+<body>
+<script>
+/* Players use the real save names, so everything saved on this page's address is set aside first
+   and put back at the end (see "keep" and "putBack"). */
+window.MEADOW_IN_APP = true; // players are an App Store app feature
+window.__kept = {};
+for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^(meadow|harvey)/.test(k)) window.__kept[k] = localStorage.getItem(k); }
+Object.keys(window.__kept).forEach(k => localStorage.removeItem(k));
+</script>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script>
+(async () => {
+  const results = [], check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail: String(detail) });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const $$ = s => [...document.querySelectorAll(s)];
+  const P = Meadow.players, save = () => Meadow.save.load(), names = () => P.list().map(p => p.name || '?').join(',');
+  const has = k => localStorage.getItem(k) !== null;
+
+  // 1. one player to begin with: the save that was always there
+  check('To begin with there is one player', P.list().length === 1 && P.list()[0].current, names());
+  check('The first player uses the save that was always there', Meadow.save.key === 'meadow-save-v1', Meadow.save.key);
+  Meadow.save.load();
+  Meadow.save.mutate(s => { s.name = 'Harvey'; s.bones = 12; s.stars['w/a'] = 3; s.coat = 'golden'; s.owned.coats.push('golden'); s.voiceRate = 0.75;
+    s.rewards = [{ id: 'r1', title: 'Film night', cost: 40 }]; s.settings.walkMix = 'maths'; });
+  const mix = save().settings.walkMix;
+
+  // 2. adding a player: a fresh start, with the grown-ups' choices copied
+  const id2 = P.add();
+  check('Adding a player switches to them, on a save of their own', id2 === 'p2' && Meadow.save.key === 'meadow-save-v1-p2' && P.list().length === 2, id2 + ' ' + Meadow.save.key);
+  let s = save();
+  check('A new player starts fresh: no name, bones, stars or outfits', !s.name && s.bones === 0 && !Object.keys(s.stars).length && s.coat === 'chocolate', JSON.stringify([s.name, s.bones, s.coat]));
+  check('A new player gets the same prizes and settings', s.rewards.length === 1 && s.rewards[0].title === 'Film night' && s.voiceRate === 0.75 && s.settings.walkMix === mix, JSON.stringify(s.rewards));
+  Meadow.save.mutate(x => { x.name = 'Alaya'; x.bones = 5; x.stars['w/b'] = 2; });
+
+  // 3. switching keeps each child's things apart
+  check('Switching to Harvey works', P.switchTo('p1') && Meadow.save.key === 'meadow-save-v1');
+  s = save();
+  check('Harvey still has his bones, stars and coat', s.name === 'Harvey' && s.bones === 12 && s.stars['w/a'] === 3 && s.coat === 'golden' && !s.stars['w/b'], JSON.stringify([s.name, s.bones, s.coat]));
+  Meadow.save.mutate(x => { x.bones += 3; });
+  P.switchTo('p2'); s = save();
+  check('Alaya still has hers, and Harvey\'s new bones did not reach her', s.name === 'Alaya' && s.bones === 5 && s.stars['w/b'] === 2 && !s.stars['w/a'], JSON.stringify([s.name, s.bones]));
+  check('The list shows both names and bones', names() === 'Harvey,Alaya' && P.list()[0].bones === 15 && P.list()[1].current, JSON.stringify(P.list()));
+  check('Who is playing is remembered', JSON.parse(localStorage.getItem(P.KEY)).current === 'p2', localStorage.getItem(P.KEY));
+
+  // 4. a new player never picks up the old website saves
+  localStorage.setItem('harvey-splitter-v1', JSON.stringify({ name: 'Old', bones: 99 }));
+  const id3 = P.add(); s = save();
+  check('A new player does not copy the old website save', id3 === 'p3' && !s.name && s.bones === 0, JSON.stringify([s.name, s.bones]));
+  localStorage.removeItem('harvey-splitter-v1');
+
+  // 5. a player who was added but never named is tidied away
+  P.switchTo('p1');
+  check('A player with no name is tidied away on switching', P.list().length === 2 && !has('meadow-save-v1-p3'), names());
+
+  // 6. four at most
+  const id4 = P.add(); Meadow.save.mutate(x => { x.name = 'Rory'; });
+  const id5 = P.add(); Meadow.save.mutate(x => { x.name = 'Rex'; });
+  check('Up to 4 players', P.list().length === 4 && names() === 'Harvey,Alaya,Rory,Rex', names());
+  check('A 5th player is refused', P.add() === null && P.list().length === 4 && Meadow.save.load().name === 'Rex', names());
+  check('Used ids are not handed out again', id4 === 'p4' && id5 === 'p5', id4 + ' ' + id5);
+
+  // 7. removing
+  check('Removing the player who is playing switches to the first', P.remove(id5) && Meadow.save.load().name === 'Harvey' && P.list()[0].current && !has('meadow-save-v1-' + id5), names());
+  check('Removing another player leaves the current one alone', P.remove('p2') && Meadow.save.load().name === 'Harvey' && names() === 'Harvey,Rory' && !has('meadow-save-v1-p2'), names());
+  check('Removing someone not in the list does nothing', P.remove('p9') === false && P.list().length === 2);
+
+  // 8. the grown-ups area lists the players, and Remove asks first
+  sessionStorage.setItem('meadow-grownups-open-until', String(Date.now() + 60000));
+  Meadow.startGame({ subject: 'test', title: 'Players Test', icon: 'T', homeHref: '../index.html', assetBase: '../', needName: false });
+  Meadow.save.mutate(x => { x.sound = false; x.voice = false; });
+  await wait(30);
+  Meadow.grownUps(); await wait(30);
+  const rm = () => $$('[data-rmplayer]');
+  check('Grown-ups: both players are listed with Remove', rm().length === 2 && /Harvey.*playing now/s.test(document.querySelector('.parent').textContent), rm().length);
+  rm().find(b => b.dataset.name === 'Rory').click(); await wait(20);
+  check('Grown-ups: Remove asks first', /Remove Rory\?/.test((document.querySelector('.modal-bg') || {}).textContent || '') && P.list().length === 2);
+  document.querySelector('.modal-bg [data-a="no"]').click(); await wait(20);
+  check('Grown-ups: Keep keeps the player', P.list().length === 2);
+  rm().find(b => b.dataset.name === 'Rory').click(); await wait(20);
+  document.querySelector('.modal-bg [data-a="yes"]').click(); await wait(30);
+  check('Grown-ups: Remove removes the player', P.list().length === 1 && names() === 'Harvey' && !has('meadow-save-v1-p4'), names());
+  check('The last player has no Remove button', rm().length === 0);
+  check('The last player cannot be removed', P.remove('p1') === false && has('meadow-save-v1'));
+
+  // 9. the first player can be removed too, and the list still works afterwards
+  P.add(); Meadow.save.mutate(x => { x.name = 'Sam'; x.bones = 7; });
+  check('The first player can be removed when there is another', P.remove('p1') && !has('meadow-save-v1') && names() === 'Sam' && Meadow.save.load().bones === 7, names());
+
+  // put everything back
+  sessionStorage.removeItem('meadow-grownups-open-until');
+  document.querySelectorAll('.modal-bg').forEach(m => m.remove());
+  const mine = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^(meadow|harvey)/.test(k)) mine.push(k); }
+  mine.forEach(k => localStorage.removeItem(k));
+  Object.entries(window.__kept).forEach(([k, v]) => localStorage.setItem(k, v));
+
+  const failed = results.filter(r => !r.ok);
+  document.body.insertAdjacentHTML('beforeend', `<div id="report"><h1>Players: up to 4 children, each with their own save</h1>
+    <p>Pretends to be the App Store app. Sets aside whatever was saved on this address, and puts it back at the end.</p>
+    <div id="result" class="${failed.length ? 'fail' : 'pass'}">${failed.length ? `✗ ${failed.length} of ${results.length} checks failed` : `✓ All ${results.length} checks passed`}</div>
+    <ul>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name} <small>(${r.detail})</small></li>`).join('')}</ul></div>`);
+  window.TEST_RESULT = { passed: !failed.length, results };
+})();
+</script>
+</body>
+</html>

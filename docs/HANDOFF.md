@@ -8,7 +8,7 @@
 
 Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an **iPad app**: a free download with a taster, plus one in-app purchase that unlocks everything (about £3.99).
 
-- Free: Bonnie's Walk, the first maths world (Partitioning Park) and the first English world (Phonics Forest)
+- Free: Bonnie's Walk and the first level of every world (changed 12 November 2026; it was two whole worlds)
 - Kids category, age band 6–8, no ads, no tracking, "Data Not Collected"
 - Rough timeline: about 17 weeks at evenings-and-weekends pace. Don't promise an earlier date.
 
@@ -80,30 +80,42 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 
 ## Phase 4: free taster and unlock (game side built 12 November 2026; the App Store side waits for the developer account)
 
-- **What a family sees:** in the app, every world except The Partitioning Park and Phonics Forest has a padlock and a "FULL GAME" ribbon. Tapping one makes Bonnie say "Go and get a grown-up!". The grown-up answers the usual sum, then sees the unlock screen: the price from the App Store, **Unlock everything**, and **Restore purchase**. The grown-ups area also has a "Full game" section at the top. On the website nothing is locked.
-- **Bonnie's Walk is free and still draws its questions from every world.** That was left as it was; change `walkMathsPool` / `walkEnglishPool` if the walk should only use the free worlds.
-- **Game code:** "THE FULL GAME" in `js/meadow-core.js` (`FREE_WORLDS`, `paidWorld`, `storeCall`, `checkFullGame`), plus `paidModal`, `unlockScreen` and `fullGameDone`. The answer is kept in the `meadow-full-game` key (so it works offline, and `js/app-storage.js` copies it to the app's own storage) and is checked with the App Store every time a page opens, so a refund locks the game again. It is not part of the backup file.
+- **What a family sees:** in the app, every world opens and its level 1 is free ("Level 1 is free to play" on the world card). Levels 2 onwards have a padlock and a "Full game" badge. Tapping one, or tapping "Next level" after level 1, makes Bonnie say "This level is in the full game. Go and get a grown-up!". The grown-up answers the usual sum, then sees the unlock screen: the price from the App Store, **Unlock everything**, and **Restore purchase**. The grown-ups area also has a "Full game" section at the top. On the website nothing is locked.
+- **Why level 1 of every world (Anthony, 12 November 2026):** a child might love Captain's Cove and dislike partitioning, so every world gets a taster. `FREE_LEVELS` in `js/meadow-core.js` sets how many levels are free. Bonnie's Walk is free and still draws its questions from every level.
+- **Game code:** "THE FULL GAME" in `js/meadow-core.js` (`FREE_LEVELS`, `paidLevel`, `storeCall`, `checkFullGame`), plus `paidModal`, `unlockScreen` and `fullGameDone`. The answer is kept in the `meadow-full-game` key (so it works offline, and `js/app-storage.js` copies it to the app's own storage) and is checked with the App Store every time a page opens, so a refund locks the game again. It is not part of the backup file.
 - **App Store code:** the `MeadowStore` plugin at the bottom of `ios/App/App/AppDelegate.swift`. It uses Apple's StoreKit 2 directly, with no RevenueCat and no other service, so the "Data Not Collected" label stays true. `SceneDelegate.swift` now opens `MeadowViewController`, which registers the plugin. It handles Ask to Buy (pending), refunds, and purchases made on another device.
 - **Product ID:** `uk.co.holmeshouse.meadow.fullgame`, a non-consumable. The product made in App Store Connect must use exactly this ID, with Family Sharing switched on there.
 - **Testing without the developer account:** `ios/App/App/Meadow.storekit` is a pretend product (£3.99) for Xcode, and the shared scheme `App.xcscheme` points at it. Press ▶ in Xcode (not a build from the command line) and the unlock screen should show the price and let you "buy" for free. (The scheme path is `../../App/Meadow.storekit`; quit and reopen Xcode after pulling.) If the button says "Try again" instead, choose Product → Scheme → Edit Scheme → Run → Options and pick Meadow.storekit under StoreKit Configuration. Debug → StoreKit → Manage Transactions lets you delete the pretend purchase or refund it.
-- **Test page:** `tests/unlock-test.html` (30 checks with a pretend App Store).
+- **Test page:** `tests/unlock-test.html` (33 checks with a pretend App Store).
 - **Still to do for Phase 4:**
   - Try the pretend purchase in the simulator from Xcode (above).
   - Once the Apple Developer Program is approved: make the product in App Store Connect, switch on Family Sharing for it, and test with a sandbox Apple Account on a real iPad through TestFlight.
+
+## Phase 5: child profiles ("players") ✅ (built 12 November 2026)
+
+- **What a family sees (app only):** the Clubhouse has a **Switch player** button. It opens "Who's playing?" with a button for each child (name and bones) and **New player** (up to 4). A new player types their name and starts fresh: their own bones, stars, hats, coat, theme, walk streak and prizes. With more than one player, the app asks "Who's playing?" once each time it is opened. The website has no players.
+- **Removing a player** is in the grown-ups area (behind the sum), in the "Players" section at the top, and asks first. The last player can't be removed.
+- **How it is stored:** the first player is the save that was always there (`meadow-save-v1`), so nothing had to be moved. Each added player has a save of their own (`meadow-save-v1-p2`, `-p3` and so on; an id is never reused). `meadow-players` holds the list and who is playing. An added player never reads the old website saves. A player added but never named is tidied away.
+- **Shared by everyone:** the full-game purchase. **Per player:** everything else, including the grown-ups' settings and prizes (a new player starts with a copy of the prizes, sound, school years and walk mix of the player before).
+- **Code:** "PLAYERS" in `js/meadow-core.js` (`Meadow.players`: list, add, switchTo, remove), the picker in `index.html` (`playerCard`, `renderPlayers`), and the "Players" section in `parentScreen`. `js/app-storage.js` now restores when any player's save is in the app's copy.
+- **Test page:** `tests/players-test.html` (25 checks).
+- **Known gaps:**
+  - "Back up progress" (`meadow-backup.js`) still only covers the first player's save. It also insists on the old website save being in the backup, which a fresh app install doesn't have, so restoring a backup made in the app probably fails. Not checked yet; worth fixing before TestFlight.
+  - Two of Bonnie's lines need recording (`npm run voice -- --voice <id>`, about 51 characters): "Woof! Who's playing today?" and "This level is in the full game." Until then they use the device voice.
 
 ## What comes next (the plan)
 
 1. **Finish Phase 2:** the voice is fixed. Checked in the simulator on 11 November 2026: saves survive a full close (bones 13 → 14 kept, and the Preferences copy matched), the Clubhouse and Bonnie's Walk lay out correctly in portrait and landscape, and the app files contain no internet addresses. Still to do on the real iPad through TestFlight: a true Airplane Mode test, and a look at the other game pages in landscape. Original list: offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
 2. **Phase 3, number voice (done, see above):** record number clips (0 to 1,000) and joining words ("plus", "take away", "makes" and so on) with ElevenLabs. Join them like names so maths lines use Bonnie's voice. Run `npm run voice:check` first to see the credit cost.
 3. **Phase 4, free taster and unlock (game side built, see above):** padlocks on the paid worlds, an unlock screen behind the existing grown-ups gate, one non-consumable in-app purchase (the RevenueCat Capacitor plugin is the easiest route), Restore Purchases, Family Sharing, and sandbox testing.
-4. **Phase 5, child profiles:** up to 4, each with its own name, bones, stars and Bonnie outfit. Move the existing save into the first profile.
+4. **Phase 5, child profiles (built, see above):** up to 4, each with its own name, bones, stars and Bonnie outfit. Move the existing save into the first profile.
 5. **Phase 6, store listing:** App Store Connect, Small Business Program (15%), Kids category, a privacy policy on holmeshouse.co.uk, a support page, iPad screenshots, a description leading with "Year 2 / KS1", basic accessibility, and a real app icon (currently Capacitor's placeholder).
 6. **Phase 7:** TestFlight with 5–10 families.
 7. **Phase 8:** submit, launch, and get early reviews.
 
 ## Working notes
 - After any change to the game files: `npm run app:sync`, then ▶ in Xcode.
-- The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove, unlock). They all pass. Re-run them after changes.
+- The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove, unlock, players). They all pass. Re-run them after changes.
 - `npm run voice:check` (dry run) should report "new clips needed: 0" unless lines changed.
 - Commit as Anthony. Never commit `app-www/`, `node_modules/` or `.env.local`.
 - Delete stray macOS duplicates such as "config 2.xml" if they appear.

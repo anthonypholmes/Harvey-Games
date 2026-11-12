@@ -30,9 +30,8 @@
   const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
   const closeModals = () => $$('.modal-bg').forEach(m => m.remove());
   const play = (q, ctx) => { ctx.area.textContent = 'Pretend question'; };
-  const world = (id, name) => Meadow.registerWorld({ id, subject: 'test', year: 2, name, icon: 'T', play, levels: [{ id: 'one', name: 'One', count: 2, make: () => ({}) }] });
-  const FREE = Meadow.fullGame.FREE_WORLDS[0];
-  world(FREE, 'Free Park'); world('test-paid-a', 'Paid Burrow'); world('test-paid-b', 'Paid River');
+  const world = (id, name, ids) => Meadow.registerWorld({ id, subject: 'test', year: 2, name, icon: 'T', play, levels: ids.map(l => ({ id: l, name: l, count: 1, make: () => ({}) })) });
+  world('test-a', 'Burrow', ['one', 'two', 'three']); world('test-b', 'River', ['one', 'two']);
 
   // the pretend App Store
   const store = { owned: false, available: true, next: 'success', calls: [], listeners: [],
@@ -52,30 +51,35 @@
   Meadow.save.mutate(s => { s.sound = false; s.voice = false; });
   await wait(50);
 
-  // 1. the free game
+  // 1. the free game: every world opens, and level 1 of each is free
   const cards = () => $$('.world-card'), card = id => $(`.world-card[data-w="${id}"]`);
-  const locked = () => cards().filter(c => c.classList.contains('paid')).length;
+  const stones = () => $$('.stone'), locked = () => stones().filter(c => c.classList.contains('paid')).length;
   check('The page asks the App Store once when it opens', store.calls.join() === 'status', store.calls.join());
-  check('Free game: the free world has no padlock', !card(FREE).classList.contains('paid'));
-  check('Free game: the other two worlds have padlocks', locked() === 2, cards().map(c => c.className).join(' | '));
+  check('Free game: both world cards say level 1 is free', cards().length === 2 && cards().every(c => /Level 1 is free/.test(c.textContent)), cards().map(c => c.textContent.trim().slice(-30)).join(' | '));
   check('has() says the full game is not owned', Meadow.fullGame.has() === false);
+  card('test-a').click();
+  check('Free game: every world opens its map', stones().length === 3);
+  check('Free game: level 1 has no padlock, levels 2 and 3 do', !stones()[0].classList.contains('paid') && locked() === 2, stones().map(c => c.className).join(' | '));
 
-  // 2. the free world opens; a paid one does not
-  card(FREE).click();
-  check('The free world opens its map', !!$('.stone'));
-  Meadow.home(); await wait(20);
-  card('test-paid-a').click(); await wait(20);
-  check('A paid world shows the "get a grown-up" box, not its map', !$('.stone') && /full game/.test(($('.modal-bg') || {}).textContent || ''), ($('.modal-bg') || {}).textContent);
+  // 2. level 1 plays; a paid level does not
+  stones()[0].click();
+  check('Level 1 starts', !!$('#area'));
+  Meadow.worldMap('test-a'); await wait(20);
+  stones()[1].click(); await wait(20);
+  check('A paid level shows the "get a grown-up" box, and does not start', !$('#area') && /full game/.test(($('.modal-bg') || {}).textContent || ''), ($('.modal-bg') || {}).textContent);
   closeModals();
-  Meadow.worldMap('test-paid-a');
-  check('A paid world cannot be opened another way', !$('.stone') && cards().length === 3);
-  Meadow.startLevel('test-paid-a', 'one');
-  check('A paid level cannot be started another way', !$('#area') && cards().length === 3);
-  Meadow.save.mutate(s => { s.settings.unlockAll.test = true; }); Meadow.home();
-  check('"Open all levels" does not open paid worlds', locked() === 2);
+  Meadow.startLevel('test-a', 'two');
+  check('A paid level cannot be started another way', !$('#area') && stones().length === 3);
+  Meadow.startLevel('test-a', 'two', 'next'); await wait(20);
+  check('"Next level" after the free level asks for a grown-up', !$('#area') && /full game/.test(($('.modal-bg') || {}).textContent || ''));
+  closeModals();
+  Meadow.save.mutate(s => { s.settings.unlockAll.test = true; s.stars['test-a/one'] = 3; }); Meadow.worldMap('test-a');
+  check('"Open all levels" and earning stars do not open paid levels', locked() === 2);
+  Meadow.worldMap('test-b');
+  check('The second world has level 1 free too', stones().length === 2 && !stones()[0].classList.contains('paid') && locked() === 1);
 
   // 3. buying is behind the grown-ups sum
-  card('test-paid-a').click(); await wait(20);
+  stones()[1].click(); await wait(20);
   $('.modal-bg [data-a="grown"]').click(); await wait(20);
   const sum = () => { const m = /(\d+) × (\d+)/.exec($('.modal-bg').textContent); return m[1] * m[2]; };
   check('Grown-ups: unlock asks the sum first', !!$('#gateAns') && !$('#buyBtn'));
@@ -84,7 +88,7 @@
   $('#gateAns').value = sum(); $('.modal-bg [data-a="ok"]').click(); await wait(50);
   check('The right answer opens the unlock screen', !!$('#buyBtn'));
   check('The button shows the App Store price', /£3\.99/.test($('#buyBtn').textContent) && !$('#buyBtn').disabled, $('#buyBtn').textContent);
-  check('The screen names the paid worlds', /Paid Burrow, Paid River/.test($('.unlock').textContent));
+  check('The screen says what is free and what the full game adds', /first level of every world/.test($('.unlock').textContent) && /2 worlds and 5 levels \(2 levels free\)/.test($('.unlock').textContent), $('.unlock').textContent.slice(0, 300));
 
   // 4. purchases that don't finish
   store.next = 'cancel'; $('#buyBtn').click(); await wait(30);
@@ -108,12 +112,14 @@
   check('Bought: the full game is owned', Meadow.fullGame.has());
   check('Bought: a thank-you shows', /unlocked/.test(($('.modal-bg') || {}).textContent || ''));
   closeModals();
-  check('Bought: no padlocks are left', cards().length === 3 && locked() === 0);
-  card('test-paid-a').click();
-  check('Bought: a paid world opens its map', !!$('.stone'));
+  check('Bought: the world cards no longer mention the free level', cards().length === 2 && !cards().some(c => /Level 1 is free/.test(c.textContent)));
+  Meadow.worldMap('test-a');
+  check('Bought: no padlocks are left', stones().length === 3 && locked() === 0);
+  Meadow.startLevel('test-a', 'two');
+  check('Bought: level 2 starts', !!$('#area'));
 
   // 7. restoring on a new iPad
-  localStorage.removeItem(FULL); Meadow.home();
+  localStorage.removeItem(FULL); Meadow.worldMap('test-a');
   check('New iPad: locked until restored', locked() === 2);
   Meadow.fullGame.unlock(); await wait(30);
   check('New iPad: opening the unlock screen finds the purchase', Meadow.fullGame.has());
@@ -128,8 +134,8 @@
   check('Try again checks the price again, and does not buy', /£3\.99/.test($('#buyBtn').textContent) && store.calls.filter(c => c === 'buy').length === n, $('#buyBtn').textContent);
 
   // 9. the website locks nothing
-  window.MEADOW_IN_APP = false; Meadow.home();
-  check('On the website nothing is locked', Meadow.fullGame.has() && locked() === 0);
+  window.MEADOW_IN_APP = false; Meadow.worldMap('test-a');
+  check('On the website nothing is locked', Meadow.fullGame.has() && stones().length === 3 && locked() === 0);
   window.MEADOW_IN_APP = true;
 
   check('Only the test save was used', Meadow.save.key === TEST_KEY, Meadow.save.key);

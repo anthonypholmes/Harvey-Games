@@ -153,6 +153,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 .name-card label{font-size:clamp(1.5rem,4vw,2rem);font-weight:700}
 .name-card input{font-family:var(--font-ui);font-size:clamp(1.8rem,6vw,2.6rem);font-weight:700;text-align:center;width:100%;max-width:420px;padding:12px;border-radius:18px;border:3px solid var(--card-edge);background:#fff;color:var(--ink);user-select:text;-webkit-user-select:text}
 .name-card input:focus{outline:none;border-color:var(--accent)}
+.player-list{display:grid;gap:12px;width:100%;max-width:420px}
+.player-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:14px 18px;border-radius:18px;font-size:1.5rem;font-weight:700;color:var(--ink);background:#fff;border:3px solid var(--card-edge);box-shadow:0 5px 0 var(--card-edge)}
+.player-btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--card-edge)}
+.player-btn.now{border-color:var(--leaf);box-shadow:0 5px 0 var(--leaf-dark)}
+.player-btn small{font-size:1rem;font-weight:600;color:var(--ink-soft);white-space:nowrap}
+.player-btn.add{justify-content:center;border-style:dashed;font-size:1.25rem}
 .name-msg{margin:0;min-height:1.3em;color:var(--berry);font-weight:600}
 .name-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
 .shop-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:inherit;cursor:pointer}
@@ -284,12 +290,20 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
     </div>
   </form>
 
+  <!-- App Store app: up to 4 children, each with their own bones, stars and outfits -->
+  <div class="name-card" id="playerCard" hidden>
+    <label id="playerLabel">Who’s playing?</label>
+    <div class="player-list" id="playerList"></div>
+    <div class="name-btns"><button class="btn" type="button" id="playerCancel">Back</button></div>
+  </div>
+
   <main class="cabinets" id="cabinets"></main>
   <a class="shop-btn" id="shopBig" href="meadow-words.html#shop" data-shop>🛍️ Bonnie's Bone Shop <small>hats, themes &amp; real prizes</small></a>
 
   <div class="foot">
     <button class="btn" id="soundBtn">🔊 Sound: on</button>
     <button class="btn" id="changeName">✏️ Change name</button>
+    <button class="btn" id="switchPlayer" hidden>👥 Switch player</button>
     <a class="btn" id="grownUps" href="meadow-maths.html#grownups" title="Settings, prizes and progress (with a sum to check you're a grown-up)">🔒 Grown-ups</a>
   </div>
   <p class="note">Spend your bones on hats, themes and real prizes in Bonnie's Bone Shop.</p>
@@ -383,8 +397,12 @@ function render() {
   document.title = title;
   document.getElementById('title').textContent = title;
   // no name yet (or changing it): show the name card instead of the games
-  const asking = !S.hasName || editingName;
-  document.getElementById('nameCard').hidden = !asking;
+  const naming = !S.hasName || editingName, picking = pickingPlayer && !naming;
+  const asking = naming || picking; // a card is showing instead of the games
+  document.getElementById('nameCard').hidden = !naming;
+  document.getElementById('playerCard').hidden = !picking;
+  document.getElementById('switchPlayer').hidden = asking || !Meadow.players.on();
+  if (picking) renderPlayers();
   document.getElementById('cabinets').hidden = asking;
   // Bonnie's Walk: the streak shows from 2 days in a row; a missed day just drops it
   const walk = Meadow.walkInfo(), wb = document.getElementById('walkBtn');
@@ -395,7 +413,7 @@ function render() {
   ws.hidden = walk.streak < 2; ws.textContent = `${'🐾'.repeat(Math.min(walk.streak, 3))} ${walk.streak} days in a row!`;
   document.querySelectorAll('[data-shop]').forEach(a => { a.hidden = asking; });
   document.getElementById('changeName').hidden = asking || !S.hasName;
-  document.getElementById('nameCancel').hidden = !S.hasName;
+  document.getElementById('nameCancel').hidden = !S.hasName && !otherPlayers().length; // a new player can go back to the others
   document.getElementById('nameLabel').textContent = S.hasName ? 'What’s your new name?' : 'What’s your name?';
   document.getElementById('boneNum').textContent = S.bones;
   document.getElementById('bonnie').innerHTML = bonnieSVG();
@@ -423,6 +441,7 @@ function goTo(href, line) {
   setTimeout(() => BonnieVoice.whenQuiet(go), 650); setTimeout(go, 3000);
 }
 function greet() {
+  if (pickingPlayer && S.hasName && !editingName) { document.getElementById('say').textContent = LINES.who; return LINES.who; }
   if (!S.hasName || editingName) {
     const t = S.hasName ? LINES.newName : LINES.askName;
     document.getElementById('say').textContent = t; return t;
@@ -433,6 +452,7 @@ const fmtN = s => s.replaceAll('{N}', S.childName);
 /* Everything Bonnie says here. tools/make-voice.mjs reads clubhouseLines() to make recorded clips. */
 const LINES = {
   askName: "Woof! I'm Bonnie. Welcome to the Meadow Clubhouse! What's your name?",
+  who: "Woof! Who's playing today?",
   newName: 'Ooh, a new name? Type it in the box!',
   hello: 'Hi {N}! Welcome to your Meadow Clubhouse! Pick a game to play.',
   greetBones: ['Welcome back, {N}! Look at all the bones in your bowl! Which game shall we play?', "Woof! Hi {N}! Pick a game and let's earn more bones!"],
@@ -441,7 +461,7 @@ const LINES = {
   greetStart: ['Hello {N}! Welcome to the Meadow Clubhouse! Pick a game to start earning bones.', 'Woof! Hi {N}! Shall we play some maths or some words today?'],
 };
 function clubhouseLines() {
-  return [LINES.askName, LINES.newName, LINES.hello, LINES.shop, LINES.walk, ...LINES.greetBones, ...LINES.greetStart, ...TICKLES,
+  return [LINES.askName, LINES.who, LINES.newName, LINES.hello, LINES.shop, LINES.walk, ...LINES.greetBones, ...LINES.greetStart, ...TICKLES,
     ...CONFIG.GAMES.filter(g => g.href && !g.soon).map(g => `Let's play ${g.name}!`)].map(fmtN);
 }
 const TICKLES = [...Meadow.LINES.tickles, ...Meadow.LINES.tickleEgg]; // the same tickle lines as the games
@@ -462,17 +482,45 @@ document.getElementById('nameCard').addEventListener('submit', e => {
   const t = fmtN(LINES.hello);
   document.getElementById('say').textContent = t; say(t);
 });
-document.getElementById('nameCancel').addEventListener('click', () => { editingName = false; render(); greet(); });
+document.getElementById('nameCancel').addEventListener('click', () => {
+  editingName = false;
+  if (!S.hasName && otherPlayers().length) { Meadow.players.switchTo(otherPlayers()[0].id); pickingPlayer = true; } // a new player who changed their mind
+  render(); say(greet());
+});
+
+/* ---------- players (App Store app): up to 4 children, each with their own save ---------- */
+const PICKED_KEY = 'meadow-player-picked'; // asked once each time the app is opened
+let pickingPlayer = false;
+const otherPlayers = () => Meadow.players.list().filter(p => !p.current && p.name);
+function renderPlayers() {
+  const list = Meadow.players.list().filter(p => p.name);
+  document.getElementById('playerList').innerHTML = list.map(p =>
+    `<button class="player-btn ${p.current ? 'now' : ''}" type="button" data-player="${esc(p.id)}"><span>${esc(p.name)}</span><small>🦴 ${p.bones}</small></button>`).join('') +
+    (list.length < Meadow.players.MAX ? '<button class="player-btn add" type="button" data-player="new">➕ New player</button>' : '');
+}
+function playerPicked() {
+  pickingPlayer = false; try { sessionStorage.setItem(PICKED_KEY, '1'); } catch (e) {}
+  soundOn = loadShared().clubSound; render(); coinUp();
+  if (S.hasName) say(greet()); else { greet(); document.getElementById('nameIn').value = ''; document.getElementById('nameIn').focus(); }
+}
+document.getElementById('playerList').addEventListener('click', e => {
+  const b = e.target.closest('[data-player]'); if (!b) return;
+  if (b.dataset.player === 'new') Meadow.players.add(); else Meadow.players.switchTo(b.dataset.player);
+  playerPicked();
+});
+document.getElementById('playerCancel').addEventListener('click', playerPicked);
+document.getElementById('switchPlayer').addEventListener('click', () => { pickingPlayer = true; render(); say(greet()); });
 document.getElementById('changeName').addEventListener('click', openNameCard);
 document.querySelectorAll('[data-shop]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); goTo(a.getAttribute('href'), LINES.shop); }));
 
 if (!window.__VOICE_LINES_ONLY__) {
 BonnieVoice.load();
+if (Meadow.players.on() && S.hasName && otherPlayers().length) { try { pickingPlayer = !sessionStorage.getItem(PICKED_KEY); } catch (e) {} }
 render();
 const firstLine = greet();
 if (!S.hasName) setTimeout(() => document.getElementById('nameIn').focus(), 100);
 // Browsers only allow speech after the first tap, so Bonnie says hello then (unless the tap was on Bonnie or a game).
-document.addEventListener('pointerdown', e => { if (!e.target.closest('#bonnie, a.cab, [data-shop], #soundBtn, #nameCard, #changeName, #grownUps')) say(document.getElementById('say').textContent); }, { once: true });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#bonnie, a.cab, [data-shop], #soundBtn, #nameCard, #playerCard, #switchPlayer, #changeName, #grownUps')) say(document.getElementById('say').textContent); }, { once: true });
 document.getElementById('bonnie').addEventListener('click', e => {
   const b = e.currentTarget, egg = Meadow.ui.tickleEgg(); // lots of quick tickles: the Easter egg
   const cls = egg ? 'bonnie-spin' : 'giggle'; b.classList.remove('giggle', 'bonnie-spin'); void b.offsetWidth; b.classList.add(cls);

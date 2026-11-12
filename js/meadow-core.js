@@ -155,7 +155,7 @@ const LINES = {
   walkDone: ['What a lovely walk, {N}! Thank you for coming with me!', 'Walk done! My paws are so happy, {N}!', 'Hooray! We did the whole walk together, {N}!'],
   walkStop: "Stop the walk? That's okay, I'll wait for you!",
   locked: 'Finish the level before to unlock this one!',
-  paid: 'This world is in the full game. Go and get a grown-up!',
+  paid: 'This level is in the full game. Go and get a grown-up!',
   fullGame: 'Woof! Every world is open now! Thank you!',
   shownAll: "I've shown you the answer, {N}! Now you have a go. 🐾",
   shopWelcome: 'Welcome to my shop, {N}! Bones from Meadow Maths and Meadow Words all go in the same bone bowl.',
@@ -358,9 +358,10 @@ function write(s) {
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
 }
 function load() {
-  const raw = readJSON(KEY);
+  const raw = readJSON(KEY), extra = isExtraPlayerKey(KEY); // an added player never reads the old saves
   if (isObj(raw) && raw.version) {
     const s = normalise(raw);
+    if (extra) return s;
     if (!s.name) { // the Clubhouse still sets the name in the old save (until it moves onto the core)
       const old = readJSON(OLD_KEYS.shared);
       if (isObj(old) && typeof old.name === 'string' && old.name.trim()) { s.name = old.name.trim().slice(0, 30); write(s); }
@@ -368,8 +369,68 @@ function load() {
     if (catchUp(s)) { const t = normalise(s); write(t); return t; }
     return s;
   }
+  if (extra) { const s = normalise(blankSave()); write(s); return s; }
   const s = migrate(); s.oldSeen = { print: oldPrint(), bones: s.bones }; write(s); return s;
 }
+
+/* =========================================================
+   PLAYERS (App Store app): up to 4 children, each with their own save
+   The first player is the save that was always there (meadow-save-v1). Each added player gets a
+   save of their own (meadow-save-v1-p2, -p3 …) and starts fresh: name, bones, stars, outfits.
+   PLAYERS_KEY remembers who is in the list and who is playing. The full-game purchase is shared.
+   ========================================================= */
+const PLAYERS_KEY = 'meadow-players', MAX_PLAYERS = 4;
+const playerKey = id => (id === 'p1' ? DEFAULT_KEY : DEFAULT_KEY + '-' + id);
+const isExtraPlayerKey = k => /^meadow-save-v1-p\d+$/.test(k);
+function playersRaw() {
+  const r = readJSON(PLAYERS_KEY), ok = id => /^p[1-9]\d*$/.test(id);
+  const list = isObj(r) && Array.isArray(r.list) ? [...new Set(r.list.filter(ok))].slice(0, MAX_PLAYERS) : [];
+  if (!list.length) list.push('p1');
+  const next = Math.max(int(isObj(r) && r.next), ...list.map(id => +id.slice(1) + 1), 2);
+  return { current: isObj(r) && list.includes(r.current) ? r.current : list[0], list, next };
+}
+function writePlayers(p) { try { localStorage.setItem(PLAYERS_KEY, JSON.stringify(p)); } catch (e) {} }
+function playerInfo(id) {
+  const s = readJSON(playerKey(id));
+  return { id, name: isObj(s) && typeof s.name === 'string' ? s.name : '', bones: isObj(s) ? int(s.bones) : 0 };
+}
+function playerList() { const p = playersRaw(); return p.list.map(id => ({ ...playerInfo(id), current: id === p.current })); }
+function usePlayer(id) {
+  KEY = playerKey(id); S = load();
+  if (GAME && $('#boneNum')) { renderHud(); applyTheme(); }
+  return S;
+}
+function dropSave(id) { try { localStorage.removeItem(playerKey(id)); } catch (e) {} }
+/* Switch to a player in the list. Players who were added but never given a name are tidied away. */
+function switchPlayer(id) {
+  const p = playersRaw(); if (!p.list.includes(id)) return false;
+  p.list.filter(x => x !== id && !playerInfo(x).name).forEach(x => { dropSave(x); p.list = p.list.filter(y => y !== x); });
+  p.current = id; writePlayers(p); usePlayer(id); return true;
+}
+/* Add a player and switch to them. They have no name yet (the Clubhouse asks for it). The grown-ups'
+   choices (prizes, sound, school years, walk mix) are copied from the player before. Returns the id, or null when full. */
+function addPlayer() {
+  const p = playersRaw(); if (p.list.length >= MAX_PLAYERS) return null;
+  const from = load(), id = 'p' + p.next;
+  p.list.push(id); p.current = id; p.next += 1; writePlayers(p);
+  dropSave(id); usePlayer(id);
+  mutate(s => {
+    s.rewards = from.rewards.map(r => ({ ...r }));
+    s.sound = from.sound; s.voice = from.voice; s.voiceRate = from.voiceRate; s.readAloud = from.readAloud; s.clubSound = from.clubSound;
+    s.settings = { ...s.settings, years: from.settings.years, warmUps: from.settings.warmUps, teachBonnie: from.settings.teachBonnie, walkMix: from.settings.walkMix };
+  });
+  return id;
+}
+/* Take a player off the list and delete their save (never the last one). */
+function removePlayer(id) {
+  const p = playersRaw(); if (!p.list.includes(id) || p.list.length < 2) return false;
+  p.list = p.list.filter(x => x !== id);
+  const wasCurrent = p.current === id; if (wasCurrent) p.current = p.list[0];
+  writePlayers(p); dropSave(id);
+  if (wasCurrent) usePlayer(p.current);
+  return true;
+}
+KEY = playerKey(playersRaw().current); // the player who was playing last time
 /* Always re-read before changing, so another open game never loses bones. */
 function mutate(fn) { S = load(); fn(S); S = normalise(S); write(S); renderHud(); return S; }
 
@@ -439,17 +500,17 @@ function starsThisWeek(subject) {
 }
 /* =========================================================
    THE FULL GAME (App Store app only)
-   The app is free with a taster: Bonnie's Walk and the FREE_WORLDS. One purchase opens every other
-   world. On the website nothing is locked. The answer is kept in FULL_KEY so it works with no
+   The app is free with a taster: Bonnie's Walk and the first FREE_LEVELS level(s) of every world,
+   so a child can try them all. One purchase opens every other level. On the website nothing is locked. The answer is kept in FULL_KEY so it works with no
    internet, and is checked against the App Store each time a page opens (so a refund locks again).
    The App Store side is the MeadowStore plugin in ios/App/App/AppDelegate.swift.
    ========================================================= */
-const FREE_WORLDS = ['y2-maths-partitioning', 'y2-english-phonics'];
+const FREE_LEVELS = 1; // how many levels at the start of each world are free
 const FULL_KEY = 'meadow-full-game';
 const inApp = () => typeof window !== 'undefined' && !!window.MEADOW_IN_APP;
 const hasFullGame = () => { if (!inApp()) return true; try { return localStorage.getItem(FULL_KEY) === '1'; } catch (e) { return false; } };
 const setFullGame = on => { try { if (on) localStorage.setItem(FULL_KEY, '1'); else localStorage.removeItem(FULL_KEY); } catch (e) {} };
-const paidWorld = w => !!w && !FREE_WORLDS.includes(w.id) && !hasFullGame();
+const paidLevel = (w, i) => !!w && i >= FREE_LEVELS && !hasFullGame();
 function storePlugin() {
   if (window.MeadowStoreTest) return window.MeadowStoreTest; // the test page's pretend App Store
   const cap = window.Capacitor; if (!cap) return null;
@@ -751,14 +812,15 @@ function homeScreen() {
       </div>
     </div>
     <div class="worlds">
-      ${ws.map((w, i) => { const s = worldStars(w), max = w.levels.length * 3, paid = paidWorld(w); return `
-        <button class="card world-card ${paid ? 'paid' : ''}" data-w="${esc(w.id)}" ${paid ? `aria-label="${esc(w.name)}: in the full game"` : ''}>
-          ${paid ? '<span class="padlock" aria-hidden="true"><i></i></span><span class="ribbon full">FULL GAME</span>' : s === max ? '<span class="ribbon">MASTERED</span>' : ''}
+      ${ws.map((w, i) => { const s = worldStars(w), max = w.levels.length * 3; return `
+        <button class="card world-card" data-w="${esc(w.id)}">
+          ${s === max ? '<span class="ribbon">MASTERED</span>' : ''}
           <div class="wicon" style="background:${w.tint || '#F4ECDC'}">${w.icon || '🌼'}</div>
           <h3>World ${i + 1}: ${esc(w.name)}</h3>
           <div class="sub">${esc(w.tag || w.blurb || '')}</div>
           ${ws.some(x => x.year !== w.year) ? `<div class="note">Year ${w.year}</div>` : ''}
           <div class="wstars">⭐ ${s} / ${max}</div>
+          ${paidLevel(w, FREE_LEVELS) && w.levels.length > FREE_LEVELS ? '<div class="free-note">Level 1 is free to play</div>' : ''}
         </button>`; }).join('') || '<p class="note on-bg">No worlds to show yet.</p>'}
     </div>
     <div class="home-actions">
@@ -767,11 +829,7 @@ function homeScreen() {
     </div>`);
   const hb = $('#homeBonnie');
   hb.onclick = () => { const t = tickle(hb); $('#homeSay').textContent = t; say(t, { pitch: 1.4 }); };
-  $$('.world-card').forEach(b => b.onclick = () => {
-    const w = worldById(b.dataset.w);
-    if (paidWorld(w)) { sfx.wrong(); animate(b, 'bad', 450); paidModal(w); return; }
-    sfx.pop(); worldScreen(b.dataset.w);
-  });
+  $$('.world-card').forEach(b => b.onclick = () => { sfx.pop(); worldScreen(b.dataset.w); });
   $('#goShop').onclick = () => shopScreen({ welcome: true });
   $('#goParent').onclick = () => { parentFromClub = false; parentGate(); };
   setTimeout(() => say(greet), 250);
@@ -779,7 +837,7 @@ function homeScreen() {
 
 function worldScreen(id) {
   G = null;
-  const w = worldById(id); if (!w || paidWorld(w)) return homeScreen();
+  const w = worldById(id); if (!w) return homeScreen();
   show(`
     <div class="card map">
       <div class="map-head">
@@ -789,18 +847,19 @@ function worldScreen(id) {
       </div>
       ${w.intro ? `<p class="world-intro">${w.intro}</p>` : ''}
       <div class="path">
-        ${w.levels.map((L, l) => { const un = levelUnlocked(w, l), st = starsOf(w, L); return `
-          <button class="stone ${un ? '' : 'locked'}" data-l="${l}" ${un ? '' : 'aria-disabled="true"'}>
-            <div class="num" style="background:${w.color || 'var(--leaf)'}">${un ? l + 1 : '🔒'}</div>
+        ${w.levels.map((L, l) => { const paid = paidLevel(w, l), un = !paid && levelUnlocked(w, l), st = starsOf(w, L); return `
+          <button class="stone ${paid ? 'paid' : un ? '' : 'locked'}" data-l="${l}" ${un ? '' : 'aria-disabled="true"'}>
+            <div class="num" style="background:${w.color || 'var(--leaf)'}">${paid ? '<span class="padlock" aria-hidden="true"><i></i></span>' : un ? l + 1 : '🔒'}</div>
             <div><div class="lt">Level ${l + 1}: ${esc(L.name)}</div>
             ${L.blurb ? `<div class="lb">${esc(L.blurb)}${L.eg ? ` <span class="eg">${esc(L.eg)}</span>` : ''}</div>` : ''}
-            ${playedLevel(w, L) ? `<div class="ls" aria-label="${plural(st, 'star')}">${'⭐'.repeat(st)}${'☆'.repeat(3 - st)}</div>` : un ? '<div class="new-badge">New!</div>' : ''}</div>
+            ${playedLevel(w, L) ? `<div class="ls" aria-label="${plural(st, 'star')}">${'⭐'.repeat(st)}${'☆'.repeat(3 - st)}</div>` : paid ? '<div class="new-badge full">Full game</div>' : un ? '<div class="new-badge">New!</div>' : ''}</div>
           </button>`; }).join('')}
       </div>
     </div>`);
   $('#back').onclick = homeScreen;
   $$('.stone').forEach(b => b.onclick = () => {
     const l = +b.dataset.l;
+    if (paidLevel(w, l)) { sfx.wrong(); animate(b, 'bad', 450); paidModal(w); return; }
     if (!levelUnlocked(w, l)) { sfx.wrong(); animate(b, 'bad', 450); say(LINES.locked); return; }
     sfx.pop(); startLevel(w.id, w.levels[l].id);
   });
@@ -817,7 +876,8 @@ function tierNames(w) { return w.tierNames || ['On their own', ...hintNames(w)];
 
 function startLevel(worldId, levelId, via = 'map') {
   const w = worldById(worldId), li = w ? w.levels.findIndex(L => L.id === levelId) : -1;
-  if (li < 0 || paidWorld(w)) return homeScreen();
+  if (li < 0) return homeScreen();
+  if (paidLevel(w, li)) { worldScreen(w.id); if (via === 'next') paidModal(w); return; } // "Next level" after the free one
   const L = w.levels[li];
   recordStart(keyOf(w, L), via);
   const count = L.count || (L.seq && L.seq.length) || w.perLevel || (L.items ? 6 : 8);
@@ -1458,24 +1518,23 @@ function parentGate(then = parentScreen, what = 'open settings') {
   const inp = $('#gateAns', bg); inp.focus();
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') $('[data-a="ok"]', bg).click(); });
 }
-/* A child tapped a padlocked world: Bonnie sends them for a grown-up. Buying is behind the sum check. */
+/* A child tapped a padlocked level: Bonnie sends them for a grown-up. Buying is behind the sum check. */
 function paidModal(w) {
   say(LINES.paid);
-  modal(`${bonnieHTML('', '', undefined)}<h2>${esc(w.name)} is in the full game</h2>
-    <p>Go and get a grown-up!</p>
+  modal(`${bonnieHTML('', '', undefined)}<h2>This level is in the full game</h2>
+    <p>The full game opens every level of ${esc(w.name)} and all the other worlds. Go and get a grown-up!</p>
     <div class="btns"><button class="btn green" data-a="grown">Grown-ups: unlock</button><button class="btn ghost" data-a="back">Back</button></div>`,
     a => { if (a === 'grown') { parentFromClub = false; parentGate(unlockScreen, 'unlock the full game'); } });
 }
 /* The grown-ups' unlock screen: the price from the App Store, Buy, and Restore. */
 function unlockScreen() {
   G = null;
-  const names = ws => ws.map(w => esc(w.name)).join(', ');
-  const mine = subjectWorlds(GAME.subject), free = mine.filter(w => FREE_WORLDS.includes(w.id)), paid = mine.filter(w => !FREE_WORLDS.includes(w.id));
+  const mine = subjectWorlds(GAME.subject), levels = mine.reduce((n, w) => n + w.levels.length, 0);
   show(`
     <div class="card parent unlock">
       <div class="map-head"><button class="icon-btn" id="back">← Back</button><h2>Unlock the full game</h2></div>
-      <p>The free game has Bonnie's Walk, the first maths world and the first English world. The full game opens every world in Meadow Maths and Meadow Words, and keeps them open.</p>
-      ${paid.length ? `<p><b>In ${esc(GAME.title)}:</b> ${free.length ? `${names(free)} is free. ` : ''}The full game adds ${names(paid)}.</p>` : ''}
+      <p>The free game has Bonnie's Walk and the first level of every world. The full game opens every level in Meadow Maths and Meadow Words, and keeps them open.</p>
+      ${mine.length ? `<p><b>In ${esc(GAME.title)}:</b> ${plural(mine.length, 'world')} and ${plural(levels, 'level')} (${plural(mine.length * FREE_LEVELS, 'level')} free).</p>` : ''}
       <p class="note">One payment. No subscription, no adverts and nothing else to buy.</p>
       <div class="row-btns" style="justify-content:flex-start">
         <button class="btn green" id="buyBtn" disabled>Checking the price…</button>
@@ -1608,17 +1667,20 @@ function parentScreen() {
   const subj = GAME.subject, sworlds = subjectWorlds(subj);
   const history = S.redeemed.slice().reverse().slice(0, 20);
   const allYears = yearsWithWorlds(), chosen = S.settings.years;
-  const V = window.BonnieVoice;
+  const V = window.BonnieVoice, players = playerList();
   show(`
     <div class="card parent">
       <div class="map-head"><button class="icon-btn" id="back">${parentFromClub ? '← Clubhouse' : '← Home'}</button><h2>⚙️ Grown-up Settings: ${esc(GAME.title)}</h2></div>
       <p class="note">Bones, name, hats, themes and prizes are shared by every Meadow game. Changes here show up there too. Stars and progress further down are for ${esc(GAME.title)} only.</p>
       ${(GAME.otherGames || []).length ? `<div class="row-btns" style="justify-content:flex-start">${GAME.otherGames.map(g => `<a class="btn small ghost" href="${esc(g.href)}#grownups">${esc(g.icon || '')} ${esc(g.title)} settings →</a>`).join('')}</div>` : ''}
-      <section><h3>Child</h3>
-        <p>Playing as <b>${esc(nameOf())}</b>. To change the name, use <b>Change name</b> on the <a href="${esc(GAME.homeHref)}">Clubhouse</a> page.</p></section>
+      <section><h3>${inApp() ? 'Players' : 'Child'}</h3>
+        <p>Playing as <b>${esc(nameOf())}</b>. To change the name, use <b>Change name</b> on the <a href="${esc(GAME.homeHref)}">Clubhouse</a> page.</p>
+        ${inApp() ? `${players.map(p => `<div class="redeem"><span><b>${esc(p.name || 'New player')}</b>${p.current ? ' (playing now)' : ''}</span>
+          <span class="note">${p.bones}🦴 ${players.length > 1 ? `<button class="btn small ghost" data-rmplayer="${esc(p.id)}" data-name="${esc(p.name || 'New player')}">Remove</button>` : ''}</span></div>`).join('')}
+        <p class="note">Up to ${MAX_PLAYERS} children can each have their own name, bones, stars and Bonnie outfit. To add a player or swap, use <b>Switch player</b> on the Clubhouse page. Everything on this page is for ${esc(nameOf())} only.</p>` : ''}</section>
       ${inApp() ? `<section><h3>Full game</h3>${hasFullGame()
         ? '<p>✓ The full game is unlocked. Every world is open.</p>'
-        : `<p>This is the free game: Bonnie's Walk, the first maths world and the first English world.</p>
+        : `<p>This is the free game: Bonnie's Walk and the first level of every world.</p>
           <div class="row-btns" style="justify-content:flex-start"><button class="btn small green" id="pFull">Unlock the full game, or restore a purchase</button></div>`}</section>` : ''}
       ${weekPanelHTML()}
       <section><h3>Bones 🦴 <span class="chip bones" style="display:inline-flex" id="pBones">${S.bones}</span></h3>
@@ -1675,6 +1737,10 @@ function parentScreen() {
     </div>`);
   $('#back').onclick = () => { if (parentFromClub) location.href = GAME.homeHref; else homeScreen(); };
   if ($('#pFull')) $('#pFull').onclick = unlockScreen;
+  $$('[data-rmplayer]').forEach(b => b.onclick = () => modal(`<h2>Remove ${esc(b.dataset.name)}?</h2>
+    <p>${esc(b.dataset.name)}'s bones, stars, outfits and prizes will be deleted from this iPad. This can't be undone.</p>
+    <div class="btns"><button class="btn berry" data-a="yes">Remove</button><button class="btn ghost" data-a="no">Keep</button></div>`,
+    a => { if (a === 'yes') { removePlayer(b.dataset.rmplayer); S = load(); parentScreen(); } }));
   $$('[data-bone]').forEach(b => b.onclick = () => { mutate(s => { s.bones = Math.max(0, s.bones + +b.dataset.bone); }); $('#pBones').textContent = S.bones; $('#boneSet').value = S.bones; });
   $('#boneForm').onsubmit = e => { e.preventDefault(); const v = int($('#boneSet').value, 0, 99999); mutate(s => { s.bones = v; }); $('#pBones').textContent = S.bones; $('#boneSet').value = S.bones; $('#boneOk').textContent = 'Saved ✓'; };
   // prizes save as you type
@@ -1834,10 +1900,12 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 .world-card h3{font-size:1.3rem}
 .world-card .sub{font-family:var(--font-read);color:var(--ink-soft)}
 .world-card .wstars{font-weight:600;color:var(--wood-dark)}
-.world-card.paid .wicon,.world-card.paid h3,.world-card.paid .sub,.world-card.paid .wstars{opacity:.55}
-.world-card .ribbon.full{background:var(--ink-soft);color:#fff}
-.world-card .padlock{position:absolute;left:62px;top:60px;width:34px;height:28px;border-radius:8px;background:var(--gold);border:3px solid var(--wood-dark);z-index:1}
-.world-card .padlock i{position:absolute;left:5px;top:-17px;width:18px;height:18px;border:4px solid var(--wood-dark);border-bottom:0;border-radius:11px 11px 0 0}
+.world-card .free-note{font-size:.9rem;font-weight:600;color:var(--ink-soft)}
+.stone.paid .lt,.stone.paid .lb{opacity:.6}
+.stone.paid .num{filter:grayscale(.5)}
+.stone .padlock{position:relative;display:block;width:26px;height:20px;margin-top:10px;border-radius:6px;background:var(--gold);border:3px solid var(--wood-dark)}
+.stone .padlock i{position:absolute;left:3px;top:-14px;width:14px;height:14px;border:3px solid var(--wood-dark);border-bottom:0;border-radius:9px 9px 0 0}
+.stone .new-badge.full{background:var(--ink-soft);color:#fff}
 .world-card .ribbon{position:absolute;top:14px;right:-34px;transform:rotate(35deg);background:var(--gold);padding:3px 40px;font-size:.75rem;font-weight:700}
 .home-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
 .map{padding:20px;margin-top:6px}
@@ -2155,7 +2223,8 @@ window.Meadow = {
   // screens
   home: () => homeScreen(), worldMap: id => worldScreen(id), shop: opts => shopScreen(opts || {}), grownUps: () => parentGate(),
   // the App Store app's free taster and unlock
-  fullGame: { FREE_WORLDS, KEY: FULL_KEY, has: hasFullGame, paid: paidWorld, unlock: unlockScreen, check: checkFullGame },
+  players: { MAX: MAX_PLAYERS, KEY: PLAYERS_KEY, on: () => inApp(), list: playerList, add: addPlayer, switchTo: switchPlayer, remove: removePlayer },
+  fullGame: { FREE_LEVELS, KEY: FULL_KEY, has: hasFullGame, paid: paidLevel, unlock: unlockScreen, check: checkFullGame },
   // UI kit for world files
   ui: { $, $$, esc, fmt, rand, randInt, shuffle, wait, plural, reduceMotion, say, hush, whenQuiet, sfx, tone, ac, animate, hearts, banner, confetti,
     shakeScreen, tickle, tickleEgg, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show,
