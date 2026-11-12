@@ -8,7 +8,7 @@ Text in `code` is for pasting exactly. Character limits are Apple's.
 1. **Apple Developer Program** approved (about £79 a year).
 2. **Small Business Program:** enrol at developer.apple.com/app-store/small-business-program as soon as the developer account is active. Apple then keeps 15% instead of 30%. It only applies from the date you are accepted, so do it before launch.
 3. **Agreements, Tax and Banking** in App Store Connect: accept the Paid Apps agreement and add bank and tax details. In-app purchases can't be tested on a real iPad or sold until this is done.
-4. **Two web pages live on holmeshouse.co.uk:** `privacy.html` and `support.html`. They are committed on `main`; push `main` from GitHub Desktop to make them live, then check both addresses open.
+4. **Two web pages live on holmeshouse.co.uk:** `privacy.html` and `support.html`. Both are live (checked 12 November 2026).
 
 ## App information
 
@@ -142,7 +142,7 @@ To find it: open Meadow Maths, tap any world, tap a level with a padlock, then "
 It is also in the Grown-ups area (the Grown-ups button on any page), under "Full game".
 Restore Purchases is on the same unlock screen.
 
-PARENTAL GATE: the Grown-ups area and the purchase screen are behind a multiplication question (for example 7 x 14). Type the answer and tap Unlock.
+PARENTAL GATE: the Grown-ups area and the purchase screen are behind a multiplication question (for example 7 x 12). Type the answer and tap Unlock.
 
 PLAYERS: "Switch player" on the first page adds up to 4 child profiles. They are stored only on the device.
 
