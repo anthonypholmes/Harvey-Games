@@ -8,7 +8,7 @@ Text in `code` is for pasting exactly. Character limits are Apple's.
 1. **Apple Developer Program** approved (about £79 a year).
 2. **Small Business Program:** enrol at developer.apple.com/app-store/small-business-program as soon as the developer account is active. Apple then keeps 15% instead of 30%. It only applies from the date you are accepted, so do it before launch.
 3. **Agreements, Tax and Banking** in App Store Connect: accept the Paid Apps agreement and add bank and tax details. In-app purchases can't be tested on a real iPad or sold until this is done.
-4. **Two web pages live on holmeshouse.co.uk:** `privacy.html` and `support.html` (drafts are in the project folder). Both have two gaps to fill first: `[YOUR NAME OR BUSINESS NAME]` and `[YOUR SUPPORT EMAIL]`.
+4. **Two web pages live on holmeshouse.co.uk:** `privacy.html` and `support.html`. They are committed on `main`; push `main` from GitHub Desktop to make them live, then check both addresses open.
 
 ## App information
 
@@ -40,9 +40,15 @@ Year 2 maths and English with Bonnie the dog. Try the first level of every world
 **Description (4,000)**
 
 ```
-Meadow Clubhouse is Year 2 (KS1) maths and English practice with Bonnie, a friendly chocolate-brown dog who cheers your child on, talks them through each world and helps when they're stuck.
+Homework without the tears. Meadow Clubhouse turns Year 2 (KS1) maths and English into a game your child will ask to play, with Bonnie the chocolate-brown dog cheering them on every step of the way.
 
-It was made by a parent for his own Year 2 child, and follows what children aged 6 to 7 learn at school in England.
+It began at a kitchen table. A dad wanted his six-year-old to stop dreading maths, so he built him a meadow, gave it a dog, and filled it with exactly what Year 2 children learn at school in England. The dread went. The practice stayed. Now it's yours.
+
+WHY CHILDREN LOVE IT
+Bonnie never tells a child they're wrong and leaves it there. She wags, she giggles when you tickle her, and when a question is tricky she says "let's work it out together". Every right answer earns a bone, and bones buy Bonnie hats, coats and whole new themes for the meadow.
+
+WHY PARENTS LOVE IT
+You'll hear "just one more level" about maths. You'll see what they practised this week without having to ask. And you'll never see an advert, a subscription or a pop-up asking your child to buy something.
 
 MEADOW MATHS: 6 worlds, 38 levels
 • The Partitioning Park: tens and ones, hundreds, splitting numbers different ways
@@ -59,28 +65,30 @@ MEADOW WORDS: 4 worlds, 20 levels
 • Bonnie's Story Nook: short stories, rhymes and reading questions
 
 BONNIE'S WALK
-Five quick questions a day, mixing maths and English. Nothing can be failed, so it's a gentle way to build a daily habit.
+Five quick questions a day, mixing maths and English. Nothing can be failed, so even a reluctant learner can finish with a smile. It's the gentlest daily habit you'll ever start.
 
 HELP THAT TEACHES
-Tap Ask Bonnie and she gives a clue, then shows a step, then works through it together. Now and then Bonnie has a go herself and your child checks her answer. If a level is proving hard, the game quietly makes the next questions a little easier.
+Tap Ask Bonnie and she gives a clue, then shows a step, then works through it together. Sometimes Bonnie has a go herself and gets it gloriously wrong, and your child gets to be the teacher. If a level is proving hard, the game quietly eases off, so confidence comes first.
 
-BONES, HATS AND REAL PRIZES
-Right answers earn bones. Children spend them in Bonnie's Bone Shop on hats, coats and themes, or save up for real-life prizes that you choose, like a film night or a trip to the park.
+REAL PRIZES, CHOSEN BY YOU
+Children can save their bones for real-life treats that you set: choosing the Friday film, staying up ten minutes late, being DJ in the car. A grown-up holds a button to say yes.
 
 MADE FOR FAMILIES
 • Up to 4 children, each with their own name, bones, stars and Bonnie outfit
 • A grown-ups area showing this week's practice and how much help each level needed
-• Works offline, so it's good for car journeys
+• Works offline, so it's perfect for car journeys and waiting rooms
 • Bonnie can read maths questions aloud, for children who are still building their reading
 
 SAFE AND SIMPLE
-• No adverts
+• No adverts, ever
 • No subscription
 • No accounts, and nothing collected about your child
 • The purchase button is behind a check for grown-ups
 
 FREE TO TRY
-Bonnie's Walk and the first level of every world are free. One purchase unlocks all 58 levels for good, and works with Family Sharing.
+Bonnie's Walk and the first level of every world are free, so your child can find the world they love. One purchase then unlocks all 58 levels for good, and works with Family Sharing.
+
+Come and meet Bonnie. She's been waiting by the gate.
 ```
 
 **Keywords (100, commas, no spaces).** Words already in the name and subtitle are left out, because Apple counts those anyway.
@@ -94,7 +102,7 @@ phonics,spelling,times tables,number bonds,sats,primary,age 6,age 7,homework,rea
 | Support URL | `https://holmeshouse.co.uk/support.html` |
 | Marketing URL | `https://holmeshouse.co.uk` (optional) |
 | Privacy Policy URL | `https://holmeshouse.co.uk/privacy.html` |
-| Copyright | `2026 [YOUR NAME OR BUSINESS NAME]` |
+| Copyright | `2026 Anthony Holmes` |
 | Version | 1.0 |
 
 ## App Privacy (the "nutrition label")
@@ -143,16 +151,20 @@ PRIVACY: the app collects no data. It has no adverts, no analytics, no accounts 
 
 ## Screenshots
 
-- **Needed:** iPad 13-inch, 2064 × 2752 (portrait) or 2752 × 2064 (landscape). Between 1 and 10. The 11-inch size is filled in from these automatically.
-- **Don't take them in the Xcode simulator:** it shows every emoji as a "?" box (see the handoff notes). Take them on a real iPad through TestFlight, or ask Claude to make them from the game pages.
-- **Suggested set of 6, in this order:**
-  1. The Clubhouse with Bonnie greeting the child by name. Caption idea: "Year 2 maths and English with Bonnie"
-  2. A maths question with the Ask Bonnie step card showing. "Help that teaches, not just answers"
-  3. The Meadow Maths world list. "6 maths worlds, 38 levels"
-  4. A Meadow Words question (Phonics Forest). "Phonics, spelling and stories"
-  5. Bonnie's Bone Shop with a hat on. "Earn bones for hats and real prizes"
-  6. The grown-ups "this week" panel. "See what they practised this week"
-- Use a made-up name such as "Sam" in screenshots, not a real child's name.
+Six pictures are ready in `docs/screenshots/`, at the iPad 13-inch size Apple asks for (2064 × 2752). Drag them into the "iPad 13-inch Display" box in this order. The 11-inch size is filled in from these automatically.
+
+| File | Caption on the picture |
+|---|---|
+| `1-clubhouse.png` | Year 2 maths and English, with Bonnie the dog cheering them on |
+| `2-help.png` | Help that teaches: Bonnie gives a clue, then shows how |
+| `3-maths-worlds.png` | 6 maths worlds, 38 levels |
+| `4-words.png` | Phonics, spelling and stories: 4 English worlds, 20 levels |
+| `5-bone-shop.png` | Earn bones for hats and prizes |
+| `6-walk.png` | A walk with Bonnie every day |
+
+They are made from the real game pages by `sh tools/make-screenshots.sh`, with a made-up player called Sam. Run it again after any change to how the game looks. Don't take screenshots in the Xcode simulator: it shows every emoji as a "?" box.
+
+For the in-app purchase's review screenshot, take one of the "Unlock the full game" screen on a real iPad through TestFlight (it only needs to be readable).
 
 ## Kids category rules to keep true
 
