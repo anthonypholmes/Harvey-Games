@@ -103,13 +103,27 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
   - "Back up progress" (`meadow-backup.js`) still only covers the first player's save. It also insists on the old website save being in the backup, which a fresh app install doesn't have, so restoring a backup made in the app probably fails. Not checked yet; worth fixing before TestFlight.
   - (Done 12 November 2026: "Woof! Who's playing today?" and "This level is in the full game." are recorded.)
 
+## Phase 6: store listing (started 12 November 2026)
+
+- **App icon ✅:** the placeholder is replaced with Bonnie on a meadow. It is drawn by `tools/app-icon.html` with the game's own Bonnie, and `sh tools/make-icon.sh` (needs Google Chrome) turns it into `ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png` (1024 × 1024, no see-through parts). The website's icons (`icon-512.png` and so on) are unchanged.
+- **Listing text ✅:** `docs/APP_STORE_LISTING.md` has everything to paste into App Store Connect: name, subtitle, description, keywords, the privacy label answers, the in-app purchase fields, notes for the reviewer, a screenshot plan and a checklist. All of it is checked against Apple's character limits.
+- **Privacy policy and support page (drafts) ✅:** `privacy.html` and `support.html` in the project folder. They are not in the app (`tools/build-app.mjs` doesn't copy them). **Two gaps to fill in both:** `[YOUR NAME OR BUSINESS NAME]` and `[YOUR SUPPORT EMAIL]`. They then need to go live on holmeshouse.co.uk, which means adding those two files to `main`. That is Anthony's call; nothing on `main` has been touched.
+- **Export compliance ✅:** `ITSAppUsesNonExemptEncryption` is set to false in `Info.plist`, so App Store Connect won't ask the encryption question on every upload.
+- **Still to do for Phase 6:**
+  - Fill the two gaps and publish the two pages.
+  - Screenshots (iPad 13-inch, 2064 × 2752). Not from the simulator, because of the emoji bug. Either a real iPad through TestFlight, or made from the game pages with headless Chrome the way the icon is.
+  - Basic accessibility pass (VoiceOver labels on the main buttons, text contrast, Reduce Motion).
+  - "Back up progress" fix (see Phase 5 known gaps).
+  - Anthony, once the developer account is active: Small Business Program, the Paid Apps agreement with bank and tax details, create the app and the in-app purchase in App Store Connect.
+  - The home-screen name "Meadow Clubhouse" (16 letters) may be shortened by iPadOS under the icon. Check on a real iPad; "Meadow Club" would fit if so (`CFBundleDisplayName` in `Info.plist`).
+
 ## What comes next (the plan)
 
 1. **Finish Phase 2:** the voice is fixed. Checked in the simulator on 11 November 2026: saves survive a full close (bones 13 → 14 kept, and the Preferences copy matched), the Clubhouse and Bonnie's Walk lay out correctly in portrait and landscape, and the app files contain no internet addresses. Still to do on the real iPad through TestFlight: a true Airplane Mode test, and a look at the other game pages in landscape. Original list: offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
 2. **Phase 3, number voice (done, see above):** record number clips (0 to 1,000) and joining words ("plus", "take away", "makes" and so on) with ElevenLabs. Join them like names so maths lines use Bonnie's voice. Run `npm run voice:check` first to see the credit cost.
 3. **Phase 4, free taster and unlock (game side built, see above):** padlocks on the paid worlds, an unlock screen behind the existing grown-ups gate, one non-consumable in-app purchase (the RevenueCat Capacitor plugin is the easiest route), Restore Purchases, Family Sharing, and sandbox testing.
 4. **Phase 5, child profiles (built, see above):** up to 4, each with its own name, bones, stars and Bonnie outfit. Move the existing save into the first profile.
-5. **Phase 6, store listing:** App Store Connect, Small Business Program (15%), Kids category, a privacy policy on holmeshouse.co.uk, a support page, iPad screenshots, a description leading with "Year 2 / KS1", basic accessibility, and a real app icon (currently Capacitor's placeholder).
+5. **Phase 6, store listing (started, see above):** App Store Connect, Small Business Program (15%), Kids category, a privacy policy on holmeshouse.co.uk, a support page, iPad screenshots, a description leading with "Year 2 / KS1", basic accessibility, and a real app icon (currently Capacitor's placeholder).
 6. **Phase 7:** TestFlight with 5–10 families.
 7. **Phase 8:** submit, launch, and get early reviews.
 
