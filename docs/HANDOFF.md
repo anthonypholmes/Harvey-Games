@@ -88,7 +88,7 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - **Testing without the developer account:** `ios/App/App/Meadow.storekit` is a pretend product (£3.99) for Xcode, and the shared scheme `App.xcscheme` points at it. Press ▶ in Xcode (not a build from the command line) and the unlock screen should show the price and let you "buy" for free. (The scheme path is `../../App/Meadow.storekit`; quit and reopen Xcode after pulling.) If the button says "Try again" instead, choose Product → Scheme → Edit Scheme → Run → Options and pick Meadow.storekit under StoreKit Configuration. Debug → StoreKit → Manage Transactions lets you delete the pretend purchase or refund it.
 - **Test page:** `tests/unlock-test.html` (33 checks with a pretend App Store).
 - **Still to do for Phase 4:**
-  - Try the pretend purchase in the simulator from Xcode (above).
+  - (Done 12 November 2026) Anthony tried the pretend purchase in the simulator from Xcode: the unlock screen and the purchase work.
   - Once the Apple Developer Program is approved: make the product in App Store Connect, switch on Family Sharing for it, and test with a sandbox Apple Account on a real iPad through TestFlight.
 
 ## Phase 5: child profiles ("players") ✅ (built 12 November 2026)
@@ -100,17 +100,17 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - **Code:** "PLAYERS" in `js/meadow-core.js` (`Meadow.players`: list, add, switchTo, remove), the picker in `index.html` (`playerCard`, `renderPlayers`), and the "Players" section in `parentScreen`. `js/app-storage.js` now restores when any player's save is in the app's copy.
 - **Test page:** `tests/players-test.html` (25 checks).
 - **Known gaps:**
-  - "Back up progress" (`meadow-backup.js`) still only covers the first player's save. It also insists on the old website save being in the backup, which a fresh app install doesn't have, so restoring a backup made in the app probably fails. Not checked yet; worth fixing before TestFlight.
+  - (Fixed 12 November 2026) "Back up progress" (`meadow-backup.js`) now covers every player: each added player's save and the list of players go in the backup, and restoring puts them all back (players on the device that aren't in the backup are removed, and "Undo the last restore" brings them back). A backup made in the app, which has none of the older website saves, used to be refused with "no player progress"; it is now accepted. The panel shows a line for each player. The full-game purchase is still never in a backup. Older website backups still work. Test page: `tests/backup-test.html` (26 checks). Not yet tried by hand in the simulator: saving the file through the iPad share sheet, and choosing a file to restore.
   - (Done 12 November 2026: "Woof! Who's playing today?" and "This level is in the full game." are recorded.)
 
 ## Phase 6: store listing (started 12 November 2026)
 
 - **App icon ✅:** the placeholder is replaced with Bonnie on a meadow. It is drawn by `tools/app-icon.html` with the game's own Bonnie, and `sh tools/make-icon.sh` (needs Google Chrome) turns it into `ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png` (1024 × 1024, no see-through parts). The website's icons (`icon-512.png` and so on) are unchanged.
 - **Listing text ✅ (description rewritten warmer on 12 November 2026, at Anthony's request):** `docs/APP_STORE_LISTING.md` has everything to paste into App Store Connect: name, subtitle, description, keywords, the privacy label answers, the in-app purchase fields, notes for the reviewer, a screenshot plan and a checklist. All of it is checked against Apple's character limits.
-- **Privacy policy and support page ✅:** `privacy.html` and `support.html`, with Anthony Holmes and anthony@holmeshouse.co.uk as the contact. They are not in the app (`tools/build-app.mjs` doesn't copy them) and use the device's own lettering, because `main` has no `fonts/` folder. With Anthony's go-ahead they were committed on **local `main`** on 12 November 2026 (one commit, only those two files). **That commit still has to be pushed:** Claude's shell has no GitHub sign-in, so Anthony pushes `main` from GitHub Desktop. Until then the two addresses in the listing don't work.
+- **Privacy policy and support page ✅:** `privacy.html` and `support.html`, with Anthony Holmes and anthony@holmeshouse.co.uk as the contact. They are not in the app (`tools/build-app.mjs` doesn't copy them) and use the device's own lettering, because `main` has no `fonts/` folder. With Anthony's go-ahead they were committed on **local `main`** on 12 November 2026 (one commit, only those two files). **Pushed, and both pages are live** (checked 12 November 2026: https://holmeshouse.co.uk/privacy.html and /support.html both open).
 - **Export compliance ✅:** `ITSAppUsesNonExemptEncryption` is set to false in `Info.plist`, so App Store Connect won't ask the encryption question on every upload.
 - **Still to do for Phase 6:**
-  - Push `main` so the two pages go live, then check https://holmeshouse.co.uk/privacy.html and /support.html open.
+  - (Done 12 November 2026) `main` is pushed and the privacy and support pages are live.
   - (Done 12 November 2026) Screenshots: six iPad 13-inch pictures (2064 × 2752) in `docs/screenshots/`, made from the real game pages by `sh tools/make-screenshots.sh` (needs Google Chrome; the page is `tools/screenshots.html`). Each has a caption above the game. The player is a made-up "Sam". To change a caption or a scene, edit `SHOTS` in that page and run the script again.
   - (Done 12 November 2026) Accessibility pass. `tests/a11y-audit.js` is a checker to run in a browser console on any screen (`a11yAudit()`): it lists buttons with no name for VoiceOver, buttons under 44 × 44, and text too close in colour to its background. It was run on the Clubhouse, both world lists, a level map, a level in all 10 worlds, the Bone Shop, the grown-ups area and Bonnie's Walk, and now reports nothing except the decorative frog.
     - **Contrast (the main change):** white writing on the light green, orange and pink was about 3 to 1. Buttons (`.btn`, `.btn.green`, `.btn.berry`, `.tab.on`), the Clubhouse game cards, the Bone Shop and walk buttons, and the level-number circles now use the darker shade of each colour, at least 4.5 to 1 for small writing, in every theme. The orange "ones" digit in the maths worlds is slightly deeper (`--c-ink`). The App Store screenshots were remade with the new colours.
@@ -118,9 +118,17 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
     - **Tap sizes:** the phonics sound dots keep their look but their tap area is now 44 × 44. The page title in the top bar is 44 high.
     - **Reduce Motion:** already handled (a rule in the core CSS switches off animations and hides the butterflies and frog).
     - **Not done:** nothing has been tried with VoiceOver switched on, on a real iPad. Dragging letters and tiles can't be done with VoiceOver, though every drag also works as a tap. Text does not grow with the iPad's Larger Text setting. Do a VoiceOver walk-through during TestFlight.
-  - "Back up progress" fix (see Phase 5 known gaps).
+  - (Done 12 November 2026) "Back up progress" fix (see Phase 5 known gaps).
   - Anthony, once the developer account is active: Small Business Program, the Paid Apps agreement with bank and tax details, create the app and the in-app purchase in App Store Connect.
   - The home-screen name "Meadow Clubhouse" (16 letters) may be shortened by iPadOS under the icon. Check on a real iPad; "Meadow Club" would fit if so (`CFBundleDisplayName` in `Info.plist`).
+
+## Next up (as of 12 November 2026)
+
+1. **Anthony:** enrol in the Apple Developer Program if not done yet. Everything after this waits for it.
+2. Once approved: the App Store Connect setup (Phase 6 list), then TestFlight on the real iPad.
+3. While waiting: try "Export or import save" by hand in the simulator (Phase 5 known gaps).
+
+If Xcode says a package such as CapApp-SPM is missing after the project moves or is pulled afresh, quit Xcode and reopen it with `npm run app:open`.
 
 ## What comes next (the plan)
 
@@ -134,11 +142,12 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 
 ## Working notes
 - After any change to the game files: `npm run app:sync`, then ▶ in Xcode.
-- The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove, unlock, players). They all pass. Re-run them after changes.
+- The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove, unlock, players, backup). They all pass. Re-run them after changes.
 - `npm run voice:check` (dry run) should report "new clips needed: 0" unless lines changed.
 - Commit as Anthony. Never commit `app-www/`, `node_modules/` or `.env.local`.
 - Delete stray macOS duplicates such as "config 2.xml" if they appear.
-- **Stray duplicates are a standing problem.** The project lives in the iCloud-synced Documents folder, and macOS keeps making copies with a number before the ending ("config 4.xml", and on 12 November 2026 about 1,100 "… 2.mp3" files in `audio/clips` and `audio/numbers`, all exact copies). Never commit them. `tools/build-app.mjs` now leaves them out of the app. A duplicate inside the hidden `.git` folder ("HEAD 2") once stopped git reaching GitHub. Moving the project out of Documents (for example to a `Developer` folder in the home folder) would stop it and should also make the Mac much faster during builds.
+- **The project moved on 12 November 2026** from the iCloud-synced Documents folder to `~/Developer/GitHub/Harvey-Games`, which should stop the stray duplicates below. Four that had been committed were removed (commit `1d1195f`). If GitHub Desktop or Xcode still point at the old place, open the project from the new one.
+- **Stray duplicates were a standing problem.** The project used to live in the iCloud-synced Documents folder, and macOS kept making copies with a number before the ending ("config 4.xml", and on 12 November 2026 about 1,100 "… 2.mp3" files in `audio/clips` and `audio/numbers`, all exact copies). Never commit them. `tools/build-app.mjs` now leaves them out of the app. A duplicate inside the hidden `.git` folder ("HEAD 2") once stopped git reaching GitHub. If any appear again, delete them.
 - Claude's shell can commit but cannot push (no GitHub sign-in). Anthony pushes from GitHub Desktop. On `main`, GitHub Desktop lists about 6,500 "new" files (`app-www` and `ios`, which only `app-store` ignores): never commit those.
 - Anthony tends to work in bursts. Keep each step small enough to finish in one sitting, and don't compress the timeline.
 

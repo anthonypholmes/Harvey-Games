@@ -6,10 +6,19 @@
  *   - a file:  meadow-backup-<name>-<date>.json   (share sheet / download)
  *   - a code:  MEADOW-SAVE-1:<base64 of the same JSON>   (copy and paste, e.g. into Notes or an email)
  * Before a restore replaces anything, the current progress is kept in BEFORE_KEY so it can be put back.
+ *
+ * What is in a backup: the games' save (meadow-save-v1), the older website saves if this device has
+ * them, and in the App Store app every added player's save (meadow-save-v1-p2, -p3 …) with the list
+ * of players. The full-game purchase is never in a backup: the App Store looks after that.
  */
 (function () {
   const KEYS = ['harvey-splitter-v1', 'meadowWords_english_v1', 'meadowClubhouse_sound', 'meadow-save-v1'];
-  const MAIN_KEY = 'harvey-splitter-v1';
+  const MAIN_KEY = 'harvey-splitter-v1';   // the older website save
+  const SAVE_KEY = 'meadow-save-v1';       // the games' save now (the first player's in the app)
+  const PLAYERS_KEY = 'meadow-players';    // the app's list of players
+  const isExtraSave = k => /^meadow-save-v1-p[1-9]\d*$/.test(String(k)); // an added player's save
+  const isSave = k => k === SAVE_KEY || isExtraSave(k);
+  const allowed = k => KEYS.includes(k) || k === PLAYERS_KEY || isExtraSave(k);
   const BEFORE_KEY = 'meadow-backup-before-restore';
   const CODE_PREFIX = 'MEADOW-SAVE-1:';
   const APP = 'meadow-clubhouse';
@@ -20,9 +29,23 @@
   const today = () => new Date().toISOString().slice(0, 10);
 
   /* ---------- making and reading backups ---------- */
+  /* Every key on this device that belongs in a backup. */
+  function here() {
+    const keys = [...KEYS, PLAYERS_KEY];
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (isExtraSave(k)) keys.push(k); } } catch (e) {}
+    return keys;
+  }
+  const obj = text => { try { const v = JSON.parse(text); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch (e) { return null; } };
+  /* The players in a backup, in order: [{ id, key }]. One player unless the app's list says more. */
+  function playersIn(data) {
+    const p = obj(data[PLAYERS_KEY]) || {};
+    const ids = (Array.isArray(p.list) ? p.list : []).filter(id => /^p[1-9]\d*$/.test(id)).filter((id, i, a) => a.indexOf(id) === i);
+    const list = (ids.length ? ids : ['p1']).map(id => ({ id, key: id === 'p1' ? SAVE_KEY : SAVE_KEY + '-' + id }));
+    return list.filter(x => x.id === 'p1' || x.key in data);
+  }
   function make() {
     const data = {};
-    KEYS.forEach(k => { const v = get(k); if (v !== null) data[k] = v; });
+    here().forEach(k => { const v = get(k); if (v !== null) data[k] = v; });
     return { app: APP, format: 1, exportedAt: new Date().toISOString(), data };
   }
   const b64encode = s => { const bytes = new TextEncoder().encode(s); let bin = '';
@@ -50,13 +73,14 @@
     if (!b || b.app !== APP || !b.data || typeof b.data !== 'object') return { error: 'That isn’t a Meadow backup.' };
     if (b.format !== 1) return { error: 'This backup was made by a newer version of the games. Update the games, then try again.' };
     const keys = Object.keys(b.data);
-    if (keys.some(k => !KEYS.includes(k) || typeof b.data[k] !== 'string')) return { error: 'This backup has something unexpected in it, so it wasn’t used.' };
-    if (!keys.includes(MAIN_KEY)) return { error: 'This backup has no player progress in it.' };
+    if (keys.some(k => !allowed(k) || typeof b.data[k] !== 'string')) return { error: 'This backup has something unexpected in it, so it wasn’t used.' };
+    // a backup made in the app has only the games' save; one from the website has the older save too
+    if (!keys.includes(MAIN_KEY) && !keys.includes(SAVE_KEY)) return { error: 'This backup has no player progress in it.' };
     for (const k of keys) {
       if (k === 'meadowClubhouse_sound') { if (!/^[01]$/.test(b.data[k])) return { error: 'This backup looks damaged (sound setting).' }; continue; }
       let v; try { v = JSON.parse(b.data[k]); } catch (e) { return { error: 'This backup looks damaged, so it wasn’t used.' }; }
       if (!v || typeof v !== 'object' || Array.isArray(v)) return { error: 'This backup looks damaged, so it wasn’t used.' };
-      if (k === MAIN_KEY) {
+      if (k === MAIN_KEY || isSave(k)) {
         if (v.name != null && typeof v.name !== 'string') return { error: 'This backup looks damaged (player name).' };
         if (v.bones != null && !(Number.isFinite(+v.bones) && +v.bones >= 0)) return { error: 'This backup looks damaged (bones).' };
       }
@@ -64,27 +88,40 @@
     return { backup: b };
   }
 
-  /* A short description, e.g. "Harvey · 340 bones · 12 maths levels done · 18 word stars" */
+  /* A short description, e.g. "Harvey · 340 bones · 27 stars · 2 prizes claimed", with a line for each player. */
   function summary(data) {
-    let main = {}, words = {};
-    try { main = JSON.parse(data[MAIN_KEY] || '{}') || {}; } catch (e) {}
-    try { words = JSON.parse(data.meadowWords_english_v1 || '{}') || {}; } catch (e) {}
+    const count = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+    if (!(SAVE_KEY in data)) return oldSummary(data, count);
+    return playersIn(data).map(({ key }) => {
+      const s = obj(data[key]) || {};
+      const stars = Object.values(s.stars && typeof s.stars === 'object' ? s.stars : {}).reduce((a, v) => a + (Math.floor(+v) || 0), 0);
+      const claimed = Array.isArray(s.redeemed) ? s.redeemed.length : 0;
+      return `${typeof s.name === 'string' && s.name ? esc(s.name) : 'No name'} · ${count(Math.floor(+s.bones || 0), 'bone')} · ${count(stars, 'star')} · ${count(claimed, 'prize')} claimed`;
+    }).join('<br>');
+  }
+  /* A backup from before the games shared one save: read the older saves instead. */
+  function oldSummary(data, count) {
+    const main = obj(data[MAIN_KEY]) || {}, words = obj(data.meadowWords_english_v1) || {};
     const maths = ['done', 'done2', 'done3', 'done4'].reduce((a, k) => a + Object.values(main[k] || {}).filter(Boolean).length, 0);
     const stars = Object.values(words).reduce((a, w) => a + ((w && w.stars) || []).reduce((x, y) => x + (+y || 0), 0), 0);
     const claimed = Array.isArray(main.redeemed) ? main.redeemed.length : 0;
-    return `${main.name ? esc(main.name) : 'No name'} · ${Math.floor(+main.bones || 0)} bones · ${maths} maths level${maths === 1 ? '' : 's'} done · ${stars} word star${stars === 1 ? '' : 's'} · ${claimed} prize${claimed === 1 ? '' : 's'} claimed`;
+    return `${main.name ? esc(main.name) : 'No name'} · ${count(Math.floor(+main.bones || 0), 'bone')} · ${maths} maths level${maths === 1 ? '' : 's'} done · ${count(stars, 'word star')} · ${count(claimed, 'prize')} claimed`;
   }
 
   /* Replace this device's progress with the backup (keeping what was here, so it can be undone). */
   function restore(backup) {
     const before = make();
     localStorage.setItem(BEFORE_KEY, JSON.stringify({ savedAt: new Date().toISOString(), backup: before }));
-    KEYS.forEach(k => { if (k in backup.data) localStorage.setItem(k, backup.data[k]); else localStorage.removeItem(k); });
+    put(backup.data);
+  }
+  /* Make this device hold exactly what the backup holds: players here that aren't in it go too. */
+  function put(data) {
+    [...new Set([...here(), ...Object.keys(data)])].forEach(k => { if (k in data) localStorage.setItem(k, data[k]); else localStorage.removeItem(k); });
   }
   function before() { try { const b = JSON.parse(get(BEFORE_KEY) || 'null'); return b && b.backup && parse(JSON.stringify(b.backup)).backup ? b : null; } catch (e) { return null; } }
 
   function fileName(backup) {
-    let name = 'player'; try { name = JSON.parse(backup.data[MAIN_KEY]).name || name; } catch (e) {}
+    const name = (obj(backup.data[SAVE_KEY]) || {}).name || (obj(backup.data[MAIN_KEY]) || {}).name || 'player';
     return `meadow-backup-${String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'player'}-${today()}.json`;
   }
   /* Save the file: the share sheet on iPad/iPhone (Save to Files, AirDrop, email…), a download elsewhere. */
@@ -131,7 +168,7 @@
       <div class="mb-head"><h2>💾 Back up progress</h2><button class="mb-btn" data-mb="close" aria-label="Close">✕ Close</button></div>
       <p class="mb-sum">${summary(now.data)}</p>
       <h3>Make a backup</h3>
-      <p>Keep a copy of all the progress on this device: bones, hats, themes, prizes and both games.</p>
+      <p>Keep a copy of all the progress on this device: every player’s bones, stars, hats, themes and prizes.</p>
       <div class="mb-row"><button class="mb-btn go" data-mb="file">Save a backup file</button><button class="mb-btn" data-mb="copy">Copy backup code</button></div>
       <p class="mb-note">The file can go in Files, iCloud, an email or a message. The code is the same backup as text: paste it into Notes or an email.</p>
       <textarea readonly aria-label="Backup code" data-mb="code">${esc(code)}</textarea>
@@ -185,7 +222,7 @@
         catch (err) { msg('inmsg', 'Couldn’t save on this device (it may be full or in private browsing). Nothing was changed.'); }
       } else if (act === 'undo') {
         const p = before(); if (!p) return;
-        try { KEYS.forEach(k => { if (k in p.backup.data) localStorage.setItem(k, p.backup.data[k]); else localStorage.removeItem(k); });
+        try { put(p.backup.data);
           localStorage.removeItem(BEFORE_KEY); reloadSoon('Progress put back. Reloading the game…'); }
         catch (err) { msg('inmsg', 'Couldn’t put it back on this device.'); }
       }
@@ -201,5 +238,5 @@
     $('close').focus();
   }
 
-  window.MeadowBackup = { open, make, parse, toCode, summary, restore, KEYS };
+  window.MeadowBackup = { open, make, parse, toCode, summary, restore, before, KEYS };
 })();

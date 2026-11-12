@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Backup Test</title>
+<style>
+  #report { position: relative; z-index: 50; max-width: 900px; margin: 16px auto 140px; padding: 16px; font-family: system-ui, sans-serif; background: #FDFBF7; border: 2px solid #EADFCB; border-radius: 18px; color: #3E2F27; }
+  #report h1 { font-size: 1.3rem; margin: 0 0 6px; }
+  #report p { margin: 0 0 12px; color: #7A6A5E; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+</style>
+</head>
+<body>
+<script>
+/* Players use the real save names, so everything saved on this page's address is set aside first
+   and put back at the end (see "keep" and "putBack"). */
+window.MEADOW_IN_APP = true; // players are an App Store app feature
+window.__kept = {};
+for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^(meadow|harvey)/.test(k)) window.__kept[k] = localStorage.getItem(k); }
+Object.keys(window.__kept).forEach(k => localStorage.removeItem(k));
+</script>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script src="../meadow-backup.js"></script>
+<script>
+(async () => {
+  const results = [], check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail: String(detail) });
+  const B = MeadowBackup, P = Meadow.players, names = () => P.list().map(p => p.name || '?').join(',');
+  const has = k => localStorage.getItem(k) !== null, bones = k => (JSON.parse(localStorage.getItem(k) || '{}').bones);
+  const ours = () => { const m = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^(meadow|harvey)/.test(k)) m.push(k); } return m; };
+  const wipe = () => ours().forEach(k => localStorage.removeItem(k));
+
+  // 1. a fresh install of the app: one player, and none of the older website saves
+  Meadow.save.load();
+  Meadow.save.mutate(s => { s.name = 'Harvey'; s.bones = 12; s.stars['w/a'] = 3; s.stars['w/b'] = 2; s.redeemed = [{ title: 'Film night', cost: 40 }]; });
+  check('The app has none of the older website saves', !has('harvey-splitter-v1') && has('meadow-save-v1'));
+  const one = B.make();
+  check('A backup made in the app holds the player\'s save', Object.keys(one.data).join() === 'meadow-save-v1', Object.keys(one.data).join());
+  let r = B.parse(JSON.stringify(one));
+  check('A backup made in the app can be restored (it used to be refused)', !!r.backup && !r.error, r.error || 'accepted');
+  check('Its description shows the name, bones, stars and prizes', B.summary(one.data) === 'Harvey · 12 bones · 5 stars · 1 prize claimed', B.summary(one.data));
+  r = B.parse(B.toCode(one));
+  check('The backup code works the same as the file', !!r.backup && r.backup.data['meadow-save-v1'] === one.data['meadow-save-v1'], r.error || 'accepted');
+
+  // 2. more players: all of them go in the backup
+  P.add(); Meadow.save.mutate(s => { s.name = 'Alaya'; s.bones = 5; s.stars['w/c'] = 1; });
+  P.add(); Meadow.save.mutate(s => { s.name = 'Rory'; s.bones = 30; });
+  localStorage.setItem('meadow-full-game', '1');
+  const three = B.make(), keys3 = Object.keys(three.data).sort().join();
+  check('A backup holds every player\'s save and the list of players', keys3 === 'meadow-players,meadow-save-v1,meadow-save-v1-p2,meadow-save-v1-p3', keys3);
+  check('The full-game purchase is not in a backup', !('meadow-full-game' in three.data));
+  const sum3 = B.summary(three.data);
+  check('The description has a line for each player', sum3.split('<br>').length === 3 && /^Harvey · 12 bones/.test(sum3) && /Alaya · 5 bones · 1 star ·/.test(sum3) && /Rory · 30 bones/.test(sum3), sum3);
+  r = B.parse(B.toCode(three));
+  check('A backup with three players is accepted', !!r.backup, r.error || 'accepted');
+
+  // 3. restoring onto an empty device brings every player back
+  wipe(); localStorage.setItem('meadow-full-game', '1');
+  B.restore(r.backup);
+  check('Restoring brings back all three saves', bones('meadow-save-v1') === 12 && bones('meadow-save-v1-p2') === 5 && bones('meadow-save-v1-p3') === 30, [bones('meadow-save-v1'), bones('meadow-save-v1-p2'), bones('meadow-save-v1-p3')].join());
+  check('The players are listed again, with the same one playing', names() === 'Harvey,Alaya,Rory' && P.list()[2].current, names());
+  check('Restoring leaves the purchase alone', localStorage.getItem('meadow-full-game') === '1');
+
+  // 4. restoring replaces what is here: players not in the backup go, and can be put back
+  B.restore(B.parse(JSON.stringify(one)).backup);
+  check('Restoring a one-player backup removes the other players', !has('meadow-save-v1-p2') && !has('meadow-save-v1-p3') && !has('meadow-players') && names() === 'Harvey', ours().join());
+  const kept = B.before();
+  check('What was here before is kept for "Undo", with every player', !!kept && Object.keys(kept.backup.data).sort().join() === keys3, kept ? Object.keys(kept.backup.data).sort().join() : 'nothing kept');
+  B.restore(kept.backup);
+  check('Putting it back brings the three players back', names() === 'Harvey,Alaya,Rory' && bones('meadow-save-v1-p3') === 30, names());
+
+  // 5. the older website backups still work
+  const web = { app: 'meadow-clubhouse', format: 1, exportedAt: '2026-06-01T10:00:00.000Z', data: {
+    'harvey-splitter-v1': JSON.stringify({ name: 'Sam', bones: 40, done: { 0: true, 1: true } }), 'meadowWords_english_v1': JSON.stringify({ w0: { stars: [3, 2] } }), 'meadowClubhouse_sound': '1' } };
+  r = B.parse(JSON.stringify(web));
+  check('A backup from the older website games is still accepted', !!r.backup, r.error || 'accepted');
+  check('Its description still reads the older saves', B.summary(web.data) === 'Sam · 40 bones · 2 maths levels done · 5 word stars · 0 prizes claimed', B.summary(web.data));
+  const both = { ...web, data: { ...web.data, 'meadow-save-v1': one.data['meadow-save-v1'] } };
+  check('A website backup with both kinds of save is accepted', !!B.parse(JSON.stringify(both)).backup);
+
+  // 6. things that should be refused
+  const bad = d => B.parse(JSON.stringify({ app: 'meadow-clubhouse', format: 1, data: d })).error || '';
+  check('Refused: nothing with progress in it', /no player progress/.test(bad({ 'meadowClubhouse_sound': '1' })), bad({ 'meadowClubhouse_sound': '1' }));
+  check('Refused: only the list of players, with no saves', /no player progress/.test(bad({ 'meadow-players': '{"list":["p1"]}' })));
+  check('Refused: something that is not a Meadow save', /unexpected/.test(bad({ 'meadow-save-v1': '{}', 'meadow-full-game': '1' })) && /unexpected/.test(bad({ 'meadow-save-v1': '{}', 'other': '1' })));
+  check('Refused: a made-up player save name', /unexpected/.test(bad({ 'meadow-save-v1': '{}', 'meadow-save-v1-p0': '{}' })) && /unexpected/.test(bad({ 'meadow-save-v1': '{}', 'meadow-save-v1-px': '{}' })));
+  check('Refused: a damaged player save', /damaged/.test(bad({ 'meadow-save-v1': '{}', 'meadow-save-v1-p2': 'not json' })) && /damaged/.test(bad({ 'meadow-save-v1': '{}', 'meadow-save-v1-p2': '{"bones":-4}' })));
+  check('Refused: a damaged list of players', /damaged/.test(bad({ 'meadow-save-v1': '{}', 'meadow-players': '[1,2]' })));
+
+  // 7. the panel shows every player
+  B.open();
+  const panel = document.querySelector('.mb-card');
+  check('The panel lists every player', !!panel && /Harvey · 12 bones/.test(panel.textContent) && /Alaya · 5 bones/.test(panel.textContent) && /Rory · 30 bones/.test(panel.textContent));
+  check('The code in the panel restores all three', Object.keys(B.parse(panel.querySelector('[data-mb="code"]').value).backup.data).sort().join() === keys3);
+  document.querySelector('.mb-back').remove();
+
+  // put everything back
+  wipe();
+  Object.entries(window.__kept).forEach(([k, v]) => localStorage.setItem(k, v));
+
+  const failed = results.filter(r => !r.ok);
+  document.body.insertAdjacentHTML('beforeend', `<div id="report"><h1>Back up progress: every player, in the app and on the website</h1>
+    <p>Pretends to be the App Store app. Sets aside whatever was saved on this address, and puts it back at the end.</p>
+    <div id="result" class="${failed.length ? 'fail' : 'pass'}">${failed.length ? `✗ ${failed.length} of ${results.length} checks failed` : `✓ All ${results.length} checks passed`}</div>
+    <ul>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name} <small>(${r.detail.replace(/</g, '&lt;')})</small></li>`).join('')}</ul></div>`);
+  window.TEST_RESULT = { passed: !failed.length, results };
+})();
+</script>
+</body>
+</html>
