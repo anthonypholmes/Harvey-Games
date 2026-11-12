@@ -101,7 +101,7 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - **Test page:** `tests/players-test.html` (25 checks).
 - **Known gaps:**
   - "Back up progress" (`meadow-backup.js`) still only covers the first player's save. It also insists on the old website save being in the backup, which a fresh app install doesn't have, so restoring a backup made in the app probably fails. Not checked yet; worth fixing before TestFlight.
-  - Two of Bonnie's lines need recording (`npm run voice -- --voice <id>`, about 51 characters): "Woof! Who's playing today?" and "This level is in the full game." Until then they use the device voice.
+  - (Done 12 November 2026: "Woof! Who's playing today?" and "This level is in the full game." are recorded.)
 
 ## What comes next (the plan)
 
