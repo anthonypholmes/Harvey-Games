@@ -112,6 +112,18 @@ const THEMES = [
   { id: 'christmas', name: 'Christmas Lights', cost: 350, sw: 'radial-gradient(circle at 22% 32%,#FF5A4E 0 8%,transparent 9%),radial-gradient(circle at 50% 24%,#FFD24A 0 8%,transparent 9%),radial-gradient(circle at 78% 32%,#6EDB7A 0 8%,transparent 9%),radial-gradient(circle at 30% 75%,#fff 0 3%,transparent 4%),radial-gradient(circle at 68% 68%,#fff 0 3%,transparent 4%),linear-gradient(#173B2C,#2E5E44)' },
   { id: 'snow', name: 'Winter Snow', cost: 400, sw: 'linear-gradient(#EEF5FB,#B4D4F0)' },
 ];
+/* Bonnie's coat colours (Bone Shop). Each sets the three fur colours she is drawn with.
+   Chocolate is the real Bonnie, so everyone starts with it. */
+const COATS = [
+  { id: 'chocolate', name: 'Chocolate (the real Bonnie)', line: 'chocolate coat', cost: 0, fur: '#9a6440', dk: '#74472a', lt: '#c99568' },
+  { id: 'golden', name: 'Golden', line: 'golden coat', cost: 60, fur: '#d6a24a', dk: '#a8772f', lt: '#f0cf8a' },
+  { id: 'red', name: 'Fox Red', line: 'fox red coat', cost: 90, fur: '#b5532e', dk: '#86391e', lt: '#dc9067' },
+  { id: 'cream', name: 'Cream', line: 'cream coat', cost: 120, fur: '#e6cfa6', dk: '#c2a273', lt: '#f7ead2' },
+  { id: 'black', name: 'Black', line: 'black coat', cost: 150, fur: '#4b403a', dk: '#2e2622', lt: '#8e7d70' },
+  { id: 'silver', name: 'Silver Grey', line: 'silver grey coat', cost: 200, fur: '#9d9893', dk: '#706b66', lt: '#cdc9c4' },
+];
+const coatOf = id => COATS.find(c => c.id === id) || COATS[0];
+const coatVars = c => `--fur:${c.fur};--fur-dk:${c.dk};--fur-lt:${c.lt}`;
 const PRIZE_TIERS = [[0, 'Little treats'], [100, 'Small prizes'], [300, 'Medium prizes'], [1000, 'Big goals']];
 const tierOf = cost => PRIZE_TIERS.filter(([min]) => cost >= min).pop()[1];
 const prizeEmoji = t => { t = String(t).toLowerCase();
@@ -209,9 +221,9 @@ let S = null; // the save, always re-read before a change
 function readJSON(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } }
 function blankSave() {
   return {
-    version: SAVE_VERSION, name: null, bones: 0, hat: null, face: null, neck: null, theme: 'day',
+    version: SAVE_VERSION, name: null, bones: 0, hat: null, face: null, neck: null, theme: 'day', coat: 'chocolate',
     sound: true, voice: true, readAloud: false, voiceRate: 0.9, clubSound: true,
-    owned: { hats: [], themes: ['day'] },
+    owned: { hats: [], themes: ['day'], coats: ['chocolate'] },
     rewards: STARTER_PRIZES.map(r => ({ ...r })), redeemed: [],
     stars: {}, logs: {},
     settings: { unlockAll: {}, years: null },
@@ -236,7 +248,9 @@ function normalise(raw) {
   s.voiceRate = Math.min(1.2, Math.max(0.6, +s.voiceRate || 0.9));
   const o = isObj(s.owned) ? s.owned : {};
   s.owned = { hats: [...new Set((o.hats || []).filter(h => itemOf(h)))],
-    themes: [...new Set(['day', ...(o.themes || []).filter(t => THEMES.some(x => x.id === t))])] };
+    themes: [...new Set(['day', ...(o.themes || []).filter(t => THEMES.some(x => x.id === t))])],
+    coats: [...new Set(['chocolate', ...(o.coats || []).filter(c => COATS.some(x => x.id === c))])] };
+  s.coat = s.owned.coats.includes(s.coat) ? s.coat : 'chocolate';
   s.rewards = Array.isArray(s.rewards) ? s.rewards.filter(isObj).map(cleanPrize) : STARTER_PRIZES.map(r => ({ ...r }));
   s.redeemed = Array.isArray(s.redeemed) ? s.redeemed.filter(isObj) : [];
   const stars = {}; if (isObj(s.stars)) Object.entries(s.stars).forEach(([k, v]) => { v = int(v, 0, 3); if (v) stars[k] = v; });
@@ -331,7 +345,7 @@ function catchUp(s, old = readOld(), print = oldPrint()) {
   if (seen) { const had = new Set(s.redeemed.map(r => JSON.stringify(r))); live.redeemed.forEach(r => { if (!had.has(JSON.stringify(r))) s.redeemed.push(r); }); }
   Object.entries(live.stars).forEach(([k, v]) => { s.stars[k] = Math.max(s.stars[k] || 0, v); });
   Object.entries(live.logs).forEach(([k, v]) => { if (!s.logs[k]) s.logs[k] = v; });
-  s.owned = { hats: [...new Set([...s.owned.hats, ...live.owned.hats])], themes: [...new Set([...s.owned.themes, ...live.owned.themes])] };
+  s.owned = { hats: [...new Set([...s.owned.hats, ...live.owned.hats])], themes: [...new Set([...s.owned.themes, ...live.owned.themes])], coats: s.owned.coats }; // coats only exist in the new save
   if (!s.name && live.name) s.name = live.name;
   s.oldSeen = { print, bones: live.bones };
   return true;
@@ -651,7 +665,12 @@ function renderHud() {
   $('#streakNum').textContent = streak;
   $('#streakChip').classList.toggle('hot', streak >= 3);
 }
-function applyTheme() { document.body.dataset.theme = (S && S.theme) || 'day'; }
+function applyTheme() {
+  document.body.dataset.theme = (S && S.theme) || 'day';
+  let st = document.getElementById('bonnie-coat');
+  if (!st) { st = document.createElement('style'); st.id = 'bonnie-coat'; document.head.appendChild(st); }
+  st.textContent = `body, body .mm { ${coatVars(coatOf(S && S.coat))} }`;
+}
 function refreshBonnies() { $$('.bonnie').forEach(b => { if (!b.closest('.hatprev')) b.innerHTML = bonnieSVG(); }); }
 
 function modal(inner, onAction) {
@@ -1283,7 +1302,11 @@ function shopScreen(opts = {}) {
   const tabs = { hats: '🎀 Dress Up Bonnie', themes: '🎨 Themes', prizes: '🎁 Real Prizes' };
   const more = cost => `<span class="meter" aria-hidden="true"><i style="width:${Math.min(100, Math.round(S.bones / cost * 100))}%"></i></span><div class="note">${cost - S.bones} more to go!</div>`;
   let body = '';
-  if (shopTab === 'hats') body = SLOTS.map(sl => `<h3 class="tier">${sl.name}</h3>` + HATS.filter(h => h.slot === sl.id).map(h => {
+  if (shopTab === 'hats') body = `<h3 class="tier">Coat colours</h3>` + COATS.map(c => {
+    const own = S.owned.coats.includes(c.id), on = (S.coat || 'chocolate') === c.id;
+    return `<div class="card item"><div class="hatprev" style="${coatVars(c)}">${bonnieSVG('')}</div><b>${c.name}</b>
+      ${own ? (on ? '<div class="note">Wearing ✓</div>' : `<button class="btn small green" data-coat="${c.id}">Wear</button>`)
+        : `<div class="cost">🦴 ${c.cost}</div>${S.bones >= c.cost ? `<button class="btn small" data-buy="coats:${c.id}">Buy</button>` : more(c.cost)}`}</div>`; }).join('') + SLOTS.map(sl => `<h3 class="tier">${sl.name}</h3>` + HATS.filter(h => h.slot === sl.id).map(h => {
     const own = S.owned.hats.includes(h.id), on = S[sl.key] === h.id;
     return `<div class="card item"><div class="hatprev">${bonnieSVG(h.id)}</div><b>${h.name}</b>
       ${own ? (on ? `<div class="note">Wearing ✓</div><button class="btn small ghost" data-off="${sl.key}">${sl.off}</button>`
@@ -1325,24 +1348,27 @@ function shopScreen(opts = {}) {
   const dressed = line => setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); shopSay(line); }, 50);
   $$('[data-wear]').forEach(b => b.onclick = () => { const id = b.dataset.wear; mutate(s => { s[slotKey(id)] = id; }); sfx.pop(); shopScreen(); dressed(LINES.hatOn); });
   $$('[data-off]').forEach(b => b.onclick = () => { mutate(s => { s[b.dataset.off] = null; }); sfx.pop(); shopScreen(); dressed(LINES.hatOff); });
+  $$('[data-coat]').forEach(b => b.onclick = () => { mutate(s => { s.coat = b.dataset.coat; }); applyTheme(); sfx.pop(); shopScreen(); dressed(LINES.hatOn); });
   $$('[data-usetheme]').forEach(b => b.onclick = () => { mutate(s => { s.theme = b.dataset.usetheme; }); applyTheme(); sfx.pop(); shopScreen(); });
   $$('[data-buy]').forEach(b => b.onclick = () => { sfx.tap(); confirmBuy(...b.dataset.buy.split(':')); });
   $$('[data-prize]').forEach(b => b.onclick = () => { sfx.tap(); confirmPrize(b.dataset.prize); });
 }
 function confirmBuy(tab, id) {
-  const it = (tab === 'hats' ? HATS : THEMES).find(x => x.id === id); if (!it) return;
-  modal(`${tab === 'hats' ? `<div class="hatprev big">${bonnieSVG(id)}</div>` : `<div class="swatch big" style="background:${it.sw}"></div>`}
+  const it = (tab === 'hats' ? HATS : tab === 'coats' ? COATS : THEMES).find(x => x.id === id); if (!it) return;
+  modal(`${tab === 'hats' ? `<div class="hatprev big">${bonnieSVG(id)}</div>` : tab === 'coats' ? `<div class="hatprev big" style="${coatVars(it)}">${bonnieSVG('')}</div>` : `<div class="swatch big" style="background:${it.sw}"></div>`}
     <h2>${esc(it.name)}</h2><p>Buy it for <b>${it.cost} bones</b>?</p>
     <div class="btns"><button class="btn green" data-a="yes">Yes, buy it!</button><button class="btn ghost" data-a="no">Not now</button></div>`, a => {
     if (a !== 'yes') return;
     S = load(); if (S.bones < it.cost) return shopScreen();
     mutate(s => {
       s.bones -= it.cost;
-      if (tab === 'hats') { s.owned.hats.push(id); s[slotKey(id)] = id; } else { s.owned.themes.push(id); s.theme = id; }
-      s.redeemed.push({ title: (tab === 'hats' ? 'Bonnie’s ' : 'Theme: ') + it.name, cost: it.cost, when: todayGB() });
+      if (tab === 'hats') { s.owned.hats.push(id); s[slotKey(id)] = id; }
+      else if (tab === 'coats') { s.owned.coats.push(id); s.coat = id; }
+      else { s.owned.themes.push(id); s.theme = id; }
+      s.redeemed.push({ title: (tab === 'hats' ? 'Bonnie’s ' : tab === 'coats' ? 'Bonnie’s coat: ' : 'Theme: ') + it.name, cost: it.cost, when: todayGB() });
     });
     applyTheme(); sfx.fanfare(); confetti(20); shopScreen();
-    setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); const m = tab === 'hats' ? `Thank you {N}! I love my ${it.name}!` : LINES.theme; $('#shopSay').textContent = fmt(m); say(m); }, 50);
+    setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); const m = tab === 'hats' ? `Thank you {N}! I love my ${it.name}!` : tab === 'coats' ? `Thank you {N}! I love my ${it.line}!` : LINES.theme; $('#shopSay').textContent = fmt(m); say(m); }, 50);
   });
 }
 function confirmPrize(id) {
@@ -1599,6 +1625,7 @@ function spokenLines(game = GAME) {
   [1, 2, 3].forEach(st => [1, 2].forEach(p => { if (st <= p) add(fmt(LINES.finish[st]) + ' ' + LINES.stillBest[p]); }));
   [1, 2, 3].forEach(st => add(fmt(LINES.finish[st]) + ' ' + LINES.already3));
   HATS.filter(h => h.cost > 0).forEach(h => add(`Thank you {N}! I love my ${h.name}!`));
+  COATS.filter(c => c.cost > 0).forEach(c => add(`Thank you {N}! I love my ${c.line}!`));
   STARTER_PRIZES.forEach(p => add(`Hooray, {N}! Tell your grown-up you unlocked: ${p.title}!`));
   if (game) add(...(game.greets || []));
   WORLDS.filter(w => !game || w.subject === game.subject).forEach(w => {
@@ -1992,7 +2019,7 @@ function startGame(opts = {}) {
 
 window.Meadow = {
   version: SAVE_VERSION,
-  RULES, HATS, SLOTS, THEMES, STARTER_PRIZES, OLD_IDS, OLD_KEYS, LINES,
+  RULES, HATS, SLOTS, THEMES, COATS, STARTER_PRIZES, OLD_IDS, OLD_KEYS, LINES,
   // content
   registerWorld, addLevels, worlds: subjectWorlds, world: worldById, visibleWorlds, shownYears, levelUnlocked, starSummary, starsThisWeek, weekStart,
   // play
@@ -2010,7 +2037,8 @@ window.Meadow = {
   home: () => homeScreen(), worldMap: id => worldScreen(id), shop: opts => shopScreen(opts || {}), grownUps: () => parentGate(),
   // UI kit for world files
   ui: { $, $$, esc, fmt, rand, randInt, shuffle, wait, plural, reduceMotion, say, hush, whenQuiet, sfx, tone, ac, animate, hearts, banner, confetti,
-    shakeScreen, tickle, tickleEgg, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show },
+    shakeScreen, tickle, tickleEgg, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show,
+    applyTheme }, // the theme and Bonnie's coat colour
   spokenLines, hostLines, numberLines,
   // tests only: pretend the date is something else (fn returns a Date; leave it out to go back to the real clock)
   setClock: fn => { clock = typeof fn === 'function' ? fn : () => new Date(); },

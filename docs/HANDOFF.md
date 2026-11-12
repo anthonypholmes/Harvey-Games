@@ -95,3 +95,11 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - Commit as Anthony. Never commit `app-www/`, `node_modules/` or `.env.local`.
 - Delete stray macOS duplicates such as "config 2.xml" if they appear.
 - Anthony tends to work in bursts. Keep each step small enough to finish in one sitting, and don't compress the timeline.
+
+
+### Bone Shop: Bonnie's coat colours ✅ (12 Nov)
+- Six coats in the "Dress Up Bonnie" tab: Chocolate (the real Bonnie, free), Golden 60, Fox Red 90, Cream 120, Black 150, Silver Grey 200 bones.
+- `COATS` in `js/meadow-core.js`. The save has `coat` and `owned.coats`, and `applyTheme()` sets her fur colours everywhere, including inside the maths worlds (`.mm`) and on the Clubhouse page.
+- Fixed with it: `catchUp()` (merging the old saves) now keeps `owned.coats`.
+- Bonnie and her name stay the same. Customising is through her coat, not a new animal or name.
+- **To do:** `npm run voice` records the 5 new "Thank you {N}! I love my golden coat!" lines (about 114 characters). Until then those lines use the device voice.

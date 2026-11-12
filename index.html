@@ -379,6 +379,7 @@ function render() {
   S = loadShared();
   const name = S.childName, title = S.hasName ? `${name}'s Meadow Clubhouse` : 'Meadow Clubhouse';
   document.body.dataset.theme = S.theme;
+  Meadow.ui.applyTheme(); // Bonnie's coat colour from the Bone Shop
   document.title = title;
   document.getElementById('title').textContent = title;
   // no name yet (or changing it): show the name card instead of the games
