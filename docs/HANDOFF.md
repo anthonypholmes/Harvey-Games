@@ -1,6 +1,6 @@
 # Meadow Clubhouse App Store project: handoff
 
-**Last updated:** 11 November 2026
+**Last updated:** 12 November 2026
 **Repo:** `anthonypholmes/Harvey-Games`. Work happens on the **`app-store`** branch. `main` is the live website (holmeshouse.co.uk) and must not be touched.
 **Owner:** Anthony. He isn't a developer, so explain steps plainly, give commands to paste, and do the technical work yourself where you can.
 
@@ -78,11 +78,24 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - The recorder calls the ElevenLabs web API directly. Loading the SDK (24,000 files) took many minutes from this iCloud-synced folder; it is only used for `--list-voices` now.
 - `npm run voice:check` should again report "new clips needed: 0".
 
+## Phase 4: free taster and unlock (game side built 12 November 2026; the App Store side waits for the developer account)
+
+- **What a family sees:** in the app, every world except The Partitioning Park and Phonics Forest has a padlock and a "FULL GAME" ribbon. Tapping one makes Bonnie say "Go and get a grown-up!". The grown-up answers the usual sum, then sees the unlock screen: the price from the App Store, **Unlock everything**, and **Restore purchase**. The grown-ups area also has a "Full game" section at the top. On the website nothing is locked.
+- **Bonnie's Walk is free and still draws its questions from every world.** That was left as it was; change `walkMathsPool` / `walkEnglishPool` if the walk should only use the free worlds.
+- **Game code:** "THE FULL GAME" in `js/meadow-core.js` (`FREE_WORLDS`, `paidWorld`, `storeCall`, `checkFullGame`), plus `paidModal`, `unlockScreen` and `fullGameDone`. The answer is kept in the `meadow-full-game` key (so it works offline, and `js/app-storage.js` copies it to the app's own storage) and is checked with the App Store every time a page opens, so a refund locks the game again. It is not part of the backup file.
+- **App Store code:** the `MeadowStore` plugin at the bottom of `ios/App/App/AppDelegate.swift`. It uses Apple's StoreKit 2 directly, with no RevenueCat and no other service, so the "Data Not Collected" label stays true. `SceneDelegate.swift` now opens `MeadowViewController`, which registers the plugin. It handles Ask to Buy (pending), refunds, and purchases made on another device.
+- **Product ID:** `uk.co.holmeshouse.meadow.fullgame`, a non-consumable. The product made in App Store Connect must use exactly this ID, with Family Sharing switched on there.
+- **Testing without the developer account:** `ios/App/App/Meadow.storekit` is a pretend product (£3.99) for Xcode, and the shared scheme `App.xcscheme` points at it. Press ▶ in Xcode (not a build from the command line) and the unlock screen should show the price and let you "buy" for free. (The scheme path is `../../App/Meadow.storekit`; quit and reopen Xcode after pulling.) If the button says "Try again" instead, choose Product → Scheme → Edit Scheme → Run → Options and pick Meadow.storekit under StoreKit Configuration. Debug → StoreKit → Manage Transactions lets you delete the pretend purchase or refund it.
+- **Test page:** `tests/unlock-test.html` (30 checks with a pretend App Store).
+- **Still to do for Phase 4:**
+  - Try the pretend purchase in the simulator from Xcode (above).
+  - Once the Apple Developer Program is approved: make the product in App Store Connect, switch on Family Sharing for it, and test with a sandbox Apple Account on a real iPad through TestFlight.
+
 ## What comes next (the plan)
 
 1. **Finish Phase 2:** the voice is fixed. Checked in the simulator on 11 November 2026: saves survive a full close (bones 13 → 14 kept, and the Preferences copy matched), the Clubhouse and Bonnie's Walk lay out correctly in portrait and landscape, and the app files contain no internet addresses. Still to do on the real iPad through TestFlight: a true Airplane Mode test, and a look at the other game pages in landscape. Original list: offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
 2. **Phase 3, number voice (done, see above):** record number clips (0 to 1,000) and joining words ("plus", "take away", "makes" and so on) with ElevenLabs. Join them like names so maths lines use Bonnie's voice. Run `npm run voice:check` first to see the credit cost.
-3. **Phase 4, free taster and unlock:** padlocks on the paid worlds, an unlock screen behind the existing grown-ups gate, one non-consumable in-app purchase (the RevenueCat Capacitor plugin is the easiest route), Restore Purchases, Family Sharing, and sandbox testing.
+3. **Phase 4, free taster and unlock (game side built, see above):** padlocks on the paid worlds, an unlock screen behind the existing grown-ups gate, one non-consumable in-app purchase (the RevenueCat Capacitor plugin is the easiest route), Restore Purchases, Family Sharing, and sandbox testing.
 4. **Phase 5, child profiles:** up to 4, each with its own name, bones, stars and Bonnie outfit. Move the existing save into the first profile.
 5. **Phase 6, store listing:** App Store Connect, Small Business Program (15%), Kids category, a privacy policy on holmeshouse.co.uk, a support page, iPad screenshots, a description leading with "Year 2 / KS1", basic accessibility, and a real app icon (currently Capacitor's placeholder).
 6. **Phase 7:** TestFlight with 5–10 families.
@@ -90,7 +103,7 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 
 ## Working notes
 - After any change to the game files: `npm run app:sync`, then ▶ in Xcode.
-- The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove). They all pass. Re-run them after changes.
+- The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove, unlock). They all pass. Re-run them after changes.
 - `npm run voice:check` (dry run) should report "new clips needed: 0" unless lines changed.
 - Commit as Anthony. Never commit `app-www/`, `node_modules/` or `.env.local`.
 - Delete stray macOS duplicates such as "config 2.xml" if they appear.
@@ -102,4 +115,4 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - `COATS` in `js/meadow-core.js`. The save has `coat` and `owned.coats`, and `applyTheme()` sets her fur colours everywhere, including inside the maths worlds (`.mm`) and on the Clubhouse page.
 - Fixed with it: `catchUp()` (merging the old saves) now keeps `owned.coats`.
 - Bonnie and her name stay the same. Customising is through her coat, not a new animal or name.
-- **To do:** `npm run voice` records the 5 new "Thank you {N}! I love my golden coat!" lines (about 114 characters). Until then those lines use the device voice.
+- The 5 coat thank-you lines and the 2 unlock lines were recorded on 12 November 2026 (8 clips, 179 characters). To record new lines: `npm run voice -- --voice <the voice id in audio/manifest.json>`.

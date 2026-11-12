@@ -46,3 +46,103 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return config
     }
 }
+
+// MARK: - The full game (in-app purchase)
+//
+// The free app has a taster. One purchase (below) opens every world. This is the App Store side;
+// the game side is "THE FULL GAME" in js/meadow-core.js. It uses Apple's StoreKit directly, so
+// nothing about the family is sent to anyone but Apple.
+
+import StoreKit
+
+/// The app's screen: the usual Capacitor web view, plus the MeadowStore plugin.
+class MeadowViewController: CAPBridgeViewController {
+    override open func capacitorDidLoad() {
+        bridge?.registerPluginInstance(MeadowStorePlugin())
+    }
+}
+
+@objc(MeadowStorePlugin)
+public class MeadowStorePlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "MeadowStorePlugin"
+    public let jsName = "MeadowStore"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "status", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "buy", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "restore", returnType: CAPPluginReturnPromise)
+    ]
+
+    /// The product's ID. It must match the one made in App Store Connect (and in Meadow.storekit).
+    static let productId = "uk.co.holmeshouse.meadow.fullgame"
+
+    private var updates: Task<Void, Never>?
+
+    /// Purchases that finish later (Ask to Buy approved, a refund, another device) arrive here.
+    override public func load() {
+        updates = Task { [weak self] in
+            for await result in Transaction.updates {
+                if case .verified(let transaction) = result { await transaction.finish() }
+                guard let self = self else { return }
+                self.notifyListeners("changed", data: ["owned": await self.owned()])
+            }
+        }
+    }
+
+    deinit { updates?.cancel() }
+
+    private func owned() async -> Bool {
+        for await result in Transaction.currentEntitlements {
+            if case .verified(let transaction) = result,
+               transaction.productID == Self.productId,
+               transaction.revocationDate == nil {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func product() async -> Product? {
+        return try? await Product.products(for: [Self.productId]).first
+    }
+
+    @objc func status(_ call: CAPPluginCall) {
+        Task {
+            let item = await product()
+            call.resolve(["owned": await owned(), "available": item != nil, "price": item?.displayPrice ?? ""])
+        }
+    }
+
+    @objc func buy(_ call: CAPPluginCall) {
+        Task {
+            guard let item = await product() else { call.reject("The App Store can't be reached"); return }
+            do {
+                switch try await item.purchase() {
+                case .success(let result):
+                    if case .verified(let transaction) = result { await transaction.finish() }
+                    call.resolve(["owned": await owned()])
+                case .pending:
+                    call.resolve(["owned": false, "pending": true])
+                case .userCancelled:
+                    call.resolve(["owned": await owned(), "cancelled": true])
+                @unknown default:
+                    call.resolve(["owned": await owned()])
+                }
+            } catch {
+                call.reject(error.localizedDescription)
+            }
+        }
+    }
+
+    @objc func restore(_ call: CAPPluginCall) {
+        Task {
+            do {
+                try await AppStore.sync()
+                call.resolve(["owned": await owned()])
+            } catch StoreKitError.userCancelled {
+                call.resolve(["owned": await owned(), "cancelled": true])
+            } catch {
+                call.reject(error.localizedDescription)
+            }
+        }
+    }
+}

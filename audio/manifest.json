@@ -2058,7 +2058,15 @@
   "969c76fc": "clips/969c76fc-4crzui.mp3",
   "33f6b385": "clips/33f6b385-4crzui.mp3",
   "76763c95": "clips/76763c95-4crzui.mp3",
-  "b9f077c7": "clips/b9f077c7-4crzui.mp3"
+  "b9f077c7": "clips/b9f077c7-4crzui.mp3",
+  "ab93cc52": "clips/ab93cc52-4crzui.mp3",
+  "c1bb8933": "clips/c1bb8933-4crzui.mp3",
+  "fd18b61b": "clips/fd18b61b-4crzui.mp3",
+  "5c2e61a5": "clips/5c2e61a5-4crzui.mp3",
+  "d8e77b7a": "clips/d8e77b7a-4crzui.mp3",
+  "74b0742e": "clips/74b0742e-4crzui.mp3",
+  "5c235e0f": "clips/5c235e0f-4crzui.mp3",
+  "95d49e10": "clips/95d49e10-4crzui.mp3"
  },
  "names": {
   "harvey": "names/harvey-4crzui.mp3",
@@ -4224,9 +4232,17 @@
   "969c76fc": "of them.",
   "33f6b385": "bones in baskets of",
   "76763c95": "lily pads.",
-  "b9f077c7": "they all belong together."
+  "b9f077c7": "they all belong together.",
+  "ab93cc52": "This world is in the full game.",
+  "c1bb8933": "Every world is open now!",
+  "fd18b61b": "Thank you!",
+  "5c2e61a5": "I love my golden coat!",
+  "d8e77b7a": "I love my fox red coat!",
+  "74b0742e": "I love my cream coat!",
+  "5c235e0f": "I love my black coat!",
+  "95d49e10": "I love my silver grey coat!"
  },
- "made": "2026-11-11T16:46:02.742Z",
+ "made": "2026-11-12T10:00:33.054Z",
  "said": {
   "11b54859": "Nnn...",
   "38deadf5": "rrrr.",

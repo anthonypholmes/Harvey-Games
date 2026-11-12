@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Full Game Unlock Test</title>
+<style>
+  #report { position: relative; z-index: 50; max-width: 900px; margin: 16px auto 140px; padding: 16px; font-family: system-ui, sans-serif; background: #FDFBF7; border: 2px solid #EADFCB; border-radius: 18px; color: #3E2F27; }
+  #report h1 { font-size: 1.3rem; margin: 0 0 6px; }
+  #report p { margin: 0 0 12px; color: #7A6A5E; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+</style>
+</head>
+<body>
+<script>window.MEADOW_IN_APP = true; // pretend to be the App Store app (the website locks nothing)</script>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script>
+/* The free taster and the unlock, with a pretend App Store. It uses its own save, and puts the
+   real "full game" answer back at the end. */
+(async () => {
+  const TEST_KEY = 'meadow-save-unlock-test', FULL = Meadow.fullGame.KEY, realFull = localStorage.getItem(FULL);
+  const results = [], check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail: String(detail) });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const closeModals = () => $$('.modal-bg').forEach(m => m.remove());
+  const play = (q, ctx) => { ctx.area.textContent = 'Pretend question'; };
+  const world = (id, name) => Meadow.registerWorld({ id, subject: 'test', year: 2, name, icon: 'T', play, levels: [{ id: 'one', name: 'One', count: 2, make: () => ({}) }] });
+  const FREE = Meadow.fullGame.FREE_WORLDS[0];
+  world(FREE, 'Free Park'); world('test-paid-a', 'Paid Burrow'); world('test-paid-b', 'Paid River');
+
+  // the pretend App Store
+  const store = { owned: false, available: true, next: 'success', calls: [], listeners: [],
+    status: async () => { store.calls.push('status'); return { owned: store.owned, available: store.available, price: '£3.99' }; },
+    buy: async () => { store.calls.push('buy');
+      if (store.next === 'error') throw new Error('nope');
+      if (store.next === 'cancel') return { owned: false, cancelled: true };
+      if (store.next === 'pending') return { owned: false, pending: true };
+      store.owned = true; return { owned: true }; },
+    restore: async () => { store.calls.push('restore'); return { owned: store.owned }; },
+    addListener: (name, fn) => { store.listeners.push(fn); } };
+  window.MeadowStoreTest = store;
+
+  localStorage.removeItem(TEST_KEY); localStorage.removeItem(FULL);
+  sessionStorage.removeItem('meadow-grownups-open-until');
+  Meadow.startGame({ subject: 'test', title: 'Unlock Test', icon: 'T', homeHref: '../index.html', assetBase: '../', needName: false, saveKey: TEST_KEY });
+  Meadow.save.mutate(s => { s.sound = false; s.voice = false; });
+  await wait(50);
+
+  // 1. the free game
+  const cards = () => $$('.world-card'), card = id => $(`.world-card[data-w="${id}"]`);
+  const locked = () => cards().filter(c => c.classList.contains('paid')).length;
+  check('The page asks the App Store once when it opens', store.calls.join() === 'status', store.calls.join());
+  check('Free game: the free world has no padlock', !card(FREE).classList.contains('paid'));
+  check('Free game: the other two worlds have padlocks', locked() === 2, cards().map(c => c.className).join(' | '));
+  check('has() says the full game is not owned', Meadow.fullGame.has() === false);
+
+  // 2. the free world opens; a paid one does not
+  card(FREE).click();
+  check('The free world opens its map', !!$('.stone'));
+  Meadow.home(); await wait(20);
+  card('test-paid-a').click(); await wait(20);
+  check('A paid world shows the "get a grown-up" box, not its map', !$('.stone') && /full game/.test(($('.modal-bg') || {}).textContent || ''), ($('.modal-bg') || {}).textContent);
+  closeModals();
+  Meadow.worldMap('test-paid-a');
+  check('A paid world cannot be opened another way', !$('.stone') && cards().length === 3);
+  Meadow.startLevel('test-paid-a', 'one');
+  check('A paid level cannot be started another way', !$('#area') && cards().length === 3);
+  Meadow.save.mutate(s => { s.settings.unlockAll.test = true; }); Meadow.home();
+  check('"Open all levels" does not open paid worlds', locked() === 2);
+
+  // 3. buying is behind the grown-ups sum
+  card('test-paid-a').click(); await wait(20);
+  $('.modal-bg [data-a="grown"]').click(); await wait(20);
+  const sum = () => { const m = /(\d+) × (\d+)/.exec($('.modal-bg').textContent); return m[1] * m[2]; };
+  check('Grown-ups: unlock asks the sum first', !!$('#gateAns') && !$('#buyBtn'));
+  $('#gateAns').value = sum() + 1; $('.modal-bg [data-a="ok"]').click(); await wait(20);
+  check('A wrong answer does not open the unlock screen', !!$('#gateAns') && !$('#buyBtn'));
+  $('#gateAns').value = sum(); $('.modal-bg [data-a="ok"]').click(); await wait(50);
+  check('The right answer opens the unlock screen', !!$('#buyBtn'));
+  check('The button shows the App Store price', /£3\.99/.test($('#buyBtn').textContent) && !$('#buyBtn').disabled, $('#buyBtn').textContent);
+  check('The screen names the paid worlds', /Paid Burrow, Paid River/.test($('.unlock').textContent));
+
+  // 4. purchases that don't finish
+  store.next = 'cancel'; $('#buyBtn').click(); await wait(30);
+  check('Cancelled: still locked, no error shown', !Meadow.fullGame.has() && $('#buyMsg').textContent === '' && !$('#buyBtn').disabled, $('#buyMsg').textContent);
+  store.next = 'error'; $('#buyBtn').click(); await wait(30);
+  check('Failed: still locked, says nothing was charged', !Meadow.fullGame.has() && /nothing has been charged/.test($('#buyMsg').textContent), $('#buyMsg').textContent);
+  store.next = 'pending'; $('#buyBtn').click(); await wait(30);
+  check('Ask to Buy: still locked, says it is waiting', !Meadow.fullGame.has() && /Waiting for approval/.test($('#buyMsg').textContent), $('#buyMsg').textContent);
+  $('#restoreBtn').click(); await wait(30);
+  check('Restore with nothing bought: still locked, says so', !Meadow.fullGame.has() && /No purchase was found/.test($('#buyMsg').textContent), $('#buyMsg').textContent);
+
+  // 5. the approval arrives later
+  store.owned = true; store.listeners.forEach(fn => fn({ owned: true })); await wait(30);
+  check('Approved later: the game unlocks by itself', Meadow.fullGame.has());
+  store.owned = false; store.listeners.forEach(fn => fn({ owned: false }));
+  check('Refunded: the game locks again', !Meadow.fullGame.has());
+
+  // 6. buying
+  Meadow.fullGame.unlock(); await wait(30);
+  store.next = 'success'; $('#buyBtn').click(); await wait(50);
+  check('Bought: the full game is owned', Meadow.fullGame.has());
+  check('Bought: a thank-you shows', /unlocked/.test(($('.modal-bg') || {}).textContent || ''));
+  closeModals();
+  check('Bought: no padlocks are left', cards().length === 3 && locked() === 0);
+  card('test-paid-a').click();
+  check('Bought: a paid world opens its map', !!$('.stone'));
+
+  // 7. restoring on a new iPad
+  localStorage.removeItem(FULL); Meadow.home();
+  check('New iPad: locked until restored', locked() === 2);
+  Meadow.fullGame.unlock(); await wait(30);
+  check('New iPad: opening the unlock screen finds the purchase', Meadow.fullGame.has());
+  closeModals();
+
+  // 8. the App Store can't be reached
+  store.owned = false; store.available = false; localStorage.removeItem(FULL);
+  Meadow.fullGame.unlock(); await wait(30);
+  check('No App Store: says so and offers Try again', /Try again/.test($('#buyBtn').textContent) && /can't be reached/.test($('#buyMsg').textContent), $('#buyBtn').textContent);
+  const n = store.calls.filter(c => c === 'buy').length;
+  store.available = true; $('#buyBtn').click(); await wait(30);
+  check('Try again checks the price again, and does not buy', /£3\.99/.test($('#buyBtn').textContent) && store.calls.filter(c => c === 'buy').length === n, $('#buyBtn').textContent);
+
+  // 9. the website locks nothing
+  window.MEADOW_IN_APP = false; Meadow.home();
+  check('On the website nothing is locked', Meadow.fullGame.has() && locked() === 0);
+  window.MEADOW_IN_APP = true;
+
+  check('Only the test save was used', Meadow.save.key === TEST_KEY, Meadow.save.key);
+  closeModals();
+  localStorage.removeItem(TEST_KEY); sessionStorage.removeItem('meadow-grownups-open-until');
+  if (realFull === null) localStorage.removeItem(FULL); else localStorage.setItem(FULL, realFull);
+  const failed = results.filter(r => !r.ok);
+  document.body.insertAdjacentHTML('beforeend', `<div id="report"><h1>Full game: taster and unlock check</h1>
+    <p>Pretends to be the App Store app, with a pretend App Store. Uses its own test save, which it deletes at the end.</p>
+    <div id="result" class="${failed.length ? 'fail' : 'pass'}">${failed.length ? `✗ ${failed.length} of ${results.length} checks failed` : `✓ All ${results.length} checks passed`}</div>
+    <ul>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name} <small>(${r.detail})</small></li>`).join('')}</ul></div>`);
+  window.TEST_RESULT = { passed: !failed.length, results };
+})();
+</script>
+</body>
+</html>

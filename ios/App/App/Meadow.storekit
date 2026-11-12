@@ -1,0 +1,30 @@
+{
+  "identifier" : "4D454144",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "3.99",
+      "familyShareable" : true,
+      "internalID" : "6700000001",
+      "localizations" : [
+        {
+          "description" : "Opens every world in Meadow Maths and Meadow Words.",
+          "displayName" : "Full Game",
+          "locale" : "en_GB"
+        }
+      ],
+      "productID" : "uk.co.holmeshouse.meadow.fullgame",
+      "referenceName" : "Full Game",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_locale" : "en_GB",
+    "_storefront" : "GBR"
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
