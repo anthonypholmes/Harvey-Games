@@ -158,3 +158,13 @@ If Xcode says a package such as CapApp-SPM is missing after the project moves or
 - Fixed with it: `catchUp()` (merging the old saves) now keeps `owned.coats`.
 - Bonnie and her name stay the same. Customising is through her coat, not a new animal or name.
 - The 5 coat thank-you lines and the 2 unlock lines were recorded on 12 November 2026 (8 clips, 179 characters). To record new lines: `npm run voice -- --voice <the voice id in audio/manifest.json>`.
+
+### Grown-ups area tidy-up ✅ (12 Nov)
+- No redesign: the same settings, on a page about 40% shorter. All in `parentScreen` in `js/meadow-core.js`.
+- **Two groups:** "For every game" (players, full game, this week, bones, prizes, walk, sound, backup) and "<this game> only" (progress, stars, how each answer was reached), with the link to the other game's page in the second group.
+- **Fold-away parts** (closed until tapped): "Bones spent", "Real-life prizes", "How each answer was reached" and "How bones are earned". The page remembers which are open while it redraws (`parentOpen`), and a redraw no longer jumps to the top.
+- **Name box:** "Playing as" can be changed here with **Save name**, as well as on the Clubhouse.
+- **In the app only:** the reading-speed slider and the "Recorded Bonnie voice" line are hidden (speed only changes the device voice). The website still shows them.
+- **Smaller fixes:** the "Teach Bonnie" tick box no longer drops below its label; radio buttons are the same size as tick boxes; "School years" hides while there is only one year; worlds with nothing played are left out of the help tables; the backup button says "Back up or restore".
+- **The grown-up sum is easier:** 6 to 9 times 11 or 12 (it was up to 9 × 19).
+- All the test pages pass. Not yet looked at in the simulator.
