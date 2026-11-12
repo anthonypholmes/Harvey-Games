@@ -130,6 +130,26 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 
 If Xcode says a package such as CapApp-SPM is missing after the project moves or is pulled afresh, quit Xcode and reopen it with `npm run app:open`.
 
+## Next job: children's names (agreed 12 Nov, not built yet)
+
+**The problem:** Bonnie says the child's name by joining in a recorded name clip. That works for the ~120 names in `tools/names.txt`, but the public will type names we don't have, and today those lines drop back to the device voice. A stand-in word ("buddy", "friend") sounded wrong to Anthony and clashes in the word games.
+
+**The decision:** the name is always *written*, only *said* when it's recorded, and otherwise Bonnie says a **name-free version** of the line (not a stand-in word).
+
+1. **Name-free clips for every line with `{N}`** (about 140 places in the code).
+   - Spoken text drops the name and tidies the punctuation, e.g. "Well done, {N}!" → "Well done!", "{N}, look at this!" → "Look at this!", "Thank you {N}! I love my golden coat!" → "Thank you! I love my golden coat!"
+   - Use a `dropName()` helper with simple rules, plus a small override map for awkward lines. Check every result reads naturally.
+   - The text on screen keeps the child's name. Only the spoken version changes.
+   - `bonnie-voice.js`: when the name isn't in the pack, use the name-free clip instead of returning null (which falls back to the device voice).
+   - `tools/make-voice.mjs`: record the name-free variants too. Run `npm run voice:check` first to see the cost.
+2. **Make the name list bigger.** Add the most popular few hundred boys' and girls' names for England and Wales (ONS baby names list) to `tools/names.txt`. Name clips are only a few characters each, so this is cheap. Listen to a sample for pronunciation.
+3. **Name entry:** when the child types their name, Bonnie says it back if she knows it. In grown-ups, show "Bonnie can say this name ✓" or "Bonnie will write this name but not say it".
+4. **Word games: no child's name inside puzzles.** Check every world (especially Meadow Words: sentence fixing, word building, Story Nook, and any maths word problems) for `{N}` inside puzzle content. Replace it with Bonnie or a fixed set of story characters (e.g. Sam, Mia) whose names are recorded. Keep the child's name for praise and chat only.
+5. **Tests:** add checks that every line with `{N}` has a name-free clip, and that an unknown name (e.g. "Zebedee") still gets Bonnie's recorded voice, never the device voice.
+6. **Optional, later:** the child picks a title as well as their name ("Superstar", "Captain", "Explorer"), which Bonnie uses now and then. That's about a dozen recordings.
+
+**Don't:** generate names live with ElevenLabs in the app (needs the internet, costs per child, sends a child's name to a third party, a problem for the Kids category), use the device voice for just the name, or let parents record the name.
+
 ## What comes next (the plan)
 
 1. **Finish Phase 2:** the voice is fixed. Checked in the simulator on 11 November 2026: saves survive a full close (bones 13 → 14 kept, and the Preferences copy matched), the Clubhouse and Bonnie's Walk lay out correctly in portrait and landscape, and the app files contain no internet addresses. Still to do on the real iPad through TestFlight: a true Airplane Mode test, and a look at the other game pages in landscape. Original list: offline (Airplane Mode), that saves survive a full close, and the layout in portrait and landscape.
