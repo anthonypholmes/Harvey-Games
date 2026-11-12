@@ -120,7 +120,7 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
     - **Not done:** nothing has been tried with VoiceOver switched on, on a real iPad. Dragging letters and tiles can't be done with VoiceOver, though every drag also works as a tap. Text does not grow with the iPad's Larger Text setting. Do a VoiceOver walk-through during TestFlight.
   - (Done 12 November 2026) "Back up progress" fix (see Phase 5 known gaps).
   - Anthony, once the developer account is active: Small Business Program, the Paid Apps agreement with bank and tax details, create the app and the in-app purchase in App Store Connect.
-  - The home-screen name "Meadow Clubhouse" (16 letters) may be shortened by iPadOS under the icon. Check on a real iPad; "Meadow Club" would fit if so (`CFBundleDisplayName` in `Info.plist`).
+  - (Done 12 November 2026) The home-screen name was cut short on a real iPad ("MeadowCl…"), so the name under the icon is now "Meadow Club" (`CFBundleDisplayName` in `Info.plist`). The App Store name is still "Meadow Clubhouse".
 
 ## Next up (as of 12 November 2026)
 
@@ -168,3 +168,10 @@ If Xcode says a package such as CapApp-SPM is missing after the project moves or
 - **Smaller fixes:** the "Teach Bonnie" tick box no longer drops below its label; radio buttons are the same size as tick boxes; "School years" hides while there is only one year; worlds with nothing played are left out of the help tables; the backup button says "Back up or restore".
 - **The grown-up sum is easier:** 6 to 9 times 11 or 12 (it was up to 9 × 19).
 - All the test pages pass. Not yet looked at in the simulator.
+
+### TestFlight ✅ (12 Nov)
+- The developer account is active, the app and the in-app purchase are made in App Store Connect, and **build 1 (version 1.0) is on TestFlight**. Anthony tested it on an old iPad (TestFlight refuses child Apple Accounts, so the child's iPad can't be used): Airplane Mode, saves, landscape, players, the grown-ups area and backup are all fine. The old iPad is from about 2018 on iPadOS 17 and the game runs very well on it, so speed on older iPads is not a worry.
+- **The unlock screen shows "Try again", not a price, until the Paid Apps agreement is Active.** The bank details were still processing on 12 November 2026. Nothing to fix in the app: check Business in App Store Connect, then tap Try again a few hours after it goes Active.
+- **Build 2** is set in the project (`CURRENT_PROJECT_VERSION`) with the shorter name under the icon. Every upload needs a higher build number than the last.
+- To upload: `npm run app:sync`, then in Xcode choose Any iOS Device (arm64), Product → Archive, Distribute App → App Store Connect → Upload.
+- Xcode needed a device registered before it would sign: an iPad's UDID was added by hand at developer.apple.com/account/resources/devices.

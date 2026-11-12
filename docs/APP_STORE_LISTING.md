@@ -122,7 +122,7 @@ phonics,spelling,times tables,number bonds,sats,primary,age 6,age 7,homework,rea
 | Family Sharing | Turn on. This can't be turned off later. |
 | Display name (35) | `Full Game` |
 | Description (55) | `Opens every level in Meadow Maths and Meadow Words.` |
-| Review screenshot | A screenshot of the "Unlock the full game" screen |
+| Review screenshot | `docs/screenshots/iap-unlock.png` |
 
 The first in-app purchase has to be submitted together with the app version: on the version page, add it under "In-App Purchases and Subscriptions" before pressing Submit.
 
@@ -164,7 +164,18 @@ Six pictures are ready in `docs/screenshots/`, at the iPad 13-inch size Apple as
 
 They are made from the real game pages by `sh tools/make-screenshots.sh`, with a made-up player called Sam. Run it again after any change to how the game looks. Don't take screenshots in the Xcode simulator: it shows every emoji as a "?" box.
 
-For the in-app purchase's review screenshot, take one of the "Unlock the full game" screen on a real iPad through TestFlight (it only needs to be readable).
+For the in-app purchase's review screenshot, use `docs/screenshots/iap-unlock.png`: the "Unlock the full game" screen with the £3.99 button. `sh tools/make-screenshots.sh unlock` makes it again (the page is `tools/unlock-shot.html`). Only Apple's reviewer sees it; it is not shown in the App Store.
+
+## Header and search results pictures (optional, iOS 27 and later)
+
+App Store Connect has two newer picture boxes under "Header and Search Results". Both are optional: without them the App Store shows the screenshots, as before.
+
+| Box | File | Size |
+|---|---|---|
+| Product page header | `docs/screenshots/store-header.png` | 3840 × 1646 |
+| Search results | `docs/screenshots/store-search.png` | 3840 × 2560 |
+
+Both are drawn with the game's own Bonnie by `sh tools/make-store-art.sh` (the page is `tools/store-art.html`). Apple's rules for them: no prices, web addresses or awards, a short phrase at most, and suitable for a 4+ rating. Apple may trim the edges, so use the Preview button in App Store Connect to check Bonnie and the words aren't cut off or covered.
 
 ## Kids category rules to keep true
 

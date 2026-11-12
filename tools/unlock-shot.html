@@ -1,0 +1,40 @@
+<!doctype html>
+<!-- The App Store review screenshot for the in-app purchase: the "Unlock the full game" screen,
+     as the app shows it (the pretend App Store gives the price). 2064 x 2752.
+     Run from the project folder:  sh tools/make-screenshots.sh unlock
+     It must be opened through a web server (the script starts one), not as a file. -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Unlock screen</title>
+<style>
+  html, body { margin: 0; width: 1032px; height: 1376px; overflow: hidden; background: #F6EBD3; }
+  iframe { width: 100%; height: 100%; border: 0; display: block; }
+</style>
+</head>
+<body>
+<iframe id="game" title="The game"></iframe>
+<script>
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const frame = document.getElementById('game');
+const open = src => new Promise(r => { frame.onload = () => r(frame.contentWindow); frame.src = src; });
+(async () => {
+  let w = await open('../index.html');
+  w.localStorage.clear(); w.sessionStorage.clear();
+  w.Meadow.save.load();
+  w.Meadow.save.mutate(s => { s.name = 'Sam'; s.bones = 86; s.voice = false; s.sound = false; });
+  w.sessionStorage.setItem('meadow-grownups-open-until', String(Date.now() + 6e8)); // the grown-ups' sum, already answered
+  w = await open('../meadow-maths.html');
+  w.MEADOW_IN_APP = true; // show what the app shows
+  const answer = async () => ({ owned: false, available: true, price: '£3.99' });
+  w.MeadowStoreTest = { status: answer, buy: answer, restore: answer, addListener() {} };
+  w.document.head.insertAdjacentHTML('beforeend', '<style>*, *::before, *::after { animation: none !important; transition: none !important; } .butterfly { display: none !important; }</style>');
+  await wait(500);
+  w.Meadow.grownUps(); await wait(500);
+  w.document.querySelector('#pFull').click();
+  await wait(1500);
+  document.title = 'ready';
+})();
+</script>
+</body>
+</html>

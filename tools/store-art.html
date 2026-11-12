@@ -1,0 +1,70 @@
+<!doctype html>
+<!-- The two App Store pictures (iOS 27 and later): the product page header and the search results picture.
+     Drawn with the game's own Bonnie. tools/make-store-art.sh turns this page into
+     docs/screenshots/store-header.png (3840 x 1646) and docs/screenshots/store-search.png (3840 x 2560).
+     ?art=header or ?art=search. Apple may trim the edges, so everything that matters is near the middle.
+     Apple's rules: no prices, web addresses or awards in these pictures, and a short phrase at most. -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Meadow Clubhouse store pictures</title>
+<link href="../fonts/fonts.css" rel="stylesheet">
+<style>
+  html, body { margin: 0; overflow: hidden; }
+  #art { position: relative; width: 1920px; height: var(--h); overflow: hidden; font-family: 'Fredoka', system-ui, sans-serif;
+    background: linear-gradient(180deg, #9ED6EC 0%, #CDEBF3 50%, #E9F5D3 74%);
+    --fur: #9a6440; --fur-dk: #74472a; --fur-lt: #c99568; }
+  #sun { position: absolute; border-radius: 50%; background: #FFE08A; box-shadow: 0 0 0 28px rgba(255, 224, 138, .35); }
+  .hill { position: absolute; border-radius: 50%; }
+  .cloud { position: absolute; height: 54px; border-radius: 99px; background: rgba(255, 255, 255, .8); }
+  .cloud::before { content: ''; position: absolute; left: 22%; top: -46%; width: 46%; height: 120%; border-radius: 50%; background: inherit; }
+  #bonnie { position: absolute; filter: drop-shadow(0 14px 0 rgba(60, 40, 20, .14)); }
+  #bonnie svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .daisy { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #F2C14E; box-shadow: 0 0 0 8px #fff; }
+  #words { position: absolute; text-align: center; color: #4A3B2C; }
+  #words b { display: block; font-weight: 700; line-height: 1.05; }
+  #words span { display: block; font-weight: 500; color: #5B4A38; }
+
+  /* the header: wide and short. Bonnie in the middle, no words (the App Store puts the app's name beside it). */
+  .header { --h: 823px; }
+  .header #sun { left: 1290px; top: 90px; width: 150px; height: 150px; }
+  .header #hill1 { left: -300px; bottom: -640px; width: 1500px; height: 900px; background: #8FC46B; }
+  .header #hill2 { right: -360px; bottom: -700px; width: 1700px; height: 980px; background: #6BA368; }
+  .header #bonnie { left: 660px; top: 120px; width: 600px; height: 620px; }
+  .header #words { display: none; }
+
+  /* search results: a short line above Bonnie */
+  .search { --h: 1280px; }
+  .search #sun { left: 1380px; top: 330px; width: 170px; height: 170px; }
+  .search #hill1 { left: -320px; bottom: -560px; width: 1500px; height: 980px; background: #8FC46B; }
+  .search #hill2 { right: -380px; bottom: -640px; width: 1700px; height: 1080px; background: #6BA368; }
+  .search #bonnie { left: 610px; top: 470px; width: 700px; height: 724px; }
+  .search #words { left: 160px; right: 160px; top: 130px; white-space: nowrap; }
+  .search #cloud1 { top: 36% !important; left: 300px !important; }
+  .search #cloud2 { top: 44% !important; left: 1480px !important; }
+  .search #words b { font-size: 112px; }
+  .search #words span { font-size: 58px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div id="art">
+  <div id="sun"></div>
+  <div class="cloud" id="cloud1" style="left:420px;top:14%;width:210px"></div>
+  <div class="cloud" id="cloud2" style="left:1120px;top:8%;width:160px;height:42px"></div>
+  <div class="hill" id="hill1"></div>
+  <div class="hill" id="hill2"></div>
+  <div class="daisy" style="left:520px;bottom:9%"></div>
+  <div class="daisy" style="left:590px;bottom:4%"></div>
+  <div class="daisy" style="left:1340px;bottom:7%"></div>
+  <div class="daisy" style="left:1420px;bottom:13%"></div>
+  <div id="words"><b>Year 2 maths and English</b><span>with Bonnie the dog</span></div>
+  <div id="bonnie"></div>
+</div>
+<script src="../js/meadow-core.js"></script>
+<script>
+  const art = new URLSearchParams(location.search).get('art') === 'search' ? 'search' : 'header';
+  document.getElementById('art').className = art;
+  document.getElementById('bonnie').innerHTML = Meadow.ui.bonnieSVG(null);
+</script>
+</body>
+</html>
