@@ -69,7 +69,8 @@ const CSS = `
 .slot.locked{border-style:solid;border-color:var(--leaf);background:#E8F3DF}
 .slot.bad{animation:shake .45s;border-color:var(--berry);background:#FBE3E6}
 .slot.glow{box-shadow:0 0 0 5px rgba(242,193,78,.6)}
-.sb{width:18px;height:18px;border-radius:50%;background:var(--ink);opacity:.8;transition:transform .1s}
+.sb{width:18px;height:18px;border-radius:50%;background:var(--ink);opacity:.8;transition:transform .1s;position:relative}
+.sb::after{content:'';position:absolute;inset:-13px}
 .sb.dash{width:46px;border-radius:9px;height:12px;margin-top:3px}
 .sb:active,.sb.say{transform:scale(1.35);background:var(--accent);opacity:1}
 .arc{position:absolute;bottom:4px;height:22px;border:5px solid var(--ink);border-top:none;border-radius:0 0 40px 40px;opacity:.8;pointer-events:none}

@@ -849,7 +849,7 @@ function worldScreen(id) {
       <div class="path">
         ${w.levels.map((L, l) => { const paid = paidLevel(w, l), un = !paid && levelUnlocked(w, l), st = starsOf(w, L); return `
           <button class="stone ${paid ? 'paid' : un ? '' : 'locked'}" data-l="${l}" ${un ? '' : 'aria-disabled="true"'}>
-            <div class="num" style="background:${w.color || 'var(--leaf)'}">${paid ? '<span class="padlock" aria-hidden="true"><i></i></span>' : un ? l + 1 : '🔒'}</div>
+            <div class="num" style="background:${w.color || 'var(--leaf-dark)'};background:color-mix(in srgb,${w.color || 'var(--leaf-dark)'} 78%,#000)">${paid ? '<span class="padlock" aria-hidden="true"><i></i></span>' : un ? l + 1 : '🔒'}</div>
             <div><div class="lt">Level ${l + 1}: ${esc(L.name)}</div>
             ${L.blurb ? `<div class="lb">${esc(L.blurb)}${L.eg ? ` <span class="eg">${esc(L.eg)}</span>` : ''}</div>` : ''}
             ${playedLevel(w, L) ? `<div class="ls" aria-label="${plural(st, 'star')}">${'⭐'.repeat(st)}${'☆'.repeat(3 - st)}</div>` : paid ? '<div class="new-badge full">Full game</div>' : un ? '<div class="new-badge">New!</div>' : ''}</div>
@@ -1871,7 +1871,7 @@ input,textarea{user-select:text;-webkit-user-select:text}
 button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
 #app{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:12px 16px 120px;min-height:100vh}
 .hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-.hud .title{font-weight:700;font-size:1.25rem;color:var(--on-bg);display:flex;align-items:center;gap:8px;margin-right:auto;cursor:pointer}
+.hud .title{font-weight:700;font-size:1.25rem;color:var(--on-bg);display:flex;align-items:center;gap:8px;margin-right:auto;cursor:pointer;min-height:44px}
 .chip{background:var(--card);border:2px solid var(--card-edge);border-radius:999px;padding:6px 14px;font-weight:600;display:flex;align-items:center;gap:6px;box-shadow:0 3px 0 rgba(74,59,44,.12)}
 .chip.bones{font-size:1.15rem}
 .chip.bones.bump{animation:bump .45s}
@@ -1880,10 +1880,11 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 .icon-btn{text-decoration:none;color:var(--ink);background:var(--card);border:2px solid var(--card-edge);border-radius:14px;padding:8px 12px;min-height:44px;display:inline-flex;align-items:center;font-weight:600;box-shadow:0 3px 0 rgba(74,59,44,.12)}
 .icon-btn:active{transform:translateY(2px);box-shadow:none}
 .card{background:var(--card);border:2px solid var(--card-edge);border-radius:var(--radius);box-shadow:var(--shadow);position:relative}
-.btn{background:var(--accent);color:#fff;font-weight:600;font-size:1.1rem;padding:12px 22px;min-height:48px;border-radius:16px;box-shadow:0 5px 0 var(--accent-dark);transition:transform .08s}
+/* Buttons use the darker shade of each colour so their white writing is easy to read (at least 4.5 to 1). */
+.btn{background:var(--accent-dark);color:#fff;font-weight:600;font-size:1.1rem;padding:12px 22px;min-height:48px;border-radius:16px;box-shadow:0 5px 0 rgba(0,0,0,.3);box-shadow:0 5px 0 color-mix(in srgb,var(--accent-dark) 62%,#000);transition:transform .08s}
 .btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--accent-dark)}
-.btn.green{background:var(--leaf);box-shadow:0 5px 0 var(--leaf-dark)}
-.btn.berry{background:var(--berry);box-shadow:0 5px 0 var(--berry-dark)}
+.btn.green{background:var(--leaf-dark);box-shadow:0 5px 0 rgba(0,0,0,.3);box-shadow:0 5px 0 color-mix(in srgb,var(--leaf-dark) 62%,#000)}
+.btn.berry{background:var(--berry-dark);box-shadow:0 5px 0 rgba(0,0,0,.3);box-shadow:0 5px 0 color-mix(in srgb,var(--berry-dark) 62%,#000)}
 .btn.ghost{background:var(--card);color:var(--ink);border:2px solid var(--card-edge);box-shadow:0 4px 0 var(--card-edge)}
 .btn.small{font-size:.95rem;padding:8px 14px;min-height:44px;border-radius:12px}
 .btn:disabled{opacity:.45;pointer-events:none}
@@ -2033,7 +2034,7 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .bubble.pop{animation:pop .35s}
 .bubble b{color:var(--accent-dark)}
 .ladder{display:flex;gap:6px;align-items:center;font-size:.8rem;color:var(--ink-soft)}
-.ladder .rung{width:22px;height:22px;border-radius:50%;background:#F1E8D6;display:grid;place-items:center;font-size:.75rem}
+.ladder .rung{width:22px;height:22px;border-radius:50%;background:#F1E8D6;color:var(--ink);display:grid;place-items:center;font-size:.75rem}
 .ladder .rung.on{background:var(--gold)}
 .bonnie{position:relative;width:140px;height:140px;cursor:pointer;flex:none;transition:transform .2s}
 .bonnie svg{width:100%;height:100%;overflow:visible}
@@ -2052,7 +2053,7 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .row-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center}
 .tabs{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
 .tab{padding:10px 18px;min-height:44px;border-radius:14px;background:var(--card);border:2px solid var(--card-edge);font-weight:600}
-.tab.on{background:var(--accent);color:#fff;border-color:var(--accent-dark)}
+.tab.on{background:var(--accent-dark);color:#fff;border-color:var(--accent-dark)}
 .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
 .shop-grid .tier{grid-column:1/-1;margin-top:6px;color:var(--wood-dark)}
 .item{padding:16px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}

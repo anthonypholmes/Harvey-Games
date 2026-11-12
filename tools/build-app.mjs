@@ -14,7 +14,9 @@ const FOLDERS = ['js', 'worlds', 'fonts', 'audio'];
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out);
 for (const f of FILES) fs.copyFileSync(path.join(root, f), path.join(out, f));
-for (const d of FOLDERS) fs.cpSync(path.join(root, d), path.join(out, d), { recursive: true });
+// macOS sometimes leaves stray copies such as "clip 2.mp3" in an iCloud-synced folder. They are never part of the game.
+const stray = p => / \d+(\.[A-Za-z0-9]+)?$/.test(path.basename(p));
+for (const d of FOLDERS) fs.cpSync(path.join(root, d), path.join(out, d), { recursive: true, filter: src => !stray(src) });
 
 const fontsReady = fs.existsSync(path.join(root, 'fonts', 'Fredoka.ttf'));
 let files = 0, bytes = 0;

@@ -112,7 +112,12 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - **Still to do for Phase 6:**
   - Push `main` so the two pages go live, then check https://holmeshouse.co.uk/privacy.html and /support.html open.
   - (Done 12 November 2026) Screenshots: six iPad 13-inch pictures (2064 × 2752) in `docs/screenshots/`, made from the real game pages by `sh tools/make-screenshots.sh` (needs Google Chrome; the page is `tools/screenshots.html`). Each has a caption above the game. The player is a made-up "Sam". To change a caption or a scene, edit `SHOTS` in that page and run the script again.
-  - Basic accessibility pass (VoiceOver labels on the main buttons, text contrast, Reduce Motion).
+  - (Done 12 November 2026) Accessibility pass. `tests/a11y-audit.js` is a checker to run in a browser console on any screen (`a11yAudit()`): it lists buttons with no name for VoiceOver, buttons under 44 × 44, and text too close in colour to its background. It was run on the Clubhouse, both world lists, a level map, a level in all 10 worlds, the Bone Shop, the grown-ups area and Bonnie's Walk, and now reports nothing except the decorative frog.
+    - **Contrast (the main change):** white writing on the light green, orange and pink was about 3 to 1. Buttons (`.btn`, `.btn.green`, `.btn.berry`, `.tab.on`), the Clubhouse game cards, the Bone Shop and walk buttons, and the level-number circles now use the darker shade of each colour, at least 4.5 to 1 for small writing, in every theme. The orange "ones" digit in the maths worlds is slightly deeper (`--c-ink`). The App Store screenshots were remade with the new colours.
+    - **Names for VoiceOver:** every button already had one except the speaker button in Bonnie's Story Nook, now "Hear the question".
+    - **Tap sizes:** the phonics sound dots keep their look but their tap area is now 44 × 44. The page title in the top bar is 44 high.
+    - **Reduce Motion:** already handled (a rule in the core CSS switches off animations and hides the butterflies and frog).
+    - **Not done:** nothing has been tried with VoiceOver switched on, on a real iPad. Dragging letters and tiles can't be done with VoiceOver, though every drag also works as a tap. Text does not grow with the iPad's Larger Text setting. Do a VoiceOver walk-through during TestFlight.
   - "Back up progress" fix (see Phase 5 known gaps).
   - Anthony, once the developer account is active: Small Business Program, the Paid Apps agreement with bank and tax details, create the app and the in-app purchase in App Store Connect.
   - The home-screen name "Meadow Clubhouse" (16 letters) may be shortened by iPadOS under the icon. Check on a real iPad; "Meadow Club" would fit if so (`CFBundleDisplayName` in `Info.plist`).
@@ -133,6 +138,8 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - `npm run voice:check` (dry run) should report "new clips needed: 0" unless lines changed.
 - Commit as Anthony. Never commit `app-www/`, `node_modules/` or `.env.local`.
 - Delete stray macOS duplicates such as "config 2.xml" if they appear.
+- **Stray duplicates are a standing problem.** The project lives in the iCloud-synced Documents folder, and macOS keeps making copies with a number before the ending ("config 4.xml", and on 12 November 2026 about 1,100 "… 2.mp3" files in `audio/clips` and `audio/numbers`, all exact copies). Never commit them. `tools/build-app.mjs` now leaves them out of the app. A duplicate inside the hidden `.git` folder ("HEAD 2") once stopped git reaching GitHub. Moving the project out of Documents (for example to a `Developer` folder in the home folder) would stop it and should also make the Mac much faster during builds.
+- Claude's shell can commit but cannot push (no GitHub sign-in). Anthony pushes from GitHub Desktop. On `main`, GitHub Desktop lists about 6,500 "new" files (`app-www` and `ios`, which only `app-store` ignores): never commit those.
 - Anthony tends to work in bursts. Keep each step small enough to finish in one sitting, and don't compress the timeline.
 
 

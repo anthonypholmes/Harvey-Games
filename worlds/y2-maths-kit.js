@@ -1236,7 +1236,7 @@ const CSS = String.raw`
 .mm [hidden] { display: none !important; }
 .mm button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
 .mm button:focus-visible { outline: 4px solid var(--tens); outline-offset: 3px; }
-.mm .p0 { --c: var(--ones); --c-dk: var(--ones-dk); }
+.mm .p0 { --c: var(--ones); --c-dk: var(--ones-dk); --c-ink: #d4680f; }
 .mm .p1 { --c: var(--tens); --c-dk: var(--tens-dk); }
 .mm .p2 { --c: var(--hund); --c-dk: var(--hund-dk); }
 .mm .p3 { --c: var(--thou); --c-dk: var(--thou-dk); }
@@ -1258,7 +1258,7 @@ const CSS = String.raw`
 @keyframes mm-pawbob { to { transform: translate(-3px, 5px) rotate(-12deg); } }
 .mm .hl { display: inline-block; }
 .mm .d { font-variant-numeric: tabular-nums; }
-.mm .d.p0, .mm .d.p1, .mm .d.p2, .mm .d.p3 { color: var(--c); }
+.mm .d.p0, .mm .d.p1, .mm .d.p2, .mm .d.p3 { color: var(--c-ink, var(--c)); }
 .mm .play { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 900px) {
   .mm .play { grid-template-columns: minmax(0, 1fr) 370px; }
@@ -1296,7 +1296,7 @@ const CSS = String.raw`
 .mm .ctr { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: #fff; border: 3px solid var(--c-dk); font-weight: 700; font-size: 14px; }
 .mm .p3 .ctr, .mm .ctr.p3 { font-size: 12px; }
 .mm .glabel { font-size: 17px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
-.mm .glabel b { color: var(--c); font-size: 20px; }
+.mm .glabel b { color: var(--c-ink, var(--c)); font-size: 20px; }
 .mm .steppers { display: flex; gap: 8px; }
 .mm .mstep { width: 52px; height: 52px; border-radius: 14px; border: 3px solid var(--ink); background: var(--card); box-shadow: 0 3px 0 var(--ink); font-size: 30px; font-weight: 700; line-height: 1; padding: 0; }
 .mm .mstep.plus { background: var(--c); color: #fff; }

@@ -94,7 +94,7 @@ function playStory(item, ctx) {
   area.innerHTML = `
     <div class="story" id="story">${html}</div>
     <div class="row-btns" style="margin-top:12px"><button class="btn small" id="read">🔊 Read it to me</button></div>
-    <div class="question">❓ ${esc(q)} <button class="btn small ghost" id="hearQ">🔊</button></div>
+    <div class="question">❓ ${esc(q)} <button class="btn small ghost" id="hearQ" aria-label="Hear the question">🔊</button></div>
     <div class="opts" id="opts">${opts.map(o => `<button class="opt" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
   const wordEls = $$('#story .w');
   function readAloud(textToSay = spoken, then) {

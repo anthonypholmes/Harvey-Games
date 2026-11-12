@@ -163,10 +163,10 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 .name-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
 .shop-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:inherit;cursor:pointer}
 .shop-btn{display:flex;align-items:center;justify-content:center;gap:12px;margin:26px auto 0;max-width:560px;padding:16px 22px;border-radius:20px;
-  font-size:1.45rem;font-weight:700;color:#fff;text-decoration:none;background:var(--berry);box-shadow:0 6px 0 #A63C4C}
+  font-size:1.45rem;font-weight:700;color:#fff;text-decoration:none;background:#A93E4F;box-shadow:0 6px 0 #692731}
 .shop-btn small{font-size:.95rem;font-weight:600;opacity:.92}
 .shop-btn:active{transform:translateY(4px);box-shadow:none}
-.play-btn{flex:1;max-width:420px;padding:16px;border-radius:18px;font-size:1.5rem;font-weight:700;color:#fff;background:var(--leaf);box-shadow:0 6px 0 var(--leaf-dark)}
+.play-btn{flex:1;max-width:420px;padding:16px;border-radius:18px;font-size:1.5rem;font-weight:700;color:#fff;background:var(--leaf-dark);box-shadow:0 6px 0 #2F4E2E}
 .play-btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--leaf-dark)}
 .note{text-align:center;color:var(--on-bg);opacity:.8;font-size:.9rem;margin-top:14px}
 
@@ -182,7 +182,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 .walk-btn .wb-txt b{display:block;font-size:clamp(1.5rem,4vw,2rem);line-height:1.1}
 .walk-btn .wb-txt small{font-size:1.05rem;font-weight:600;opacity:.85}
 .walk-btn .wb-streak{position:relative;z-index:1;flex:none;background:#fff;border:2px solid #8FC46B;border-radius:999px;padding:6px 12px;font-weight:700;font-size:.95rem;white-space:nowrap}
-.walk-btn .wb-go{position:relative;z-index:1;flex:none;font-size:1.3rem;font-weight:700;color:#fff;background:var(--leaf);border-radius:16px;padding:10px 18px;box-shadow:0 4px 0 var(--leaf-dark);animation:pulse 2s ease-in-out infinite}
+.walk-btn .wb-go{position:relative;z-index:1;flex:none;font-size:1.3rem;font-weight:700;color:#fff;background:var(--leaf-dark);border-radius:16px;padding:10px 18px;box-shadow:0 4px 0 #2F4E2E;animation:pulse 2s ease-in-out infinite}
 @media (max-width:560px){.walk-btn{flex-wrap:wrap}.walk-btn .wb-go{display:none}.walk-btn .wb-streak{order:3;margin-left:92px}}
 
 /* ---------- "Put it on your Home Screen" banner ---------- */
@@ -192,7 +192,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 .a2hs .txt b{display:block;font-size:1.1rem}
 .a2hs .txt span{font-family:var(--font-read);color:var(--ink-soft);font-size:.98rem}
 .a2hs .share{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;color:#2F7BF6}
-.a2hs .install{flex:none;padding:12px 18px;border-radius:14px;font-size:1.1rem;font-weight:700;color:#fff;background:var(--leaf);box-shadow:0 4px 0 var(--leaf-dark)}
+.a2hs .install{flex:none;padding:12px 18px;border-radius:14px;font-size:1.1rem;font-weight:700;color:#fff;background:var(--leaf-dark);box-shadow:0 4px 0 #2F4E2E}
 .a2hs .install:active{transform:translateY(3px);box-shadow:none}
 .a2hs .x{flex:none;width:44px;height:44px;border-radius:12px;font-size:1.2rem;color:var(--ink-soft)}
 .a2hs .x:active{background:var(--line)}
@@ -421,14 +421,14 @@ function render() {
   document.getElementById('cabinets').innerHTML = CONFIG.GAMES.map(g => {
     const prog = progressFor(g);
     const inner = `
-      <div class="marquee" style="background:${g.color}">${esc(g.name)}<small>${esc(g.sub)}</small></div>
+      <div class="marquee" style="background:${g.dark}">${esc(g.name)}<small>${esc(g.sub)}</small></div>
       <div class="screen" style="background:${g.screen}">
         ${g.bits.map(([e, x, y], i) => `<span class="bit" style="left:${x}%;top:${y}%;animation-delay:${-i * .6}s">${e}</span>`).join('')}
         <span class="big" style="left:${g.big[1]}%;top:${g.big[2]}%">${esc(g.big[0])}</span>
       </div>
       <div class="about">${esc(g.about)}</div>
       ${prog ? `<div class="stats">${prog}</div>` : ''}
-      <div class="play" style="background:${g.color};box-shadow:0 6px 0 ${g.dark}">${g.soon ? 'Coming soon' : '▶ PLAY'}</div>`;
+      <div class="play" style="background:${g.dark};box-shadow:0 6px 0 rgba(0,0,0,.3);box-shadow:0 6px 0 color-mix(in srgb,${g.dark} 62%,#000)">${g.soon ? 'Coming soon' : '▶ PLAY'}</div>`;
     return g.soon || !g.href ? `<div class="cab soon">${inner}</div>`
                              : `<a class="cab" href="${esc(g.href)}" data-name="${esc(g.name)}">${inner}</a>`;
   }).join('');
