@@ -59,6 +59,10 @@ import StoreKit
 class MeadowViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(MeadowStorePlugin())
+        // Feel like an app, not a web page: no rubber-band bounce at the top and bottom, and no pinch zoom.
+        webView?.scrollView.bounces = false
+        webView?.scrollView.alwaysBounceVertical = false
+        webView?.scrollView.pinchGestureRecognizer?.isEnabled = false
     }
 }
 

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Voice Name Test</title>
+<style>
+  #report { max-width: 900px; margin: 16px auto; padding: 16px; font-family: system-ui, sans-serif; background: #FDFBF7; border: 2px solid #EADFCB; border-radius: 18px; color: #3E2F27; }
+  #report h1 { font-size: 1.3rem; margin: 0 0 6px; } #report p { margin: 0 0 12px; color: #7A6A5E; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; } #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; } #report li.bad { color: #A93E4F; font-weight: 700; }
+</style>
+</head>
+<body>
+<script src="../bonnie-voice.js"></script>
+<script>
+/* Which recordings Bonnie joins up for a line with the child's name in it. Nothing is played. */
+(async () => {
+  const results = [], check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail: String(detail) });
+  const V = BonnieVoice;
+  V.base = '../'; V.load();
+  for (let i = 0; i < 80 && !V.pack; i++) await new Promise(r => setTimeout(r, 100));
+  V.getAudio = () => ({ state: 'running' }); window.MEADOW_IN_APP = true;
+  const clips = (name, line) => { V.getName = () => name; const p = V.plan(line); return p ? p.map(x => x.file.split('/').pop().replace(/-\w+\.mp3$/, '')).join(' + ') : 'DEVICE VOICE (' + V.why + ')'; };
+  const hello = n => `Woof! Hi ${n}! Pick a game and let's earn more bones!`;
+
+  check('The recordings loaded', !!V.pack && Object.keys(V.pack.names).length > 100, V.pack ? Object.keys(V.pack.names).length + ' names' : 'not loaded');
+  check('The stand-in word is recorded', V.STAND_INS.some(w => V.pack.names[w]), V.STAND_INS.filter(w => V.pack.names[w]).join(', '));
+  let c = clips('Harvey', hello('Harvey'));
+  check('A recorded name is said as itself', / \+ harvey \+ /.test(c), c);
+  for (const n of ['Zebedee', 'Sam', 'Xanthe', 'Mary Jane']) {
+    c = clips(n, hello(n));
+    check(`${n} (no recording): the line stays in Bonnie's voice, with "buddy" for the name`, !/DEVICE/.test(c) && / \+ buddy \+ /.test(c), c);
+  }
+  c = clips('Zebedee', 'Well done, Zebedee!');
+  check('It works at the end of a line too', !/DEVICE/.test(c) && /buddy$/.test(c), c);
+  c = clips('Zebedee', 'Woof!');
+  check('A line with no name in it is unchanged', !/DEVICE/.test(c) && !/buddy/.test(c), c);
+  c = clips('Buddy', hello('Buddy'));
+  check('A child really called Buddy is fine', / \+ buddy \+ /.test(c), c);
+
+  const failed = results.filter(r => !r.ok);
+  document.body.insertAdjacentHTML('beforeend', `<div id="report"><h1>Bonnie's voice: names with no recording</h1>
+    <p>A name that isn't recorded is said as "buddy", so the whole line stays in Bonnie's recorded voice. Nothing is played or saved.</p>
+    <div id="result" class="${failed.length ? 'fail' : 'pass'}">${failed.length ? `✗ ${failed.length} of ${results.length} checks failed` : `✓ All ${results.length} checks passed`}</div>
+    <ul>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name} <small>(${r.detail})</small></li>`).join('')}</ul></div>`);
+  window.TEST_RESULT = { passed: !failed.length, results };
+})();
+</script>
+</body>
+</html>

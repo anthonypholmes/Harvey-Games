@@ -11,6 +11,12 @@ Anthony
 Alaya
 Rory
 
+# Stand-in words: Bonnie says the first of these in place of a name that isn't in this list
+# ("Hi buddy!"), so the line stays in her own voice. The screen still shows the child's real name.
+# Keep them here: bonnie-voice.js (STAND_INS) looks them up like any other name.
+Buddy
+Friend
+
 # Boys
 Oliver
 George

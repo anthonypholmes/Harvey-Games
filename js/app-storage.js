@@ -16,8 +16,18 @@
   // Keep every page clear of the iPad's clock and battery bar (and the rounded corners in landscape).
   document.documentElement.classList.add('in-app');
   const css = document.createElement('style');
-  css.textContent = 'html.in-app{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}';
+  css.textContent = 'html.in-app{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}'
+    // Feel like an app, not a web page: no zoom on a double tap, no rubber-band bounce, and a page that
+    // fits the screen doesn't scroll (the website leaves room under each page for the grass; here the
+    // grass sits behind the last card instead, and the status bar's height is taken off the page).
+    + 'html.in-app{touch-action:manipulation;overscroll-behavior:none}html.in-app body{overscroll-behavior:none;-webkit-touch-callout:none}'
+    + 'html.in-app body{min-height:calc(100vh - env(safe-area-inset-top))}'
+    + 'html.in-app #app,html.in-app .wrap{padding-bottom:calc(20px + env(safe-area-inset-bottom))}'
+    + 'html.in-app #app{min-height:calc(100vh - env(safe-area-inset-top))}';
   (document.head || document.documentElement).appendChild(css);
+  // No pinch zoom either (a web view obeys this, unlike Safari).
+  const noZoom = () => { const m = document.querySelector('meta[name="viewport"]'); if (m && !/user-scalable/.test(m.content)) m.content += ', maximum-scale=1, user-scalable=no'; };
+  noZoom(); document.addEventListener('DOMContentLoaded', noZoom);
   const P = (cap.Plugins && cap.Plugins.Preferences) || (cap.registerPlugin && cap.registerPlugin('Preferences'));
   if (!P) return;
 

@@ -24,6 +24,7 @@
     packs: {},           // their lists once loaded
     device: null,        // the chosen device voice
     missing: new Set(),  // pieces with no clip (for checking a voice pack)
+    STAND_INS: ['buddy', 'friend'], // said in place of a child's name that has no recording (the first one recorded is used; both are in tools/names.txt)
     why: '',             // why the last line used the device voice (shown in the console, for fixing the app)
   };
   const AUDIO_CACHE = 'meadow-club-audio-v1'; // must match sw.js
@@ -139,7 +140,8 @@
       for (const p of group || V.pieces(s.raw, name).map(p => ({ ...p, start: p.start + s.start }))) {
         const clean = V.cleanPiece(p.raw);
         if (!V.hasWords(clean)) { if (out.length) out[out.length - 1].pause = Math.max(out[out.length - 1].pause, pauseAfter(p.raw)); continue; }
-        const file = p.file || (p.name ? pack.names && pack.names[clean.toLowerCase()] : pack.clips[V.pieceKey(clean)]);
+        // A name with no recording is said as a friendly word instead ("Hi buddy!"), so the line stays in Bonnie's own voice.
+        const file = p.file || (p.name ? pack.names && (pack.names[clean.toLowerCase()] || V.STAND_INS.map(w => pack.names[w]).find(Boolean)) : pack.clips[V.pieceKey(clean)]);
         if (!file && !p.name && /\d/.test(clean) && pack.numbers) { // no recording of the whole piece: join it up from words and numbers
           const bits = numberPlan(pack, p);
           if (bits) { out.push(...bits); continue; }
@@ -275,6 +277,7 @@
 
   /* ---------- loading the clips ---------- */
   V.load = () => (V.loading = loadPacks());
+  V.plan = plan; // for tests/voice-name-test.html
   async function loadPacks() {
     try {
       const res = await fetch(V.base + 'audio/manifest.json', { cache: 'no-cache' }); if (!res.ok) return;

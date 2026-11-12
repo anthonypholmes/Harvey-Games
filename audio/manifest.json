@@ -2174,7 +2174,9 @@
   "thea": "names/thea-4crzui.mp3",
   "margot": "names/margot-4crzui.mp3",
   "imogen": "names/imogen-4crzui.mp3",
-  "alaya": "names/alaya-4crzui.mp3"
+  "alaya": "names/alaya-4crzui.mp3",
+  "buddy": "names/buddy-4crzui.mp3",
+  "friend": "names/friend-4crzui.mp3"
  },
  "texts": {
   "15831362": "'like' has a magic 'e' at the end: l-i-k-e.",
@@ -4244,7 +4246,7 @@
   "e2121e53": "Who's playing today?",
   "8b9b6054": "This level is in the full game."
  },
- "made": "2026-11-12T10:53:57.813Z",
+ "made": "2026-11-12T16:54:47.423Z",
  "said": {
   "11b54859": "Nnn...",
   "38deadf5": "rrrr.",

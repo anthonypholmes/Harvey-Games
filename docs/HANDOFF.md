@@ -142,7 +142,7 @@ If Xcode says a package such as CapApp-SPM is missing after the project moves or
 
 ## Working notes
 - After any change to the game files: `npm run app:sync`, then ▶ in Xcode.
-- The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove, unlock, players, backup). They all pass. Re-run them after changes.
+- The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove, unlock, players, backup, voice-name). They all pass. Re-run them after changes.
 - `npm run voice:check` (dry run) should report "new clips needed: 0" unless lines changed.
 - Commit as Anthony. Never commit `app-www/`, `node_modules/` or `.env.local`.
 - Delete stray macOS duplicates such as "config 2.xml" if they appear.
@@ -175,3 +175,13 @@ If Xcode says a package such as CapApp-SPM is missing after the project moves or
 - **Build 2** is set in the project (`CURRENT_PROJECT_VERSION`) with the shorter name under the icon. Every upload needs a higher build number than the last.
 - To upload: `npm run app:sync`, then in Xcode choose Any iOS Device (arm64), Product → Archive, Distribute App → App Store Connect → Upload.
 - Xcode needed a device registered before it would sign: an iPad's UDID was added by hand at developer.apple.com/account/resources/devices.
+
+### Feeling like an app, not a web page ✅ (12 Nov, after the first TestFlight test)
+- **No zoom:** a double tap or a pinch no longer zooms. `js/app-storage.js` sets `touch-action: manipulation` and `user-scalable=no`, and `MeadowViewController` in `AppDelegate.swift` switches the pinch off.
+- **No rubber-band bounce** at the top and bottom of a page (`scrollView.bounces = false`, plus `overscroll-behavior: none`).
+- **Pages that fit no longer scroll.** The website leaves 120px under every page for the grass, and the app's status-bar padding made every page a little taller than the screen. In the app the space under the page is 20px (the grass sits behind the last card) and the status bar's height is taken off. Levels, Bonnie's Walk and the Words world list now fit on a 2018 iPad (768 × 1024) held upright.
+- **A tighter Clubhouse when held upright** (`html.in-app` rules in `index.html`): a smaller sign and pictures, and no description under each game, so it fits on one screen.
+- **Still scroll, because they are longer than the screen:** the Bone Shop, the grown-ups area, the Maths world list (6 worlds), the level map slightly, and most pages when the iPad is sideways (the Clubhouse by about 490px). Fixing sideways would need a different layout.
+- None of this changes the website. Checked by measuring the pages in Chrome at iPad sizes; not yet seen on the iPad (it goes out in build 2).
+- **Names with no recording (fixed 12 November 2026, Anthony's choice):** 105 names are recorded in `audio/names/`. For any other name, Bonnie now says **"buddy"** in place of the name ("Woof! Hi buddy!"), so the line stays in her recorded voice; before, the whole line dropped to the device voice. The screen still shows the child's real name. `STAND_INS` in `bonnie-voice.js` lists the words (the first one recorded is used; "friend" is recorded too, as a spare) and they are in `tools/names.txt` like any name. Test page: `tests/voice-name-test.html` (10 checks). Not yet heard on the iPad: listen for how "buddy" sounds at the joins.
+- Lines that still use the device voice: numbers of 10,000 or more, shapes like 2.5, and a few on-screen tips the recorder doesn't list.
