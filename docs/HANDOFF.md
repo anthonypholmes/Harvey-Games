@@ -153,7 +153,7 @@ If Xcode says a package such as CapApp-SPM is missing after the project moves or
 - **The bug (found on the real iPad, build 3):** in Story Nook, Anthony locked the iPad and shut the cover, and the device's robotic voice started talking through the locked iPad. Cause: a line came due just after locking, Bonnie's recording could not start (iOS had paused the sound), so `bonnie-voice.js` fell back to the device voice, which iOS lets carry on while locked.
 - **Fix 1: nothing is said while the iPad is locked or the app is put away.** `V.sleep()` in `bonnie-voice.js` stops everything on `visibilitychange` and `pagehide`, `say()` does nothing while the page is hidden, and `MeadowViewController` in `AppDelegate.swift` calls it too when the app stops being active.
 - **Fix 2: the app never uses the device voice.** If a line has no recording, or the recording can't start, Bonnie says nothing and the words stay on screen (`deviceOrQuiet()`). The website still uses the device voice. Every line has a recording (see the names test), so in normal play this only affects Bonnie's silly guesses of 10,000 or more.
-- Tests: four new checks in `tests/voice-name-test.html` (18 in all). Not yet tried on the real iPad: it goes out in the next build.
+- Tests: four new checks in `tests/voice-name-test.html` (18 in all). Confirmed on the real iPad in build 4.
 
 ## Text size and fonts ✅ (done 13 November 2026)
 
@@ -166,6 +166,16 @@ Every screen was looked at on a 2018 iPad's size, upright and sideways (pictures
 - **Less bold:** Fredoka buttons, number keys, chips, level numbers, badges and banners are 600. 700 is kept for the page and world titles, the Clubhouse sign, the game names, the two big PLAY buttons, "Let's play!" and the sum.
 - All the test pages pass. The App Store screenshots were made again with the new look.
 - **Not checked:** on the real iPad, and with the three shop themes other than the meadow.
+
+## Submitted for review (14 November 2026)
+
+- **Version 1.0 is with Apple for review.** Builds 3 and 4 went to TestFlight; build 4 has the fix for the device voice talking through a locked iPad, and **build 4 is the one submitted**. Anthony confirmed on the real iPad that locking it mid-story is now silent.
+- The in-app purchase was bought successfully in TestFlight once the Paid Apps agreement went Active. Restore purchase had not been confirmed as tested when this was written.
+- Accessibility labels: claim only Sufficient Contrast and Reduced Motion. VoiceOver, Voice Control and Larger Text are not supported or not tested.
+- TestFlight refuses child Apple Accounts, so the planned family testing was skipped. The first week after release is the real family test; fixes go out as 1.0.1.
+- **If Apple rejects it or asks a question,** paste their message into the session. Likely topics: the parental gate, where the purchase is, Kids category rules. The reviewer notes are in `docs/APP_STORE_LISTING.md`.
+- **After approval:** release it (if manual release was chosen), install it on the children's iPads from the App Store, and ask a few families for feedback and a rating.
+- **For a later version:** a VoiceOver walk-through and fixes, a layout that fits when the iPad is sideways, recordings for Bonnie's guesses of 10,000 or more.
 
 ## What comes next (the plan)
 
