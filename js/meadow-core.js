@@ -179,6 +179,23 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const nameCase = n => String(n).replace(/(^|[\s'’-])(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase());
 const nameOf = () => (S && S.name) || 'friend';
 const fmt = s => String(s).replaceAll('{N}', nameOf());
+/* STORY CHARACTERS: the children in the questions and stories, like the Sarah and Jack of a school textbook.
+   The player's own name ({N}) is only for greetings and praise. It is never part of a question, so every
+   child gets the same questions and Bonnie can always read them in her own voice (a sentence about Sarah is
+   recorded with her name in it).
+   A question picks its character when it is made (Meadow.character()), so what is written, what is said and
+   the answer all name the same child. Use the same bank in every world and every year. */
+const CHARACTERS = [
+  { name: 'Sarah', pronoun: 'she', their: 'her' }, { name: 'Jack', pronoun: 'he', their: 'his' },
+  { name: 'Lucy', pronoun: 'she', their: 'her' }, { name: 'Oliver', pronoun: 'he', their: 'his' },
+  { name: 'Mia', pronoun: 'she', their: 'her' }, { name: 'Tom', pronoun: 'he', their: 'his' },
+  { name: 'Priya', pronoun: 'she', their: 'her' }, { name: 'Ben', pronoun: 'he', their: 'his' },
+  { name: 'Ava', pronoun: 'she', their: 'her' }, { name: 'Leo', pronoun: 'he', their: 'his' },
+];
+/* When tools/make-voice.mjs lists the lines to record, a question names a stand-in, and the tool then makes the
+   line for every character. Otherwise a rarely made question could miss some characters' recordings. */
+const STAND_IN = { name: 'Qqstorynameqq', pronoun: 'Qqstorypronounqq', their: 'Qqstorytheirqq' };
+const character = () => (typeof window !== 'undefined' && window.__VOICE_LINES_ONLY__ ? STAND_IN : CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const todayGB = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 /* Bones v1.1: the device's local date as YYYY-MM-DD. clock() can be swapped by the tests (Meadow.setClock). */
@@ -1684,6 +1701,7 @@ function parentScreen() {
           <label for="pName" style="margin:0">Playing as</label>
           <input type="text" id="pName" value="${esc(S.name || '')}" maxlength="30" autocapitalize="words" autocorrect="off" spellcheck="false" aria-label="Child's name">
           <button class="btn small" type="submit">Save name</button><span class="note" id="nameOk" aria-live="polite"></span></form>
+        <p class="note" id="nameSay" aria-live="polite"></p>
         ${inApp() ? `${players.map(p => `<div class="redeem"><span><b>${esc(p.name || 'New player')}</b>${p.current ? ' (playing now)' : ''}</span>
           <span class="note">${p.bones}🦴 ${players.length > 1 ? `<button class="btn small ghost" data-rmplayer="${esc(p.id)}" data-name="${esc(p.name || 'New player')}">Remove</button>` : ''}</span></div>`).join('')}
         <p class="note">Up to ${MAX_PLAYERS} children can each have their own name, bones, stars and Bonnie outfit. To add a player or swap, use <b>Switch player</b> on the Clubhouse page.</p>` : ''}</section>
@@ -1752,6 +1770,13 @@ function parentScreen() {
     </div>`);
   if (redraw) window.scrollTo(0, scrollY);
   $$('.parent details[data-fold]').forEach(d => d.addEventListener('toggle', () => { if (d.open) parentOpen.add(d.dataset.fold); else parentOpen.delete(d.dataset.fold); }));
+  // Bonnie only says a name she has a recording of; for any other name she says the same lines without it.
+  const nameSay = () => {
+    const v = $('#pName').value.trim(), BV = window.BonnieVoice;
+    $('#nameSay').textContent = !v || !BV || !BV.pack ? '' : BV.canSay(v) ? `Bonnie can say this name ✓` : `Bonnie will write this name but not say it. She says "Well done!" where she would say "Well done, ${nameCase(v)}!"`;
+  };
+  nameSay(); $('#pName').oninput = nameSay;
+  if (window.BonnieVoice && !window.BonnieVoice.pack && window.BonnieVoice.loading) window.BonnieVoice.loading.then(() => { if ($('#nameSay')) nameSay(); });
   $('#nameForm').onsubmit = e => {
     e.preventDefault();
     const v = $('#pName').value.trim();
@@ -1911,11 +1936,12 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 .btn.green{background:var(--leaf-dark);box-shadow:0 5px 0 rgba(0,0,0,.3);box-shadow:0 5px 0 color-mix(in srgb,var(--leaf-dark) 62%,#000)}
 .btn.berry{background:var(--berry-dark);box-shadow:0 5px 0 rgba(0,0,0,.3);box-shadow:0 5px 0 color-mix(in srgb,var(--berry-dark) 62%,#000)}
 .btn.ghost{background:var(--card);color:var(--ink);border:2px solid var(--card-edge);box-shadow:0 4px 0 var(--card-edge)}
-.btn.small{font-size:.95rem;padding:8px 14px;min-height:44px;border-radius:12px}
+/* 600 is bold enough for Fredoka: 700 is kept for the main titles */
+.btn.small{font-size:1rem;padding:8px 14px;min-height:44px;border-radius:12px}
 .btn:disabled{opacity:.45;pointer-events:none}
 h1,h2,h3,h4{margin:0;font-weight:700}
 .on-bg{color:var(--on-bg)}
-.note{font-size:.9rem;color:var(--ink-soft)}
+.note{font-size:1rem;color:var(--ink-soft)}
 .hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:18px 22px;margin-bottom:18px}
 .hero h1{font-size:clamp(1.6rem,4vw,2.4rem)}
 .hero p{margin:6px 0 0;font-family:var(--font-read);font-size:1.15rem;color:var(--ink-soft)}
@@ -1926,13 +1952,13 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 .world-card h3{font-size:1.3rem}
 .world-card .sub{font-family:var(--font-read);color:var(--ink-soft)}
 .world-card .wstars{font-weight:600;color:var(--wood-dark)}
-.world-card .free-note{font-size:.9rem;font-weight:600;color:var(--ink-soft)}
+.world-card .free-note{font-size:1rem;font-weight:600;color:var(--ink-soft)}
 .stone.paid .lt,.stone.paid .lb{opacity:.6}
 .stone.paid .num{filter:grayscale(.5)}
 .stone .padlock{position:relative;display:block;width:26px;height:20px;margin-top:10px;border-radius:6px;background:var(--gold);border:3px solid var(--wood-dark)}
 .stone .padlock i{position:absolute;left:3px;top:-14px;width:14px;height:14px;border:3px solid var(--wood-dark);border-bottom:0;border-radius:9px 9px 0 0}
 .stone .new-badge.full{background:var(--ink-soft);color:#fff}
-.world-card .ribbon{position:absolute;top:14px;right:-34px;transform:rotate(35deg);background:var(--gold);padding:3px 40px;font-size:.75rem;font-weight:700}
+.world-card .ribbon{position:absolute;top:14px;right:-34px;transform:rotate(35deg);background:var(--gold);padding:3px 40px;font-size:.85rem;font-weight:600}
 .home-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
 .map{padding:20px;margin-top:6px}
 .map-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
@@ -1941,17 +1967,17 @@ h1,h2,h3,h4{margin:0;font-weight:700}
 .path{position:relative;display:flex;flex-direction:column;gap:14px;padding:10px 0}
 .stone{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:20px;background:#F5EEDF;border:2px dashed var(--card-edge);width:min(560px,100%);text-align:left;transition:transform .15s}
 .stone:nth-child(even){margin-left:auto}
-.stone .num{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;font-weight:700;color:#fff;flex:none;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.stone .num{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;font-weight:600;color:#fff;flex:none;box-shadow:0 4px 0 rgba(0,0,0,.18)}
 .stone .lt{font-weight:600;font-size:1.1rem}
-.stone .lb{font-family:var(--font-read);color:var(--ink-soft);font-size:.95rem}
+.stone .lb{font-family:var(--font-read);color:var(--ink-soft);font-size:1rem}
 .stone .eg{white-space:nowrap;background:#fff;border-radius:8px;padding:0 6px}
 .stone .ls{font-size:1.2rem;letter-spacing:2px}
-.stone .new-badge{display:inline-block;margin-top:4px;padding:2px 12px;border-radius:999px;background:var(--gold);color:var(--ink);font-weight:700;font-size:.95rem;box-shadow:0 2px 0 rgba(74,59,44,.18)}
+.stone .new-badge{display:inline-block;margin-top:4px;padding:2px 12px;border-radius:999px;background:var(--gold);color:var(--ink);font-weight:600;font-size:.95rem;box-shadow:0 2px 0 rgba(74,59,44,.18)}
 .stone.locked{opacity:.55;filter:grayscale(.6)}
 .stone.bad{animation:shake .45s}
 .game-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.game-top .gt{font-weight:700;color:var(--on-bg);font-size:1.1rem}
-.chip.extra{background:linear-gradient(180deg,#E9F4FB,#CFE6F5);border-color:#9CC3DE;color:#245A91;font-size:.95rem;padding:4px 12px}
+.game-top .gt{font-weight:600;color:var(--on-bg);font-size:1.1rem}
+.chip.extra{background:linear-gradient(180deg,#E9F4FB,#CFE6F5);border-color:#9CC3DE;color:#245A91;font-size:1rem;padding:4px 12px}
 .pips{display:flex;gap:6px;margin-left:auto}
 .pip{width:16px;height:16px;border-radius:50%;background:var(--card);border:2px solid var(--card-edge)}
 .pip.done{background:var(--leaf);border-color:var(--leaf-dark)}
@@ -2023,7 +2049,7 @@ body[data-theme="sea"] .walk-path{background:linear-gradient(180deg,#BCEBF2 0%,#
 body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .walk-sky .h2{background:#F1DEAE}
 /* the dig */
 .dig{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
-.dig-head{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:#7E5430;background:#F6E7CF;border:2px dashed #C9A16E;border-radius:999px;padding:6px 16px}
+.dig-head{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:#7E5430;background:#F6E7CF;border:2px dashed #C9A16E;border-radius:999px;padding:6px 16px}
 .dig-nose{display:inline-block;animation:sniffBob .5s ease-in-out infinite alternate}
 .dig-q{font-family:var(--font-read);font-size:clamp(1.5rem,3.6vw,2.1rem);margin:6px 0 4px;line-height:1.35}
 .dig-field{display:flex;justify-content:center;align-items:flex-end;gap:clamp(12px,4vw,34px);width:100%;padding:70px 10px 10px;border-radius:24px;background:radial-gradient(ellipse at 50% 120%,#9ECB78 0 60%,transparent 61%),linear-gradient(180deg,transparent 40%,#BFE0A0 40%)}
@@ -2053,13 +2079,13 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 @media (prefers-reduced-motion:reduce){.walker,.wstone,.wstone .wicon,.wstone .wpaw,.wdig,.mound .heap,.mound .find{transition:none}.walk-in,.paw-stamp,.walker.trot .walker-bob,.wstone.now,.walk-sky .sun,.walk-sky .cloud,.wdig .sniff,.dig-nose,.mound.treasure .find,.mound .clod{animation:none}}
 .play-card{padding:22px;min-height:440px}
 .dock{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px}
-.bubble{background:#fff;border:2px solid var(--card-edge);border-radius:18px;padding:12px 14px;font-family:var(--font-read);font-size:1.08rem;line-height:1.35;position:relative;width:100%;min-height:64px}
+.bubble{background:#fff;border:2px solid var(--card-edge);border-radius:18px;padding:12px 14px;font-family:var(--font-read);font-size:1.15rem;line-height:1.35;position:relative;width:100%;min-height:64px}
 .bubble::after{content:"";position:absolute;bottom:-11px;left:50%;margin-left:-10px;border:10px solid transparent;border-top-color:#fff;border-bottom:0}
 .bubble::before{content:"";position:absolute;bottom:-14px;left:50%;margin-left:-12px;border:12px solid transparent;border-top-color:var(--card-edge);border-bottom:0}
 .bubble.pop{animation:pop .35s}
 .bubble b{color:var(--accent-dark)}
-.ladder{display:flex;gap:6px;align-items:center;font-size:.8rem;color:var(--ink-soft)}
-.ladder .rung{width:22px;height:22px;border-radius:50%;background:#F1E8D6;color:var(--ink);display:grid;place-items:center;font-size:.75rem}
+.ladder{display:flex;gap:6px;align-items:center;font-size:.9rem;color:var(--ink-soft)}
+.ladder .rung{width:22px;height:22px;border-radius:50%;background:#F1E8D6;color:var(--ink);display:grid;place-items:center;font-size:.85rem}
 .ladder .rung.on{background:var(--gold)}
 .bonnie{position:relative;width:140px;height:140px;cursor:pointer;flex:none;transition:transform .2s}
 .bonnie svg{width:100%;height:100%;overflow:visible}
@@ -2087,7 +2113,7 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .hatprev.big{width:140px;height:140px;margin:0 auto}
 .swatch{width:70px;height:50px;border-radius:12px;border:2px solid var(--card-edge)}
 .swatch.big{width:140px;height:90px;margin:0 auto 8px}
-.item .cost{font-weight:700;color:var(--wood-dark)}
+.item .cost{font-weight:600;color:var(--wood-dark)}
 .meter{display:block;width:100%;height:10px;border-radius:99px;background:#EFE5D0;overflow:hidden}
 .meter i{display:block;height:100%;background:var(--leaf);border-radius:99px}
 .modal .item{margin:10px auto;max-width:240px;box-shadow:none}
@@ -2098,6 +2124,7 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .parent{padding:22px;display:flex;flex-direction:column;gap:18px}
 .parent section{border-top:2px dashed var(--line);padding-top:14px}
 .parent h4{margin:12px 0 4px}
+.parent .note{font-size:.93rem}
 .parent label{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0;font-weight:500;min-height:44px}
 .parent input[type=checkbox],.parent input[type=radio]{width:24px;height:24px;flex:none;accent-color:var(--leaf-dark)}
 .parent label.tick{flex-wrap:nowrap}
@@ -2122,7 +2149,7 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .modal{max-width:460px;width:100%;padding:26px;text-align:center;animation:pop .35s}
 .modal h2{font-size:1.7rem;margin-bottom:6px}
 .modal p{font-family:var(--font-read);font-size:1.15rem}
-.modal p.note{font-family:var(--font-ui);font-size:.9rem}
+.modal p.note{font-family:var(--font-ui);font-size:1rem}
 .modal p.kind{color:var(--leaf-dark);font-weight:700}
 .modal .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .modal input{font-size:1.5rem;width:140px;text-align:center;padding:8px;border-radius:12px;border:2px solid var(--card-edge);font-family:inherit}
@@ -2131,7 +2158,7 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .stars-big span.off{opacity:.45}
 .fly{position:fixed;z-index:90;pointer-events:none;font-size:1.8rem;transition:transform .8s cubic-bezier(.5,-0.3,.6,1),opacity .8s}
 .confetti{position:fixed;top:-40px;z-index:85;pointer-events:none;font-size:1.6rem;animation:fall linear forwards}
-.banner{position:fixed;left:50%;top:80px;transform:translateX(-50%);z-index:95;background:linear-gradient(180deg,#FFE48A,#F2C14E);border:3px solid #C99A2E;border-radius:20px;padding:12px 22px;font-weight:700;font-size:1.3rem;box-shadow:var(--shadow);animation:bannerIn 2.4s forwards;pointer-events:none;text-align:center;white-space:nowrap}
+.banner{position:fixed;left:50%;top:80px;transform:translateX(-50%);z-index:95;background:linear-gradient(180deg,#FFE48A,#F2C14E);border:3px solid #C99A2E;border-radius:20px;padding:12px 22px;font-weight:600;font-size:1.3rem;box-shadow:var(--shadow);animation:bannerIn 2.4s forwards;pointer-events:none;text-align:center;white-space:nowrap}
 .shake{animation:screenShake .4s}
 .float-plus{position:fixed;z-index:92;pointer-events:none;font-weight:700;font-size:1.5rem;color:var(--leaf-dark);animation:floatUp 1s ease-out forwards;text-shadow:0 2px 0 #fff}
 .drag-ghost{position:fixed!important;z-index:100;pointer-events:none;transform:scale(1.12) rotate(-4deg);box-shadow:0 18px 30px rgba(0,0,0,.25)!important;margin:0!important}
@@ -2263,6 +2290,8 @@ window.Meadow = {
     shakeScreen, tickle, tickleEgg, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show,
     applyTheme }, // the theme and Bonnie's coat colour
   spokenLines, hostLines, numberLines,
+  // the children in the questions and stories: [{ name, pronoun, their }], and one picked at random
+  characters: CHARACTERS, character,
   // tests only: pretend the date is something else (fn returns a Date; leave it out to go back to the real clock)
   setClock: fn => { clock = typeof fn === 'function' ? fn : () => new Date(); },
 };

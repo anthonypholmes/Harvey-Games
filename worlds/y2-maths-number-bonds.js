@@ -9,7 +9,7 @@
 (() => {
 'use strict';
 const M = window.MeadowMaths;
-const { rand, pick, near, gq, fillStep, burrow, burrowCount, burrowFull, countsOf, NAME } = M;
+const { rand, pick, near, gq, fillStep, burrow, burrowCount, burrowFull, countsOf, WHO } = M;
 
 // put k of the question's carrots (or bones) into the burrows in order, so the first frame fills first
 function placeIn(v, k) {
@@ -135,9 +135,9 @@ function make20(type, easy) {
     const a = rand(5, 9); return miss20('b20miss', a, rand(11, a + 9));
   }
   // word problems, with carrots and the player's name
-  if (Math.random() < .5) { const [n, s] = subPair(); return sub20('b20word', n, s, `${NAME()} has ${n} carrots. Bonnie eats ${s}. How many are left?`, 'carrot'); }
+  if (Math.random() < .5) { const [n, s] = subPair(); return sub20('b20word', n, s, `${WHO()} has ${n} carrots. Bonnie eats ${s}. How many are left?`, 'carrot'); }
   const [a, b] = addPair();
-  return add20('b20word', a, b, `${NAME()} picks ${a} carrots, then ${b} more. How many carrots now?`);
+  return add20('b20word', a, b, `${WHO()} picks ${a} carrots, then ${b} more. How many carrots now?`);
 }
 
 /* ---------- Level 3: Tens Facts ---------- */
@@ -263,7 +263,7 @@ function makeOnesTens(type, easy) {
   if (type === 'addTens' || type === 'subTens') {
     const add = type === 'addTens', t = add ? rand(1, 7) : rand(2, 9), a = t * 10 + rand(1, 9);
     const k = add ? rand(1, easy ? Math.min(2, 9 - t) : 9 - t) : rand(1, easy ? Math.min(2, t - 1) : t - 1), b = 10 * k;
-    return add ? addTensQ(a, b, story ? `${NAME()} has ${a} bones. Bonnie brings ${b} more. How many now?` : `What is ${a} add ${b}?`)
+    return add ? addTensQ(a, b, story ? `${WHO()} has ${a} bones. Bonnie brings ${b} more. How many now?` : `What is ${a} add ${b}?`)
       : subTensQ(a, b, story ? `There are ${a} carrots. The rabbits eat ${b}. How many are left?` : `What is ${a} take away ${b}?`);
   }
   const cross = !easy && Math.random() < .6, t = rand(type === 'subOnes' ? 2 : 1, 8);
@@ -272,7 +272,7 @@ function makeOnesTens(type, easy) {
     return addOnesQ(a, b, story ? `Bonnie has ${a} bones. She digs up ${b} more. How many now?` : `What is ${a} add ${b}?`);
   }
   const o = cross ? rand(1, 7) : rand(2, 9), a = t * 10 + o, b = cross ? rand(o + 1, 9) : rand(1, o);
-  return subOnesQ(a, b, story ? `${NAME()} has ${a} carrots. Bonnie eats ${b}. How many are left?` : `What is ${a} take away ${b}?`);
+  return subOnesQ(a, b, story ? `${WHO()} has ${a} carrots. Bonnie eats ${b}. How many are left?` : `What is ${a} take away ${b}?`);
 }
 
 /* Level 5: 2-digit add or take away 2-digit: tens first, then ones */
@@ -316,7 +316,7 @@ function makeTwoDigit(type, easy) {
   const ta = rand(swap ? 3 : 2, 9), tb = rand(1, ta - (swap ? 2 : 1));
   const oa = swap ? rand(1, 8) : rand(1, 9), ob = swap ? rand(oa + 1, 9) : rand(1, oa);
   const a = 10 * ta + oa, b = 10 * tb + ob;
-  return twoSubQ(a, b, story ? `${NAME()} picked ${a} carrots. The rabbits ate ${b}. How many are left?` : `What is ${a} take away ${b}?`);
+  return twoSubQ(a, b, story ? `${WHO()} picked ${a} carrots. The rabbits ate ${b}. How many are left?` : `What is ${a} take away ${b}?`);
 }
 
 /* ---------- Level 6: three numbers, spotting a bond to 10 ---------- */

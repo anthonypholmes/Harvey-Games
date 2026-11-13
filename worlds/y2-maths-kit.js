@@ -25,7 +25,8 @@ const U = Meadow.ui, { $, $$, esc } = U;
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-const NAME = () => U.fmt('{N}');
+const NAME = () => U.fmt('{N}'); // the player: for Bonnie's hellos only, never in a question
+const WHO = () => Meadow.character().name; // a story character for a word problem (Sarah, Jack …)
 const reduced = () => U.reduceMotion();
 
 // place value: one colour per place, used everywhere (blocks, digits, labels)
@@ -1574,13 +1575,37 @@ const CSS = String.raw`
 .mm .tickle-pop { position: absolute; left: 50%; bottom: calc(100% - 4px); transform: translateX(-50%); width: max-content; max-width: 210px; text-align: center; line-height: 1.2; background: #fff; border: 2px solid var(--fur); border-radius: 16px; padding: 2px 10px; font-family: var(--f-display); font-weight: 700; font-size: 16px; color: var(--fur-dk); animation: mm-tpop 1.6s ease-out forwards; pointer-events: none; z-index: 3; }
 @keyframes mm-tpop { 0% { opacity: 0; transform: translate(-50%, 8px) scale(.6); } 20% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -16px); } }
 .mm-numpop { font-family: 'Fredoka', 'Nunito', system-ui, sans-serif; }
+/* ---------- text a child reads (13 November 2026) ----------
+   Anything a child reads to learn (the question, Bonnie's clues and explanations, the Captain's ideas, word
+   answers) is in Andika, the font made for early readers, the same as Meadow Words. Fredoka is for numbers,
+   buttons and headings, and mostly at 600: 700 is kept for the sum itself and the answer box.
+   The question is the biggest writing on the card. Supporting text a child must act on is at least 16px (1rem). */
+.mm { --f-read: 'Andika', 'Trebuchet MS', sans-serif; }
+.mm .prompt, .mm .tip, .mm .feedback, .mm .mstep-say, .mm .quest, .mm .reason, .mm .why, .mm .scroll b, .mm .scroll .sub,
+.mm .choices.wordy .choice, .mm .mchip.word, .mm .eqline .word, .mm .glabel, .mm .tlog, .mm .wait-note, .mm .host-say { font-family: var(--f-read); }
+.mm .glabel b, .mm .feedback .big, .mm .wait-note.big { font-family: var(--f-display); }
+.mm .prompt { font-size: clamp(25px, 3.3vw, 31px); font-weight: 700; line-height: 1.3; }
+.mm .tip { font-size: 18px; }
+.mm .feedback { font-weight: 400; }
+.mm .feedback .big { font-weight: 600; }
+.mm .mstep-say { font-size: 26px; line-height: 1.2; }
+.mm .quest { font-weight: 400; font-size: 17px; }
+.mm .glabel, .mm .tlog, .mm .reason, .mm .wait-note { font-weight: 400; }
+.mm .eqline .word, .mm .choices.wordy .choice, .mm .mchip.word, .mm .why { font-weight: 700; }
+.mm .mbtn, .mm .key, .mm .choice, .mm .mchip, .mm .nl-lab, .mm .nl-val, .mm .tbtn, .mm .picked, .mm .tickle-pop, .mm .mstep-wait,
+.mm .teach-card, .mm .mstep, .mm .wstep, .mm .gv-empty, .mm-numpop { font-weight: 600; }
+.mm .choices.wordy .choice, .mm .mchip.word { font-weight: 700; }
+.mm .host-say { font-size: 16px; font-weight: 400; }
+.mm .scroll small { font-size: 15px; }
+.mm .wstep i { font-size: 16px; }
+.mm .buddy .feedback { font-size: 18px; }
 `;
 if (!document.getElementById('meadow-maths-kit')) {
   const st = document.createElement('style'); st.id = 'meadow-maths-kit'; st.textContent = CSS; document.head.appendChild(st);
 }
 
 window.MeadowMaths = {
-  world, addLevels, SHAPES, rand, pick, shuffle, NAME, PL, len, pow, countsOf, partsOf, joinAnd, placeList, nameCount, colorNum, near, makesChoices,
+  world, addLevels, SHAPES, rand, pick, shuffle, NAME, WHO, PL, len, pow, countsOf, partsOf, joinAnd, placeList, nameCount, colorNum, near, makesChoices,
   rd, fmtN, range, pick3, JUMPS, jumpOpts, gq, fillStep, shareDone, gridOk, shapeSVG, frac, sum, PRAISE, TIER_NAMES,
   burrow, burrowCount, burrowFull, burrowPlaced,
   teach: { slips: teachSlips, teachable, LINES: TEACH_LINES }, // Teach Bonnie (for the tests)

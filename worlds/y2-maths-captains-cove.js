@@ -9,7 +9,7 @@
 (() => {
 'use strict';
 const M = window.MeadowMaths;
-const { rand, pick, shuffle, near, gq, NAME } = M;
+const { rand, pick, shuffle, near, gq, WHO } = M;
 
 const CAPTAIN = 'Captain Croak';   // the name lives here only, so it's easy to change
 const range = (a, b, s = 1) => { const r = []; for (let x = a; x <= b; x += s) r.push(x); return r; };
@@ -188,7 +188,7 @@ const TF = [
     check: ({ n, word }) => (word === 'even') === even(n) },
   { id: 'share', easyOk: true,
     make(easy) { const g = pick(easy ? [2] : [2, 3, 5]), e = rand(2, easy ? 5 : 6), n = g * e, t = coin(), s = t ? e : wrongBy(e, [1, -1]);
-      return { nums: { n, g, s }, truth: t, text: `If ${NAME()} shares ${n} bones between ${g} dogs, each dog gets ${s}`, clue: 'Share them out one each.',
+      return { nums: { n, g, s }, truth: t, text: `If ${WHO()} shares ${n} bones between ${g} dogs, each dog gets ${s}`, clue: 'Share them out one each.',
         reasons: [t ? `${g} lots of ${e} make ${n}` : `${g} lots of ${s} make ${g * s}, not ${n}`, `Sharing means take away ${g}`, `${g} lots of ${e} make ${n + g}`],
         steps: [[`${g} lots of what make ${n}?`, near(e), e], [`Is that ${s}?`, YN, yn(s === e)]] }; },
     check: ({ n, g, s }) => g * s === n },

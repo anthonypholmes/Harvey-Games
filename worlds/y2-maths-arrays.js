@@ -6,7 +6,7 @@
 (() => {
 'use strict';
 const M = window.MeadowMaths;
-const { rand, pick, near, gq, fillStep, gridOk, NAME } = M;
+const { rand, pick, near, gq, fillStep, gridOk, WHO } = M;
 
 const AO_LEVELS = [
   { name: 'Bone Groups', blurb: 'Equal groups and adding again', eg: '5 + 5 + 5 = 15',
@@ -87,7 +87,7 @@ const AO_LEVELS = [
   { name: 'Word Problems', blurb: 'Groups in little stories', eg: '4 plates of 3 bones',
     seq: ['w', 'w', 'w', 'w', 'w', 'w', 'w', 'w', 'w'],
     make(type, k, easy) {
-      const g = rand(2, easy ? 3 : 5), n = easy ? pick([2, 5, 10]) : pick([2, 3, 4, 5, 10]), p = g * n, N = NAME();
+      const g = rand(2, easy ? 3 : 5), n = easy ? pick([2, 5, 10]) : pick([2, 3, 4, 5, 10]), p = g * n, N = WHO();
       const [story, box, it, word] = pick([
         [`${N} has ${g} plates with ${n} bones on each. How many bones altogether?`, 'plate', 'bone', 'bones'],
         [`Bonnie buries ${n} bones in each of ${g} holes. How many bones is that?`, 'plate', 'bone', 'bones'],

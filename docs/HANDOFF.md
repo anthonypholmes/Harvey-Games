@@ -1,6 +1,6 @@
 # Meadow Clubhouse App Store project: handoff
 
-**Last updated:** 12 November 2026
+**Last updated:** 13 November 2026
 **Repo:** `anthonypholmes/Harvey-Games`. Work happens on the **`app-store`** branch. `main` is the live website (holmeshouse.co.uk) and must not be touched.
 **Owner:** Anthony. He isn't a developer, so explain steps plainly, give commands to paste, and do the technical work yourself where you can.
 
@@ -130,53 +130,35 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 
 If Xcode says a package such as CapApp-SPM is missing after the project moves or is pulled afresh, quit Xcode and reopen it with `npm run app:open`.
 
-## Next job: children's names (decided 13 Nov, replaces the 12 Nov idea; not built yet)
+## Children's names ✅ (built 13 November 2026)
 
-**The principle:** keep personalisation and learning separate, the way primary school textbooks do. Children are used to questions about Sarah, Jack, Tom or Lucy, so the questions don't need to be about them. The player's own name belongs in the Clubhouse, greetings and praise. The learning content uses a small bank of story characters.
+**The principle:** personalisation and learning are separate, the way primary school textbooks do it. The player's own name is for the Clubhouse, greetings and praise. Questions and stories are about a small bank of story characters.
 
-| Situation | What Bonnie says (always her recorded voice) |
-|---|---|
-| Greeting, name recorded | "Hello, Harvey! Ready to play?" |
-| Greeting, name not recorded | "Hello! Ready to play?" |
-| Praise, name recorded | "Brilliant work, Harvey!" |
-| Praise, name not recorded | "Brilliant work!" |
-| Maths word problem | "Sarah has 12 apples. She gives 4 to Jack. How many does she have left?" |
-| Story or reading activity | Characters from the fixed bank, all recorded |
+- **The player's name.** Always shown on screen. Bonnie only *says* it if it has a recording (`tools/names.txt`, 109 names with the story characters). For any other name she says the **same line without the name**, as its own recording: "Well done, {N}!" → "Well done!", "Hi {N}!" → "Hi!". No stand-in word ("buddy" and "friend" are gone, with their recordings). So a child called Zebedee hears Bonnie's own voice everywhere, never the device voice.
+  - `dropName()` in `bonnie-voice.js` takes the name out by rule (after a comma, before ! ? or ., or at the start of a sentence). `NAME_FREE` there is the place for a line the rules would leave sounding odd; nothing needs it yet. `plan()` uses the name-free clip whenever the name has no recording.
+  - **The screen still shows the name** in Bonnie's speech bubble, even when she doesn't say it (a choice: change it in one place if Anthony would like the bubble to match the voice).
+  - `tools/make-voice.mjs` records the name-free sentences (33 of them) and warns if a new line needs the name to make sense. `--list-name-lines` lists every line with the name in it.
+- **Story characters:** Sarah, Jack, Lucy, Oliver, Mia, Tom, Priya, Ben, Ava and Leo (`CHARACTERS` in `js/meadow-core.js`, each with `pronoun` and `their`). `Meadow.character()` picks one when a question is made, so the writing, the voice and the answer all name the same child. `WHO()` in `worlds/y2-maths-kit.js` is the short way for a maths word problem. "Sam" is not in the bank because one sentence in Sentence Meadow already uses it.
+  - Every `{N}` is out of the questions: the maths word problems (Number Bonds Burrow, Array Orchard, Sharing Pond, Captain's Cove), Sentence Meadow, Tricky Word Trail and all of Story Nook. The stories and sentences each have a fixed character.
+  - A sentence about a character is **recorded with the name in it** ("Tom has a green hat."), which sounds more natural than joining a name on. For the number sentences the first piece carries the name ("Mia has" + 12 + "carrots.").
+  - Use the same bank for Year 3 and Year 4. Keep the player's name out of anything a child has to read to answer.
+- **Grown-ups:** under the name box it says "Bonnie can say this name ✓" or "Bonnie will write this name but not say it", and updates as the name is typed.
+- **Recorded:** 142 clips, about 2,700 characters (roughly 1,080 credits). `npm run voice:check` reports 0 to make.
+- **Test page:** `tests/voice-name-test.html` (14 checks). It opens all four game pages as Zebedee (no recording), Harvey (recorded), Jack (recorded and a story character) and Red (no recording, and an ordinary word in the stories), and checks that every one of about 9,600 lines is in Bonnie's recorded voice, that the name is only ever where it can be left out, and that no question has the player's name. The only lines left on the device voice are Bonnie's silly guesses of 10,000 or more.
+- **Not checked:** nobody has listened to the new clips. Listen to a few name-free lines ("Well done!", "Hi!") and a story or two, and to how "Priya" is said.
+- **Don't** (still true): generate names live with ElevenLabs in the app, use the device voice for just the name, let parents record names, or grow the list to hundreds.
 
-### 1. The player's name: only in greetings and encouragement
-- The name is always shown on screen (Clubhouse title, profile, stars and bones).
-- Bonnie only *says* it if it's in the recorded list (`tools/names.txt`, about 120 names now). **Don't** grow it to hundreds of names. That idea has been dropped.
-- If the name isn't recorded, Bonnie says a **name-free version** of the line, recorded as its own clip. No stand-in word ("buddy" and "friend" were rejected): "Well done, {N}!" → "Well done!", "{N}, look at this!" → "Look at this!", "Thank you {N}! I love my golden coat!" → "Thank you! I love my golden coat!"
-- Build it with a `dropName()` helper (simple rules plus a small override map for awkward lines) and check every result reads naturally. `bonnie-voice.js` uses the name-free clip whenever the player's name has no recording, so it never falls back to the device voice. `tools/make-voice.mjs` records the name-free variants. Run `npm run voice:check` first for the cost.
-- For a player whose name isn't recorded, the speech bubble can show the name-free line too, so what's read and what's heard match. Decide this per line if needed.
+## Text size and fonts ✅ (done 13 November 2026)
 
-### 2. Learning content: a bank of story characters
-- Choose **8 to 12 character names** (for example Sarah, Jack, Lucy, Oliver, Tom, Mia, Sam, Priya, Leo, Ava: a mix of boys and girls, easy to read and decode for Year 2). Record them all in Shelley's voice. Check which are already in `tools/names.txt`.
-- **Remove the player's name (`{N}`) from all puzzle and question content:** maths word problems, Meadow Words sentence fixing and word building, Story Nook, and anything else. Audit every world.
-- **Pick the character when the question is generated**, never by swapping names in the audio. The written question, the answer logic and Bonnie's narration must all refer to the same person. Handle pronouns (she/he) with the character too. Store something like `{ name, pronoun }` with the question.
-- Reuse the same bank across every world, so Year 3 and Year 4 content needs no new name work.
-- Later, after launch, these characters could become Bonnie's recurring friends. Not for version 1.0.
+Every screen was looked at on a 2018 iPad's size, upright and sideways (pictures before and after, side by side, are in `docs/text-check/`).
 
-### 3. Name entry and grown-ups
-- When the child types their name, Bonnie says it back if it's recorded ("Hello, Harvey!"), or "Hello!" if not.
-- In grown-ups, show "Bonnie can say this name ✓" or "Bonnie will write this name but not say it".
-
-### 4. Tests
-- Every line with `{N}` has a recorded name-free clip.
-- An unrecorded name (e.g. "Zebedee") still gets Bonnie's recorded voice everywhere, never the device voice.
-- No question or puzzle content contains `{N}`, and every question's text and spoken version name the same character.
-
-**Don't:** generate names live with ElevenLabs in the app (needs the internet, costs per child, sends a child's name to a third party, a problem for the Kids category), use the device voice for just the name, let parents record names, or build a bigger name system. Keep it simple for release.
-
-## Next job: text size and fonts check (requested 13 Nov)
-
-Go through every screen (Clubhouse, both games and their worlds, Bonnie's Walk, Bone Shop, grown-ups, players, the unlock screen) and check readability on the iPad:
-
-1. **Important instructions must be comfortably readable.** Aim for at least `1rem` for essential supporting text where the layout allows (hints, instructions, labels a child must act on). Small print is only OK for truly secondary text.
-2. **The child's question text stays noticeably larger** than everything around it.
-3. **Reduce the boldness.** Fredoka at weight 600 usually has enough personality. Not every button, chip and label needs 700. Keep 700 for the few things that really need it (main titles, the main PLAY buttons).
-4. **Use Andika for all educational text.** Whenever a child reads a question, explanation, story or word to build, use Andika (designed for early readers) rather than Fredoka. Fredoka is for headings, buttons and decoration.
-5. Check portrait and landscape, and after changes run all the `tests/` pages. Send Anthony before and after screenshots of a few key screens.
+- **Andika for what a child reads to learn.** Meadow Words, Bonnie's Walk and Bonnie's speech bubble already used it. **Meadow Maths did not:** its questions, clues, explanations, step cards, word answers and the Captain's conjectures were in Fredoka or Nunito, and are now Andika. The block is at the end of the styles in `worlds/y2-maths-kit.js` ("text a child reads").
+- **Left in Fredoka on purpose:** the sum itself ("5 + 8 ="), the answer box, the number keys and number choices, and the number line. They are numerals in the game's own look, not sentences. Say if they should be Andika too.
+- **The question is the biggest writing on the card:** 25 to 31px in maths (it was 22 to 28px), above 17 to 18px supporting text.
+- **Nothing a child must act on is under 1rem (16px):** Bonnie's speech bubble 1.15rem, hints and notes 1rem (they were 0.9), small buttons 1rem, the level blurbs 1rem, "Level 1 is free to play" 1rem, the maths instructions 18px. Still smaller, as true small print: the "Full game" ribbon, the hint numbers, the labels on the place-value blocks, and the grown-ups' notes (0.93rem, for adults).
+- **Less bold:** Fredoka buttons, number keys, chips, level numbers, badges and banners are 600. 700 is kept for the page and world titles, the Clubhouse sign, the game names, the two big PLAY buttons, "Let's play!" and the sum.
+- All the test pages pass. The App Store screenshots were made again with the new look.
+- **Not checked:** on the real iPad, and with the three shop themes other than the meadow.
 
 ## What comes next (the plan)
 
@@ -231,5 +213,5 @@ Go through every screen (Clubhouse, both games and their worlds, Bonnie's Walk, 
 - **A tighter Clubhouse when held upright** (`html.in-app` rules in `index.html`): a smaller sign and pictures, and no description under each game, so it fits on one screen.
 - **Still scroll, because they are longer than the screen:** the Bone Shop, the grown-ups area, the Maths world list (6 worlds), the level map slightly, and most pages when the iPad is sideways (the Clubhouse by about 490px). Fixing sideways would need a different layout.
 - None of this changes the website. Checked by measuring the pages in Chrome at iPad sizes; not yet seen on the iPad (it goes out in build 2).
-- **Names with no recording (fixed 12 November 2026, Anthony's choice):** 105 names are recorded in `audio/names/`. For any other name, Bonnie now says **"buddy"** in place of the name ("Woof! Hi buddy!"), so the line stays in her recorded voice; before, the whole line dropped to the device voice. The screen still shows the child's real name. `STAND_INS` in `bonnie-voice.js` lists the words (the first one recorded is used; "friend" is recorded too, as a spare) and they are in `tools/names.txt` like any name. Test page: `tests/voice-name-test.html` (10 checks). Not yet heard on the iPad: listen for how "buddy" sounds at the joins.
+- **(Replaced on 13 November 2026, see "Children's names".)** Names with no recording, the 12 November idea: 105 names are recorded in `audio/names/`. For any other name, Bonnie now says **"buddy"** in place of the name ("Woof! Hi buddy!"), so the line stays in her recorded voice; before, the whole line dropped to the device voice. The screen still shows the child's real name. `STAND_INS` in `bonnie-voice.js` lists the words (the first one recorded is used; "friend" is recorded too, as a spare) and they are in `tools/names.txt` like any name. Test page: `tests/voice-name-test.html` (10 checks). Not yet heard on the iPad: listen for how "buddy" sounds at the joins.
 - Lines that still use the device voice: numbers of 10,000 or more, shapes like 2.5, and a few on-screen tips the recorder doesn't list.

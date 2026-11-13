@@ -50,6 +50,7 @@ const NAMES = [...new Set([
 ].map(s => s.trim()).filter(Boolean))];
 const WHOLE = NAMES.filter(n => n.startsWith('*')).map(n => n.slice(1).trim());
 for (let i = 0; i < NAMES.length; i++) NAMES[i] = NAMES[i].replace(/^\*\s*/, '');
+const LISTED = new Set(NAMES.map(n => n.toLowerCase())); // what names.txt and --names asked for (the story characters are added below)
 
 /* Letter sounds that ElevenLabs reads as letter names ("lll" -> "L, L, L") or too faintly get a
    different spelling when recorded. The game still says the left-hand text with the device voice.
@@ -124,18 +125,24 @@ function loadPages() {
     const hosts = vm.runInContext('Meadow.hostLines ? Meadow.hostLines() : {}', c);
     for (const [who, ls] of Object.entries(hosts)) (hostLines[who] ||= new Set()) && ls.forEach(l => hostLines[who].add(l));
     vm.runInContext('Meadow.numberLines ? Meadow.numberLines() : []', c).forEach(l => numberLines.add(l));
+    JSON.parse(vm.runInContext('JSON.stringify(Meadow.characters || [])', c)).forEach(x => characters.set(x.name, x));
     return vm.runInContext('Meadow.spokenLines()', c);
   };
+  const characters = new Map(); // the story characters: name -> { name, pronoun, their }
+  // A question made while listing names a stand-in character (see character() in js/meadow-core.js): make it for each one.
+  const everyone = l => l.includes('Qqstory') ? [...characters.values()].map(x => l.replaceAll('Qqstorynameqq', x.name).replaceAll('Qqstorypronounqq', x.pronoun).replaceAll('Qqstorytheirqq', x.their)) : [l];
   const numberLines = new Set(); // sentences with numbers in them (cut at the numbers, see bonnie-voice.js)
   const hostLines = {}; // other speakers' lines: { captain: Set }
   const call = (f, ...a) => vm.runInContext(`BonnieVoice.${f}(${a.map(x => JSON.stringify(x)).join(',')})`, ctx);
-  const lines = [...new Set([...run('index.html', 'clubhouseLines'), ...CORE_PAGES.flatMap(runCore)])];
+  const lines = [...new Set([...run('index.html', 'clubhouseLines'), ...CORE_PAGES.flatMap(runCore)].flatMap(everyone))];
   return {
-    lines, numberLines: [...numberLines], numberParts: text => call('numberParts', text),
+    lines, numberLines: [...new Set([...numberLines].flatMap(everyone))], numberParts: text => call('numberParts', text),
     hosts: Object.fromEntries(Object.entries(hostLines).map(([k, v]) => [k, [...v]])),
     pieces: (text, name) => call('pieces', text, name),
     sentences: text => call('sentences', text),
     template: (s, name) => call('template', s, name),
+    dropName: tmpl => call('dropName', tmpl), // the sentence without the child's name, or null
+    storyNames: [...characters.keys()], // the story characters (CHARACTERS in js/meadow-core.js)
     clean: s => call('cleanPiece', s),
     key: s => call('pieceKey', s),
     hasWords: s => /[\p{L}\p{N}]/u.test(s),
@@ -144,6 +151,12 @@ function loadPages() {
 
 /* ---------- 2. Work out which clips are needed ---------- */
 const game = loadPages();
+// The story characters' names are always recorded too, so a child called Tom or Priya hears their name.
+for (const n of game.storyNames) if (!NAMES.some(x => x.toLowerCase() === n.toLowerCase())) NAMES.push(n);
+if (args.includes('--list-name-lines')) { // every line with the child's name in it, for checking
+  [...game.lines, ...game.numberLines].filter(l => l.includes(NAME_TOKEN)).forEach(l => console.log(l.replaceAll(NAME_TOKEN, '{N}')));
+  process.exit(0);
+}
 const wanted = new Map(); // key -> text
 let collisions = 0;
 for (const line of game.lines) {
@@ -157,6 +170,25 @@ for (const line of game.lines) {
     wanted.set(k, text);
   }
 }
+
+/* A child whose name has no recording hears the same line without the name ("Well done, {N}!" -> "Well done!").
+   Each of those is its own clip, so Bonnie never needs the device voice for a name. */
+let nameFree = 0, noNameFree = 0;
+for (const line of game.lines) for (const s of game.sentences(line)) {
+  if (!s.raw.includes(NAME_TOKEN)) continue;
+  const free = game.dropName(game.template(s.raw, NAME_TOKEN));
+  if (free == null) { noNameFree++; console.warn('! this line needs the name to make sense. Reword it, or add a name-free version to NAME_FREE in bonnie-voice.js:', s.raw.replaceAll(NAME_TOKEN, '{N}').trim()); continue; }
+  for (const p of game.pieces(free, NAME_TOKEN)) {
+    if (p.name) continue;
+    const text = game.clean(p.raw);
+    if (!game.hasWords(text)) continue;
+    const k = game.key(text);
+    if (wanted.has(k) && wanted.get(k) !== text) { collisions++; console.warn('! two phrases share a key:', wanted.get(k), '|', text); }
+    if (!wanted.has(k)) nameFree++;
+    wanted.set(k, text);
+  }
+}
+for (const line of game.numberLines) if (line.includes(NAME_TOKEN)) { noNameFree++; console.warn('! a question has the child\'s name in it. Use a story character (Meadow.character()) instead:', line.replaceAll(NAME_TOKEN, '{N}')); }
 
 /* Sentences with numbers: the words between the numbers are clips like any other ("What goes with", "to make"),
    the maths signs are clips of their words ("plus"), and the numbers are their own clips (audio/numbers/). */
@@ -240,6 +272,7 @@ if (!DRY && CAPTAIN_VOICE && (capMan.voice !== CAPTAIN_VOICE || capMan.model !==
 }
 const capTodo = [...capWanted].filter(([k, t]) => !(exists(capMan.clips[k]) && capMan.texts[k] === t));
 
+console.log(`Names Bonnie can say: ${NAMES.length} (${game.storyNames.length} are story characters)  ·  lines without the name, for any other child: ${nameFree}${noNameFree ? `  ·  ${noNameFree} PROBLEM(S), see the warnings above` : ''}`);
 console.log(`Lines: ${game.lines.length}  ·  pieces: ${wanted.size}  ·  new clips needed: ${todo.length + namesTodo.length + wholeTodo.length + numbersTodo.length}  ·  characters: ${chars}`);
 if (game.numberLines.length) console.log(`Numbers: ${game.numberLines.length} sentences with numbers  ·  joining pieces: ${numberBits}  ·  number clips: ${numbersWanted.size} (new: ${numbersTodo.length}, ${numbersTodo.reduce((a, [, w]) => a + w.length, 0)} characters)`);
 if (DRY) {
@@ -337,6 +370,8 @@ if (VOICE) try {
     for (const k of Object.keys(manifest.whole[nl])) if (!wantedWhole.has(k)) { delete manifest.whole[nl][k]; delete manifest.wholeTexts[nl][k]; }
   }
   for (const n of Object.keys(manifest.numbers)) if (!numbersWanted.has(n)) delete manifest.numbers[n];
+  const namesWanted = new Set(NAMES.map(n => n.toLowerCase()));
+  if (!opt('--names')) for (const n of Object.keys(manifest.names)) if (!namesWanted.has(n)) delete manifest.names[n]; // a name taken out of tools/names.txt
   const keep = new Set([...Object.values(manifest.clips), ...Object.values(manifest.names), ...Object.values(manifest.numbers), ...Object.values(manifest.whole).flatMap(Object.values)]);
   const sweep = dir => { for (const f of fs.readdirSync(path.join(AUDIO, dir), { withFileTypes: true })) {
     const rel = `${dir}/${f.name}`;

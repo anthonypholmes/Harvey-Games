@@ -6,7 +6,7 @@
 (() => {
 'use strict';
 const M = window.MeadowMaths;
-const { rand, pick, shuffle, near, gq, fillStep, shareDone, shapeSVG, frac, NAME } = M;
+const { rand, pick, shuffle, near, gq, fillStep, shareDone, shapeSVG, frac, WHO } = M;
 
 const shareAct = q => ({ say: 'Tap “One each” until the pile is empty.', point: 'g-each', action: () => shareDone(q.vis), wait: 'Share them out up there!' });
 const shareSteps = (q, ask, ans) => [shareAct(q), fillStep(ask, ans, near(ans))];
@@ -15,7 +15,7 @@ const SP_LEVELS = [
     seq: ['share', 'share', 'share', 'share', 'share', 'share', 'share', 'share', 'share'],
     make(type, k, easy) {
       const bowls = easy ? 2 : pick([2, 3, 4, 5, 10]), each = rand(2, easy ? 5 : bowls === 10 ? 3 : 5), N = bowls * each;
-      const prompt = pick([`Share ${N} bones equally between ${bowls} bowls.`, `Can you help Bonnie share ${N} bones between ${bowls} bowls?`, `${NAME()} shares ${N} bones between ${bowls} bowls. How many in each?`]);
+      const prompt = pick([`Share ${N} bones equally between ${bowls} bowls.`, `Can you help Bonnie share ${N} bones between ${bowls} bowls?`, `${WHO()} shares ${N} bones between ${bowls} bowls. How many in each?`]);
       return gq({ t: 'share', prompt, eq: [{ num: N }, '÷', { num: bowls }, '=', { box: 0 }, { text: 'each' }], answer: [each], tip: 'Tap a bowl to drop a bone in.',
         vis: { type: 'share', N, bowls: Array(bowls).fill(0), box: 'bowl', item: 'bone' },
         clue: { say: 'Give every bowl one, then again.', point: 'g-each' },

@@ -24,7 +24,6 @@
     packs: {},           // their lists once loaded
     device: null,        // the chosen device voice
     missing: new Set(),  // pieces with no clip (for checking a voice pack)
-    STAND_INS: ['buddy', 'friend'], // said in place of a child's name that has no recording (the first one recorded is used; both are in tools/names.txt)
     why: '',             // why the last line used the device voice (shown in the console, for fixing the app)
   };
   const AUDIO_CACHE = 'meadow-club-audio-v1'; // must match sw.js
@@ -73,6 +72,25 @@
     }
     return at;
   };
+  /* ---------- a line without the child's name ----------
+     Bonnie only says a name she has a recording of. For any other name she says the same line without it:
+     "Well done, {N}!" -> "Well done!", "Hi {N}!" -> "Hi!", "{N}, look at this!" -> "Look at this!". Each of
+     these is recorded as its own clip (tools/make-voice.mjs), so the line is still in her own voice.
+     NAME_FREE is for a line the rules would leave sounding odd: the sentence with {N} -> what to say instead.
+     dropName() answers null when the name can't be taken out neatly (the name is part of what the sentence says). */
+  V.NAME_FREE = {};
+  V.dropName = tmpl => {
+    const t = String(tmpl), fixed = V.NAME_FREE[t.trim()];
+    if (fixed != null) return fixed;
+    if (!t.includes('{N}')) return t;
+    const s = t
+      .replace(/,\s*\{N\}\s*,/g, ',')                // "Which one, {N}, and why?"
+      .replace(/,?\s*\{N\}(?=\s*[!?.…])/g, '')       // "Well done, {N}!"  "Hi {N}!"  "Thank you {N}!"
+      .replace(/\s+\{N\}\s*,/g, ',')                 // "Come on {N}, five quick questions!"
+      .replace(/(^|[.!?…]\s+)\{N\}\s*,\s*(\p{L})/gu, (m, a, c) => a + c.toUpperCase()); // "{N}, look at this!"
+    return s.includes('{N}') ? null : s;
+  };
+  V.canSay = name => !!(name && V.pack && V.pack.names && V.pack.names[String(name).trim().toLowerCase()]);
   const cutInto = (out, chunk, base) => { let pos = 0;
     chunk.replace(/(\.\.\.|…|[.!?]+["'”’)]*)(\s+|$)/g, '$1$2\u0001').split('\u0001').forEach(raw => {
       if (raw) out.push({ raw, start: base + pos, name: false }); pos += raw.length; }); };
@@ -80,7 +98,9 @@
   V.sentences = text => { const out = []; cutInto(out, text, 0); return out; };
   /* A sentence with the name swapped for {N} (used to find whole-sentence recordings of a name). */
   V.template = (clean, name) => { let s = clean; nameAt(clean, name).reverse().forEach(i => { s = s.slice(0, i) + '{N}' + s.slice(i + String(name).length); }); return s; };
-  /* Pieces: sentences, "..." pauses and the child's name. [{raw, start, name}]; raw keeps spacing so offsets add up. */
+  /* Pieces: sentences, "..." pauses and the child's name. [{raw, start, name}]; raw keeps spacing so offsets add up.
+     (The story characters in the questions, Sarah, Jack and so on, are ordinary words here: a sentence about
+     them is recorded with the name in it.) */
   V.pieces = (text, name = V.getName()) => {
     const out = [], nm = String(name || '');
     let from = 0;
@@ -129,26 +149,44 @@
     if (!pack) { V.why = 'clip list not loaded'; return null; }
     if (!a) { V.why = 'no audio'; return null; }
     if (a.state !== 'running' && !inApp() && !(navigator.userActivation && navigator.userActivation.hasBeenActive)) { V.why = 'not tapped yet (' + a.state + ')'; return null; }
-    const out = [], name = who ? '' : V.getName(), whole = !who && V.pack.whole && V.pack.whole[String(name).toLowerCase()];
-    for (const s of V.sentences(text)) {
-      // A sentence with the name in it may be recorded whole for this name (sounds most natural)
-      let group = null;
-      if (whole && nameAt(s.raw, name).length) {
-        const f = whole[V.pieceKey(V.template(V.cleanPiece(s.raw), name))];
-        if (f) group = [{ raw: s.raw, start: s.start, name: false, file: f }];
-      }
-      for (const p of group || V.pieces(s.raw, name).map(p => ({ ...p, start: p.start + s.start }))) {
+    const out = [], name = who ? '' : String(V.getName() || ''), names = pack.names || {};
+    const sayable = !!(name && names[name.toLowerCase()]), whole = sayable && V.pack.whole && V.pack.whole[name.toLowerCase()];
+    /* The clips for one sentence, or null. `nm` is the child's name to join in ('' for none). */
+    const clipsFor = (raw, start, nm) => {
+      const got = [];
+      for (const p of V.pieces(raw, nm).map(p => ({ ...p, start: p.start + start }))) {
         const clean = V.cleanPiece(p.raw);
-        if (!V.hasWords(clean)) { if (out.length) out[out.length - 1].pause = Math.max(out[out.length - 1].pause, pauseAfter(p.raw)); continue; }
-        // A name with no recording is said as a friendly word instead ("Hi buddy!"), so the line stays in Bonnie's own voice.
-        const file = p.file || (p.name ? pack.names && (pack.names[clean.toLowerCase()] || V.STAND_INS.map(w => pack.names[w]).find(Boolean)) : pack.clips[V.pieceKey(clean)]);
+        if (!V.hasWords(clean)) { const last = got[got.length - 1] || out[out.length - 1]; if (last) last.pause = Math.max(last.pause, pauseAfter(p.raw)); continue; }
+        const file = p.name ? names[clean.toLowerCase()] : pack.clips[V.pieceKey(clean)];
         if (!file && !p.name && /\d/.test(clean) && pack.numbers) { // no recording of the whole piece: join it up from words and numbers
           const bits = numberPlan(pack, p);
-          if (bits) { out.push(...bits); continue; }
+          if (bits) { got.push(...bits); continue; }
+          return null;
         }
-        if (!file) { if (!p.name) V.missing.add((who ? who + ': ' : '') + clean); V.why = 'no clip for "' + clean + '"'; return null; }
-        out.push({ ...p, file: V.base + 'audio/' + file, pause: pauseAfter(p.raw) });
+        if (!file) { miss = (who ? who + ': ' : '') + clean; return null; }
+        got.push({ ...p, file: V.base + 'audio/' + file, pause: pauseAfter(p.raw) });
       }
+      return got;
+    };
+    let miss = '';
+    for (const s of V.sentences(text)) {
+      const has = !!name && nameAt(s.raw, name).length > 0;
+      let got = null;
+      if (has && sayable) {
+        // A sentence with the name in it may be recorded whole for this name (sounds most natural)
+        const f = whole && whole[V.pieceKey(V.template(V.cleanPiece(s.raw), name))];
+        got = f ? [{ raw: s.raw, start: s.start, name: false, file: V.base + 'audio/' + f, pause: pauseAfter(s.raw) }] : clipsFor(s.raw, s.start, name);
+      }
+      // No name in it, or the "name" is an ordinary word here (a child called Rose reading about a rose)
+      if (!got) got = clipsFor(s.raw, s.start, '');
+      // The child's name has no recording: say the sentence without it
+      if (!got && has && !sayable) {
+        const free = V.dropName(V.template(s.raw, name));
+        if (free != null) got = V.hasWords(free) ? (clipsFor(free, s.start, '') || []).map(x => ({ ...x, start: s.start })) : [];
+        if (got && !got.length && V.hasWords(free || '')) got = null;
+      }
+      if (!got) { if (miss) V.missing.add(miss); V.why = 'no clip for "' + (miss || V.cleanPiece(s.raw)) + '"'; return null; }
+      out.push(...got);
     }
     return out.length ? out : null;
   }

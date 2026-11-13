@@ -20,7 +20,7 @@ const sn = (w, p, opts = {}) => ({ w, p, proper: opts.proper || [], alts: opts.a
 const SENTENCES = [
   { title: 'Capital Letters', mode: 'caps', badges: ['.'], tip: "Every sentence starts with a capital letter. Names, places, days and the word 'I' always get capitals too!", items: [
     sn('the frog jumped in the pond', '.'), sn('i like my red kite', '.'), sn('bonnie dug a big hole', '.', { proper: ['bonnie'] }),
-    sn('{N} has a green hat', '.', { proper: ['{N}'] }), sn('we went to london on the train', '.', { proper: ['london'] }),
+    sn('tom has a green hat', '.', { proper: ['tom'] }), sn('we went to london on the train', '.', { proper: ['london'] }),
     sn('my friend sam likes cake', '.', { proper: ['sam'] }), sn('on monday i went swimming', '.', { proper: ['monday'] })] },
   { title: 'Full Stop or Question?', mode: 'punct', badges: ['.', '?'], tip: "If a sentence ASKS something, it ends with a question mark. If it TELLS us something, it gets a full stop.", items: [
     sn('where is my ball', '?'), sn('the sun is hot', '.'), sn('can you see the bee', '?'), sn('we went to the park', '.'),
@@ -30,19 +30,19 @@ const SENTENCES = [
     sn('the cat is asleep', '.'), sn('what a lovely day it is', '!'), sn('where did the duck go', '?'), sn('how tall that tree is', '!')] },
   { title: 'Word Order', mode: 'order', badges: ['.', '?', '!'], tip: "Find the word with the capital letter — that goes first! Then read it aloud to check it makes sense.", items: [
     sn('the duck swam in the pond', '.'), sn('bonnie dug up a bone', '.', { proper: ['bonnie'], alts: ['bonnie dug a bone up'] }),
-    sn('can you hop like a frog', '?'), sn('{N} ate a big red apple', '.', { proper: ['{N}'] }), sn('what a tall tree', '!'),
+    sn('can you hop like a frog', '?'), sn('mia ate a big red apple', '.', { proper: ['mia'] }), sn('what a tall tree', '!'),
     sn('the bees buzz in the meadow', '.')] },
   { title: 'Super Sentences', mode: 'all', badges: ['.', '?', '!'], tip: "Put the words in order, then give capitals to the first word and any names, days or 'I'. Finish with the right punctuation!", items: [
-    sn('on monday {N} went to the farm', '.', { proper: ['monday', '{N}'], alts: ['{N} went to the farm on monday'] }),
+    sn('on monday jack went to the farm', '.', { proper: ['monday', 'jack'], alts: ['jack went to the farm on monday'] }),
     sn('bonnie and i played outside', '.', { proper: ['bonnie', 'i'], alts: ['i and bonnie played outside'] }),
     sn('where is my teddy', '?'), sn('what a huge spider', '!'), sn('my dog is called bonnie', '.', { proper: ['bonnie'] }),
     sn('can we go to the beach', '?')] },
 ];
-/* Words that always need a capital, in every sentence: names (Bonnie, and every word of the child's own name),
-   days, months, places and 'I'. A sentence's own proper list adds more. */
-const ALWAYS_CAPS = ['i', 'bonnie', 'sam', 'london', 'christmas', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+/* Words that always need a capital, in every sentence: names (Bonnie and the story characters), days, months,
+   places and 'I'. A sentence's own proper list adds more. The player's own name is never in a sentence. */
+const ALWAYS_CAPS = ['i', 'bonnie', 'sam', ...Meadow.characters.map(c => c.name.toLowerCase()), 'london', 'christmas', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
   'january', 'february', 'april', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-const properOf = raw => [...new Set([...ALWAYS_CAPS, ...[...raw.proper, ...(raw.w.includes('{N}') ? ['{N}'] : [])].flatMap(x => fmt(x).toLowerCase().split(' '))])];
+const properOf = raw => [...new Set([...ALWAYS_CAPS, ...raw.proper.flatMap(x => x.toLowerCase().split(' '))])];
 const SENT_PROMPTS = { caps: 'Tap the words that need a capital letter!', punct: 'Which punctuation mark goes at the end?', order: 'Drag the words into the right order, then add the end mark!', all: 'Order the words, tap Aa for capitals, then add the end mark!' };
 const CSS = `
 /* ---------- Sentence meadow ---------- */

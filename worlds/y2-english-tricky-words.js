@@ -31,7 +31,7 @@ const TRICKY = [
     tw('there', 'Look over ___!', ['thare', 'ther'], "'there' has the word 'here' hiding inside it: t-HERE!"),
     tw('where', '___ is my hat?', ['wair', 'whare'], "'where' also has 'here' hiding inside: w-HERE!"),
     tw('friend', 'Bonnie is my best ___.', ['frend', 'freind'], "'friend' has a sneaky 'i' — remember: a FRIend is there till the END."),
-    tw('school', '{N} walks to ___.', ['skool', 'scool'], "'school' starts with 's-c-h' and has a double 'o'.")] },
+    tw('school', 'Lucy walks to ___.', ['skool', 'scool'], "'school' starts with 's-c-h' and has a double 'o'.")] },
   { title: 'Would, Could, Should', items: [
     tw('because', 'I am happy ___ it is sunny.', ['becos', 'becuz'], "Say it in a funny way: be-CAUSE. B-e-c-a-u-s-e!"),
     tw('people', 'Lots of ___ came to the fair.', ['peeple', 'pepul'], "'people' has a sneaky 'o' in the middle: p-e-O-p-l-e."),

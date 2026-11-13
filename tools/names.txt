@@ -11,11 +11,12 @@ Anthony
 Alaya
 Rory
 
-# Stand-in words: Bonnie says the first of these in place of a name that isn't in this list
-# ("Hi buddy!"), so the line stays in her own voice. The screen still shows the child's real name.
-# Keep them here: bonnie-voice.js (STAND_INS) looks them up like any other name.
-Buddy
-Friend
+# Story characters (Sarah, Jack, Lucy, Oliver, Mia, Tom, Priya, Ben, Ava, Leo): the children in the
+# questions and stories. They are listed in js/meadow-core.js (CHARACTERS). Their names are always
+# recorded as well, so a child with one of those names hears it. They don't need to be in this file.
+#
+# A child whose name is NOT in this file still hears Bonnie's own voice: she says the same line
+# without the name ("Well done!"). So this list does not need to grow to hundreds of names.
 
 # Boys
 Oliver
