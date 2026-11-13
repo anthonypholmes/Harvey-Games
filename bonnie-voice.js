@@ -1,8 +1,8 @@
 /* Bonnie's voice — shared by the Clubhouse and Meadow Words.
  *
  * BonnieVoice.say(text, opts) plays recorded ElevenLabs clips (made by tools/make-voice.mjs and
- * listed in audio/manifest.json) when every piece of the line has a clip, and otherwise uses the
- * device's own British voice. BonnieVoice.whenQuiet(fn) runs fn once Bonnie has finished talking,
+ * listed in audio/manifest.json) when every piece of the line has a clip. Otherwise, on the website, it uses
+ * the device's own British voice; in the App Store app it says nothing (Bonnie only has her recorded voice there). BonnieVoice.whenQuiet(fn) runs fn once Bonnie has finished talking,
  * so a game can wait for her instead of cutting her off.
  *
  * Other speakers (like Captain Croak in Captain's Cove) have their own clips in audio/<who>.json:
@@ -29,7 +29,6 @@
   const AUDIO_CACHE = 'meadow-club-audio-v1'; // must match sw.js
   const hasSpeech = () => typeof speechSynthesis !== 'undefined';
   const inApp = () => typeof window !== 'undefined' && !!window.MEADOW_IN_APP; // the App Store app (Capacitor)
-  const because = (why, text) => { V.why = why; if (typeof console !== 'undefined') console.warn('[Bonnie] device voice: ' + why + ' | ' + String(text).slice(0, 60)); };
   let token = 0, nodes = [], speaking = false, waiters = [], safety = null, utter = null, pending = null;
   if (typeof document !== 'undefined') document.addEventListener('pointerdown', () => {
     const p = pending; pending = null; V.getAudio(); // unlocks sound
@@ -225,6 +224,16 @@
   // Run waiting jobs one at a time; if one makes Bonnie speak, the rest wait for that line too.
   function flush() { while (!speaking && waiters.length) waiters.shift()(); }
   V.hush = () => { cut(); waiters = []; };
+  /* When the iPad is locked, its cover is shut or the app is put away, everything stops at once and nothing new
+     starts until the game is on screen again. (Found on 14 November 2026: a line that came due just after the
+     iPad was locked could not start its recording, so it fell back to the device voice, which carried on
+     talking through the locked iPad.) Jobs that were waiting for Bonnie to finish still run, silently. */
+  const away = () => typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden');
+  V.sleep = () => { pending = null; cut(); flush(); };
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => { if (away()) V.sleep(); });
+    window.addEventListener('pagehide', V.sleep);
+  }
   V.isSpeaking = () => speaking;
   /* Run fn when Bonnie is quiet (now, if she isn't talking). */
   V.whenQuiet = fn => { if (speaking) waiters.push(fn); else setTimeout(fn, 0); };
@@ -232,6 +241,7 @@
   V.say = (text, opts = {}) => {
     cut();
     text = String(text);
+    if (away()) { setTimeout(() => { opts.onend && opts.onend(); }, 0); return null; } // locked or put away: say nothing
     // A page that talks as soon as it opens (Bonnie's Walk) can beat the clip list: wait for it (up to 2.5s)
     // so the first line is Bonnie's recorded voice too, not the device voice.
     if (!V.pack && V.loading && !opts.afterLoad && V.enabled()) {
@@ -249,9 +259,17 @@
     safety = setTimeout(() => finished(t, opts.onend), 2500 + text.length * 110 / Math.min(1, opts.rate || V.getRate()));
     const p = plan(text, opts.who);
     if (p) { playClips(p, opts, t); return { clip: true }; }
-    if (inApp()) because(V.why, text);
-    return speakDevice(text, opts, t);
+    return deviceOrQuiet(V.why, text, opts, t);
   };
+  /* A line with no recording. On the website the device's own voice reads it. In the App Store app Bonnie only ever
+     has her recorded voice: the line stays on screen and she says nothing, because a different, robotic voice
+     is worse than a quiet moment (and every line in the game has a recording: see tests/voice-name-test.html). */
+  function deviceOrQuiet(why, text, opts, t) {
+    if (!inApp()) return speakDevice(text, opts, t);
+    V.why = why; if (typeof console !== 'undefined') console.warn('[Bonnie] no recording, so nothing said: ' + why + ' | ' + String(text).slice(0, 60));
+    setTimeout(() => finished(t, opts.onend), Math.min(2500, 600 + text.length * 30)); // about as long as reading it would take
+    return null;
+  }
   function speakDevice(text, opts, t) {
     if (!hasSpeech()) { setTimeout(() => finished(t, opts.onend), 300); return null; }
     const u = new SpeechSynthesisUtterance(text);
@@ -288,13 +306,14 @@
   async function playClips(p, opts, t) {
     let list;
     try { list = await Promise.all(p.map(x => clipBuffer(x.file))); }
-    catch (e) { because('clip failed to load or decode: ' + (e && (e.message || e.name) || e), p.map(x => x.file).join(' ')); if (t === token) speakDevice(p.map(x => x.raw).join(''), opts, t); return; }
+    catch (e) { if (t === token) deviceOrQuiet('clip failed to load or decode: ' + (e && (e.message || e.name) || e), p.map(x => x.raw).join(''), opts, t); return; }
     if (t !== token) return;
+    if (away()) { finished(t, opts.onend); return; } // locked while the recordings were loading
     const ctx = V.getAudio();
     if (ctx.state !== 'running') {
       try { await Promise.race([ctx.resume(), new Promise(r => setTimeout(r, 400))]); } catch (e) {}
       if (t !== token) return;
-      if (ctx.state !== 'running') { because('sound would not start (' + ctx.state + ')', p.map(x => x.raw).join('')); speakDevice(p.map(x => x.raw).join(''), opts, t); return; }
+      if (ctx.state !== 'running') { deviceOrQuiet('sound would not start (' + ctx.state + ')', p.map(x => x.raw).join(''), opts, t); return; }
     }
     const a = ctx, slow = (opts.rate || 1) < .8 ? 1.6 : 1;
     let at = a.currentTime + .04;

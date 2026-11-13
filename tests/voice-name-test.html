@@ -80,6 +80,25 @@
   check('Taking the name out of a line follows the rules', !wrong.length, wrong.map(([a]) => `${a} → ${V.dropName(a)}`).join(' | ') || rules.length + ' examples');
   check('Every sentence with the name has a name-free version', nameLines > 60 && dropped.size > 25, `${dropped.size} different sentences`);
 
+  // the device's own voice: never in the app, and nothing at all while the iPad is locked
+  let spoke = 0, ended = 0; const end = () => { ended++; };
+  if (w.speechSynthesis) w.speechSynthesis.speak = () => { spoke++; };
+  V.enabled = () => true; V.getName = () => 'Zebedee';
+  const noClip = 'This line has no recording at all.';
+  w.MEADOW_IN_APP = true; V.say(noClip, { onend: end }); await wait(2600);
+  check('In the app, a line with no recording is not read by the device voice', spoke === 0 && ended === 1, `device voice used ${spoke} time(s); the game carried on: ${ended === 1}`);
+  w.MEADOW_IN_APP = false; V.say(noClip, { onend: end });
+  check('On the website it still is', !w.speechSynthesis || spoke === 1, spoke);
+  V.hush(); w.MEADOW_IN_APP = true; spoke = 0; ended = 0;
+  Object.defineProperty(w.document, 'hidden', { value: true, configurable: true });
+  const r1 = V.say('Well done!', { onend: end }), r2 = V.say(noClip, { onend: end }); await wait(300);
+  check('While the iPad is locked or the app is put away, Bonnie says nothing', r1 === null && r2 === null && spoke === 0 && ended === 2 && !V.isSpeaking(), `started: ${[r1, r2].filter(Boolean).length}, device voice: ${spoke}`);
+  let ran = false; Object.defineProperty(w.document, 'hidden', { value: false, configurable: true });
+  V.say('Well done!'); V.whenQuiet(() => { ran = true; }); Object.defineProperty(w.document, 'hidden', { value: true, configurable: true });
+  w.document.dispatchEvent(new w.Event('visibilitychange')); await wait(100);
+  check('Locking it stops her mid-line, and the game is not left waiting', !V.isSpeaking() && ran);
+  delete w.document.hidden;
+
   Object.keys(localStorage).filter(k => /^(meadow|harvey)/.test(k)).forEach(k => localStorage.removeItem(k));
   Object.entries(kept).forEach(([k, v]) => localStorage.setItem(k, v));
   f.remove();

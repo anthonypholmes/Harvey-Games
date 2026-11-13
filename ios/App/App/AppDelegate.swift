@@ -63,6 +63,14 @@ class MeadowViewController: CAPBridgeViewController {
         webView?.scrollView.bounces = false
         webView?.scrollView.alwaysBounceVertical = false
         webView?.scrollView.pinchGestureRecognizer?.isEnabled = false
+        // Locked, cover shut or app put away: stop Bonnie talking at once (the web page does this too; this is the belt to its braces).
+        for name in [UIApplication.willResignActiveNotification, UIApplication.didEnterBackgroundNotification] {
+            NotificationCenter.default.addObserver(self, selector: #selector(hushBonnie), name: name, object: nil)
+        }
+    }
+
+    @objc private func hushBonnie() {
+        webView?.evaluateJavaScript("window.BonnieVoice && BonnieVoice.sleep && BonnieVoice.sleep(); if (window.speechSynthesis) speechSynthesis.cancel();", completionHandler: nil)
     }
 }
 

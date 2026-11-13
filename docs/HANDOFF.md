@@ -148,6 +148,13 @@ If Xcode says a package such as CapApp-SPM is missing after the project moves or
 - **Not checked:** nobody has listened to the new clips. Listen to a few name-free lines ("Well done!", "Hi!") and a story or two, and to how "Priya" is said.
 - **Don't** (still true): generate names live with ElevenLabs in the app, use the device voice for just the name, let parents record names, or grow the list to hundreds.
 
+## The device voice is gone from the app ✅ (14 November 2026)
+
+- **The bug (found on the real iPad, build 3):** in Story Nook, Anthony locked the iPad and shut the cover, and the device's robotic voice started talking through the locked iPad. Cause: a line came due just after locking, Bonnie's recording could not start (iOS had paused the sound), so `bonnie-voice.js` fell back to the device voice, which iOS lets carry on while locked.
+- **Fix 1: nothing is said while the iPad is locked or the app is put away.** `V.sleep()` in `bonnie-voice.js` stops everything on `visibilitychange` and `pagehide`, `say()` does nothing while the page is hidden, and `MeadowViewController` in `AppDelegate.swift` calls it too when the app stops being active.
+- **Fix 2: the app never uses the device voice.** If a line has no recording, or the recording can't start, Bonnie says nothing and the words stay on screen (`deviceOrQuiet()`). The website still uses the device voice. Every line has a recording (see the names test), so in normal play this only affects Bonnie's silly guesses of 10,000 or more.
+- Tests: four new checks in `tests/voice-name-test.html` (18 in all). Not yet tried on the real iPad: it goes out in the next build.
+
 ## Text size and fonts ✅ (done 13 November 2026)
 
 Every screen was looked at on a 2018 iPad's size, upright and sideways (pictures before and after, side by side, are in `docs/text-check/`).
