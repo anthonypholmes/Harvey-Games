@@ -130,25 +130,53 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 
 If Xcode says a package such as CapApp-SPM is missing after the project moves or is pulled afresh, quit Xcode and reopen it with `npm run app:open`.
 
-## Next job: children's names (agreed 12 Nov, not built yet)
+## Next job: children's names (decided 13 Nov, replaces the 12 Nov idea; not built yet)
 
-**The problem:** Bonnie says the child's name by joining in a recorded name clip. That works for the ~120 names in `tools/names.txt`, but the public will type names we don't have, and today those lines drop back to the device voice. A stand-in word ("buddy", "friend") sounded wrong to Anthony and clashes in the word games.
+**The principle:** keep personalisation and learning separate, the way primary school textbooks do. Children are used to questions about Sarah, Jack, Tom or Lucy, so the questions don't need to be about them. The player's own name belongs in the Clubhouse, greetings and praise. The learning content uses a small bank of story characters.
 
-**The decision:** the name is always *written*, only *said* when it's recorded, and otherwise Bonnie says a **name-free version** of the line (not a stand-in word).
+| Situation | What Bonnie says (always her recorded voice) |
+|---|---|
+| Greeting, name recorded | "Hello, Harvey! Ready to play?" |
+| Greeting, name not recorded | "Hello! Ready to play?" |
+| Praise, name recorded | "Brilliant work, Harvey!" |
+| Praise, name not recorded | "Brilliant work!" |
+| Maths word problem | "Sarah has 12 apples. She gives 4 to Jack. How many does she have left?" |
+| Story or reading activity | Characters from the fixed bank, all recorded |
 
-1. **Name-free clips for every line with `{N}`** (about 140 places in the code).
-   - Spoken text drops the name and tidies the punctuation, e.g. "Well done, {N}!" → "Well done!", "{N}, look at this!" → "Look at this!", "Thank you {N}! I love my golden coat!" → "Thank you! I love my golden coat!"
-   - Use a `dropName()` helper with simple rules, plus a small override map for awkward lines. Check every result reads naturally.
-   - The text on screen keeps the child's name. Only the spoken version changes.
-   - `bonnie-voice.js`: when the name isn't in the pack, use the name-free clip instead of returning null (which falls back to the device voice).
-   - `tools/make-voice.mjs`: record the name-free variants too. Run `npm run voice:check` first to see the cost.
-2. **Make the name list bigger.** Add the most popular few hundred boys' and girls' names for England and Wales (ONS baby names list) to `tools/names.txt`. Name clips are only a few characters each, so this is cheap. Listen to a sample for pronunciation.
-3. **Name entry:** when the child types their name, Bonnie says it back if she knows it. In grown-ups, show "Bonnie can say this name ✓" or "Bonnie will write this name but not say it".
-4. **Word games: no child's name inside puzzles.** Check every world (especially Meadow Words: sentence fixing, word building, Story Nook, and any maths word problems) for `{N}` inside puzzle content. Replace it with Bonnie or a fixed set of story characters (e.g. Sam, Mia) whose names are recorded. Keep the child's name for praise and chat only.
-5. **Tests:** add checks that every line with `{N}` has a name-free clip, and that an unknown name (e.g. "Zebedee") still gets Bonnie's recorded voice, never the device voice.
-6. **Optional, later:** the child picks a title as well as their name ("Superstar", "Captain", "Explorer"), which Bonnie uses now and then. That's about a dozen recordings.
+### 1. The player's name: only in greetings and encouragement
+- The name is always shown on screen (Clubhouse title, profile, stars and bones).
+- Bonnie only *says* it if it's in the recorded list (`tools/names.txt`, about 120 names now). **Don't** grow it to hundreds of names. That idea has been dropped.
+- If the name isn't recorded, Bonnie says a **name-free version** of the line, recorded as its own clip. No stand-in word ("buddy" and "friend" were rejected): "Well done, {N}!" → "Well done!", "{N}, look at this!" → "Look at this!", "Thank you {N}! I love my golden coat!" → "Thank you! I love my golden coat!"
+- Build it with a `dropName()` helper (simple rules plus a small override map for awkward lines) and check every result reads naturally. `bonnie-voice.js` uses the name-free clip whenever the player's name has no recording, so it never falls back to the device voice. `tools/make-voice.mjs` records the name-free variants. Run `npm run voice:check` first for the cost.
+- For a player whose name isn't recorded, the speech bubble can show the name-free line too, so what's read and what's heard match. Decide this per line if needed.
 
-**Don't:** generate names live with ElevenLabs in the app (needs the internet, costs per child, sends a child's name to a third party, a problem for the Kids category), use the device voice for just the name, or let parents record the name.
+### 2. Learning content: a bank of story characters
+- Choose **8 to 12 character names** (for example Sarah, Jack, Lucy, Oliver, Tom, Mia, Sam, Priya, Leo, Ava: a mix of boys and girls, easy to read and decode for Year 2). Record them all in Shelley's voice. Check which are already in `tools/names.txt`.
+- **Remove the player's name (`{N}`) from all puzzle and question content:** maths word problems, Meadow Words sentence fixing and word building, Story Nook, and anything else. Audit every world.
+- **Pick the character when the question is generated**, never by swapping names in the audio. The written question, the answer logic and Bonnie's narration must all refer to the same person. Handle pronouns (she/he) with the character too. Store something like `{ name, pronoun }` with the question.
+- Reuse the same bank across every world, so Year 3 and Year 4 content needs no new name work.
+- Later, after launch, these characters could become Bonnie's recurring friends. Not for version 1.0.
+
+### 3. Name entry and grown-ups
+- When the child types their name, Bonnie says it back if it's recorded ("Hello, Harvey!"), or "Hello!" if not.
+- In grown-ups, show "Bonnie can say this name ✓" or "Bonnie will write this name but not say it".
+
+### 4. Tests
+- Every line with `{N}` has a recorded name-free clip.
+- An unrecorded name (e.g. "Zebedee") still gets Bonnie's recorded voice everywhere, never the device voice.
+- No question or puzzle content contains `{N}`, and every question's text and spoken version name the same character.
+
+**Don't:** generate names live with ElevenLabs in the app (needs the internet, costs per child, sends a child's name to a third party, a problem for the Kids category), use the device voice for just the name, let parents record names, or build a bigger name system. Keep it simple for release.
+
+## Next job: text size and fonts check (requested 13 Nov)
+
+Go through every screen (Clubhouse, both games and their worlds, Bonnie's Walk, Bone Shop, grown-ups, players, the unlock screen) and check readability on the iPad:
+
+1. **Important instructions must be comfortably readable.** Aim for at least `1rem` for essential supporting text where the layout allows (hints, instructions, labels a child must act on). Small print is only OK for truly secondary text.
+2. **The child's question text stays noticeably larger** than everything around it.
+3. **Reduce the boldness.** Fredoka at weight 600 usually has enough personality. Not every button, chip and label needs 700. Keep 700 for the few things that really need it (main titles, the main PLAY buttons).
+4. **Use Andika for all educational text.** Whenever a child reads a question, explanation, story or word to build, use Andika (designed for early readers) rather than Fredoka. Fredoka is for headings, buttons and decoration.
+5. Check portrait and landscape, and after changes run all the `tests/` pages. Send Anthony before and after screenshots of a few key screens.
 
 ## What comes next (the plan)
 
