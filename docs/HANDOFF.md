@@ -4,6 +4,8 @@
 **Repo:** `anthonypholmes/Harvey-Games`. Work happens on the **`app-store`** branch. `main` is the live website (holmeshouse.co.uk) and must not be touched.
 **Owner:** Anthony. He isn't a developer, so explain steps plainly, give commands to paste, and do the technical work yourself where you can.
 
+**What comes after 1.0:** see `docs/UPDATE_PLAN.md` (the roadmap for 1.0.1 to 2.0).
+
 ## The goal
 
 Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an **iPad app**: a free download with a taster, plus one in-app purchase that unlocks everything (about £3.99).
