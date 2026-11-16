@@ -67,7 +67,7 @@ const CSS = `
 .story::before{content:"📖";position:absolute;top:-18px;left:-10px;font-size:2rem;transform:rotate(-12deg)}
 .story .w{padding:2px 3px;border-radius:6px;transition:background .15s}
 .story .w.hl{background:var(--gold)}
-.story .w.ev{background:#CFE8BE;box-shadow:0 0 0 2px var(--leaf)}
+.story .w.ev{background:#CFE8BE;box-shadow:0 0 0 2px var(--leaf);font-weight:700;text-decoration:underline 3px var(--leaf-dark);text-underline-offset:4px} /* bold and underlined too, so the clue isn't shown by colour alone */
 .story .blank{display:inline-block;min-width:90px;border-bottom:4px dashed var(--accent);text-align:center;color:var(--leaf-dark);font-weight:700}
 .question{font-family:var(--font-read);font-size:1.45rem;font-weight:700;margin:18px 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}

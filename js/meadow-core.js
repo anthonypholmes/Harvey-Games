@@ -289,7 +289,8 @@ function normalise(raw) {
   const st = isObj(s.settings) ? s.settings : {};
   s.settings = { ...st, unlockAll: isObj(st.unlockAll) ? st.unlockAll : {},
     years: Array.isArray(st.years) && st.years.length ? [...new Set(st.years.map(Number).filter(Number.isFinite))] : null,
-    warmUps: st.warmUps !== false, teachBonnie: st.teachBonnie !== false, walkMix: WALK_MIXES[st.walkMix] ? st.walkMix : 'gentle' };
+    warmUps: st.warmUps !== false, teachBonnie: st.teachBonnie !== false, walkMix: WALK_MIXES[st.walkMix] ? st.walkMix : 'gentle',
+    prizesEdited: st.prizesEdited === true }; // the grown-up has changed the prizes at least once (until then the editor stays open)
   return s;
 }
 
@@ -434,7 +435,7 @@ function addPlayer() {
   mutate(s => {
     s.rewards = from.rewards.map(r => ({ ...r }));
     s.sound = from.sound; s.voice = from.voice; s.voiceRate = from.voiceRate; s.readAloud = from.readAloud; s.clubSound = from.clubSound;
-    s.settings = { ...s.settings, years: from.settings.years, warmUps: from.settings.warmUps, teachBonnie: from.settings.teachBonnie, walkMix: from.settings.walkMix };
+    s.settings = { ...s.settings, years: from.settings.years, warmUps: from.settings.warmUps, teachBonnie: from.settings.teachBonnie, walkMix: from.settings.walkMix, prizesEdited: from.settings.prizesEdited };
   });
   return id;
 }
@@ -522,6 +523,8 @@ function starsThisWeek(subject) {
    internet, and is checked against the App Store each time a page opens (so a refund locks again).
    The App Store side is the MeadowStore plugin in ios/App/App/AppDelegate.swift.
    ========================================================= */
+const SUPPORT_EMAIL = 'anthony@holmeshouse.co.uk'; // the same as support.html and the App Store listing
+const APP_STORE_ID = '6833979390'; // the app's Apple ID (a number) from App Store Connect, for "Rate the app"; the button hides while this is empty
 const FREE_LEVELS = 1; // how many levels at the start of each world are free
 const FULL_KEY = 'meadow-full-game';
 const inApp = () => typeof window !== 'undefined' && !!window.MEADOW_IN_APP;
@@ -784,6 +787,8 @@ function renderHud() {
 }
 function applyTheme() {
   document.body.dataset.theme = (S && S.theme) || 'day';
+  // remembered for js/first-paint.js, which paints the next page in this colour before anything else
+  try { localStorage.setItem('meadow-paint', document.body.dataset.theme); } catch (e) {}
   let st = document.getElementById('bonnie-coat');
   if (!st) { st = document.createElement('style'); st.id = 'bonnie-coat'; document.head.appendChild(st); }
   st.textContent = `body, body .mm { ${coatVars(coatOf(S && S.coat))} }`;
@@ -1478,7 +1483,8 @@ function shopScreen(opts = {}) {
         <p class="shop-say" id="shopSay">${esc(fmt(LINES.shopWelcome))}</p>
       </div>
       <div class="tabs" role="group" aria-label="Shop sections">${Object.entries(tabs).map(([k, v]) => `<button class="tab ${shopTab === k ? 'on' : ''}" data-tab="${k}" aria-pressed="${shopTab === k}">${v}</button>`).join('')}</div>
-      ${shopTab === 'prizes' ? '<p class="note">Real prizes are set by your grown-up. When you swap, a grown-up holds a button to say yes!</p>' : ''}
+      ${shopTab === 'prizes' ? `<p class="note">Real prizes are set by your grown-up. When you swap, a grown-up holds a button to say yes!</p>
+        <div class="row-btns prize-edit"><button class="btn small ghost" id="editPrizes">🔒 Grown-ups: change these prizes</button></div>` : ''}
       <div class="shop-grid">${body}</div>
     </div>`);
   const shopSay = text => { $('#shopSay').textContent = fmt(text); say(text); };
@@ -1486,6 +1492,8 @@ function shopScreen(opts = {}) {
   if (opts.welcome) setTimeout(() => say(LINES.shopWelcome), 250);
   const sb = $('#shopBonnie'); sb.onclick = () => { const t = tickle(sb); $('#shopSay').textContent = t; say(t, { pitch: 1.4 }); };
   $$('[data-tab]').forEach(b => b.onclick = () => { shopTab = b.dataset.tab; sfx.pop(); shopScreen(); });
+  if ($('#editPrizes')) $('#editPrizes').onclick = () => { parentFromClub = false; parentGate(() => { parentOpen.add('prizes'); parentScreen();
+    const f = $('[data-fold="prizes"]'); if (f) f.scrollIntoView({ block: 'start' }); }, 'change the prizes'); };
   const dressed = line => setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); shopSay(line); }, 50);
   $$('[data-wear]').forEach(b => b.onclick = () => { const id = b.dataset.wear; mutate(s => { s[slotKey(id)] = id; }); sfx.pop(); shopScreen(); dressed(LINES.hatOn); });
   $$('[data-off]').forEach(b => b.onclick = () => { mutate(s => { s[b.dataset.off] = null; }); sfx.pop(); shopScreen(); dressed(LINES.hatOff); });
@@ -1711,7 +1719,7 @@ function parentScreen() {
   const history = S.redeemed.slice().reverse().slice(0, 20);
   const allYears = yearsWithWorlds(), chosen = S.settings.years;
   const V = window.BonnieVoice, players = playerList();
-  const fold = (id, title, count, body) => `<details data-fold="${id}" ${parentOpen.has(id) ? 'open' : ''}><summary><h3>${title}</h3>${count ? `<span class="note">${count}</span>` : ''}</summary>${body}</details>`;
+  const fold = (id, title, count, body) => `<details data-fold="${id}" ${parentOpen.has(id) || (id === 'prizes' && !S.settings.prizesEdited) ? 'open' : ''}><summary><h3>${title}</h3>${count ? `<span class="note">${count}</span>` : ''}</summary>${body}</details>`;
   const logs = sworlds.map(w => [w, logTable(w)]).filter(x => x[1]);
   const others = GAME.otherGames || [];
   show(`
@@ -1745,6 +1753,7 @@ function parentScreen() {
         history.length ? history.map(r => `<div class="redeem"><span><b>${esc(r.title)}</b></span><span class="note">${int(r.cost)}🦴 · ${esc(r.when || '')}</span></div>`).join('') : '<p class="note">Nothing swapped yet.</p>')}
       </section>
       <section>${fold('prizes', 'Real-life prizes', plural(S.rewards.length, 'prize'), `
+        ${S.settings.prizesEdited ? '' : '<p class="prize-start">These are starter prizes. Change them to suit your family.</p>'}
         <p class="note">These show in the Bone Shop. Changes save as you type. Claiming a prize needs a grown-up to hold a button for 3 seconds.</p>
         <div id="prizeList">${S.rewards.map(p => `<div class="prize-row" data-id="${esc(p.id)}">
           <span class="pe">${prizeEmoji(p.title)}</span>
@@ -1776,6 +1785,12 @@ function parentScreen() {
       <section><h3>Back up progress</h3>
         <p class="note">Keeps a copy of everything on this device (${inApp() ? "every player's " : ''}bones, stars, hats, themes and prizes) as a file or a code, to restore on this or another device.</p>
         <div class="row-btns" style="justify-content:flex-start"><button class="btn small green" id="backupBtn" ${window.MeadowBackup ? '' : 'disabled'}>💾 Back up or restore</button></div></section>
+      <section><h3>Tell us what you think</h3>
+        <p class="note">Meadow Clubhouse collects nothing about how it's used, so the only way to hear what works, and what doesn't, is from you.</p>
+        <div class="row-btns" style="justify-content:flex-start">
+          <a class="btn small green" id="feedbackBtn" href="mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Meadow Clubhouse feedback')}">✉️ Send feedback</a>
+          ${inApp() && APP_STORE_ID ? `<a class="btn small ghost" id="rateBtn" href="https://apps.apple.com/app/id${APP_STORE_ID}?action=write-review">⭐ Rate the app</a>` : ''}</div>
+        <p class="note">Or email ${SUPPORT_EMAIL}.</p></section>
       <div class="group"><h3>${esc(GAME.title)} only</h3>
         ${others.length ? `<p class="note">Each game keeps its own stars and progress. ${others.length > 1 ? 'The other games have theirs' : esc(others[0].title) + ' has its own'} here:</p>
           <div class="row-btns" style="justify-content:flex-start">${others.map(g => `<a class="btn small ghost" href="${esc(g.href)}#grownups">${esc(g.icon || '')} ${esc(g.title)} progress →</a>`).join('')}</div>` : ''}</div>
@@ -1818,7 +1833,8 @@ function parentScreen() {
   $('#prizeList').addEventListener('input', e => {
     const row = e.target.closest('[data-id]'), f = e.target.dataset.f; if (!row || !f) return;
     mutate(s => { const r = s.rewards.find(x => x.id === row.dataset.id); if (!r) return;
-      if (f === 'cost') { const v = int(e.target.value, 0, 9999); if (v > 0) r.cost = v; } else r[f] = e.target.value; });
+      if (f === 'cost') { const v = int(e.target.value, 0, 9999); if (v > 0) r.cost = v; } else r[f] = e.target.value;
+      s.settings.prizesEdited = true; });
     if (f === 'title') $('.pe', row).textContent = prizeEmoji(e.target.value);
     prizeOk();
   });
@@ -1830,13 +1846,13 @@ function parentScreen() {
   });
   $$('[data-del]').forEach(b => b.onclick = () => {
     if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again'; return; }
-    mutate(s => { s.rewards = s.rewards.filter(r => r.id !== b.dataset.del); }); parentScreen();
+    mutate(s => { s.rewards = s.rewards.filter(r => r.id !== b.dataset.del); s.settings.prizesEdited = true; }); parentScreen();
   });
-  $('#addPrize').onclick = () => { const id = 'r' + Date.now().toString(36); mutate(s => { s.rewards.push({ id, title: 'New prize', desc: '', cost: 50 }); }); parentScreen();
+  $('#addPrize').onclick = () => { const id = 'r' + Date.now().toString(36); mutate(s => { s.rewards.push({ id, title: 'New prize', desc: '', cost: 50 }); s.settings.prizesEdited = true; }); parentScreen();
     const inp = $(`[data-id="${id}"] [data-f="title"]`); if (inp) { inp.focus(); inp.select(); } };
   $('#resetPrizes').onclick = () => modal(`<h2>Use the starter prizes?</h2><p>This replaces all prizes with the 12 starter prizes.</p>
     <div class="btns"><button class="btn berry" data-a="yes">Yes, replace</button><button class="btn ghost" data-a="no">Keep mine</button></div>`, a => {
-    if (a === 'yes') { mutate(s => { s.rewards = STARTER_PRIZES.map(r => ({ ...r })); }); parentScreen(); } });
+    if (a === 'yes') { mutate(s => { s.rewards = STARTER_PRIZES.map(r => ({ ...r })); s.settings.prizesEdited = true; }); parentScreen(); } });
   $('#pSfx').onchange = e => mutate(s => { s.sound = e.target.checked; });
   $$('[name="walkMix"]').forEach(r => r.onchange = () => { if (r.checked) mutate(s => { s.settings.walkMix = r.value; }); });
   $('#pVoice').onchange = e => { mutate(s => { s.voice = e.target.checked; }); if (!S.voice) hush(); };
@@ -1954,6 +1970,7 @@ button{font-family:inherit;font-size:100%;color:inherit;cursor:pointer;border:no
 .card{background:var(--card);border:2px solid var(--card-edge);border-radius:var(--radius);box-shadow:var(--shadow);position:relative}
 /* Buttons use the darker shade of each colour so their white writing is easy to read (at least 4.5 to 1). */
 .btn{background:var(--accent-dark);color:#fff;font-weight:600;font-size:1.1rem;padding:12px 22px;min-height:48px;border-radius:16px;box-shadow:0 5px 0 rgba(0,0,0,.3);box-shadow:0 5px 0 color-mix(in srgb,var(--accent-dark) 62%,#000);transition:transform .08s}
+a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--accent-dark)}
 .btn.green{background:var(--leaf-dark);box-shadow:0 5px 0 rgba(0,0,0,.3);box-shadow:0 5px 0 color-mix(in srgb,var(--leaf-dark) 62%,#000)}
 .btn.berry{background:var(--berry-dark);box-shadow:0 5px 0 rgba(0,0,0,.3);box-shadow:0 5px 0 color-mix(in srgb,var(--berry-dark) 62%,#000)}
@@ -2163,6 +2180,8 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .prize-row input{width:100%}
 .prize-row .pe{font-size:1.6rem;text-align:center}
 .prize-row .pdesc{grid-column:2/4}
+.prize-start{background:#FFF6D6;border:2px solid #E9C95B;border-radius:14px;padding:8px 12px;font-weight:600;margin:8px 0}
+.prize-edit{margin:6px 0 2px}
 .redeem{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
 .log-wrap{overflow-x:auto}
 .log.week td{font-weight:700;font-size:1.05rem}.log.week td small{font-weight:500;color:var(--ink-soft,#7A6A5E);font-size:.8rem}
@@ -2250,6 +2269,8 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
   .dock .bubble{grid-column:2 / span 2;grid-row:1;min-width:0;width:auto;min-height:0;padding:8px 12px;font-size:1.1rem}
   .dock #askBtn{grid-column:1 / span 2;grid-row:2;justify-self:start}
   .dock .ladder{grid-column:3;grid-row:2}
+  /* the hopping frog stays out of levels on a phone: there it would hop across the number keys and the tiles at the bottom */
+  body:has(.play-card) .frog{display:none}
   /* the Bone Shop: Bonnie beside her words, the three tabs on one row, and two things to a row */
   .card.shop{padding:14px!important}
   .shop-hello{flex-wrap:nowrap;gap:10px}

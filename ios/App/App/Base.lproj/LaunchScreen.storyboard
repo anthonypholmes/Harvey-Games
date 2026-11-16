@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- The launch screen: the Clubhouse's cream background with the green meadow along the bottom, and no logo,
+     so opening the app looks like the Clubhouse arriving (Apple's guidance for launch screens). -->
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17132" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
     <device id="retina4_7" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17105"/>
-        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -12,11 +13,32 @@
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
-                    <imageView key="view" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Splash" id="snD-IY-ifK">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </imageView>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" image="LaunchMeadow" translatesAutoresizingMaskIntoConstraints="NO" id="snD-IY-ifK" userLabel="Background">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                            </imageView>
+                            <view userInteractionEnabled="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Gr4-ss-M3d" userLabel="Meadow">
+                                <rect key="frame" x="0.0" y="595" width="375" height="72"/>
+                                <color key="backgroundColor" red="0.611764729" green="0.796078444" blue="0.486274511" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="72" id="c8H-ei-008"/>
+                                </constraints>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" red="0.964705884" green="0.921568632" blue="0.827450991" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="snD-IY-ifK" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="c1T-op-001"/>
+                            <constraint firstItem="snD-IY-ifK" firstAttribute="bottom" secondItem="Ze5-6b-2t3" secondAttribute="bottom" id="c2B-ot-002"/>
+                            <constraint firstItem="snD-IY-ifK" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="c3L-ea-003"/>
+                            <constraint firstItem="snD-IY-ifK" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" id="c4T-ra-004"/>
+                            <constraint firstItem="Gr4-ss-M3d" firstAttribute="bottom" secondItem="Ze5-6b-2t3" secondAttribute="bottom" id="c5B-ot-005"/>
+                            <constraint firstItem="Gr4-ss-M3d" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="c6L-ea-006"/>
+                            <constraint firstItem="Gr4-ss-M3d" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" id="c7T-ra-007"/>
+                        </constraints>
+                    </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -24,9 +46,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="Splash" width="1366" height="1366"/>
-        <systemColor name="systemBackgroundColor">
-            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
+        <image name="LaunchMeadow" width="4" height="1024"/>
     </resources>
 </document>

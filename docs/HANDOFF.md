@@ -36,7 +36,7 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 - `capacitor.config.json`: app ID `uk.co.holmeshouse.meadow`, name "Meadow Clubhouse", `webDir: app-www`.
 - `tools/build-app.mjs` copies only the game files into `app-www/` (git-ignored, about 1,850 files, 37 MB).
 - npm scripts: `app:build`, `app:sync` (build plus `npx cap sync ios`) and `app:open`.
-- `ios/` Xcode project committed (Swift Package Manager, no CocoaPods). Set to **iPad only** (`TARGETED_DEVICE_FAMILY = 2`).
+- `ios/` Xcode project committed (Swift Package Manager, no CocoaPods). Set to **iPhone and iPad** (`TARGETED_DEVICE_FAMILY = "1,2"`, changed 16 November 2026 for 1.1; the 1.0 build in review was iPad only). iPhones are upright only; the iPad turns all four ways.
 - `ios/App/App/AppDelegate.swift` sets the AVAudioSession category to `.playback`, so sound plays and the silent switch doesn't mute Bonnie.
 - `js/app-storage.js` is loaded first on every page and only runs inside the app. It:
   - sets `window.MEADOW_IN_APP = true`

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="js/first-paint.js"></script><!-- the background at once, then a fade: no blank flash between pages -->
 <title>Meadow Clubhouse</title>
 <!-- Install as an app (PWA): works offline from the home screen -->
 <link rel="manifest" href="manifest.json">
@@ -269,13 +270,14 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
   .cabinets,html.in-app .cabinets{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .cab{border-radius:22px 22px 14px 14px}
   .marquee{padding:10px 8px;font-size:1.2rem;line-height:1.15}
-  .marquee small{font-size:.9rem;margin-top:2px}
+  .marquee small{font-size:.9rem;margin-top:2px;min-height:2.3em} /* room for two lines on both signs, so the pictures and Play buttons line up */
   .screen,html.in-app .screen{height:96px;margin:10px 10px 4px;border-width:4px;border-radius:14px}
   .screen .bit{font-size:1.6rem}
   .screen .big{font-size:1.15rem;padding:2px 8px}
   .cab .about{display:none}
   .cab .stats{padding:4px 8px 0;flex-wrap:wrap;text-align:center;line-height:1.25}
-  .play,html.in-app .play{margin:8px 10px 12px;padding:10px 6px;font-size:1.15rem}
+  .play,html.in-app .play{margin:auto 10px 12px;padding:10px 6px;font-size:1.15rem}
+  .cab .stats{margin-bottom:8px}
   .shop-btn,html.in-app .shop-btn{margin-top:14px}
 }
 @media (prefers-reduced-motion:reduce){

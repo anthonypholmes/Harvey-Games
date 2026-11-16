@@ -2,10 +2,10 @@
   "appId": "uk.co.holmeshouse.meadow",
   "appName": "Meadow Clubhouse",
   "webDir": "app-www",
-  "backgroundColor": "#F6EDDA",
+  "backgroundColor": "#F6EBD3",
   "ios": {
     "contentInset": "never",
-    "backgroundColor": "#F6EDDA",
+    "backgroundColor": "#F6EBD3",
     "scrollEnabled": true
   }
 }

@@ -1,13 +1,17 @@
 <!doctype html>
 <!-- The App Store app's icon, drawn with the game's own Bonnie. tools/make-icon.sh turns this page
-     into ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png (1024 x 1024, no see-through parts).
+     into the three pictures in ios/App/App/Assets.xcassets/AppIcon.appiconset/ (each 1024 x 1024):
+       app-icon.html              the usual icon: Bonnie in the sunny meadow (no see-through parts)
+       app-icon.html?look=dark    for a dark Home Screen: the same meadow at night, with a moon
+       app-icon.html?look=tinted  for a tinted Home Screen: Bonnie alone in grey on a see-through background
+                                  (iOS colours it with the tint the person picked)
      iOS rounds the corners itself, so the picture fills the whole square. -->
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <title>Meadow Clubhouse app icon</title>
 <style>
-  html, body { margin: 0; width: 1024px; height: 1024px; overflow: hidden; }
+  html, body { margin: 0; width: 1024px; height: 1024px; overflow: hidden; background: transparent; }
   #icon { position: relative; width: 1024px; height: 1024px; overflow: hidden;
     background: linear-gradient(180deg, #9ED6EC 0%, #CDEBF3 48%, #E9F5D3 72%);
     --fur: #9a6440; --fur-dk: #74472a; --fur-lt: #c99568; }
@@ -18,10 +22,29 @@
   #bonnie { position: absolute; left: 62px; top: 118px; width: 900px; height: 900px; filter: drop-shadow(0 18px 0 rgba(60, 40, 20, .16)); }
   #bonnie svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .daisy { position: absolute; width: 54px; height: 54px; border-radius: 50%; background: #F2C14E; box-shadow: 0 0 0 16px #fff; }
+  .star { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #FFF6D5; opacity: .85; display: none; }
+
+  /* dark: the meadow at night. Bonnie keeps her own colours; the sky, hills and daisy go dark, and the sun becomes the moon. */
+  .dark #icon { background: linear-gradient(180deg, #141833 0%, #1F2550 52%, #2B3466 74%); }
+  .dark #sun { background: #F3EBC8; box-shadow: 0 0 0 26px rgba(243, 235, 200, .16), 0 0 90px 30px rgba(243, 235, 200, .18); }
+  .dark #hill1 { background: #2F5A3C; }
+  .dark #hill2 { background: #24462F; }
+  .dark .daisy { background: #C9A23E; box-shadow: 0 0 0 16px #B9B7C9; }
+  .dark .star { display: block; }
+  .dark #bonnie { filter: drop-shadow(0 18px 0 rgba(0, 0, 0, .3)); }
+
+  /* tinted: only Bonnie, in grey, so iOS can colour her; the light parts of her face stay light */
+  .tinted #icon { background: transparent; }
+  .tinted #sun, .tinted .hill, .tinted .daisy { display: none; }
+  .tinted #bonnie { filter: grayscale(1) contrast(1.15) brightness(1.25); }
 </style>
 </head>
 <body>
 <div id="icon">
+  <div class="star" style="left:120px;top:110px"></div>
+  <div class="star" style="left:300px;top:60px;width:10px;height:10px"></div>
+  <div class="star" style="left:560px;top:96px"></div>
+  <div class="star" style="left:80px;top:330px;width:10px;height:10px"></div>
   <div id="sun"></div>
   <div class="hill" id="hill1"></div>
   <div class="hill" id="hill2"></div>
@@ -30,6 +53,8 @@
 </div>
 <script src="../js/meadow-core.js"></script>
 <script>
+  const look = new URLSearchParams(location.search).get('look');
+  if (look === 'dark' || look === 'tinted') document.documentElement.className = look;
   // Bonnie with no hat or collar, shown from the shoulders up so her face is clear at small sizes.
   document.getElementById('bonnie').innerHTML = Meadow.ui.bonnieSVG(null).replace('viewBox="0 0 120 124"', 'viewBox="8 12 104 104"');
 </script>
