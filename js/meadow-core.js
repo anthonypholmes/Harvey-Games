@@ -777,7 +777,8 @@ function renderHud() {
   if (!GAME || !$('#boneNum')) return;
   $('#boneNum').textContent = S.bones;
   const title = GAME.walk ? GAME.title : `${nameOf()}'s ${GAME.title}`;
-  $('#appTitle').textContent = title; document.title = title;
+  // the player's name is its own part, so a phone can leave it out of the slim top bar
+  $('#appTitle').innerHTML = GAME.walk ? esc(title) : `<span class="who">${esc(nameOf())}'s </span>${esc(GAME.title).replace(/^Meadow /, '<span class="mw">Meadow </span>')}`; document.title = title;
   $('#streakNum').textContent = streak;
   $('#streakChip').classList.toggle('hot', streak >= 3);
 }
@@ -917,7 +918,7 @@ function startLevel(worldId, levelId, via = 'map') {
       <button class="icon-btn" id="back">← Map</button>
       <div class="gt">${w.icon || ''} ${esc(w.name)} · Level ${li + 1}</div>
       ${extra ? '<div class="chip extra" id="extraChip" title="Plays after the first 2 today: no bones per answer, 3 bonus bones for finishing">🎯 Extra practice</div>' : ''}
-      <div class="pips" id="pips"></div>
+      <div class="pips" id="pips" aria-hidden="true"></div>
     </div>
     <div class="game-main ${full ? 'full' : ''}">
       <section class="card play-card" id="area"></section>
@@ -950,7 +951,26 @@ function bubble(text, speak = true) {
   const b = $('#bubble'); if (!b) return;
   b.innerHTML = text; animate(b, 'pop', 350);
   if (speak) say(b.textContent);
+  revealOnPhone(b);
 }
+/* Phones (16 November 2026): Bonnie's card sits under the question, so when she answers a tap ("Not quite!", a clue)
+   the page scrolls just far enough to show her words. Only for a tap on the question now showing (not the line she
+   says as a question appears), and never if it would push a glowing answer off the top. Each new question starts at
+   the top of the page again. */
+const phone = () => typeof matchMedia === 'function' && matchMedia('(max-width:560px)').matches;
+let lastTap = 0;
+if (typeof document !== 'undefined') document.addEventListener('pointerdown', () => { lastTap = Date.now(); }, true);
+function revealOnPhone(el) {
+  if (!el || !phone() || !G || !(lastTap > (G.shownAt || 0))) return;
+  // the maths keys can be fixed along the bottom of a phone screen: what is behind them can't be seen
+  const keys = document.querySelector('#controls'), under = keys && getComputedStyle(keys).position === 'fixed' ? keys.getBoundingClientRect().height : 0;
+  const r = el.getBoundingClientRect(), down = r.bottom - (innerHeight - under);
+  if (down <= 0 && r.top >= 0) return;
+  const glow = $('#area .glow, #area .spot');
+  if (down > 0 && glow && glow.getBoundingClientRect().top - down < 0) return;
+  el.scrollIntoView({ block: 'nearest', behavior: reduceMotion() ? 'auto' : 'smooth' });
+}
+function questionShown() { if (!G) return; G.shownAt = Date.now(); if (phone() && window.scrollY > 0) window.scrollTo(0, 0); }
 /* Run fn after ms, once Bonnie has finished talking, if the same question is still on screen. */
 function later(fn, ms = 0) { const g = G, i = G && G.i; setTimeout(() => whenQuiet(() => { if (G && G === g && G.i === i && !G.busy) fn(); }), ms); }
 
@@ -958,6 +978,7 @@ function nextQuestion() {
   if (!G) return;
   if (G.walk) return walkStep();
   if (G.i >= G.count) return finishLevel();
+  questionShown();
   const warm = G.warm < G.warmN;
   Object.assign(G, { tier: 0, qTier: 0, busy: false, hints: [], qWarm: warm });
   renderPips();
@@ -1332,6 +1353,7 @@ function renderPath() {
 /* Show the next stop's question in its own world's screen; the path stays put. */
 function walkStep() {
   if (G.i >= G.count) return finishWalk();
+  questionShown();
   G.inDig = !!(G.dig && !G.dig.done && G.i === G.dig.at);
   const p = G.inDig ? { w: DIG_WORLD, L: DIG_LEVEL, q: G.dig.q } : G.plan[G.i];
   G.w = p.w; G.L = p.L; G.q = p.q; G.qEased = p.w.subject === 'maths';
@@ -1418,7 +1440,7 @@ function walkInfo() {
 let shopTab = 'hats', shopFromClub = false;
 function shopScreen(opts = {}) {
   G = null; S = load();
-  const tabs = { hats: '🎀 Dress Up Bonnie', themes: '🎨 Themes', prizes: '🎁 Real Prizes' };
+  const tabs = { hats: '🎀 Dress Up<span class="lbl"> Bonnie</span>', themes: '🎨 Themes', prizes: '🎁 <span class="lbl">Real </span>Prizes' }; // the words in .lbl are left out on a phone
   const more = cost => `<span class="meter" aria-hidden="true"><i style="width:${Math.min(100, Math.round(S.bones / cost * 100))}%"></i></span><div class="note">${cost - S.bones} more to go!</div>`;
   let body = '';
   if (shopTab === 'hats') body = `<h3 class="tier">Coat colours</h3>` + COATS.map(c => {
@@ -1445,15 +1467,15 @@ function shopScreen(opts = {}) {
       : '<p class="note">No prizes yet. Ask a grown-up to add some!</p>';
   }
   show(`
-    <div class="card" style="padding:20px">
+    <div class="card shop" style="padding:20px">
       <div class="map-head">
         <button class="icon-btn" id="back">${shopFromClub ? '← Clubhouse' : '← Home'}</button>
         <h2>🛍️ Bonnie's Bone Shop</h2>
         <div class="chip bones" style="margin-left:auto">🦴 ${S.bones}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div class="shop-hello">
         ${bonnieHTML('', 'shopBonnie')}
-        <p style="font-family:var(--font-read);font-size:1.2rem;flex:1;min-width:200px" id="shopSay">${esc(fmt(LINES.shopWelcome))}</p>
+        <p class="shop-say" id="shopSay">${esc(fmt(LINES.shopWelcome))}</p>
       </div>
       <div class="tabs" role="group" aria-label="Shop sections">${Object.entries(tabs).map(([k, v]) => `<button class="tab ${shopTab === k ? 'on' : ''}" data-tab="${k}" aria-pressed="${shopTab === k}">${v}</button>`).join('')}</div>
       ${shopTab === 'prizes' ? '<p class="note">Real prizes are set by your grown-up. When you swap, a grown-up holds a button to say yes!</p>' : ''}
@@ -1918,7 +1940,7 @@ html{font-synthesis:none}
 b,strong{font-weight:700}
 body{font-family:var(--font-ui);color:var(--ink);background:radial-gradient(1200px 600px at 20% -10%,rgba(255,255,255,.55),transparent 60%),linear-gradient(180deg,var(--bg1),var(--bg2));background-color:var(--bg1);background-attachment:fixed;min-height:100%;overflow-x:hidden;user-select:none;-webkit-user-select:none}
 input,textarea{user-select:text;-webkit-user-select:text}
-button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+button{font-family:inherit;font-size:100%;color:inherit;cursor:pointer;border:none;background:none} /* font-size: a button doesn't take the page's text size on its own (it was 13.3px) */
 #app{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:12px 16px 120px;min-height:100vh}
 .hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .hud .title{font-weight:700;font-size:1.25rem;color:var(--on-bg);display:flex;align-items:center;gap:8px;margin-right:auto;cursor:pointer;min-height:44px}
@@ -1927,7 +1949,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 .chip.bones.bump{animation:bump .45s}
 .chip.streak{transition:all .25s}
 .chip.streak.hot{background:linear-gradient(180deg,#FFE7A8,#F2C14E);border-color:#D9A22F}
-.icon-btn{text-decoration:none;color:var(--ink);background:var(--card);border:2px solid var(--card-edge);border-radius:14px;padding:8px 12px;min-height:44px;display:inline-flex;align-items:center;font-weight:600;box-shadow:0 3px 0 rgba(74,59,44,.12)}
+.icon-btn{text-decoration:none;color:var(--ink);background:var(--card);border:2px solid var(--card-edge);border-radius:14px;padding:8px 12px;min-height:44px;display:inline-flex;align-items:center;font-weight:600;font-size:1rem;box-shadow:0 3px 0 rgba(74,59,44,.12)}
 .icon-btn:active{transform:translateY(2px);box-shadow:none}
 .card{background:var(--card);border:2px solid var(--card-edge);border-radius:var(--radius);box-shadow:var(--shadow);position:relative}
 /* Buttons use the darker shade of each colour so their white writing is easy to read (at least 4.5 to 1). */
@@ -2085,7 +2107,7 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .bubble.pop{animation:pop .35s}
 .bubble b{color:var(--accent-dark)}
 .ladder{display:flex;gap:6px;align-items:center;font-size:.9rem;color:var(--ink-soft)}
-.ladder .rung{width:22px;height:22px;border-radius:50%;background:#F1E8D6;color:var(--ink);display:grid;place-items:center;font-size:.85rem}
+.ladder .rung{width:24px;height:24px;border-radius:50%;background:#F1E8D6;color:var(--ink);display:grid;place-items:center;font-size:.95rem}
 .ladder .rung.on{background:var(--gold)}
 .bonnie{position:relative;width:140px;height:140px;cursor:pointer;flex:none;transition:transform .2s}
 .bonnie svg{width:100%;height:100%;overflow:visible}
@@ -2105,6 +2127,8 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .tabs{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
 .tab{padding:10px 18px;min-height:44px;border-radius:14px;background:var(--card);border:2px solid var(--card-edge);font-weight:600}
 .tab.on{background:var(--accent-dark);color:#fff;border-color:var(--accent-dark)}
+.shop-hello{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.shop-say{font-family:var(--font-read);font-size:1.2rem;flex:1;min-width:200px}
 .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
 .shop-grid .tier{grid-column:1/-1;margin-top:6px;color:var(--wood-dark)}
 .item{padding:16px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
@@ -2200,6 +2224,60 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
   .play-card{padding:16px;min-height:0}
   .hero{grid-template-columns:1fr;justify-items:center;text-align:center}
 }
+/* Phones (and narrow iPad windows): the top bar is one slim row, so the question starts near the top.
+   The words "Clubhouse" and "Bone Shop" are hidden (VoiceOver still reads them), the game's name is cut short
+   with "…" if it doesn't fit, and in a level ← Map sits beside the world's name with the progress dots under it. */
+@media (max-width:560px){
+  .hud{flex-wrap:nowrap;gap:6px;margin-bottom:8px}
+  .hud .lbl{display:none}
+  .hud .icon-btn{min-width:44px;justify-content:center;padding:8px 10px;font-size:1.15rem}
+  .hud .title{flex:1 1 auto;min-width:0;font-size:1.05rem;gap:6px;margin-right:0}
+  .hud .title #appTitle{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hud .title .who{display:none}
+  .hud .chip{flex:none;padding:5px 10px;min-height:40px}
+  .hud .chip.bones{font-size:1.05rem}
+  .game-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:10px;row-gap:2px;margin-bottom:8px}
+  .game-top #back{grid-row:1 / span 2}
+  .game-top .gt{grid-column:2;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .game-top .pips{grid-column:2;margin-left:0;gap:5px}
+  .game-top .pip{width:11px;height:11px}
+  .game-top .pip.now{transform:scale(1.2)}
+  .game-top .chip.extra{grid-column:3;grid-row:1 / span 2;font-size:.95rem;padding:4px 10px}
+  /* Bonnie's card goes under the question, as a slim card: Bonnie and her words, then Ask Bonnie and the hints */
+  .game-main{gap:12px}
+  .dock{order:1;display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:8px 10px;padding:10px 12px}
+  .dock .bonnie{grid-column:1;grid-row:1;width:56px;height:56px}
+  .dock .bubble{grid-column:2 / span 2;grid-row:1;min-width:0;width:auto;min-height:0;padding:8px 12px;font-size:1.1rem}
+  .dock #askBtn{grid-column:1 / span 2;grid-row:2;justify-self:start}
+  .dock .ladder{grid-column:3;grid-row:2}
+  /* the Bone Shop: Bonnie beside her words, the three tabs on one row, and two things to a row */
+  .card.shop{padding:14px!important}
+  .shop-hello{flex-wrap:nowrap;gap:10px}
+  .shop-hello .bonnie{width:72px;height:72px}
+  .shop-say{min-width:0;font-size:1.1rem;margin:0}
+  .shop .tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .shop .tab{padding:8px 4px;text-align:center;line-height:1.2}
+  .shop .tab .lbl{display:none}
+  .shop-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .shop-grid .item{padding:12px 8px;gap:6px}
+  .shop-grid .hatprev{width:72px;height:72px}
+  /* the world list: Bonnie beside her words, and each world's picture beside its name */
+  .hero{grid-template-columns:auto minmax(0,1fr);justify-items:start;text-align:left;gap:12px;padding:12px 14px;margin-bottom:12px}
+  .hero .bonnie.big{width:72px;height:72px}
+  .hero h1{font-size:1.35rem}
+  .hero p{font-size:1.05rem;margin-top:2px}
+  .hero p.note{display:none}
+  .worlds{gap:10px}
+  .world-card{display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:12px;row-gap:2px;align-items:center;padding:12px 14px}
+  .world-card .wicon{grid-row:1 / span 5;align-self:start;width:56px;height:56px;font-size:2.2rem;margin:0}
+  .world-card > :not(.wicon):not(.ribbon){grid-column:2}
+  .world-card h3{font-size:1.1rem;line-height:1.2}
+  /* boxes such as the grown-ups' sum sit near the top, where the iPhone's keyboard doesn't cover them */
+  .modal-bg{place-items:start center;padding-top:calc(env(safe-area-inset-top) + 24px)}
+}
+@media (max-width:430px){ /* most phones: "Maths" and "Words" (the biggest, 440 wide, have room for "Meadow Maths") */
+  .hud .title .mw{display:none}
+}
 @media (max-width:520px){
   .prize-row{grid-template-columns:32px 1fr 70px auto}
   .banner{white-space:normal;width:calc(100vw - 32px)}
@@ -2235,11 +2313,11 @@ function startGame(opts = {}) {
     <div class="frog" id="frog" title="Ribbit!" aria-label="Frog"><span>🐸</span></div>
     <div id="app">
       <header class="hud">
-        <a class="icon-btn" href="${esc(GAME.homeHref)}" title="Back to the Clubhouse">🏠 Clubhouse</a>
+        <a class="icon-btn" href="${esc(GAME.homeHref)}" title="Back to the Clubhouse" aria-label="Clubhouse">🏠<span class="lbl"> Clubhouse</span></a>
         <div class="title" id="homeLink" role="button" tabindex="0">${GAME.icon} <span id="appTitle"></span></div>
         <div class="chip streak" id="streakChip" title="Right answers in a row">🔥 <span id="streakNum">0</span></div>
         <div class="chip bones" id="boneChip" title="Your bones">🦴 <span id="boneNum">0</span></div>
-        <button class="icon-btn" id="shopBtn">🛍️ Bone Shop</button>
+        <button class="icon-btn" id="shopBtn" aria-label="Bone Shop">🛍️<span class="lbl"> Bone Shop</span></button>
       </header>
       <main id="screen"></main>
     </div>`);
@@ -2287,7 +2365,7 @@ window.Meadow = {
   fullGame: { FREE_LEVELS, KEY: FULL_KEY, has: hasFullGame, paid: paidLevel, unlock: unlockScreen, check: checkFullGame },
   // UI kit for world files
   ui: { $, $$, esc, fmt, rand, randInt, shuffle, wait, plural, reduceMotion, say, hush, whenQuiet, sfx, tone, ac, animate, hearts, banner, confetti,
-    shakeScreen, tickle, tickleEgg, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show,
+    shakeScreen, tickle, tickleEgg, revealOnPhone, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show,
     applyTheme }, // the theme and Bonnie's coat colour
   spokenLines, hostLines, numberLines,
   // the children in the questions and stories: [{ name, pronoun, their }], and one picked at random

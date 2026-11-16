@@ -225,7 +225,7 @@
   function flush() { while (!speaking && waiters.length) waiters.shift()(); }
   V.hush = () => { cut(); waiters = []; };
   /* When the iPad is locked, its cover is shut or the app is put away, everything stops at once and nothing new
-     starts until the game is on screen again. (Found on 14 November 2026: a line that came due just after the
+     starts until the game is on screen again. (Found on 13 November 2026: a line that came due just after the
      iPad was locked could not start its recording, so it fell back to the device voice, which carried on
      talking through the locked iPad.) Jobs that were waiting for Bonnie to finish still run, silently. */
   const away = () => typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden');

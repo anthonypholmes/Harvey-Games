@@ -92,6 +92,12 @@ const CSS = `
   .tile.in-slot{min-width:50px;height:60px}
   .word-row{gap:6px}
   .clue-pic{width:96px;height:96px;font-size:4rem}
+  /* phones (16 November 2026): the picture sits beside the sentence, and the letter tray is tighter */
+  .clue{flex-wrap:nowrap;gap:12px;margin-bottom:8px}
+  .clue-pic{width:72px;height:72px;font-size:3rem;flex:none}
+  .clue-text{text-align:left}
+  .word-wrap{margin:8px 0 2px}
+  .bank{gap:8px;padding:10px;min-height:0;margin-top:6px}
 }
 @keyframes floaty{50%{transform:translateY(-6px) rotate(2deg)}}
 @keyframes snap{0%{transform:scale(1.3) translateY(-10px)}60%{transform:scale(.92)}100%{transform:scale(1)}}

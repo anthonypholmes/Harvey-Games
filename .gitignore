@@ -10,3 +10,8 @@ node_modules/
 
 # App Store app: made by npm run app:build
 app-www/
+
+# Phone-size check pictures: made again any time by node tools/phone-check.mjs (only the report is kept)
+docs/phone-check/*
+!docs/phone-check/REPORT.md
+!docs/phone-check/LEVELS.md

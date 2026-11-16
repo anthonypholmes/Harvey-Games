@@ -67,15 +67,15 @@ const CSS = `
 .tricky-sentence{font-family:var(--font-read);font-size:clamp(1.5rem,3.5vw,2.1rem);text-align:center;margin:10px 0 20px;line-height:1.5}
 .gap{display:inline-block;min-width:120px;border-bottom:4px dashed var(--accent);margin:0 6px;color:var(--leaf-dark);font-weight:700}
 .signs{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:10px}
-.sign{position:relative;z-index:0;padding:0 0 46px;transition:transform .2s}
-.sign .board{font-family:var(--font-read);font-weight:700;font-size:clamp(1.5rem,3.4vw,2rem);background:linear-gradient(180deg,var(--wood-light),var(--wood));border-bottom:6px solid var(--wood-dark);padding:14px 26px;border-radius:12px 34px 34px 12px;box-shadow:0 6px 10px rgba(74,59,44,.25);color:#3B2A1A;min-width:150px;text-align:center}
-.sign::after{content:"";position:absolute;left:24px;bottom:0;width:14px;height:52px;background:var(--wood-dark);border-radius:4px;z-index:-1}
-.sign.wrong{animation:wobble .6s;opacity:.35;pointer-events:none}
-.sign.right .board{background:linear-gradient(180deg,#BFE3A8,var(--leaf));border-color:var(--leaf-dark)}
-.sign.glow .board{box-shadow:0 0 0 6px rgba(242,193,78,.7)}
+.signs .sign{position:relative;z-index:0;padding:0 0 46px;transition:transform .2s}
+.signs .sign .board{font-family:var(--font-read);font-weight:700;font-size:clamp(1.5rem,3.4vw,2rem);background:linear-gradient(180deg,var(--wood-light),var(--wood));border-bottom:6px solid var(--wood-dark);padding:14px 26px;border-radius:12px 34px 34px 12px;box-shadow:0 6px 10px rgba(74,59,44,.25);color:#3B2A1A;min-width:150px;text-align:center}
+.signs .sign::after{content:"";position:absolute;left:24px;bottom:0;width:14px;height:52px;background:var(--wood-dark);border-radius:4px;z-index:-1}
+.signs .sign.wrong{animation:wobble .6s;opacity:.35;pointer-events:none}
+.signs .sign.right .board{background:linear-gradient(180deg,#BFE3A8,var(--leaf));border-color:var(--leaf-dark)}
+.signs .sign.glow .board{box-shadow:0 0 0 6px rgba(242,193,78,.7)}
 .mode-tip{text-align:center;font-family:var(--font-read);font-size:1.2rem;color:var(--ink-soft)}
-@media (max-width:520px){ .sign .board{min-width:110px;padding:12px 16px} }
-@media (hover:hover){ .sign:hover{transform:rotate(-2deg) translateY(-3px)} }
+@media (max-width:520px){ .signs .sign .board{min-width:110px;padding:12px 16px} }
+@media (hover:hover){ .signs .sign:hover{transform:rotate(-2deg) translateY(-3px)} }
 @keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-10deg)}75%{transform:rotate(8deg)}}
 `;
 

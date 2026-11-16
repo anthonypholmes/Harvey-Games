@@ -1,6 +1,6 @@
 # Meadow Clubhouse App Store project: handoff
 
-**Last updated:** 13 November 2026
+**Last updated:** 16 November 2026
 **Repo:** `anthonypholmes/Harvey-Games`. Work happens on the **`app-store`** branch. `main` is the live website (holmeshouse.co.uk) and must not be touched.
 **Owner:** Anthony. He isn't a developer, so explain steps plainly, give commands to paste, and do the technical work yourself where you can.
 
@@ -150,7 +150,7 @@ If Xcode says a package such as CapApp-SPM is missing after the project moves or
 - **Not checked:** nobody has listened to the new clips. Listen to a few name-free lines ("Well done!", "Hi!") and a story or two, and to how "Priya" is said.
 - **Don't** (still true): generate names live with ElevenLabs in the app, use the device voice for just the name, let parents record names, or grow the list to hundreds.
 
-## The device voice is gone from the app ✅ (14 November 2026)
+## The device voice is gone from the app ✅ (13 November 2026)
 
 - **The bug (found on the real iPad, build 3):** in Story Nook, Anthony locked the iPad and shut the cover, and the device's robotic voice started talking through the locked iPad. Cause: a line came due just after locking, Bonnie's recording could not start (iOS had paused the sound), so `bonnie-voice.js` fell back to the device voice, which iOS lets carry on while locked.
 - **Fix 1: nothing is said while the iPad is locked or the app is put away.** `V.sleep()` in `bonnie-voice.js` stops everything on `visibilitychange` and `pagehide`, `say()` does nothing while the page is hidden, and `MeadowViewController` in `AppDelegate.swift` calls it too when the app stops being active.
@@ -169,7 +169,7 @@ Every screen was looked at on a 2018 iPad's size, upright and sideways (pictures
 - All the test pages pass. The App Store screenshots were made again with the new look.
 - **Not checked:** on the real iPad, and with the three shop themes other than the meadow.
 
-## Submitted for review (14 November 2026)
+## Submitted for review (13 November 2026)
 
 - **Version 1.0 is with Apple for review.** Builds 3 and 4 went to TestFlight; build 4 has the fix for the device voice talking through a locked iPad, and **build 4 is the one submitted**. Anthony confirmed on the real iPad that locking it mid-story is now silent.
 - The in-app purchase was bought successfully in TestFlight once the Paid Apps agreement went Active. Restore purchase had not been confirmed as tested when this was written.
@@ -191,6 +191,7 @@ Every screen was looked at on a 2018 iPad's size, upright and sideways (pictures
 
 ## Working notes
 - After any change to the game files: `npm run app:sync`, then ▶ in Xcode.
+- **Phone-size check (16 November 2026, for the iPhone release, now 1.1):** `node tools/phone-check.mjs` takes a picture of every screen at three iPhone sizes, as the app sees it. See `docs/UPDATE_PLAN.md` (1.1) for what it found. It needs Google Chrome and nothing else.
 - The game's test pages are in `tests/` (walk, teach, dig, week, confidence, bones, number-bonds, captains-cove, unlock, players, backup, voice-name). They all pass. Re-run them after changes.
 - `npm run voice:check` (dry run) should report "new clips needed: 0" unless lines changed.
 - Commit as Anthony. Never commit `app-www/`, `node_modules/` or `.env.local`.

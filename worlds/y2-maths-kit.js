@@ -801,6 +801,8 @@ function feedback(kind, html) {
   const fb = inMM('#bubble'); if (!fb) return;
   fb.className = 'feedback ' + kind; fb.innerHTML = html;
   setMood(kind === 'good' ? 'happy' : kind === 'help' ? 'help' : 'idle');
+  // On a phone Bonnie sits under the answer buttons, so bring her words into view (the rule is in the core)
+  if (kind && U.revealOnPhone) U.revealOnPhone(fb);
 }
 function setMood(m) { const b = inMM('#gameBonnie'); if (b) b.dataset.mood = m; }
 function showVisual() { const v = inMM('#visual'); if (v && v.hidden) v.hidden = false; }
@@ -1441,7 +1443,16 @@ const CSS = String.raw`
   .mm .gvis { --cell: 26px; }
   .mm .gv-plate, .mm .gv-bowl, .mm .gv-basket { width: 104px; }
   .mm .gv-plate { height: 104px; }
-  .mm .gv-lily { width: 112px; height: 112px; }
+  .mm .gv-lily { width: 96px; height: 96px; }
+  /* five or more bowls, plates or baskets: four to a row, with smaller bones, so ten bowls are three rows and not five */
+  .mm .gv-row:has(> .gv-box:nth-child(5)) { gap: 8px; width: 100%; }
+  .mm .gv-row:has(> .gv-box:nth-child(5)) > .gv-box { width: calc((100% - 24px) / 4); min-width: 0; min-height: 58px; padding: 8px 4px 12px; }
+  .mm .gv-row:has(> .gv-box:nth-child(5)) > .gv-plate, .mm .gv-row:has(> .gv-box:nth-child(5)) > .gv-lily { height: auto; aspect-ratio: 1; }
+  .mm .gv-row:has(> .gv-box:nth-child(5)) .gi, .mm .gv-row:has(> .gv-box:nth-child(5)) .gi .bone { width: 20px; height: 20px; }
+  /* three or four: all in one row (on the small iPhone the third one wrapped onto a row of its own) */
+  .mm .gv-row:has(> .gv-box:nth-child(3)):not(:has(> .gv-box:nth-child(5))) { gap: 8px; width: 100%; flex-wrap: nowrap; }
+  .mm .gv-row:has(> .gv-box:nth-child(3)):not(:has(> .gv-box:nth-child(5))) > .gv-box { flex: 1 1 0; width: auto; min-width: 0; max-width: 112px; padding-left: 4px; padding-right: 4px; }
+  .mm .gv-row:has(> .gv-box:nth-child(3)):not(:has(> .gv-box:nth-child(5))) > .gv-plate, .mm .gv-row:has(> .gv-box:nth-child(3)):not(:has(> .gv-box:nth-child(5))) > .gv-lily { height: auto; aspect-ratio: 1; }
 }
 .mm .gv-burrows { gap: 16px 22px; }
 .mm .gv-burrow { display: grid; grid-template-columns: repeat(5, var(--hole)); gap: 8px; padding: 14px 14px 12px; border-radius: 22px 22px 16px 16px; background: linear-gradient(180deg, #A6D68A 0 14px, #C79A66 14px, #B5854F); border: 2px solid #7A5530; box-shadow: inset 0 -6px 0 rgba(90, 55, 25, .18); --hole: 54px; }
@@ -1599,6 +1610,53 @@ const CSS = String.raw`
 .mm .scroll small { font-size: 15px; }
 .mm .wstep i { font-size: 16px; }
 .mm .buddy .feedback { font-size: 18px; }
+/* ---------- phones (16 November 2026) ----------
+   On a phone the question, the thing to tap and the answer buttons should be on one screen, or close.
+   The question card is tighter, its "Bonds to 10 · Question 1 of 9" line is left out (the dots and the world's
+   name at the top already say it; a warm-up or Teach Bonnie label still shows), the answer buttons come
+   straight after the question, and Bonnie is a smaller row under them. feedback() scrolls her into view when she
+   answers a tap (revealOnPhone in the core). Nothing here changes the iPad. */
+@media (max-width: 560px) {
+  .mm .play { gap: 12px; }
+  .mm .stage { padding: 14px 14px 16px; gap: 10px; }
+  .mm .lvl-name:not(:has(.warm-chip)) { display: none; }
+  .mm .lvl-name { margin-bottom: 0; }
+  .mm .quest { padding: 6px 10px; }
+  .mm .tip { margin-top: -4px; }
+  .mm .eq { font-size: clamp(30px, 9vw, 40px); }
+  .mm .visual { padding: 10px; gap: 12px 18px; }
+  /* place-value counters: five to a row and a little smaller, so 9 hundreds is two short rows, not three tall ones */
+  .mm .items.counters { grid-template-columns: repeat(5, 38px); gap: 4px; }
+  .mm .items.counters .ctr { width: 38px; height: 38px; }
+  /* each place's label sits beside its counters, not under them */
+  .mm .visual:has(.items.counters) { flex-direction: column; align-items: stretch; gap: 10px; }
+  .mm .grp:has(> .items.counters) { grid-template-columns: auto minmax(0, 1fr); align-items: center; justify-items: start; }
+  .mm .grp:has(> .items.counters) > .glabel { white-space: normal; line-height: 1.15; }
+  .mm .grp:has(> .items.counters) > .steppers { grid-column: 1 / -1; }
+  /* a ten rod you tap to swap for ones is only 13px wide: give the finger more room either side */
+  .mm button.ten::after { content: ''; position: absolute; inset: -4px -12px; }
+  .mm .side { display: flex; flex-direction: column; gap: 12px; }
+  .mm #controls { order: -1; }
+  .mm .helper { gap: 8px; }
+  .mm .buddy { gap: 10px; align-items: center; }
+  .mm .buddy .bonnie { width: 64px; height: 64px; }
+  .mm .feedback { min-height: 60px; padding: 10px 12px; }
+  .mm .buddy .feedback::before { bottom: 50%; margin-bottom: -8px; }
+  .mm .ask { min-height: 48px; padding: 8px 14px; font-size: 18px; }
+  /* The number keys stay fixed at the bottom of the screen, like a phone's own keyboard, in two rows:
+     1 2 3 4 5 delete / 6 7 8 9 0 Check. The question scrolls above them. */
+  .mm #controls:has(> .pad) { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 8px max(12px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)); background: var(--cream); border-top: 2px solid var(--edge); box-shadow: 0 -8px 18px -12px rgba(120, 85, 45, .45); }
+  .mm .side:has(> #controls > .pad) { padding-bottom: calc(128px + env(safe-area-inset-bottom)); }
+  html:has(.mm #controls > .pad) { scroll-padding-bottom: calc(132px + env(safe-area-inset-bottom)); }
+  .mm .pad { grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.45fr); gap: 6px 6px; max-width: 520px; margin: 0 auto; }
+  .mm .key { min-height: 50px; font-size: 26px; padding: 0; }
+  .mm .key.check { font-size: 19px; }
+  .mm .key[data-key="1"] { order: 1; } .mm .key[data-key="2"] { order: 2; } .mm .key[data-key="3"] { order: 3; } .mm .key[data-key="4"] { order: 4; } .mm .key[data-key="5"] { order: 5; } .mm .key.del { order: 6; }
+  .mm .key[data-key="6"] { order: 7; } .mm .key[data-key="7"] { order: 8; } .mm .key[data-key="8"] { order: 9; } .mm .key[data-key="9"] { order: 10; } .mm .key[data-key="0"] { order: 11; } .mm .key.check { order: 12; }
+  .mm .choice { min-height: 64px; font-size: 30px; }
+  .mm .choices.wordy .choice { font-size: 20px; white-space: normal; }
+  .mm .actions .mbtn { min-height: 56px; }
+}
 `;
 if (!document.getElementById('meadow-maths-kit')) {
   const st = document.createElement('style'); st.id = 'meadow-maths-kit'; st.textContent = CSS; document.head.appendChild(st);
