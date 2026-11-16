@@ -4,7 +4,7 @@
 **Repo:** `anthonypholmes/Harvey-Games`. Work happens on the **`app-store`** branch. `main` is the live website (holmeshouse.co.uk) and must not be touched.
 **Owner:** Anthony. He isn't a developer, so explain steps plainly, give commands to paste, and do the technical work yourself where you can.
 
-**What comes after 1.0:** see `docs/UPDATE_PLAN.md` (the roadmap for 1.0.1 to 2.0).
+**What comes after 1.0:** see `docs/UPDATE_PLAN.md` (the roadmap for 1.1 to 2.0; the old 1.0.1 is folded into 1.1, the iPhone update).
 
 ## The goal
 
@@ -174,7 +174,7 @@ Every screen was looked at on a 2018 iPad's size, upright and sideways (pictures
 - **Version 1.0 is with Apple for review.** Builds 3 and 4 went to TestFlight; build 4 has the fix for the device voice talking through a locked iPad, and **build 4 is the one submitted**. Anthony confirmed on the real iPad that locking it mid-story is now silent.
 - The in-app purchase was bought successfully in TestFlight once the Paid Apps agreement went Active. Restore purchase had not been confirmed as tested when this was written.
 - Accessibility labels: claim only Sufficient Contrast and Reduced Motion. VoiceOver, Voice Control and Larger Text are not supported or not tested.
-- TestFlight refuses child Apple Accounts, so the planned family testing was skipped. The first week after release is the real family test; fixes go out as 1.0.1.
+- TestFlight refuses child Apple Accounts, so the planned family testing was skipped. The first week after release is the real family test; fixes go into 1.1 (or a quick 1.0.1 built from the `v1.0-build4` tag if one can't wait).
 - **If Apple rejects it or asks a question,** paste their message into the session. Likely topics: the parental gate, where the purchase is, Kids category rules. The reviewer notes are in `docs/APP_STORE_LISTING.md`.
 - **After approval:** release it (if manual release was chosen), install it on the children's iPads from the App Store, and ask a few families for feedback and a rating.
 - **For a later version:** a VoiceOver walk-through and fixes, a layout that fits when the iPad is sideways, recordings for Bonnie's guesses of 10,000 or more.

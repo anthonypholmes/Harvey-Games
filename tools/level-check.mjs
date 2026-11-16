@@ -46,7 +46,7 @@ const MEASURE = `(() => {
   const clipped = el => { for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) { const o = getComputedStyle(p).overflowX; if (o !== 'visible') return true; } return false; };
   const wide = [...area.querySelectorAll('*')].filter(el => seen(el) && !clipped(el)).filter(el => { const r = el.getBoundingClientRect(); return r.right > W + 1 || r.left < -1; })
     .filter((el, i, a) => !a.includes(el.parentElement)).slice(0, 4).map(el => { const r = el.getBoundingClientRect(); return label(el) + ' ' + Math.round(r.left) + '..' + Math.round(r.right); });
-  const small = taps.filter(el => { const r = el.getBoundingClientRect(); return (r.width < 44 || r.height < 44) && !el.matches('.nl, .sb'); /* .sb: the phonics sound dots have a 44 × 44 tap area of their own (::after) */ })
+  const small = taps.filter(el => { const r = el.getBoundingClientRect(); return (r.width < 44 || r.height < 44) && !el.matches('.nl, .sb, .aa, button.ten'); /* these have a bigger tap area of their own (::after): .sb the phonics sound dots, .aa the capital-letter button, button.ten the tens rods */ })
     .slice(0, 4).map(el => { const r = el.getBoundingClientRect(); return label(el) + ' ' + Math.round(r.width) + '×' + Math.round(r.height); });
   return { cut, W, H, scrollW: de.scrollWidth, scrollH: Math.max(de.scrollHeight, document.body.scrollHeight), taps: taps.length, top, bottom,
     question: prompt ? prompt.textContent.trim().replace(/\\s+/g, ' ').slice(0, 70) : '', wide, small };

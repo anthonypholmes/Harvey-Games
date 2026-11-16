@@ -30,8 +30,8 @@ Sizes: iPhone SE (375 × 667), iPhone 17 (402 × 874), iPhone 17 Pro Max (440 ×
 | number-lines-help | scrolls 259px | scrolls 128px | scrolls 46px | fits |
 | arrays-level | scrolls 341px | scrolls 240px | scrolls 13px | fits |
 | arrays-help | scrolls 237px | scrolls 228px | fits | fits |
-| sharing-level | scrolls 506px | scrolls 378px | scrolls 277px | scrolls 258px |
-| sharing-help | scrolls 447px | scrolls 347px | scrolls 180px | scrolls 40px |
+| sharing-level | scrolls 506px | scrolls 378px | scrolls 277px | scrolls 286px |
+| sharing-help | scrolls 447px | scrolls 347px | scrolls 180px | scrolls 22px |
 | captains-cove-level | scrolls 13px | fits | fits | fits |
 | captains-cove-help | scrolls 121px | scrolls 4px | fits | fits |
 | phonics-level | scrolls 255px | scrolls 124px | scrolls 8px | fits |

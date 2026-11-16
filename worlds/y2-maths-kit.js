@@ -698,6 +698,9 @@ function questFor(q) {
   return U.fmt(S.ctx.level.quest || '');
 }
 
+// the level's own story line, on any question after the first: phones hide it to save room (a line about this
+// question, like the number Bonnie's bone is buried at, is always shown)
+const repeatQuest = q => !(S.ctx.first ?? S.ctx.index === 0) && questFor(q) === U.fmt(S.ctx.level.quest || '');
 function renderGame() {
   const q = S.q, quest = questFor(q);
   if (q.teach) S.teachAsk = fresh(TEACH.ask);
@@ -707,7 +710,7 @@ function renderGame() {
     <div class="play">
       <div class="mcard stage">
         ${S.ctx.walk ? '' : `<div class="lvl-name">${S.ctx.warm ? `<span class="warm-chip">🔥 Warm-up ${S.ctx.index + 1} of ${S.ctx.count}</span> ${esc(S.ctx.level.name)}` : `${q.teach ? '<span class="warm-chip teach-chip">🎓 Teach Bonnie</span> ' : ''}${esc(S.ctx.level.name)} · Question ${S.ctx.index + 1} of ${S.ctx.count}`}</div>`}
-        ${quest ? `<div class="quest">${PAW}<span>${esc(quest)}</span></div>` : ''}
+        ${quest ? `<div class="quest${repeatQuest(q) ? ' again' : ''}">${PAW}<span>${esc(quest)}</span></div>` : ''}
         <div class="prompt-row">
           <div class="prompt">${q.prompt}</div>
           <button class="micon" type="button" id="mmSay" aria-label="Read the question out loud">${ICON.speak}</button>
@@ -822,6 +825,8 @@ function press(key) {
   if (key === 'del') S.values[S.active] = cur.slice(0, -1);
   else if (cur.length < 5) S.values[S.active] = (cur === '0' ? '' : cur) + key;
   sfx.tap(); paintBoxes();
+  // on a phone the keys are fixed at the bottom: keep the box being typed into in sight, just above them
+  if (U.revealOnPhone) U.revealOnPhone(inMM(`.box[data-box="${S.active}"]`));
   if (S.tier === 3) applyGuide();
 }
 
@@ -1441,6 +1446,12 @@ const CSS = String.raw`
 .mm .mini.gv-array, .mm .mini .gv-array { --cell: 30px; }
 @media (max-width: 560px) {
   .mm .gvis { --cell: 26px; }
+  /* an array up to 10 wide must fit the width of a small phone */
+  /* the orchard grid (5 rows of 10, drag to grow it): use the whole width, so each circle is as big as it can be */
+  .mm .gvis:has(> .gv-grid) { padding-left: 4px; padding-right: 4px; }
+  .mm .gv-grid { gap: 3px; padding: 6px; width: 100%; }
+  .mm .gv-cell { padding: 1px; }
+  .mm .gv-array { gap: 4px; padding: 10px; --cell: min(26px, calc((100vw - 165px) / 10)); }
   .mm .gv-plate, .mm .gv-bowl, .mm .gv-basket { width: 104px; }
   .mm .gv-plate { height: 104px; }
   .mm .gv-lily { width: 96px; height: 96px; }
@@ -1558,8 +1569,13 @@ const CSS = String.raw`
 .mm .wait-note { font-weight: 600; color: var(--ink-soft); }
 .mm .verdicts .choice[disabled]:not(.faded) { opacity: .45; box-shadow: none; }
 @media (max-width: 560px) {
-  .mm .host { width: 84px; }
-  .mm .tests { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mm .host { width: 68px; }
+  .mm .claim { gap: 12px; }
+  .mm .scroll { padding: 10px 14px; }
+  .mm .scroll b { font-size: 20px; }
+  /* three to a row (a pair like "11 + 13" still fits at 20px), so six tests are two rows, not three */
+  .mm .tests { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .mm .tbtn { min-height: 50px; font-size: 20px; padding: 0 2px; }
   .mm .chest b { font-size: 16px; }
 }
 /* the host's worked steps */
@@ -1622,6 +1638,7 @@ const CSS = String.raw`
   .mm .lvl-name:not(:has(.warm-chip)) { display: none; }
   .mm .lvl-name { margin-bottom: 0; }
   .mm .quest { padding: 6px 10px; }
+  .mm .quest.again { display: none; } /* shown on the first question of a level only */
   .mm .tip { margin-top: -4px; }
   .mm .eq { font-size: clamp(30px, 9vw, 40px); }
   .mm .visual { padding: 10px; gap: 12px 18px; }

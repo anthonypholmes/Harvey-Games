@@ -67,7 +67,21 @@ const CSS = `
 .s-bank{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:14px;border-radius:20px;background:#EFE5D0;min-height:80px}
 .s-bank.drop-hover{outline:4px solid var(--gold)}
 .mode-tip{text-align:center;font-family:var(--font-read);font-size:1.2rem;color:var(--ink-soft)}
+.mode-tip.lead{font-size:1.3rem;color:var(--ink)}
+.check-row{margin-top:34px}
+.aa::after{content:"";position:absolute;inset:-7px}
 @media (max-width:520px){ .wchip{font-size:1.3rem;padding:8px 12px} }
+@media (max-width:560px){
+  /* phones: the same sentence, less space around it */
+  .mode-tip.lead{font-size:1.1rem;line-height:1.35;margin:0 0 8px}
+  .wchip{min-width:46px;text-align:center}
+  .s-line{min-height:72px;padding:10px;gap:8px;margin:10px 0}
+  .p-slot{width:50px;height:58px;font-size:2.1rem}
+  .s-bank{padding:10px;gap:8px;min-height:64px}
+  .badges{margin-top:6px}
+  .badge{width:62px;height:62px;font-size:2.2rem}
+  .check-row{margin-top:30px}
+}
 @keyframes snap{0%{transform:scale(1.3) translateY(-10px)}60%{transform:scale(.92)}100%{transform:scale(1)}}
 `;
 
@@ -91,12 +105,12 @@ function playSentence(raw, ctx) {
   const prompts = SENT_PROMPTS;
   const area = ctx.area;
   area.innerHTML = `
-    <p class="mode-tip" style="font-size:1.3rem;color:var(--ink)">🌼 ${prompts[mode]}</p>
+    <p class="mode-tip lead">🌼 ${prompts[mode]}</p>
     <div class="row-btns"><button class="btn small" id="hear">🔊 Hear the sentence</button></div>
     <div class="s-line" id="line"></div>
     ${mode === 'order' || mode === 'all' ? '<div class="s-bank" id="sbank"></div>' : ''}
     <div class="badges" id="badges">${L.badges.length > 1 || mode !== 'caps' ? L.badges.map(b => `<span class="badge" data-b="${b}" style="background:${b === '.' ? 'var(--leaf)' : b === '?' ? '#5B9BD5' : 'var(--berry)'}">${b}<small>${b === '.' ? 'full stop' : b === '?' ? 'question' : 'exclaim!'}</small></span>`).join('') : ''}</div>
-    <div class="row-btns" style="margin-top:34px"><button class="btn green" id="checkBtn">✓ Check my sentence</button></div>`;
+    <div class="row-btns check-row"><button class="btn green" id="checkBtn">✓ Check my sentence</button></div>`;
   $('#hear').onclick = () => say(correctText, { rate: .8 });
 
   function draw(snapId = -1) {

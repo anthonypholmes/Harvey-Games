@@ -76,6 +76,14 @@ const CSS = `
 .opt.right{background:linear-gradient(180deg,#D8F0C6,#A9D58C);border-color:var(--leaf-dark)}
 .opt.glow{box-shadow:0 0 0 6px rgba(242,193,78,.8)}
 @media (hover:hover){ .opt:hover{transform:translateY(-2px)} }
+@media (max-width:560px){
+  /* phones: the story and its answers, with less space around them */
+  .story{font-size:1.2rem;line-height:1.55;padding:14px 16px}
+  .story::before{top:-14px;left:-6px;font-size:1.6rem}
+  .question{font-size:1.25rem;margin:14px 0 8px}
+  .opts{gap:8px}
+  .opt{font-size:1.25rem;padding:10px 14px}
+}
 `;
 
 function playStory(item, ctx) {

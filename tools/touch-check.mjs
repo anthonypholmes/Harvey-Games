@@ -88,7 +88,21 @@ try {
   check(`Number keys ${fixedKeys ? 'fixed at the bottom' : 'under the question'}: a wrong answer shows Bonnie's message`, seen.top >= 0 && seen.bottom <= seen.limit + 1,
     `her message is at ${seen.top}–${seen.bottom}px, the keys start at ${seen.limit}px ("${seen.text}")`);
 
-  // 4. swipe up to scroll a question taller than the screen (starting on the question's words, not on a drag area)
+  // 4. a box behind the keys: typing a number must bring the box into sight above them (Captain's Cove, Prove It!)
+  for (let i = 0; i < 6; i++) { await level('meadow-maths.html', i % 2 ? 'y2-maths-number-bonds' : 'y2-maths-captains-cove', i % 2 ? 0 : 4); if (await evaluate(`!!document.querySelector('.mm .box.active')`)) break; }
+  // questions are random, so push the answer down with a gap first, to make sure it starts behind the keys
+  await evaluate(`(() => { const b = document.querySelector('.mm .box.active'); if (b) b.closest('.eq, .eqline, .prompt-row, div').before(Object.assign(document.createElement('div'), { style: 'height:' + innerHeight + 'px' })); scrollTo(0, 0); })()`);
+  const boxFirst = await evaluate(`(() => { const b = document.querySelector('.mm .box.active'), k = document.querySelector('#controls'); if (!b || !k) return null; return { hidden: b.getBoundingClientRect().bottom > k.getBoundingClientRect().top }; })()`);
+  if (!boxFirst) check('Typing into a box behind the keys brings it into sight', true, 'no answer box on this question');
+  else {
+    await tapKey('7');
+    await sleep(700);
+    const b = await evaluate(`(() => { const r = document.querySelector('.mm .box.active').getBoundingClientRect(), k = document.querySelector('#controls').getBoundingClientRect(); const limit = getComputedStyle(document.querySelector('#controls')).position === 'fixed' ? k.top : innerHeight; return { top: Math.round(r.top), bottom: Math.round(r.bottom), limit: Math.round(limit), text: document.querySelector('.mm .box[data-box]').textContent }; })()`);
+    check('Typing into a box behind the keys brings it into sight', b.top >= 0 && b.bottom <= b.limit + 1,
+      `${boxFirst.hidden ? 'it started behind the keys; ' : 'it started in sight; '}after typing 7 it is at ${b.top}–${b.bottom}px, the keys start at ${b.limit}px`);
+  }
+
+  // 5. swipe up to scroll a question taller than the screen (starting on the question's words, not on a drag area)
   for (const [page, world, sel, label] of [['meadow-maths.html', 'y2-maths-number-bonds', '.mm .prompt', 'maths'], ['meadow-words.html', 'y2-english-phonics', '.clue-text', 'English']]) {
     await level(page, world);
     const tall = await evaluate(`document.documentElement.scrollHeight > innerHeight + 20`);
