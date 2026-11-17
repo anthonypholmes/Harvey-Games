@@ -1,12 +1,12 @@
 # Meadow Clubhouse: update plan after 1.0
 
 **Written:** 13 November 2026, the day version 1.0 (build 4) went to Apple for review.
-**Pace:** evenings and weekends, in bursts. The dates are targets, not promises. Don't compress them.
+**Pace (changed 17 November 2026):** Anthony works on this from home, mainly 9 to 5 on weekdays, so the dates below are about half what they were for evenings and weekends. They are targets, not promises: leave some slack in every release rather than planning every week flat out. Recording Bonnie's lines and waiting for Apple's reviews are the usual reasons a date slips.
 **Where the work happens:** the `app-store` branch, as before. `docs/HANDOFF.md` is still the record of what has been built.
 
 ## While 1.0 is in review
 
-- **Don't change the submission.** A first submission with an in-app purchase in the Kids category often gets one rejection or question. Keep a free evening to answer it and resubmit. Paste Apple's message into a session.
+- **Don't change the submission.** A first submission with an in-app purchase in the Kids category often gets one rejection or question. Keep some time free to answer it and resubmit. Paste Apple's message into a session.
 - (Done 13 November 2026) **The submitted code is tagged** `v1.0-build4` (commit `52505e5`, the last change to the app itself before the upload). The tag is on Anthony's Mac; `git push origin v1.0-build4` in a terminal puts it on GitHub too.
 - (Done 13 November 2026) **The build number in the Xcode project is 5**, ready for the next upload (Apple has builds 1 to 4). The version is still 1.0: change `MARKETING_VERSION` to 1.1 when the iPhone release is uploaded (there is no separate 1.0.1 now).
 - **Line up the first reviewers.** TestFlight family testing was skipped (it refuses child accounts), so the first week after release is the real family test. Ask the families you know to play and leave a rating.
@@ -15,16 +15,18 @@
 
 | Release | Target | What's in it |
 |---|---|---|
-| **1.1 iPhone** | Mid-December 2026 | The same app on iPhone, held upright, with the old 1.0.1 folded in: the real-world checks, two new grown-ups buttons, first impressions and Bonnie's first-time help |
-| **1.2 Money and Time** | February 2027 | Two new Year 2 maths worlds |
-| **1.3 Spelling and Grammar** | April 2027 | Two new Year 2 English worlds, and a small Shapes world |
-| **2.0 Year 3** | July 2027 | The first Year 3 maths and English worlds |
+| **1.1 iPhone** | Submit within a few days of 1.0 being approved (late November 2026) | The same app on iPhone, held upright, with the old 1.0.1 checks. Bonnie's first-time help, first impressions and the two grown-ups buttons go in if they are ready, otherwise into 1.2 |
+| **1.2 Reminders, Money and Time** | Mid-December 2026 | Weekly reminders for families, two new Year 2 maths worlds, and anything moved from 1.1 |
+| **1.3 Spelling and Grammar** | Late January 2027 | Two new Year 2 English worlds, and a small Shapes world |
+| **2.0 Year 3** | Spring 2027 (about April) | The first Year 3 maths and English worlds |
+
+**Re-paced 17 November 2026** for weekday working hours (see Pace at the top). The order is the same as before; the dates are roughly halved, and weekly reminders are added to 1.2.
 
 **Changed 15 November 2026:** iPhone moved from May to the first update, at Anthony's request. An iPad-only app cuts off a large part of the audience and stops a parent trying it quickly on their phone. The separate 1.0.1 release is folded into it; a 1.0.1 still goes out on its own if the first families find a bug that can't wait.
 
-### 1.1 iPhone (mid-December 2026)
+### 1.1 iPhone (late November 2026)
 
-Out before Christmas. The phone work started on 16 November while 1.0 was still in review; nothing from it goes to Apple until 1.0 is approved.
+Submit within a few days of 1.0 being approved, so it is out well before Christmas. The phone work started on 16 November while 1.0 was still in review; nothing from it goes to Apple until 1.0 is approved.
 
 **One update, not two (decided 16 November 2026):** nothing from the old 1.0.1 was built yet, so the iPhone work is finished first and the 1.0.1 items are done inside this update. If the first families find a bug that can't wait, a quick 1.0.1 is built from the `v1.0-build4` tag, not from `app-store` (which now has the iPhone work in it).
 
@@ -91,7 +93,7 @@ Out before Christmas. The phone work started on 16 November while 1.0 was still 
   - first bones earned: the ring is on the Bone Shop ("You've got bones! Come and see my shop.")
   - first time in the grown-ups area: a short card for the parent saying what is there, with the prizes pointed out
   - Each shows once per player, and is kept in the player's save. The ring holds still when Reduce Motion is on. Needs three or four new recorded lines (with name-free versions, as always) and a test page. Two to three sittings. It ships here because the iPhone release is when the most new players arrive.
-- **If 1.1 runs late,** move the first-time help to 1.2, then the first impressions.
+- **Don't hold 1.1 for the extras.** Once the iPhone work and the real-device checks are done, submit it. Whatever of the first-time help, first impressions and the two grown-ups buttons isn't finished moves to 1.2.
 
 **Folded in from the old 1.0.1:**
 
@@ -117,9 +119,21 @@ Out before Christmas. The phone work started on 16 November while 1.0 was still 
   - **Any window size, not only sideways.** iPads run apps in windows and split screen, so the app can be much narrower than the screen. Test narrow windows as well as sideways when doing the layout work above.
   - **Colour is never the only clue.** Story Nook says "see the clue in green". Do this with the VoiceOver fixes.
 
-### 1.2 Money and Time (February 2027)
+### 1.2 Reminders, Money and Time (mid-December 2026)
 
-The two biggest Year 2 maths topics the game doesn't cover yet.
+**Weekly reminders** (proposed 17 November 2026; confirm the details with Anthony and write a brief in `briefs/` before building):
+
+- **Local notifications only,** with Capacitor's own Local Notifications plugin (on the device, no server, works on Android later). Nothing is sent anywhere, so the "Data Not Collected" label and the Kids category answers stay true. Add a line about reminders to the reviewer notes.
+- **Off until a grown-up chooses.** A one-time card at the top of the grown-ups area (behind the sum) and once after a successful unlock: "A little reminder from Bonnie?" with **Yes, once a week (recommended)** and **No thanks**. iOS's own permission question only appears after Yes. Never shown to a child. Nothing in the game changes if they say no.
+- **One rolling reminder, not a repeating one.** Every time the app opens, cancel the pending reminders and schedule new ones. A reminder only fires on the chosen day and time if the app hasn't been opened for about 5 days, so it never arrives while a family is playing or has just played, and fixed ids mean no duplicates after an update or restart.
+- **It stops if ignored.** Schedule at most the next 4 weekly reminders. If a family ignores a month of them, they stop until the app is opened again.
+- **Settings:** on or off, a day (Mon to Sun) and one of four times (9am, 12pm, 4pm, 6pm). Default Saturday 10am. Stored in its own `meadow-reminders` key, shared by every player (`js/app-storage.js` already keeps `meadow*` keys safe). If iOS permission was refused, the switch says notifications are off for Meadow Club in Settings, with no button that leaves the app.
+- **The words:** warm and low-pressure, a few that take turns ("Bonnie's ready for another adventure! 🐾"). Never the child's name or progress, no streaks, no sad Bonnie, nothing about the full game.
+- **Tapping one just opens the app.** No special handling.
+- **Website:** nothing (the section only shows in the app).
+- **Test page** with a pretend plugin, like `tests/unlock-test.html`: the next dates, switching off, refused permission, reopening the app, and the 4-reminder limit.
+
+**Money and Time:** the two biggest Year 2 maths topics the game doesn't cover yet.
 
 - **Money world:** coins and notes, making an amount, finding the total, giving change.
 - **Time world:** o'clock, half past, quarter past and to, five-minute steps, how long things take.
@@ -128,9 +142,9 @@ The two biggest Year 2 maths topics the game doesn't cover yet.
 - Level 1 of each is free, like every other world. Both join Bonnie's Walk through their first two levels.
 - Remake the App Store screenshots and update the level counts in the listing.
 
-### 1.3 Spelling and Grammar (April 2027)
+### 1.3 Spelling and Grammar (late January 2027)
 
-Out before SATs season in May, which the listing's keywords already aim at.
+Out well before SATs season in May, which the listing's keywords already aim at. Three worlds is more than a month's voice credits (see the voice budget below), so record across December and January.
 
 - **Spelling world:** suffixes (-ing, -ed, -er, -est, -ly, -ful, -less), contractions and homophones.
 - **Grammar world:** nouns, verbs, adjectives, joining words (and, but, because), past and present tense.
@@ -138,20 +152,20 @@ Out before SATs season in May, which the listing's keywords already aim at.
 - Use the story characters (`CHARACTERS`) in every sentence, never the player's name.
 - Change the promotional text for SATs season (no review needed).
 
-### 2.0 Year 3 (July 2027)
+### 2.0 Year 3 (spring 2027, about April)
 
-In time for the summer holidays and September.
+Ready well before the summer holidays and September, when families look for something new.
 
 - The engine already handles more than one school year (the "School years" setting in the grown-ups area appears when a second year has worlds), so this is content work, not a rebuild.
 - **First maths worlds:** place value to 1,000, column addition and subtraction, the 3, 4 and 8 times tables, fractions.
 - **First English worlds:** Year 3 and 4 spelling words, prefixes, speech marks.
 - Decide the pricing first (see the decisions below).
 
-## Behind the scenes (by the end of February 2027)
+## Behind the scenes (by the end of January 2027)
 
 - **Cloud builds.** Xcode 27 runs only on Apple silicon, and Apple is expected to require it from around spring 2027. Set up GitHub Actions or Codemagic and send one test build through it before it is needed.
-- **One codebase.** `app-store` is about 4,900 lines ahead of `main`. Merge them, keeping app-only features behind `MEADOW_IN_APP`, so a new world is built once and not twice. Do it between releases, not during one.
-- **Voice budget.** ElevenLabs gives 40,000 credits a month. Plan on one or two new worlds a month, and run `npm run voice:check` before recording.
+- **One codebase.** `app-store` is about 4,900 lines ahead of `main`. Merge them, keeping app-only features behind `MEADOW_IN_APP`, so a new world is built once and not twice. Do it between releases, not during one: the gap after 1.1 is submitted is a good moment.
+- **Voice budget.** ElevenLabs gives 40,000 credits a month. Plan on one or two new worlds a month, and run `npm run voice:check` before recording. At the faster pace this is the real limit, not time: if a month needs more, move up an ElevenLabs plan for that month rather than slowing down.
 
 ## Later, not yet given a release
 
@@ -166,7 +180,7 @@ From the check against Apple's Human Interface Guidelines. None of these blocks 
 
 1. **The website gives away the full game.** holmeshouse.co.uk has all 58 levels unlocked, and it is the marketing address in the listing. Choices: lock it to the same taster as the app, move the family's copy to a private address, or leave it as it is.
    - **Decided (13 November 2026):** replace it with a landing page for the app once the app is live. The page is built and committed on the **`website-landing-page`** branch (commit `338e5ed`, on this Mac only, not pushed). **Don't merge it into `main` or push `main` until the app is on the App Store.** When it is: merge that branch into `main`, push, and check holmeshouse.co.uk, /privacy.html and /support.html still open.
-2. **Year 3 pricing.** Either part of the same £3.99 unlock (generous, and good for reviews) or a second purchase. Decide by spring 2027.
+2. **Year 3 pricing.** Either part of the same £3.99 unlock (generous, and good for reviews) or a second purchase. Decide by February 2027, before the Year 3 work starts.
 3. (Decided 15 November 2026) iPhone is the first update, 1.1, before the new worlds. (Decided 16 November 2026) The old 1.0.1 is folded into it.
 
 ## Keeping this plan honest

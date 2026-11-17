@@ -12,7 +12,7 @@ Ship Meadow Clubhouse (Year 2 maths and English games with Bonnie the dog) as an
 
 - Free: Bonnie's Walk and the first level of every world (changed 12 November 2026; it was two whole worlds)
 - Kids category, age band 6–8, no ads, no tracking, "Data Not Collected"
-- Rough timeline: about 17 weeks at evenings-and-weekends pace. Don't promise an earlier date.
+- **Pace (17 November 2026):** Anthony works on this from home, mainly 9 to 5 on weekdays (not evenings and weekends, as first thought). The dates are in `docs/UPDATE_PLAN.md`.
 
 ## Anthony's setup
 
@@ -199,7 +199,7 @@ Every screen was looked at on a 2018 iPad's size, upright and sideways (pictures
 - **The project moved on 12 November 2026** from the iCloud-synced Documents folder to `~/Developer/GitHub/Harvey-Games`, which should stop the stray duplicates below. Four that had been committed were removed (commit `1d1195f`). If GitHub Desktop or Xcode still point at the old place, open the project from the new one.
 - **Stray duplicates were a standing problem.** The project used to live in the iCloud-synced Documents folder, and macOS kept making copies with a number before the ending ("config 4.xml", and on 12 November 2026 about 1,100 "… 2.mp3" files in `audio/clips` and `audio/numbers`, all exact copies). Never commit them. `tools/build-app.mjs` now leaves them out of the app. A duplicate inside the hidden `.git` folder ("HEAD 2") once stopped git reaching GitHub. If any appear again, delete them.
 - Claude's shell can commit but cannot push (no GitHub sign-in). Anthony pushes from GitHub Desktop. On `main`, GitHub Desktop lists about 6,500 "new" files (`app-www` and `ios`, which only `app-store` ignores): never commit those.
-- Anthony tends to work in bursts. Keep each step small enough to finish in one sitting, and don't compress the timeline.
+- Anthony works on this in weekday working hours. Keep each step small enough to finish in one sitting, and leave some slack in every date rather than planning every week flat out.
 
 
 ### Bone Shop: Bonnie's coat colours ✅ (12 Nov)
