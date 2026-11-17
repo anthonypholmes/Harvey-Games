@@ -1,7 +1,35 @@
 # Meadow Clubhouse: App Store listing
 
-Everything to paste into App Store Connect, in the order the site asks for it. Written 12 November 2026.
+Everything to paste into App Store Connect, in the order the site asks for it. Written 12 November 2026, and updated 17 November 2026 for 1.1 (iPhone).
 Text in `code` is for pasting exactly. Character limits are Apple's.
+
+## Version 1.1 (iPhone): what to change
+
+1.0 went in for the iPad only. For 1.1, on the new version's page in App Store Connect:
+
+1. **Promotional text, description, notes for the reviewer:** paste the new versions below (they replace the 1.0 text; the changes are listed under each).
+2. **What's New in This Version:** paste the text just below.
+3. **Screenshots:** add the six iPhone pictures to the "iPhone 6.9-inch Display" box (see Screenshots). Keep the iPad ones.
+4. **Version:** 1.1.
+5. **App Privacy:** check it still says Data Not Collected. Reminders are made on the device, so nothing changes.
+6. The name, subtitle, keywords, categories, age rating and in-app purchase stay as they are.
+
+**What's New in This Version (4,000)**
+
+```
+Meadow Clubhouse now plays on iPhone as well as iPad!
+
+• Every game reshaped for a phone held upright, with Bonnie's own number keys so the keyboard never gets in the way
+• Bonnie shows new players where to start, how to ask her for help, and where to spend their bones
+• A gentle weekly reminder for grown-ups, made on the device only. Change the day and time, or turn it off, in the Grown-ups area
+• Works better with VoiceOver
+• Easier to change the real-life prizes
+• Send feedback and Rate the app, in the Grown-ups area
+• A new launch screen, dark and tinted app icons, and lots of small fixes
+
+Bought the full game on iPad? It's yours on iPhone too. If it isn't unlocked, tap Restore purchase on the unlock screen.
+```
+
 
 ## Before you start
 
@@ -31,13 +59,13 @@ If "Meadow Clubhouse" is taken, use `Meadow Clubhouse: KS1 Learning`.
 
 ## Version information
 
-**Promotional text (170).** This can be changed at any time without a new review.
+**Promotional text (170).** This can be changed at any time without a new review. *1.1: "Now on iPhone too!" added at the start.*
 
 ```
-Year 2 maths and English with Bonnie the dog. Try the first level of every world for free. No adverts, no subscription, and it works offline.
+Now on iPhone too! Year 2 maths and English with Bonnie the dog. Try the first level of every world for free. No adverts, no subscription, and it works offline.
 ```
 
-**Description (4,000)**
+**Description (4,000)** *1.1: three lines added under MADE FOR FAMILIES (iPhone and iPad, the weekly reminder, VoiceOver), and one under FREE TO TRY.*
 
 ```
 Homework without the tears. Meadow Clubhouse turns Year 2 (KS1) maths and English into a game your child will ask to play, with Bonnie the chocolate-brown dog cheering them on every step of the way.
@@ -74,10 +102,13 @@ REAL PRIZES, CHOSEN BY YOU
 Children can save their bones for real-life treats that you set: choosing the Friday film, staying up ten minutes late, being DJ in the car. A grown-up holds a button to say yes.
 
 MADE FOR FAMILIES
+• Plays on iPhone and iPad
 • Up to 4 children, each with their own name, bones, stars and Bonnie outfit
 • A grown-ups area showing this week's practice and how much help each level needed
 • Works offline, so it's perfect for car journeys and waiting rooms
 • Bonnie can read maths questions aloud, for children who are still building their reading
+• A gentle weekly reminder from Bonnie for grown-ups, which you can change or turn off
+• Works with VoiceOver
 
 SAFE AND SIMPLE
 • No adverts, ever
@@ -86,7 +117,7 @@ SAFE AND SIMPLE
 • The purchase button is behind a check for grown-ups
 
 FREE TO TRY
-Bonnie's Walk and the first level of every world are free, so your child can find the world they love. One purchase then unlocks all 58 levels for good, and works with Family Sharing.
+Bonnie's Walk and the first level of every world are free, so your child can find the world they love. One purchase then unlocks all 58 levels for good, on your iPhone and iPad, and works with Family Sharing.
 
 Come and meet Bonnie. She's been waiting by the gate.
 ```
@@ -103,13 +134,13 @@ phonics,spelling,times tables,number bonds,sats,primary,age 6,age 7,homework,rea
 | Marketing URL | `https://holmeshouse.co.uk` (optional) |
 | Privacy Policy URL | `https://holmeshouse.co.uk/privacy.html` |
 | Copyright | `2026 Anthony Holmes` |
-| Version | 1.0 |
+| Version | 1.0, then 1.1 for the iPhone release |
 
 ## App Privacy (the "nutrition label")
 
 - "Do you or your third-party partners collect data from this app?" **No.**
 - The label will read **Data Not Collected**.
-- This is true because saves stay on the iPad, there are no analytics or advert tools, and purchases go through Apple's own StoreKit with no other service.
+- This is true because saves stay on the device, the weekly reminders are made on the device too, there are no analytics or advert tools, and purchases go through Apple's own StoreKit with no other service.
 
 ## In-app purchase
 
@@ -130,10 +161,13 @@ The first in-app purchase has to be submitted together with the app version: on 
 
 Sign-in required: **No.**
 
-**Notes for the reviewer**
+**Notes for the reviewer** *1.1: the "NEW IN 1.1" part added, and the PRIVACY line changed (Send feedback and Rate the app leave the app, behind the grown-ups check).*
 
 ```
 Meadow Clubhouse is a Year 2 (ages 6-7) maths and English practice app.
+
+NEW IN 1.1: the app now runs on iPhone (upright only) as well as iPad. It is the same app and the same in-app purchase.
+WEEKLY REMINDERS: optional local notifications, made on the device only (no server, no push). The iOS permission request only appears after a grown-up has answered the parental gate. The reminders contain no name or progress, and can be changed or turned off in the Grown-ups area under Reminders.
 
 FREE CONTENT: Bonnie's Walk and level 1 of every world.
 
@@ -146,7 +180,7 @@ PARENTAL GATE: the Grown-ups area and the purchase screen are behind a multiplic
 
 PLAYERS: "Switch player" on the first page adds up to 4 child profiles. They are stored only on the device.
 
-PRIVACY: the app collects no data. It has no adverts, no analytics, no accounts and no links out of the app. Purchases use StoreKit 2 directly. Bonnie's voice is pre-recorded audio bundled with the app.
+PRIVACY: the app collects no data. It has no adverts, no analytics and no accounts. The only links out of the app are "Send feedback" (opens Mail) and "Rate the app" (opens the App Store page), both inside the Grown-ups area, behind the parental gate. Purchases use StoreKit 2 directly. Bonnie's voice is pre-recorded audio bundled with the app.
 ```
 
 ## Screenshots
@@ -161,6 +195,8 @@ Six pictures are ready in `docs/screenshots/`, at the iPad 13-inch size Apple as
 | `4-words.png` | Phonics, spelling and stories: 4 English worlds, 20 levels |
 | `5-bone-shop.png` | Earn bones for hats and prizes |
 | `6-walk.png` | A walk with Bonnie every day |
+
+**iPhone (from 1.1):** six more pictures are in `docs/screenshots/iphone/`, at the iPhone 6.9-inch size (1320 × 2868), with the same captions and the game at phone width. Drag them into the "iPhone 6.9-inch Display" box in the same order. The smaller iPhone sizes are filled in from these automatically. `sh tools/make-screenshots.sh iphone` makes them again. Bonnie's Walk picks its questions at random, so the walk picture can come out different each time: run it again if it looks too like the Words picture.
 
 They are made from the real game pages by `sh tools/make-screenshots.sh`, with a made-up player called Sam. Run it again after any change to how the game looks. Don't take screenshots in the Xcode simulator: it shows every emoji as a "?" box.
 
@@ -180,7 +216,7 @@ Both are drawn with the game's own Bonnie by `sh tools/make-store-art.sh` (the p
 ## Kids category rules to keep true
 
 - No adverts and no third-party analytics. (True.)
-- No links out of the app, and purchases only behind a parental gate. (True: the sum check.)
+- No links out of the app, and purchases only behind a parental gate. (True: the sum check. Send feedback and Rate the app, added in 1.1, are behind it too.)
 - A privacy policy URL is required. (Above.)
 - Don't describe the app as "for kids" in the name or subtitle in ways the Made for Kids setting already covers. Words like "Year 2" and "KS1" are fine.
 

@@ -15,7 +15,7 @@
 
 | Release | Target | What's in it |
 |---|---|---|
-| **1.1 iPhone** | Submit within a few days of 1.0 being approved (late November 2026) | The same app on iPhone, held upright, with the old 1.0.1 checks and weekly reminders. Bonnie's first-time help, first impressions and the two grown-ups buttons go in if they are ready, otherwise into 1.2 |
+| **1.1 iPhone** | Submit within a few days of 1.0 being approved (late November 2026) | The same app on iPhone, held upright, with the old 1.0.1 checks and weekly reminders. Bonnie's first-time help, first impressions, the two grown-ups buttons and the VoiceOver fixes. **Features and fixes finished 17 November 2026;** what's left is the release steps (see "Left before submitting 1.1") |
 | **1.2 Money and Time** | Mid-December 2026 | Two new Year 2 maths worlds, and anything moved from 1.1 (weekly reminders moved into 1.1 on 17 November 2026) |
 | **1.3 Spelling and Grammar** | Late January 2027 | Two new Year 2 English worlds, and a small Shapes world |
 | **2.0 Year 3** | Spring 2027 (about April) | The first Year 3 maths and English worlds |
@@ -112,7 +112,19 @@ Submit within a few days of 1.0 being approved, so it is out well before Christm
     - **Grown-ups area, first time on this device:** a "Welcome, grown-ups" card saying what's there, with **Show me the prizes**, which opens the prizes with the ring on them.
     - Kept in the player's save as `tips`; the grown-ups card is remembered for the device (`meadow-tip-grownups`). `tests/tips-test.html` (25 checks). The made-up "Sam" in the phone check and screenshot tools has seen every tip, so no rings show in the pictures.
     - **Recorded 17 November 2026:** the 5 new clips (91 characters, with "See the clue word?"), in Bonnie's usual voice. The old "See the clue in green?" clip was removed by the voice tool as no longer used. `npm run voice:check` reports 0 to make, and `tests/voice-name-test.html` passes.
-    - **Still to check on a real iPhone and iPad:** a new player sees each one once.
+    - **Checked on Anthony's iPhone, 17 November 2026:** the hints show and Bonnie says the new lines.
+- **Features and fixes finished, 17 November 2026.** Everything planned for 1.1 is built and checked on Anthony's devices: the iPhone layout, the 1.0.1 checks, weekly reminders, first impressions, the two grown-ups buttons, Bonnie's first-time help and the VoiceOver fixes. Anthony played through on the iPhone and found nothing else. Nothing moves to 1.2.
+- **Left before submitting 1.1** (release steps, no new features):
+  1. Commit the work so far (GitHub Desktop).
+  2. Wait for 1.0 to be approved and released.
+  3. In Xcode, set the version (`MARKETING_VERSION`) to 1.1 and the build number up by one, then upload to App Store Connect.
+  4. TestFlight on a real iPhone: a small phone if one can be borrowed (or the iPhone SE simulator), sound with the silent switch on, and a full level of each world.
+  5. iPhone screenshots (6.9-inch, 1320 × 2868), and the description and reviewer notes changed from "iPad" to "iPhone and iPad", with the reminders line in the reviewer notes.
+     - **Ready 17 November 2026:** six iPhone pictures in `docs/screenshots/iphone/` (`sh tools/make-screenshots.sh iphone`), and the new promotional text, description, What's New and reviewer notes in `docs/APP_STORE_LISTING.md` under "Version 1.1 (iPhone)". Left: paste them into App Store Connect.
+  6. Check the App Privacy answers still say Data Not Collected.
+  7. Submit for review.
+  - After release: try Rate the app, and see a real reminder arrive after 5 days without play.
+  - Two small 1.0.1 checks are still unticked and can be done any time before step 7: Back up progress through the share sheet (save, then restore from the file), and a listen to the newer clips.
 - **Don't hold 1.1 for the extras.** Once the iPhone work and the real-device checks are done, submit it. Whatever of the first-time help, first impressions and the two grown-ups buttons isn't finished moves to 1.2.
 
 **Folded in from the old 1.0.1:**
@@ -136,7 +148,7 @@ Submit within a few days of 1.0 being approved, so it is out well before Christm
       - Gaps in sentences say "blank" instead of nothing or "question mark".
       - Ask Bonnie's "+1" says "(earns 1 bone)", and the hint ladder is hidden (it's a picture of help used).
       - Story Nook's hint now says "See the clue word?" instead of "See the clue in green?" (the clue is bold and underlined as well as green). Only one new clip is needed, not about 50: the voice tool records the line in pieces.
-    - **Still to do:** try VoiceOver on the real iPhone or iPad (Settings → Accessibility → VoiceOver): the Clubhouse, a maths level and Sentence Meadow.
+    - **Checked with VoiceOver on Anthony's iPhone, 17 November 2026:** it works.
 - **Two new buttons in the grown-ups area** (behind the sum, so the Kids category rules are kept):
   - **Send feedback:** opens an email to the support address
   - **Rate the app:** Apple's own rating prompt
@@ -157,6 +169,7 @@ Submit within a few days of 1.0 being approved, so it is out well before Christm
   - **Any window size, not only sideways.** iPads run apps in windows and split screen, so the app can be much narrower than the screen. Test narrow windows as well as sideways when doing the layout work above.
   - **Colour is never the only clue.** Story Nook says "see the clue in green". Do this with the VoiceOver fixes.
     - **Started 16 November 2026:** the clue words are now bold and underlined as well as green. Bonnie still says "in green": changing the words means re-recording about 50 clips, so do that with the VoiceOver fixes.
+    - **Done 17 November 2026:** Bonnie now says "See the clue word?" (one new clip; see the VoiceOver fixes above).
 
 ### 1.2 Reminders, Money and Time (mid-December 2026)
 

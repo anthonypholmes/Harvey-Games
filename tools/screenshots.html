@@ -1,6 +1,8 @@
 <!doctype html>
 <!-- App Store screenshots. tools/make-screenshots.sh opens this page six times (?shot=1 … 6) in
      Google Chrome and saves each as a 2064 x 2752 picture in docs/screenshots/.
+     With &size=phone (sh tools/make-screenshots.sh iphone) the page is 440 x 956 instead, saved at 3x as
+     1320 x 2868 pictures in docs/screenshots/iphone/ (Apple's 6.9-inch iPhone size), with the game at phone width.
      Each one is the real game page in a frame, with a caption above. The player is a made-up "Sam".
      It must be opened through a web server (the script starts one), not as a file. -->
 <html lang="en-GB">
@@ -16,6 +18,12 @@
   #cap p { margin: 12px 0 0; font-size: 31px; font-weight: 500; opacity: .96; }
   #frame { position: absolute; left: 30px; right: 30px; top: 208px; bottom: -40px; border-radius: 44px; overflow: hidden; background: #F6EBD3; box-shadow: 0 0 0 10px rgba(255, 255, 255, .55), 0 18px 50px rgba(0, 0, 0, .3); }
   iframe { width: 100%; height: calc(100% - 40px); border: 0; display: block; }
+  /* iPhone 6.9-inch (440 x 956 points) */
+  html.phone, html.phone body { width: 440px; height: 956px; }
+  html.phone #cap { height: 150px; padding: 0 18px; }
+  html.phone #cap h1 { font-size: 27px; text-shadow: 0 2px 0 rgba(0, 0, 0, .16); }
+  html.phone #cap p { margin-top: 7px; font-size: 18px; }
+  html.phone #frame { left: 14px; right: auto; width: 412px; /* headless Chrome's window is at least 500px wide, so not right: */ top: 150px; border-radius: 30px; box-shadow: 0 0 0 6px rgba(255, 255, 255, .55), 0 10px 30px rgba(0, 0, 0, .3); }
 </style>
 </head>
 <body>
@@ -31,7 +39,10 @@ const levelId = (w, world, n) => w.Meadow.world(world).levels[n].id;
 const SHOTS = [
   { h: 'Year 2 maths and English', p: 'with Bonnie the dog cheering them on', page: '../index.html' },
   { h: 'Help that teaches', p: 'Bonnie gives a clue, then shows how', page: '../meadow-maths.html',
-    run: async w => { w.Meadow.startLevel('y2-maths-number-bonds', levelId(w, 'y2-maths-number-bonds', 1)); await wait(2500); click(w, '#mmAsk'); await wait(2500); click(w, '#mmAsk'); await wait(1500); } },
+    run: async w => { w.Meadow.startLevel('y2-maths-number-bonds', levelId(w, 'y2-maths-number-bonds', 1)); await wait(2500); click(w, '#mmAsk'); await wait(2500); click(w, '#mmAsk'); await wait(1500);
+      // on a phone Bonnie's help is under the question: scroll so her help is at the bottom of the picture
+      const side = w.document.querySelector('.side');
+      if (side && PHONE) w.scrollTo({ top: w.scrollY + side.getBoundingClientRect().bottom - w.innerHeight + 12, behavior: 'instant' }); } },
   { h: '6 maths worlds, 38 levels', p: 'The maths Year 2 children learn at school', page: '../meadow-maths.html' },
   { h: 'Phonics, spelling and stories', p: '4 English worlds, 20 levels', page: '../meadow-words.html',
     run: async w => { w.Meadow.startLevel('y2-english-phonics', levelId(w, 'y2-english-phonics', 0)); } },
@@ -46,6 +57,7 @@ function makeSam(w) {
   w.localStorage.clear(); w.sessionStorage.clear();
   M.save.load();
   M.save.mutate(s => {
+    s.tips = { walk: true, ask: true, shop: true }; // Sam has seen Bonnie's first-time help, so no rings
     s.name = 'Sam'; s.bones = 86; s.voice = false; s.sound = false; s.settings.warmUps = false; s.settings.teachBonnie = false;
     s.neck = 'collar-red'; s.face = 'sunglasses'; s.owned.hats = ['collar-red', 'sunglasses'];
     M.worlds().forEach((world, wi) => {
@@ -59,6 +71,8 @@ function makeSam(w) {
   });
 }
 
+const PHONE = new URLSearchParams(location.search).get('size') === 'phone';
+if (PHONE) document.documentElement.classList.add('phone');
 (async () => {
   const n = Math.max(1, Math.min(SHOTS.length, +(new URLSearchParams(location.search).get('shot')) || 1)), shot = SHOTS[n - 1];
   document.getElementById('capH').textContent = shot.h;
