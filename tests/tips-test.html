@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>First-time Help Test</title>
+<style>
+  #report { position: relative; z-index: 50; max-width: 900px; margin: 16px auto 140px; padding: 16px; font-family: system-ui, sans-serif; background: #FDFBF7; border: 2px solid #EADFCB; border-radius: 18px; color: #3E2F27; }
+  #report h1 { font-size: 1.3rem; margin: 0 0 6px; }
+  #report p { margin: 0 0 12px; color: #7A6A5E; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+</style>
+</head>
+<body>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script>
+/* Bonnie's first-time help: the ring on Ask Bonnie, the Bone Shop and the grown-ups' card, once each.
+   It uses its own save and puts the real grown-ups card answer back at the end. */
+(async () => {
+  const TEST_KEY = 'meadow-save-tips-test', T = Meadow.tips, realGU = localStorage.getItem(T.GROWNUPS_KEY);
+  const results = [], check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail: String(detail) });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const closeModals = () => $$('.modal-bg').forEach(m => m.remove());
+  const said = []; window.BonnieVoice.say = t => { said.push(t); return null; }; window.BonnieVoice.whenQuiet = fn => fn();
+  const play = (q, ctx) => { ctx.area.innerHTML = '<p>Pretend question</p>'; };
+  Meadow.registerWorld({ id: 'tips-a', subject: 'tipstest', year: 2, name: 'Burrow', icon: 'T', play, levels: ['one', 'two'].map(l => ({ id: l, name: l, count: 3, make: () => ({}) })) });
+
+  localStorage.removeItem(TEST_KEY); localStorage.removeItem(T.GROWNUPS_KEY);
+  sessionStorage.removeItem('meadow-grownups-open-until');
+  Meadow.startGame({ subject: 'tipstest', title: 'Tips Test', icon: 'T', homeHref: '../index.html', assetBase: '../', needName: false, saveKey: TEST_KEY });
+  Meadow.save.mutate(s => { s.name = 'Sam'; s.sound = false; s.bones = 0; });
+  await wait(600);
+
+  // 1. a new player
+  check('A new player has had no tips', JSON.stringify(Meadow.save.get().tips) === '{}', JSON.stringify(Meadow.save.get().tips));
+  check('No bones: no ring on the Bone Shop', !$('#shopBtn').classList.contains('tip-ring'));
+  check('The walk tip is due for a new player', T.due('walk'));
+
+  // 2. the first wrong answer in a level: the ring on Ask Bonnie
+  Meadow.startLevel('tips-a', 'one'); await wait(200);
+  said.length = 0;
+  Meadow.wrong(); await wait(500);
+  check('First wrong answer: Ask Bonnie glows', $('#askBtn') && $('#askBtn').classList.contains('tip-ring'));
+  check('…and Bonnie says the line', said.includes(Meadow.LINES.tipAsk), said.join(' | '));
+  check('…and it is kept in the save', Meadow.save.load().tips.ask === true);
+  $('#askBtn').click(); await wait(50);
+  check('Tapping Ask Bonnie takes the ring away', !$('#askBtn').classList.contains('tip-ring'));
+  said.length = 0; Meadow.wrong(); await wait(500);
+  check('The second wrong answer: no ring, no line', !$('#askBtn').classList.contains('tip-ring') && !said.includes(Meadow.LINES.tipAsk), said.join(' | '));
+
+  // 3. back on the world list with bones: the ring on the Bone Shop
+  Meadow.save.mutate(s => { s.bones = 7; });
+  said.length = 0; Meadow.home(); await wait(700);
+  check('Bones and back on the world list: the Bone Shop glows', $('#shopBtn').classList.contains('tip-ring'));
+  check('…and Bonnie says the line', said.includes(Meadow.LINES.tipShop), said.join(' | '));
+  $('#shopBtn').classList.remove('tip-ring');
+  said.length = 0; Meadow.worldMap('tips-a'); await wait(700);
+  check('Only once: a map afterwards has no ring', !$('#shopBtn').classList.contains('tip-ring') && !said.includes(Meadow.LINES.tipShop));
+
+  // 4. players who already did the thing never get the tip
+  Meadow.save.mutate(s => { s.tips = {}; s.walks.last = '2026-11-01'; s.redeemed = [{ title: 'Story', cost: 5 }]; });
+  check('Been on a walk before: no walk tip', !T.due('walk'));
+  check('Bought something before: no shop tip', !T.due('shop'));
+  Meadow.save.mutate(s => { s.tips = { walk: true, nonsense: true, ask: 'yes' }; });
+  check('The save keeps only real tips that are true', JSON.stringify(Meadow.save.load().tips) === '{"walk":true}', JSON.stringify(Meadow.save.load().tips));
+
+  // 5. a hidden button gets no ring and the tip waits
+  Meadow.save.mutate(s => { s.tips = {}; s.redeemed = []; s.bones = 5; });
+  const hid = document.createElement('button'); hid.hidden = true; document.body.appendChild(hid);
+  check('A hidden button: no ring, and the tip is still due', !T.at('shop', hid) && T.due('shop'));
+  hid.remove();
+
+  // 6. the grown-ups' card, once per device
+  Meadow.grownUps(); await wait(50);
+  const sum = ($('.modal-bg') || document.body).textContent.match(/(\d+) × (\d+)/);
+  $('#gateAns').value = sum ? sum[1] * sum[2] : 0; $('.modal-bg [data-a="ok"]').click(); await wait(100);
+  const card = $$('.modal').find(m => /Welcome, grown-ups/.test(m.textContent));
+  check('First time in the grown-ups area: the welcome card shows', !!card);
+  check('The card names the prizes', card && /Real-life prizes/.test(card.textContent));
+  check('VoiceOver: the card is named by its heading', card && card.getAttribute('aria-labelledby') && $('#' + card.getAttribute('aria-labelledby')).textContent === 'Welcome, grown-ups');
+  card.querySelector('[data-a="prizes"]').click(); await wait(100);
+  const fold = $('[data-fold="prizes"]');
+  check('"Show me the prizes" opens the prizes', fold && fold.open && fold.querySelector('summary').classList.contains('tip-ring'), [!!fold, fold && fold.open, fold && fold.querySelector('summary').className].join());
+  closeModals(); Meadow.grownUps(); await wait(100);
+  check('Second time: no card', !$$('.modal').some(m => /Welcome, grown-ups/.test(m.textContent)));
+
+  // 7. VoiceOver bits
+  Meadow.worldMap('tips-a'); await wait(100);
+  const st = $$('.stone');
+  check('VoiceOver: a level card says its name', /^Level 1: one\./.test(st[0].getAttribute('aria-label') || ''), st[0].getAttribute('aria-label'));
+  check('VoiceOver: a locked level says so', /Locked/.test(st[1].getAttribute('aria-label') || ''), st[1].getAttribute('aria-label'));
+  check('VoiceOver: the frog is hidden', $('#frog').getAttribute('aria-hidden') === 'true');
+  check('VoiceOver: the bones say "bones"', /86|\d+ bones/.test($('#boneChip').textContent) && $('#boneChip .sr').textContent.trim() === 'bones');
+
+  check('Only the test save was used', Meadow.save.key === TEST_KEY, Meadow.save.key);
+  closeModals();
+  localStorage.removeItem(TEST_KEY); sessionStorage.removeItem('meadow-grownups-open-until');
+  if (realGU === null) localStorage.removeItem(T.GROWNUPS_KEY); else localStorage.setItem(T.GROWNUPS_KEY, realGU);
+  const failed = results.filter(r => !r.ok);
+  document.body.insertAdjacentHTML('beforeend', `<div id="report"><h1>Bonnie's first-time help check</h1>
+    <p>Uses its own test save, which it deletes at the end.</p>
+    <div id="result" class="${failed.length ? 'fail' : 'pass'}">${failed.length ? `✗ ${failed.length} of ${results.length} checks failed` : `✓ All ${results.length} checks passed`}</div>
+    <ul>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name} <small>(${r.detail})</small></li>`).join('')}</ul></div>`);
+  window.TEST_RESULT = { passed: !failed.length, results };
+})();
+</script>
+</body>
+</html>

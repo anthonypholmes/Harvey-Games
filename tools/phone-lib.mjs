@@ -42,6 +42,7 @@ export const MAKE_SAM = `(() => {
   M.save.mutate(s => {
     s.name = 'Sam'; s.bones = 86; s.voice = false; s.sound = false; s.settings.warmUps = false; s.settings.teachBonnie = false;
     s.neck = 'collar-red'; s.face = 'sunglasses'; s.owned.hats = ['collar-red', 'sunglasses'];
+    s.tips = { walk: true, ask: true, shop: true }; // Bonnie's first-time help is already seen, so no glowing rings in the pictures
     M.worlds().forEach((world, wi) => {
       const done = Math.max(1, Math.min(world.levels.length - 1, [4, 3, 2, 2, 1, 2, 3, 2, 2, 1][wi] || 1));
       world.levels.slice(0, done).forEach((L, li) => {
@@ -51,7 +52,7 @@ export const MAKE_SAM = `(() => {
       });
     });
   });
-  try { sessionStorage.setItem('meadow-player-picked', '1'); } catch (e) {}
+  try { sessionStorage.setItem('meadow-player-picked', '1'); localStorage.setItem('meadow-tip-grownups', '1'); } catch (e) {}
 })()`;
 /* Drawn on top before the picture: the phone's top and bottom, and the bottom of the screen. */
 export const overlay = (size, fullH) => `(() => {

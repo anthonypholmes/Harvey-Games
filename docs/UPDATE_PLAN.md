@@ -15,8 +15,8 @@
 
 | Release | Target | What's in it |
 |---|---|---|
-| **1.1 iPhone** | Submit within a few days of 1.0 being approved (late November 2026) | The same app on iPhone, held upright, with the old 1.0.1 checks. Bonnie's first-time help, first impressions and the two grown-ups buttons go in if they are ready, otherwise into 1.2 |
-| **1.2 Reminders, Money and Time** | Mid-December 2026 | Weekly reminders for families, two new Year 2 maths worlds, and anything moved from 1.1 |
+| **1.1 iPhone** | Submit within a few days of 1.0 being approved (late November 2026) | The same app on iPhone, held upright, with the old 1.0.1 checks and weekly reminders. Bonnie's first-time help, first impressions and the two grown-ups buttons go in if they are ready, otherwise into 1.2 |
+| **1.2 Money and Time** | Mid-December 2026 | Two new Year 2 maths worlds, and anything moved from 1.1 (weekly reminders moved into 1.1 on 17 November 2026) |
 | **1.3 Spelling and Grammar** | Late January 2027 | Two new Year 2 English worlds, and a small Shapes world |
 | **2.0 Year 3** | Spring 2027 (about April) | The first Year 3 maths and English worlds |
 
@@ -27,6 +27,13 @@
 ### 1.1 iPhone (late November 2026)
 
 Submit within a few days of 1.0 being approved, so it is out well before Christmas. The phone work started on 16 November while 1.0 was still in review; nothing from it goes to Apple until 1.0 is approved.
+
+**Anthony's second phone test (17 November 2026), iPhone 15 Pro Max:**
+- **World maps:** the white example box on each level card (such as "Adding 10 keeps the ones the same") ran off the card. Phones now hide it (the level's own line says enough), and the level cards are slimmer. Captain's Cove's map scrolled 221px; now 54px.
+- **Clubhouse scrolled.** On phones the top row is gone: its Bone Shop link was the same as the big Bone Shop button, and the bones now show on that button. The Bone Shop button is one line, and the four buttons at the bottom share one row. It now fits the iPhone 17 and 17 Pro Max with no scrolling; the iPhone SE still scrolls about 145px (it was more).
+- **Captain's Cove on phones:** a smaller Captain beside a tighter speech scroll, without the "Prove it to me, matey!" line. Prove It! (level 5), on phones: the picture comes straight after the conjecture and the sum to fill in after it, the story line is left out, and the bowls, plates and lily pads are a little smaller. Every kind of Prove It question now has its picture, its buttons and the sum above the number keys on a Pro Max (only Bonnie's row is under them, as on every maths level). The CSS is at "Prove It!" in the phone section of `worlds/y2-maths-kit.js` and only touches Captain's Cove questions.
+- The iPad is unchanged, and all the test pages pass.
+- **Checked on Anthony's iPhone 15 Pro Max the same day:** the maps, the Clubhouse and Captain's Cove all look right.
 
 **One update, not two (decided 16 November 2026):** nothing from the old 1.0.1 was built yet, so the iPhone work is finished first and the 1.0.1 items are done inside this update. If the first families find a bug that can't wait, a quick 1.0.1 is built from the `v1.0-build4` tag, not from `app-store` (which now has the iPhone work in it).
 
@@ -98,19 +105,38 @@ Submit within a few days of 1.0 being approved, so it is out well before Christm
   - first bones earned: the ring is on the Bone Shop ("You've got bones! Come and see my shop.")
   - first time in the grown-ups area: a short card for the parent saying what is there, with the prizes pointed out
   - Each shows once per player, and is kept in the player's save. The ring holds still when Reduce Motion is on. Needs three or four new recorded lines (with name-free versions, as always) and a test page. Two to three sittings. It ships here because the iPhone release is when the most new players arrive.
+  - **Built 17 November 2026** ("BONNIE'S FIRST-TIME HELP" in `js/meadow-core.js`, and `clubTip()` in `index.html`). A gold ring that gently pulses (still with Reduce Motion) goes on the thing to tap, and goes away when it's tapped:
+    - **Clubhouse, first visit with a name:** the ring on Bonnie's Walk, and Bonnie's card says "Start here! Come for a walk with me." Skipped for a player who has already been on a walk.
+    - **First wrong answer in a level:** the ring on Ask Bonnie, and once Bonnie has finished her "not quite" line she says "Stuck? Tap Ask Bonnie and we'll do it together." (Not on a warm-up or Bonnie's Walk.)
+    - **Bones, back on the world list or a map (or a later Clubhouse visit):** the ring on the Bone Shop, and "You've got bones! Come and see my shop." Skipped for a player who has already bought something.
+    - **Grown-ups area, first time on this device:** a "Welcome, grown-ups" card saying what's there, with **Show me the prizes**, which opens the prizes with the ring on them.
+    - Kept in the player's save as `tips`; the grown-ups card is remembered for the device (`meadow-tip-grownups`). `tests/tips-test.html` (25 checks). The made-up "Sam" in the phone check and screenshot tools has seen every tip, so no rings show in the pictures.
+    - **Recorded 17 November 2026:** the 5 new clips (91 characters, with "See the clue word?"), in Bonnie's usual voice. The old "See the clue in green?" clip was removed by the voice tool as no longer used. `npm run voice:check` reports 0 to make, and `tests/voice-name-test.html` passes.
+    - **Still to check on a real iPhone and iPad:** a new player sees each one once.
 - **Don't hold 1.1 for the extras.** Once the iPhone work and the real-device checks are done, submit it. Whatever of the first-time help, first impressions and the two grown-ups buttons isn't finished moves to 1.2.
 
 **Folded in from the old 1.0.1:**
 
 - **Fixes** for whatever the first families and reviews turn up.
 - **Checks not yet done** (from the handoff):
-  - Restore purchase, on a real iPad
-  - Airplane Mode, on a real iPad
-  - every game page with the iPad sideways, and a layout that fits
-  - the three shop themes other than the meadow, for text size
+  - Restore purchase, on a real iPad (checked 17 November 2026: it works)
+  - Airplane Mode, on a real iPad (checked by Anthony 17 November 2026: fine)
+  - every game page with the iPad sideways, and a layout that fits (checked by Anthony 17 November 2026: fine)
+  - the three shop themes other than the meadow, for text size (checked by Anthony 17 November 2026: fine)
   - "Back up progress": saving through the share sheet, and choosing a file to restore
   - a listen to the newer clips (the name-free lines, a story or two, how "Priya" is said)
   - a VoiceOver walk-through, and fixes for what it finds
+    - **Fixes made 17 November 2026,** from a listing of what VoiceOver reads on every main screen (Chrome's accessibility tree, on the Clubhouse, world lists, maps, a level in each kind of world, the walk and the grown-ups sum):
+      - The frog and the walk's picture trail are hidden from VoiceOver; the Clubhouse's game pictures no longer read out every emoji ("plus, multiply, apple…"), and each game reads as "Play Meadow Maths: Numbers, sums & times tables. 12 new stars this week."
+      - The bones and the streak say what they are ("86 bones", "3 right in a row"), and the top bar's emojis are hidden.
+      - Each level card reads as one sentence, and says when it's locked or in the full game ("Level 2: Bonds to 20. Facts to 20, through 10. In the full game: ask a grown-up.").
+      - Pop-up cards are named by their heading and VoiceOver starts inside them.
+      - Anything you can drag (Phonics letters, Sentence words, punctuation) is now a button VoiceOver can tap.
+      - Sentence Meadow's capitals: each word reads whole with "capital letter" or "small letter" (it was read letter by letter, "m", "y").
+      - Gaps in sentences say "blank" instead of nothing or "question mark".
+      - Ask Bonnie's "+1" says "(earns 1 bone)", and the hint ladder is hidden (it's a picture of help used).
+      - Story Nook's hint now says "See the clue word?" instead of "See the clue in green?" (the clue is bold and underlined as well as green). Only one new clip is needed, not about 50: the voice tool records the line in pieces.
+    - **Still to do:** try VoiceOver on the real iPhone or iPad (Settings → Accessibility → VoiceOver): the Clubhouse, a maths level and Sentence Meadow.
 - **Two new buttons in the grown-ups area** (behind the sum, so the Kids category rules are kept):
   - **Send feedback:** opens an email to the support address
   - **Rate the app:** Apple's own rating prompt
@@ -122,6 +148,7 @@ Submit within a few days of 1.0 being approved, so it is out well before Christm
     - **Both built 16 November 2026.** The launch screen (`ios/App/App/Base.lproj/LaunchScreen.storyboard`) is now the Clubhouse's cream background (the `LaunchMeadow` picture) with the green meadow strip along the bottom, and no logo. `js/first-paint.js`, first in each page's head, paints the page in the player's theme colour straight away (applyTheme remembers the theme as `meadow-paint`), then fades the page in over about a fifth of a second; with Reduce Motion on there is no fade. The app's own background colour (`capacitor.config.json`) now matches the Clubhouse cream exactly. The old `Splash` picture (Capacitor's logo) is no longer used and can be deleted from `Assets.xcassets`.
     - **Checked on Anthony's iPhone 15 Pro Max and iPad** the same day: it looks right on both, in the day theme and a dark one. Done.
   - **A loading sign only if it is needed.** Everything is stored on the iPad, so most waits are well under a second, and a spinner that flashes is worse than none. First time the page changes on the 2018 iPad. If any takes more than about half a second, show a row of Bonnie's paw prints after that delay. No skeleton screens: they suit apps that wait on the internet.
+    - **Not needed (17 November 2026).** The 2018 iPad runs the app well, so newer devices will too. No loading sign.
   - **App icon: dark and tinted versions.** Recent iPadOS lets people switch the Home Screen to dark or tinted icons. The app has one picture, so iPadOS makes its own, which usually look muddy. Draw both from `tools/app-icon.html`. One sitting.
     - **Built 16 November 2026.** `tools/app-icon.html` now draws three looks and `sh tools/make-icon.sh` photographs all three into `AppIcon.appiconset`: the usual sunny icon (unchanged, byte for byte), **dark** (the same meadow at night, with a moon and stars; Bonnie keeps her own colours) and **tinted** (Bonnie alone in grey on a see-through background, which iOS colours with the person's tint). Xcode accepts all three with no warnings.
     - **Checked on iPhone 15 Pro Max, 16 November 2026:** the usual, dark and tinted icons all look right on the Home Screen.
@@ -133,7 +160,16 @@ Submit within a few days of 1.0 being approved, so it is out well before Christm
 
 ### 1.2 Reminders, Money and Time (mid-December 2026)
 
-**Weekly reminders** (proposed 17 November 2026; confirm the details with Anthony and write a brief in `briefs/` before building):
+**Weekly reminders: moved into 1.1 and built 17 November 2026,** at Anthony's request, as written below except the second point: reminders are **on by default**, and easy to turn off or change in the grown-ups area. What was built:
+- `js/meadow-core.js`, "WEEKLY REMINDERS": settings in `meadow-reminders` (on, Saturday, 10am unless changed), shared by every player. Every time the app opens or comes back to the front, the 4 pending reminders (ids 7101 to 7104) are cancelled and rescheduled: the first is the chosen day and time at least 5 days away.
+- **Never asked of a child alone:** nothing is scheduled until iOS has said yes, and iOS's own question ("Meadow Club would like to send you notifications") only appears the first time a grown-up answers the sum, or when they switch reminders on. (The plugin's schedule call would ask iOS by itself, so the app only schedules once permission is granted.)
+- **Grown-ups area → 🔔 Reminders** (app only): the switch, Day (Sunday to Saturday) and Time (9am, 10am, 12pm, 4pm or 6pm), when the next one is due, and, if notifications are turned off in iOS Settings, where to turn them on (no button that leaves the app).
+- Four lines that take turns, titled "Bonnie 🐾": never a name, progress or streak. Tapping one just opens the app.
+- `tests/reminders-test.html` (38 checks) with a pretend plugin. Capacitor's `@capacitor/local-notifications` 8.3.1 is added; the Xcode build succeeds.
+- **Checked on Anthony's iPhone 15 Pro Max, 17 November 2026:** it works (allowing, the "Next reminder" line, changing the day, off and on). A real reminder arriving after 5 days without play is still to be seen.
+- **Still to do:** add a line to the reviewer notes in App Store Connect, such as "Optional weekly reminders, on the device only, for grown-ups; they can be turned off in the grown-ups area"; and check the App Privacy answers still say Data Not Collected (local notifications collect nothing).
+
+*The original proposal, for reference:*
 
 - **Local notifications only,** with Capacitor's own Local Notifications plugin (on the device, no server, works on Android later). Nothing is sent anywhere, so the "Data Not Collected" label and the Kids category answers stay true. Add a line about reminders to the reviewer notes.
 - **Off until a grown-up chooses.** A one-time card at the top of the grown-ups area (behind the sum) and once after a successful unlock: "A little reminder from Bonnie?" with **Yes, once a week (recommended)** and **No thanks**. iOS's own permission question only appears after Yes. Never shown to a child. Nothing in the game changes if they say no.

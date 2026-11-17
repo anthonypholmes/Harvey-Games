@@ -116,14 +116,18 @@ function playSentence(raw, ctx) {
   function draw(snapId = -1) {
     const line = $('#line');
     line.innerHTML = (st.line.length ? '' : '<span class="ph">Drop words here…</span>') + st.line.map(id => { const t = tokens[id];
-      return `<span class="wchip placed ${t.capped ? 'capped' : ''} ${id === snapId ? 'snap' : ''}" data-id="${id}"><span class="first">${esc(show1(t.w, t.capped)[0])}</span>${esc(t.w.slice(1))}${mode === 'all' ? '<button class="aa" aria-label="Capital letter">Aa</button>' : ''}</span>`; }).join('')
+      // VoiceOver hears the whole word, and whether it has a capital (the first letter is its own part on screen).
+      // With an Aa button inside (Super Sentences) the word is a group, so VoiceOver can still reach the Aa button.
+      const said = show1(t.w, t.capped) + (mode === 'caps' ? (t.capped ? ', capital letter' : ', small letter') : '');
+      return `<span class="wchip placed ${t.capped ? 'capped' : ''} ${id === snapId ? 'snap' : ''}" data-id="${id}" ${mode === 'all' ? 'role="group"' : 'role="button" tabindex="0"'} aria-label="${esc(said)}"><span class="first">${esc(show1(t.w, t.capped)[0])}</span>${esc(t.w.slice(1))}${mode === 'all' ? `<button class="aa" aria-label="Capital letter for ${esc(t.w)}">Aa</button>` : ''}</span>`; }).join('')
       + `<span class="p-slot ${st.punct ? 'filled' : ''}" id="pslot">${st.punct || ''}</span>`;
     const bank = $('#sbank');
     if (bank) bank.innerHTML = bankOrder.filter(id => !st.line.includes(id)).map(id => `<span class="wchip" data-id="${id}">${esc(show1(tokens[id].w, tokens[id].capped))}</span>`).join('');
     // interactions
     $$('#line .wchip').forEach(el => {
       const id = +el.dataset.id;
-      if (mode === 'caps') { el.onclick = () => { tokens[id].capped = !tokens[id].capped; sfx.pop(); draw(id); }; return; }
+      if (mode === 'caps') { el.onclick = () => { tokens[id].capped = !tokens[id].capped; sfx.pop(); draw(id); };
+        el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } }; return; }
       if (mode === 'punct') return;
       const aa = $('.aa', el); if (aa) aa.onclick = e => { e.stopPropagation(); tokens[id].capped = !tokens[id].capped; sfx.pop(); draw(id); };
       draggable(el, { dropSel: '.wchip.placed, #line, #sbank', onTap: () => { st.line = st.line.filter(x => x !== id); sfx.pick(); draw(); },

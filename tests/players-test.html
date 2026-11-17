@@ -85,6 +85,7 @@ Object.keys(window.__kept).forEach(k => localStorage.removeItem(k));
 
   // 8. the grown-ups area lists the players, and Remove asks first
   sessionStorage.setItem('meadow-grownups-open-until', String(Date.now() + 60000));
+  localStorage.setItem(Meadow.tips.GROWNUPS_KEY, '1'); // the grown-ups' welcome card is tests/tips-test.html's job
   Meadow.startGame({ subject: 'test', title: 'Players Test', icon: 'T', homeHref: '../index.html', assetBase: '../', needName: false });
   Meadow.save.mutate(x => { x.sound = false; x.voice = false; });
   await wait(30);

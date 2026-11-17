@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Weekly Reminders Test</title>
+<style>
+  #report { position: relative; z-index: 50; max-width: 900px; margin: 16px auto 140px; padding: 16px; font-family: system-ui, sans-serif; background: #FDFBF7; border: 2px solid #EADFCB; border-radius: 18px; color: #3E2F27; }
+  #report h1 { font-size: 1.3rem; margin: 0 0 6px; }
+  #report p { margin: 0 0 12px; color: #7A6A5E; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+</style>
+</head>
+<body>
+<script>window.MEADOW_IN_APP = true; // pretend to be the App Store app</script>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script>
+/* The weekly reminders, with a pretend iOS notifications plugin. It uses its own save, and puts the
+   real reminder settings back at the end. */
+(async () => {
+  const TEST_KEY = 'meadow-save-reminders-test', R = Meadow.reminders, realR = localStorage.getItem(R.KEY);
+  const results = [], check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail: String(detail) });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const closeModals = () => $$('.modal-bg').forEach(m => m.remove());
+  const day = d => d.toDateString() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  const at = (y, m, d, h) => () => new Date(y, m - 1, d, h, 0, 0);
+
+  // the pretend plugin: what iOS would say, and the reminders waiting to go off
+  const ios = { perm: 'prompt', answer: 'granted', pending: new Map(), calls: [],
+    checkPermissions: async () => { ios.calls.push('check'); return { display: ios.perm }; },
+    requestPermissions: async () => { ios.calls.push('request'); ios.perm = ios.answer; return { display: ios.perm }; },
+    schedule: async ({ notifications }) => { ios.calls.push('schedule'); if (ios.perm === 'prompt') ios.perm = ios.answer; notifications.forEach(n => ios.pending.set(n.id, n)); return {}; },
+    cancel: async ({ notifications }) => { ios.calls.push('cancel'); notifications.forEach(n => ios.pending.delete(n.id)); } };
+  window.MeadowNotifyTest = ios;
+  const pending = () => [...ios.pending.values()].sort((a, b) => a.schedule.at - b.schedule.at);
+  const reset = () => { ios.calls.length = 0; };
+
+  localStorage.removeItem(R.KEY); localStorage.removeItem(TEST_KEY);
+  sessionStorage.removeItem('meadow-grownups-open-until');
+  await wait(20); // the page's own "app opened" scheduling runs first
+  reset(); ios.pending.clear();
+
+  // 1. the defaults
+  const s0 = R.settings();
+  check('On by default, Saturday at 10am', s0.on === true && s0.day === 6 && s0.hour === 10 && s0.asked === false, JSON.stringify(s0));
+  check('10am is one of the times to pick', R.HOURS.includes(10), R.HOURS.join());
+
+  // 2. the dates: the chosen day and time, at least 5 days after the app was last opened, then weekly
+  const cases = [
+    ['Monday 16 November 9am', at(2026, 11, 16, 9), 'Sat Nov 21 2026 10:00'],
+    ['Monday 16 November 11am (Saturday 10am is under 5 days away)', at(2026, 11, 16, 11), 'Sat Nov 28 2026 10:00'],
+    ['Wednesday 18 November noon', at(2026, 11, 18, 12), 'Sat Nov 28 2026 10:00'],
+    ['Saturday 21 November 10am (playing at reminder time)', at(2026, 11, 21, 10), 'Sat Nov 28 2026 10:00'],
+  ];
+  for (const [name, now, want] of cases) {
+    const ds = R.dates(now());
+    check(`Opened ${name}: first reminder ${want}`, day(ds[0]) === want, day(ds[0]));
+  }
+  const ds = R.dates(at(2026, 11, 18, 12)());
+  check('Four reminders, a week apart, all on the chosen day and time', ds.length === 4 && ds.every((d, i) => d.getDay() === 6 && d.getHours() === 10 && (i === 0 || Math.round((d - ds[i - 1]) / 864e5) === 7)), ds.map(day).join(' | '));
+  const dsClock = R.dates(at(2027, 3, 22, 9)()); // the clocks go forward on 28 March 2027
+  check('Still 10am after the clocks change', dsClock.every(d => d.getHours() === 10), dsClock.map(day).join(' | '));
+  R.set({ day: 2, hour: 16 });
+  const dsTue = R.dates(at(2026, 11, 18, 12)());
+  check('A different day and time: Tuesday 4pm', day(dsTue[0]) === 'Tue Nov 24 2026 16:00', day(dsTue[0]));
+  R.set({ day: 6, hour: 10 });
+
+  // 3. iOS hasn't been asked yet: nothing is scheduled, and the app never asks by itself (a child may be holding it)
+  Meadow.setClock(at(2026, 11, 18, 12));
+  check('Not asked yet: nothing is scheduled', (await R.schedule()) === 'prompt' && ios.pending.size === 0, ios.calls.join());
+  check('Not asked yet: iOS is not asked when the app opens', !ios.calls.includes('request') && !ios.calls.includes('schedule'), ios.calls.join());
+
+  // 4. a grown-up answers the sum for the first time: iOS asks, and the reminders are scheduled
+  Meadow.startGame({ subject: 'test', title: 'Reminders Test', icon: 'T', homeHref: '../index.html', assetBase: '../', needName: false, saveKey: TEST_KEY });
+  Meadow.save.mutate(s => { s.sound = false; s.voice = false; });
+  await wait(30); reset();
+  Meadow.grownUps(); await wait(20);
+  const sum = ($('.modal-bg') || document.body).textContent.match(/(\d+) × (\d+)/);
+  $('#gateAns').value = sum ? sum[1] * sum[2] : 0; $('.modal-bg [data-a="ok"]').click(); await wait(60);
+  check('The sum asks iOS once', ios.calls.filter(c => c === 'request').length === 1 && R.settings().asked, ios.calls.join());
+  check('Allowed: four reminders are scheduled', pending().length === 4 && day(pending()[0].schedule.at) === 'Sat Nov 28 2026 10:00', pending().map(n => day(n.schedule.at)).join(' | '));
+  check('They use the fixed ids', pending().map(n => n.id).join() === R.IDS.join(), pending().map(n => n.id).join());
+  const bodies = pending().map(n => n.body);
+  check('The words take turns, and come from the list', new Set(bodies).size > 1 && bodies.every(b => R.LINES.includes(b)), bodies.join(' | '));
+  check('No name, streak or progress in the words', R.LINES.every(l => !/\{N\}|streak|star|level|miss/i.test(l)), R.LINES.join(' | '));
+
+  // 5. the grown-ups section
+  check('The grown-ups area has a Reminders section, switched on', !!$('#pRemind') && $('#pRemind').checked, !!$('#pRemind'));
+  check('It shows Saturday and 10am', $('#pRemindDay').value === '6' && $('#pRemindHour').value === '10', $('#pRemindDay').value + ' ' + $('#pRemindHour').value);
+  await wait(30);
+  check('It says when the next reminder is', /Next reminder: Saturday 28 November, 10am/.test($('#remindSay').textContent), $('#remindSay').textContent);
+
+  // 6. answering the sum again doesn't ask iOS again
+  reset(); sessionStorage.removeItem('meadow-grownups-open-until'); closeModals();
+  Meadow.grownUps(); await wait(20);
+  const sum2 = $('.modal-bg').textContent.match(/(\d+) × (\d+)/);
+  $('#gateAns').value = sum2[1] * sum2[2]; $('.modal-bg [data-a="ok"]').click(); await wait(60);
+  check('The second sum does not ask iOS again', !ios.calls.includes('request'), ios.calls.join());
+
+  // 7. opening the app again a few days later: the reminders move, with no doubles
+  Meadow.setClock(at(2026, 11, 26, 17)); reset();
+  check('Reopened on Thursday 26th: still four, no doubles', (await R.schedule()) === 'scheduled' && ios.pending.size === 4, ios.pending.size);
+  check('Reopened: the old ones are cancelled first, then the first moves to 5 December', ios.calls.indexOf('cancel') < ios.calls.indexOf('schedule') && day(pending()[0].schedule.at) === 'Sat Dec 05 2026 10:00', ios.calls.join() + ' ' + day(pending()[0].schedule.at));
+  check('Ignored for a month: nothing after the fourth', day(pending()[3].schedule.at) === 'Sat Dec 26 2026 10:00', day(pending()[3].schedule.at));
+
+  // 8. changing the day and time in the grown-ups area
+  Meadow.setClock(at(2026, 11, 18, 12));
+  const pick = (sel, v) => { $(sel).value = v; $(sel).dispatchEvent(new Event('change')); };
+  pick('#pRemindDay', '0'); await wait(40); pick('#pRemindHour', '16'); await wait(40);
+  check('Sunday 4pm is saved', R.settings().day === 0 && R.settings().hour === 16, JSON.stringify(R.settings()));
+  check('Sunday 4pm is scheduled', pending().length === 4 && pending().every(n => n.schedule.at.getDay() === 0 && n.schedule.at.getHours() === 16), pending().map(n => day(n.schedule.at)).join(' | '));
+  check('The words say Sunday 29 November, 4pm', /Sunday 29 November, 4pm/.test($('#remindSay').textContent), $('#remindSay').textContent);
+
+  // 9. switching off
+  $('#pRemind').checked = false; $('#pRemind').dispatchEvent(new Event('change')); await wait(40);
+  check('Off: nothing is waiting', ios.pending.size === 0 && R.settings().on === false, ios.pending.size);
+  check('Off: the day and time are hidden', $('.remind-when').style.display === 'none');
+  check('Off: reopening the app schedules nothing', (await R.schedule()) === 'off' && ios.pending.size === 0);
+  $('#pRemind').checked = true; $('#pRemind').dispatchEvent(new Event('change')); await wait(40);
+  check('Back on: four again, and the day and time show', ios.pending.size === 4 && $('.remind-when').style.display === '', ios.pending.size);
+
+  // 10. a grown-up said no to iOS (or turned notifications off in Settings)
+  ios.perm = 'denied'; Meadow.grownUps(); await wait(40);
+  check('Refused: nothing is scheduled', (await R.schedule()) === 'denied' && ios.pending.size === 0, ios.pending.size);
+  await wait(20);
+  check('Refused: the grown-ups area says where to turn them on', /turned off for Meadow Club.*Settings/.test($('#remindSay').textContent), $('#remindSay').textContent);
+  check('Refused: no button that leaves the app', !$$('.parent section a, .parent section button').some(b => /settings/i.test(b.textContent) && b.closest('section').contains($('#pRemind'))));
+
+  // 11. turned off before iOS was asked: the sum never asks
+  ios.perm = 'prompt'; localStorage.removeItem(R.KEY); R.set({ on: false }); reset();
+  await R.ask();
+  check('Off before asking: iOS is never asked', !ios.calls.includes('request') && R.settings().asked, ios.calls.join());
+  // and a grown-up who said no to iOS's question
+  localStorage.removeItem(R.KEY); ios.perm = 'prompt'; ios.answer = 'denied'; reset();
+  check('Said no to iOS: nothing scheduled', (await R.ask()) === 'denied' && ios.pending.size === 0, ios.calls.join());
+
+  // 12. the website: no section, nothing scheduled
+  delete window.MeadowNotifyTest; window.MEADOW_IN_APP = false;
+  Meadow.grownUps(); await wait(20);
+  check('Website: no Reminders section', !$('#pRemind'));
+  check('Website: nothing to schedule', (await R.schedule()) === 'none');
+  window.MEADOW_IN_APP = true;
+
+  check('Only the test save was used', Meadow.save.key === TEST_KEY, Meadow.save.key);
+  closeModals(); Meadow.setClock();
+  localStorage.removeItem(TEST_KEY); sessionStorage.removeItem('meadow-grownups-open-until');
+  if (realR === null) localStorage.removeItem(R.KEY); else localStorage.setItem(R.KEY, realR);
+  const failed = results.filter(r => !r.ok);
+  document.body.insertAdjacentHTML('beforeend', `<div id="report"><h1>Weekly reminders check</h1>
+    <p>Pretends to be the App Store app, with pretend iOS notifications. Uses its own test save, which it deletes at the end.</p>
+    <div id="result" class="${failed.length ? 'fail' : 'pass'}">${failed.length ? `✗ ${failed.length} of ${results.length} checks failed` : `✓ All ${results.length} checks passed`}</div>
+    <ul>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name} <small>(${r.detail})</small></li>`).join('')}</ul></div>`);
+  window.TEST_RESULT = { passed: !failed.length, results };
+})();
+</script>
+</body>
+</html>

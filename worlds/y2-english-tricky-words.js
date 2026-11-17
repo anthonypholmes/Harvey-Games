@@ -89,7 +89,7 @@ function playTricky(item, ctx) {
       ${Array.from({ length: ctx.count }, (_, i) => `<div class="step ${i < ctx.index ? 'done' : ''}">${i === ctx.index ? `<div class="pup">${bonnieSVG()}</div>` : ''}</div>`).join('')}
       <div class="goal">🏁</div>
     </div>
-    <div class="tricky-sentence" id="sent">${esc(sentence).replace('___', '<span class="gap" id="gap">&nbsp;</span>')}</div>
+    <div class="tricky-sentence" id="sent">${esc(sentence).replace('___', '<span class="gap" id="gap">&nbsp;<span class="sr">blank</span></span>')}</div>
     <div class="row-btns"><button class="btn small" id="hear">🔊 Hear the sentence</button></div>
     <div class="signs" id="signs">${opts.map(o => `<button class="sign" data-o="${esc(o)}"><div class="board">${esc(o)}</div></button>`).join('')}</div>
     <p class="mode-tip">Tap the signpost with the correct spelling to clear Bonnie's path!</p>`;

@@ -1097,7 +1097,6 @@
   "27ab4dcb": "clips/27ab4dcb-4crzui.mp3",
   "a837ec02": "clips/a837ec02-4crzui.mp3",
   "bdac01aa": "clips/bdac01aa-4crzui.mp3",
-  "a961827d": "clips/a961827d-4crzui.mp3",
   "3d19c9f7": "clips/3d19c9f7-4crzui.mp3",
   "189c5a1a": "clips/189c5a1a-4crzui.mp3",
   "893aff4b": "clips/893aff4b-4crzui.mp3",
@@ -2155,7 +2154,12 @@
   "dc8085a7": "clips/dc8085a7-4crzui.mp3",
   "4d0f5493": "clips/4d0f5493-4crzui.mp3",
   "e31adc6d": "clips/e31adc6d-4crzui.mp3",
-  "6342ff3c": "clips/6342ff3c-4crzui.mp3"
+  "6342ff3c": "clips/6342ff3c-4crzui.mp3",
+  "4d5365e6": "clips/4d5365e6-4crzui.mp3",
+  "64885efa": "clips/64885efa-4crzui.mp3",
+  "1e917ea4": "clips/1e917ea4-4crzui.mp3",
+  "5890f0c1": "clips/5890f0c1-4crzui.mp3",
+  "95b26e19": "clips/95b26e19-4crzui.mp3"
  },
  "names": {
   "harvey": "names/harvey-4crzui.mp3",
@@ -3364,7 +3368,6 @@
   "27ab4dcb": "Say them together and listen!",
   "a837ec02": "Does \"dog\" rhyme?",
   "bdac01aa": "The answer is mat.",
-  "a961827d": "See the clue in green?",
   "3d19c9f7": "Tap the shiny answer!",
   "189c5a1a": "A little frog sat on a .",
   "893aff4b": "Then he jumped into the pond with a splash!",
@@ -4422,9 +4425,14 @@
   "dc8085a7": "If Sarah shares",
   "4d0f5493": "If Priya shares",
   "e31adc6d": "If Ben shares",
-  "6342ff3c": "If Ava shares"
+  "6342ff3c": "If Ava shares",
+  "4d5365e6": "Start here!",
+  "64885efa": "Come for a walk with me.",
+  "1e917ea4": "You've got bones!",
+  "5890f0c1": "Come and see my shop.",
+  "95b26e19": "See the clue word?"
  },
- "made": "2026-11-13T09:12:54.586Z",
+ "made": "2026-11-17T11:12:04.716Z",
  "said": {
   "11b54859": "Nnn...",
   "38deadf5": "rrrr.",

@@ -165,7 +165,12 @@ const LINES = {
   grownUp: 'Go and get a grown-up! They hold the button to say yes.',
   prize: 'Hooray, {N}! Go and tell your grown-up what you unlocked!',
   testVoice: 'Hello {N}! I am Bonnie. Shall we play together?',
+  // Bonnie's first-time help: each is said once per player, with a glowing ring on the thing to tap
+  tipWalk: 'Start here! Come for a walk with me.',
+  tipAsk: "Stuck? Tap Ask Bonnie and we'll do it together.",
+  tipShop: "You've got bones! Come and see my shop.",
 };
+const TIP_IDS = ['walk', 'ask', 'shop']; // Bonnie's first-time help (see BONNIE'S FIRST-TIME HELP)
 const DEFAULT_HINTS = ['Sniff Clue', 'Scout Tip!', 'Paw Help', 'Watch Me!'];
 
 /* ---------- tiny helpers ---------- */
@@ -286,6 +291,7 @@ function normalise(raw) {
   if (isObj(wk.days)) Object.entries(wk.days).forEach(([k, v]) => { v = int(v, 0, 999); if (DAY_RE.test(k) && v) wdays[k] = v; });
   s.walks = { days: wdays, last: typeof wk.last === 'string' && DAY_RE.test(wk.last) ? wk.last : null, streak: int(wk.streak, 0, 9999),
     topic: typeof wk.topic === 'string' ? wk.topic : null };
+  s.tips = Object.fromEntries(Object.entries(isObj(s.tips) ? s.tips : {}).filter(([k, v]) => TIP_IDS.includes(k) && v === true));
   const st = isObj(s.settings) ? s.settings : {};
   s.settings = { ...st, unlockAll: isObj(st.unlockAll) ? st.unlockAll : {},
     years: Array.isArray(st.years) && st.years.length ? [...new Set(st.years.map(Number).filter(Number.isFinite))] : null,
@@ -453,6 +459,41 @@ KEY = playerKey(playersRaw().current); // the player who was playing last time
 function mutate(fn) { S = load(); fn(S); S = normalise(S); write(S); renderHud(); return S; }
 
 /* =========================================================
+   BONNIE'S FIRST-TIME HELP (1.1, 17 November 2026)
+   Not a tour: Bonnie points something out once, at the moment it matters, with a glowing ring on the thing
+   to tap and a spoken line. Each shows once per player (S.tips), and a player who has already done the
+   thing (been on a walk, bought something) never gets it. The ring goes when it is tapped, and holds
+   still with Reduce Motion on.
+     walk  the Clubhouse, first visit with a name: the ring is on Bonnie's Walk
+     ask   the first wrong answer in a level: the ring is on Ask Bonnie
+     shop  back on the world list or a map once there are bones: the ring is on the Bone Shop
+   The grown-ups area has its own one-time card (GROWNUPS_TIP_KEY, once per device: it's the grown-up's).
+   ========================================================= */
+const GROWNUPS_TIP_KEY = 'meadow-tip-grownups';
+function tipDue(id) {
+  const s = S || load();
+  if (s.tips && s.tips[id]) return false;
+  if (id === 'walk') return !(s.walks && s.walks.last);
+  if (id === 'shop') return s.bones > 0 && !s.redeemed.length && !s.owned.hats.length && s.owned.themes.length < 2 && s.owned.coats.length < 2;
+  return true;
+}
+function ringOn(el) {
+  el.classList.add('tip-ring');
+  const off = () => { el.classList.remove('tip-ring'); el.removeEventListener('click', off); };
+  el.addEventListener('click', off);
+}
+/* Put the ring on el if this tip is due and el is on screen. Answers whether it did (the caller says the line). */
+function tipAt(id, el) {
+  if (!el || el.hidden || !el.getClientRects().length || !tipDue(id)) return false;
+  mutate(s => { s.tips = { ...s.tips, [id]: true }; });
+  ringOn(el);
+  return true;
+}
+const TIP_CSS = `.tip-ring{outline:4px solid #F2B53A;outline-offset:4px;animation:tipRing 1.4s ease-in-out infinite}
+@keyframes tipRing{50%{outline-offset:9px;outline-color:rgba(242,181,58,.55)}}
+@media (prefers-reduced-motion:reduce){.tip-ring{animation:none}}`;
+
+/* =========================================================
    WORLDS
    ========================================================= */
 const WORLDS = [];
@@ -552,6 +593,125 @@ function checkFullGame() {
   const was = hasFullGame();
   storeCall('status').then(() => redraw(was)).catch(() => {});
   if (p.addListener) p.addListener('changed', r => { const w = hasFullGame(); if (r && typeof r.owned === 'boolean') setFullGame(r.owned); redraw(w); });
+}
+
+/* =========================================================
+   WEEKLY REMINDERS (App Store app only, added for 1.1)
+   A gentle note from Bonnie on the grown-up's chosen day and time, but only if nobody has opened the
+   app for REMIND_GAP_DAYS days, so it never arrives while a family is playing or has just played.
+   Every time the app opens (or comes back to the front) the pending reminders are cancelled and the
+   next REMIND_IDS.length are scheduled again, so if a family ignores a month of them they stop.
+   On by default; iOS's own "allow notifications?" question is only asked once a grown-up has
+   answered the sum, never to a child alone. Everything stays on the device (local notifications,
+   Capacitor's Local Notifications plugin): nothing is sent anywhere.
+   The settings are shared by every player, in their own key.
+   ========================================================= */
+const REMIND_KEY = 'meadow-reminders';
+const REMIND_IDS = [7101, 7102, 7103, 7104]; // fixed ids: no doubles after an update or a restart
+const REMIND_GAP_DAYS = 5;
+const REMIND_DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const REMIND_HOURS = [9, 10, 12, 16, 18];
+const REMIND_TITLE = 'Bonnie 🐾';
+const REMIND_LINES = [ // warm and low-pressure: never a name, progress, a streak or a sad Bonnie
+  "Bonnie's ready for another adventure! 🐾",
+  'Fancy a quick game in the meadow? Bonnie has saved you a spot. 🌼',
+  "Bonnie's wagging her tail. Time for a meadow adventure? 🐶",
+  "Bonnie's found her ball. Ready to play? 🎾",
+];
+const hourName = h => (h % 12 || 12) + (h < 12 ? 'am' : 'pm');
+function reminderSettings() {
+  let r = {};
+  try { r = JSON.parse(localStorage.getItem(REMIND_KEY) || '{}') || {}; } catch (e) {}
+  return { on: r.on !== false, day: REMIND_DAY_NAMES[r.day] ? +r.day : 6, hour: REMIND_HOURS.includes(+r.hour) ? +r.hour : 10, asked: r.asked === true };
+}
+function saveReminderSettings(change) {
+  const r = Object.assign(reminderSettings(), change);
+  try { localStorage.setItem(REMIND_KEY, JSON.stringify(r)); } catch (e) {}
+  return r;
+}
+function notifyPlugin() {
+  if (window.MeadowNotifyTest) return window.MeadowNotifyTest; // the test page's pretend plugin
+  if (!inApp()) return null;
+  const cap = window.Capacitor; if (!cap) return null;
+  return (cap.Plugins && cap.Plugins.LocalNotifications) || (cap.registerPlugin ? cap.registerPlugin('LocalNotifications') : null);
+}
+/* The next reminders: the chosen day and time, starting at least REMIND_GAP_DAYS days after `from`. */
+function reminderDates(from = clock(), r = reminderSettings()) {
+  const earliest = new Date(from.getTime() + REMIND_GAP_DAYS * 864e5);
+  const d = new Date(from.getFullYear(), from.getMonth(), from.getDate(), r.hour, 0, 0, 0);
+  while (d.getDay() !== r.day || d < earliest) d.setDate(d.getDate() + 1);
+  return REMIND_IDS.map((_, i) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7 * i, r.hour, 0, 0, 0));
+}
+/* What iOS says: 'granted', 'denied' or 'prompt' (not asked yet). null when there are no notifications here. */
+async function reminderPermission() {
+  const p = notifyPlugin(); if (!p) return null;
+  try { return ((await p.checkPermissions()) || {}).display || 'prompt'; } catch (e) { return null; }
+}
+/* Cancel the pending reminders and schedule the next ones. Answers what happened: 'scheduled', 'off',
+   'denied', 'prompt' (iOS hasn't been asked yet, so nothing is scheduled: scheduling would ask) or 'none'. */
+let remindJob = Promise.resolve();
+function scheduleReminders() {
+  remindJob = remindJob.catch(() => {}).then(async () => {
+    const p = notifyPlugin(); if (!p) return 'none';
+    try { await p.cancel({ notifications: REMIND_IDS.map(id => ({ id })) }); } catch (e) {}
+    const r = reminderSettings(); if (!r.on) return 'off';
+    const perm = await reminderPermission(); if (perm !== 'granted') return perm || 'none';
+    const week = d => Math.floor(d.getTime() / (7 * 864e5)); // the line changes from week to week
+    await p.schedule({ notifications: reminderDates(clock(), r).map((at, i) => ({
+      id: REMIND_IDS[i], title: REMIND_TITLE, body: REMIND_LINES[week(at) % REMIND_LINES.length], schedule: { at, allowWhileIdle: true } })) });
+    return 'scheduled';
+  });
+  return remindJob;
+}
+/* A grown-up has just answered the sum: the first time, ask iOS (reminders are on unless they turned them off). */
+async function askReminders() {
+  const r = reminderSettings(), p = notifyPlugin();
+  if (!p || r.asked) return null;
+  saveReminderSettings({ asked: true });
+  if (!r.on) return null;
+  try { if ((await reminderPermission()) === 'prompt') await p.requestPermissions(); } catch (e) {}
+  const done = await scheduleReminders();
+  remindersSay(); // the grown-ups area may already be showing
+  return done;
+}
+/* The grown-ups area's Reminders section, and its words under the switch. */
+function remindersHTML() {
+  if (!notifyPlugin()) return '';
+  const r = reminderSettings();
+  return `<section><h3>🔔 Reminders</h3>
+    <label class="tick"><input type="checkbox" id="pRemind" ${r.on ? 'checked' : ''}><span>A weekly reminder from Bonnie</span></label>
+    <div class="row-btns remind-when" style="justify-content:flex-start${r.on ? '' : ';display:none'}">
+      <label>Day <select id="pRemindDay">${REMIND_DAY_NAMES.map((n, i) => `<option value="${i}" ${i === r.day ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label>Time <select id="pRemindHour">${REMIND_HOURS.map(h => `<option value="${h}" ${h === r.hour ? 'selected' : ''}>${hourName(h)}</option>`).join('')}</select></label></div>
+    <p class="note" id="remindSay" aria-live="polite"></p>
+    <p class="note">A reminder only comes if nobody has played for ${REMIND_GAP_DAYS} days, so never while you're playing. If ${REMIND_IDS.length} in a row go unanswered they stop, until the app is next opened. One setting for every player on this device.</p></section>`;
+}
+async function remindersSay() {
+  const el = $('#remindSay'); if (!el) return;
+  const r = reminderSettings(), perm = await reminderPermission();
+  let t = '';
+  if (!r.on) t = 'Reminders are off.';
+  else if (perm === 'denied') t = "Notifications are turned off for Meadow Club in this device's Settings app (Settings → Apps → Meadow Club → Notifications). Turn them on there to get reminders.";
+  else if (perm === 'granted') { const d = reminderDates()[0]; t = `Next reminder: ${REMIND_DAY_NAMES[d.getDay()]} ${d.getDate()} ${d.toLocaleString('en-GB', { month: 'long' })}, ${hourName(d.getHours())}, if nobody plays before then.`; }
+  if ($('#remindSay')) $('#remindSay').textContent = t;
+}
+function remindersWire() {
+  if (!$('#pRemind')) return;
+  const changed = async change => {
+    const r = saveReminderSettings(change);
+    $('.remind-when').style.display = r.on ? '' : 'none';
+    if (r.on && (await reminderPermission()) === 'prompt') { saveReminderSettings({ asked: true }); try { await notifyPlugin().requestPermissions(); } catch (e) {} }
+    await scheduleReminders(); remindersSay();
+  };
+  $('#pRemind').onchange = e => changed({ on: e.target.checked });
+  $('#pRemindDay').onchange = e => changed({ day: +e.target.value });
+  $('#pRemindHour').onchange = e => changed({ hour: +e.target.value });
+  remindersSay();
+}
+// Every time the app opens, or comes back to the front: start the 5 days again.
+if (typeof document !== 'undefined' && inApp()) {
+  setTimeout(() => scheduleReminders(), 0);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') scheduleReminders(); });
 }
 
 /* A level counts as played once it has been finished (its stars or its help log). */
@@ -734,6 +894,13 @@ function addBones(n, fromEl, label, also) {
 
 /* Drag or tap, with pointer events (mouse, touch and pen). For worlds that drag tiles. */
 function draggable(el, { onTap, onDrop, dropSel, ignore }) {
+  // VoiceOver and keyboards: anything you can drag is also a button you can tap (17 November 2026)
+  if (!/^(BUTTON|A|INPUT)$/.test(el.tagName) && !el.hasAttribute('role')) { el.setAttribute('role', 'button'); if (!el.hasAttribute('tabindex')) el.tabIndex = 0; }
+  let tapped = 0; // a finger tap already ran onTap: ignore the click that follows it
+  if (onTap) {
+    el.addEventListener('click', () => { if (Date.now() - tapped > 700) onTap(); });
+    el.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && el.getAttribute('role') === 'button') { e.preventDefault(); onTap(); } });
+  }
   el.addEventListener('pointerdown', e => {
     if (e.button > 0 || (ignore && e.target.closest(ignore))) return;
     e.preventDefault();
@@ -755,6 +922,7 @@ function draggable(el, { onTap, onDrop, dropSel, ignore }) {
     const up = ev => {
       el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
       hover && hover.classList.remove('drop-hover');
+      tapped = Date.now(); // the click after a finger tap or a drag is not a second tap
       if (ghost) {
         ghost.remove(); el.classList.remove('dragging');
         if (ev.type === 'pointerup') { const under = document.elementFromPoint(ev.clientX, ev.clientY); onDrop && onDrop(under && under.closest(dropSel)); }
@@ -797,8 +965,12 @@ function refreshBonnies() { $$('.bonnie').forEach(b => { if (!b.closest('.hatpre
 
 function modal(inner, onAction) {
   const bg = document.createElement('div'); bg.className = 'modal-bg';
-  bg.innerHTML = `<div class="card modal" role="dialog" aria-modal="true">${inner}</div>`;
+  bg.innerHTML = `<div class="card modal" role="dialog" aria-modal="true" tabindex="-1">${inner}</div>`;
   document.body.appendChild(bg);
+  // VoiceOver reads the card's heading as its name, and starts inside the card (a box to type in is focused by its caller)
+  const card = bg.firstElementChild, h = card.querySelector('h1, h2, h3');
+  if (h) { h.id = h.id || 'modal-h-' + Date.now(); card.setAttribute('aria-labelledby', h.id); }
+  setTimeout(() => { if (bg.isConnected && !card.contains(document.activeElement)) try { card.focus({ preventScroll: true }); } catch (e) {} }, 0);
   bg.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; const keep = onAction ? onAction(b.dataset.a, bg) : false; if (keep !== true) bg.remove(); });
   return bg;
 }
@@ -821,8 +993,11 @@ function wireHold(root, onDone) {
 /* =========================================================
    HOME (pick a world) and WORLD MAP (pick a level)
    ========================================================= */
+function shopTip() {
+  setTimeout(() => { if (!G && tipAt('shop', $('#shopBtn'))) whenQuiet(() => { if (!G) say(LINES.tipShop); }); }, 400);
+}
 function homeScreen() {
-  G = null;
+  G = null; shopTip();
   const greet = fmt(rand(GAME.greets));
   const ws = visibleWorlds(GAME.subject);
   show(`
@@ -859,6 +1034,7 @@ function homeScreen() {
 }
 
 function worldScreen(id) {
+  shopTip();
   G = null;
   const w = worldById(id); if (!w) return homeScreen();
   show(`
@@ -871,7 +1047,8 @@ function worldScreen(id) {
       ${w.intro ? `<p class="world-intro">${w.intro}</p>` : ''}
       <div class="path">
         ${w.levels.map((L, l) => { const paid = paidLevel(w, l), un = !paid && levelUnlocked(w, l), st = starsOf(w, L); return `
-          <button class="stone ${paid ? 'paid' : un ? '' : 'locked'}" data-l="${l}" ${un ? '' : 'aria-disabled="true"'}>
+          <button class="stone ${paid ? 'paid' : un ? '' : 'locked'}" data-l="${l}" ${un ? '' : 'aria-disabled="true"'}
+            aria-label="${esc(`Level ${l + 1}: ${L.name}. ${L.blurb ? L.blurb + '. ' : ''}${paid ? 'In the full game: ask a grown-up.' : !un ? 'Locked: finish the level before it first.' : playedLevel(w, L) ? plural(st, 'star') + '.' : 'New!'}`.replace(/([?!.])\. /g, '$1 '))}">
             <div class="num" style="background:${w.color || 'var(--leaf-dark)'};background:color-mix(in srgb,${w.color || 'var(--leaf-dark)'} 78%,#000)">${paid ? '<span class="padlock" aria-hidden="true"><i></i></span>' : un ? l + 1 : '🔒'}</div>
             <div><div class="lt">Level ${l + 1}: ${esc(L.name)}</div>
             ${L.blurb ? `<div class="lb">${esc(L.blurb)}${L.eg ? ` <span class="eg">${esc(L.eg)}</span>` : ''}</div>` : ''}
@@ -943,7 +1120,7 @@ function dockHTML(w) {
         <div class="bubble" id="bubble" aria-live="polite"></div>
         ${bonnieHTML('', 'gameBonnie')}
         <button class="btn small green" id="askBtn">🐾 Ask Bonnie</button>
-        <div class="ladder" title="Hint ladder"><span>Hints</span>${hintNames(w).map((_, i) => `<span class="rung" data-r="${i + 1}">${i + 1}</span>`).join('')}</div>
+        <div class="ladder" title="Hint ladder" aria-hidden="true"><span>Hints</span>${hintNames(w).map((_, i) => `<span class="rung" data-r="${i + 1}">${i + 1}</span>`).join('')}</div>
       </aside>`;
 }
 function renderPips() {
@@ -1080,6 +1257,7 @@ function wrong(msg, opts = {}) {
   streak = 0; renderHud(); sfx.wrong();
   animate($('#gameBonnie'), 'wiggle', 600);
   if (!opts.quiet) bubble(fmt(msg || rand(LINES.oops))); // msg may contain <b> (worlds escape their own words)
+  if (!G.qWarm && tipAt('ask', $('#askBtn') || $('#mmAsk'))) { const g = G; setTimeout(() => whenQuiet(() => { if (G === g && !G.done) say(LINES.tipAsk); }), 300); }
 }
 
 function finishLevel() {
@@ -1302,7 +1480,7 @@ function startWalk() {
     <div class="card walk-path" id="walkPath" role="progressbar" aria-label="Bonnie's walk" aria-valuemin="0" aria-valuemax="${plan.length}" aria-valuenow="0">
       <div class="walk-sky" aria-hidden="true"><span class="sun"></span><span class="cloud c1"></span><span class="cloud c2"></span><span class="hill h1"></span><span class="hill h2"></span>
         <span class="deco" style="left:17%">🌳</span><span class="deco small" style="left:37%">🌷</span><span class="deco" style="left:55%">🌲</span><span class="deco small" style="left:74%">🌼</span></div>
-      <div class="walk-track" id="walkTrack">
+      <div class="walk-track" id="walkTrack" aria-hidden="true">
         <svg class="walk-line" aria-hidden="true"><path class="trail"/><path class="trail-mid"/><path class="trail-done"/><path class="trail-dig"/></svg>
         ${plan.map((p, i) => `<div class="wstone" data-s="${i}" title="${esc(p.w.name)}"><span class="wicon">${p.w.icon || '🐾'}</span><span class="wpaw">🐾</span></div>`).join('')}
         <div class="wbowl" title="Home, and the bone bowl"><span>🏡</span><b>🦴</b></div>
@@ -1314,7 +1492,7 @@ function startWalk() {
   renderPath();
   const hello = fmt(rand(LINES.walkStart));
   $('#walkQ').innerHTML = `<div class="card walk-hello"><div class="walk-hello-in">${bonnieHTML('', 'helloBonnie')}<div><p>${esc(hello)}</p>
-    <div class="walk-stops">${plan.map(p => `<span title="${esc(p.w.name)}">${p.w.icon || '🐾'}</span>`).join('<i>·</i>')}<i>·</i><span>🏡</span></div></div></div></div>`;
+    <div class="walk-stops" aria-hidden="true">${plan.map(p => `<span title="${esc(p.w.name)}">${p.w.icon || '🐾'}</span>`).join('<i>·</i>')}<i>·</i><span>🏡</span></div></div></div></div>`;
   animate($('#helloBonnie'), 'happy', 600);
   say(hello);
   if (extra) whenQuiet(() => say(LINES.extraPractice));
@@ -1559,7 +1737,7 @@ function parentGate(then = parentScreen, what = 'open settings') {
     <input type="number" inputmode="numeric" id="gateAns" aria-label="Answer"><p class="note" id="gateMsg" aria-live="polite"></p>
     <div class="btns"><button class="btn green" data-a="ok">Unlock</button><button class="btn ghost" data-a="cancel">Cancel</button></div>`, act => {
     if (act === 'cancel') { if (parentFromClub) location.href = GAME.homeHref; return; }
-    if (+$('#gateAns').value === a * b) { gatePassed(); then(); return; }
+    if (+$('#gateAns').value === a * b) { gatePassed(); then(); askReminders(); return; }
     $('#gateMsg').textContent = 'Not quite — please try again.'; $('#gateAns').value = ''; sfx.wrong(); return true;
   });
   const inp = $('#gateAns', bg); inp.focus();
@@ -1711,6 +1889,20 @@ function logTable(w) {
 }
 /* Which fold-away parts of the grown-ups page are open: remembered while the page is redrawn (adding a prize, say). */
 const parentOpen = new Set();
+/* The first time a grown-up opens this area (on this device): what is here, with the prizes pointed out. */
+function grownUpsTip() {
+  try { if (localStorage.getItem(GROWNUPS_TIP_KEY)) return; localStorage.setItem(GROWNUPS_TIP_KEY, '1'); } catch (e) { return; }
+  modal(`<h2>Welcome, grown-ups</h2>
+    <p style="text-align:left">This is where you set things up for ${esc(nameOf())}:</p>
+    <ul class="gu-tip">
+      <li><b>Real-life prizes:</b> bones from the games can be swapped for prizes you choose. The starter ones are only ideas: change them to suit your family.</li>
+      <li><b>This week:</b> what's been played, and how each answer was reached.</li>
+      ${inApp() ? '<li><b>Players, reminders and back-ups</b> are here too.</li>' : '<li><b>Back up progress</b> is here too.</li>'}
+    </ul>
+    <div class="btns"><button class="btn green" data-a="prizes">Show me the prizes</button><button class="btn ghost" data-a="ok">Got it</button></div>`,
+    a => { if (a !== 'prizes') return; parentOpen.add('prizes'); parentScreen();
+      const f = $('[data-fold="prizes"]'); if (f) { f.open = true; f.scrollIntoView({ block: 'start' }); ringOn($('summary', f)); } });
+}
 function parentScreen() {
   const redraw = !!$('.parent'), scrollY = redraw ? window.scrollY : 0; // a redraw stays where the grown-up was
   if (!redraw) parentOpen.clear();
@@ -1782,6 +1974,7 @@ function parentScreen() {
         <p class="note">Choose which years' worlds show in every game. With none ticked, the highest year that has worlds shows (now: Year ${allYears[allYears.length - 1]}). Stars, bones, hats and prizes carry over between years.</p>
         ${allYears.map(y => `<label class="tick"><input type="checkbox" data-year="${y}" ${chosen && chosen.includes(y) ? 'checked' : ''}><span>Year ${y}</span></label>`).join('')}
         <p class="note" id="yearsNow">Showing in ${esc(GAME.title)}: ${shownYears(subj).map(y => 'Year ' + y).join(' + ')}</p></section>` : ''}
+      ${remindersHTML()}
       <section><h3>Back up progress</h3>
         <p class="note">Keeps a copy of everything on this device (${inApp() ? "every player's " : ''}bones, stars, hats, themes and prizes) as a file or a code, to restore on this or another device.</p>
         <div class="row-btns" style="justify-content:flex-start"><button class="btn small green" id="backupBtn" ${window.MeadowBackup ? '' : 'disabled'}>💾 Back up or restore</button></div></section>
@@ -1806,6 +1999,7 @@ function parentScreen() {
       ${sworlds.filter(w => w.grownUps).map(w => `<section><h3>${esc(w.name)}</h3>${w.grownUps({ stars: L => starsOf(w, L), log: L => S.logs[keyOf(w, L)] || null })}</section>`).join('')}
     </div>`);
   if (redraw) window.scrollTo(0, scrollY);
+  else grownUpsTip();
   $$('.parent details[data-fold]').forEach(d => d.addEventListener('toggle', () => { if (d.open) parentOpen.add(d.dataset.fold); else parentOpen.delete(d.dataset.fold); }));
   // Bonnie only says a name she has a recording of; for any other name she says the same lines without it.
   const nameSay = () => {
@@ -1822,6 +2016,7 @@ function parentScreen() {
   };
   $('#back').onclick = () => { if (parentFromClub) location.href = GAME.homeHref; else homeScreen(); };
   if ($('#pFull')) $('#pFull').onclick = unlockScreen;
+  remindersWire();
   $$('[data-rmplayer]').forEach(b => b.onclick = () => modal(`<h2>Remove ${esc(b.dataset.name)}?</h2>
     <p>${esc(b.dataset.name)}'s bones, stars, outfits and prizes will be deleted from this iPad. This can't be undone.</p>
     <div class="btns"><button class="btn berry" data-a="yes">Remove</button><button class="btn ghost" data-a="no">Keep</button></div>`,
@@ -1890,7 +2085,7 @@ function spokenLines(game = GAME) {
   add(LINES.extraPractice, LINES.extraDone, LINES.warmUp, ...LINES.walkStart, ...LINES.walkOops, ...LINES.walkDone, LINES.walkStop);
   if (!game || game.walk) add(...digLines());
   add(...LINES.praise, LINES.watched, ...LINES.oops, ...LINES.tickles, ...LINES.tickleEgg, ...Object.values(LINES.finish), LINES.already3, ...Object.values(LINES.stillBest),
-    LINES.locked, LINES.paid, LINES.fullGame, LINES.shownAll, LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
+    LINES.locked, LINES.paid, LINES.fullGame, LINES.tipWalk, LINES.tipAsk, LINES.tipShop, LINES.shownAll, LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
   [1, 2, 3].forEach(st => [1, 2].forEach(p => { if (st <= p) add(fmt(LINES.finish[st]) + ' ' + LINES.stillBest[p]); }));
   [1, 2, 3].forEach(st => add(fmt(LINES.finish[st]) + ' ' + LINES.already3));
   HATS.filter(h => h.cost > 0).forEach(h => add(`Thank you {N}! I love my ${h.name}!`));
@@ -2175,7 +2370,8 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .parent summary::after{content:'▸';margin-left:auto;font-size:1.2rem;color:var(--ink-soft)}
 .parent details[open]>summary::after{content:'▾'}
 .parent details.how{margin-top:8px}.parent details.how summary{font-weight:600;font-size:.95rem;justify-content:flex-start}.parent details.how summary::after{margin-left:0}
-.parent input[type=text],.parent input[type=number]{font-family:inherit;font-size:1rem;padding:8px 10px;min-height:44px;border-radius:10px;border:2px solid var(--card-edge);background:#fff;color:var(--ink)}
+.parent input[type=text],.parent input[type=number],.parent select{font-family:inherit;font-size:1rem;padding:8px 10px;min-height:44px;border-radius:10px;border:2px solid var(--card-edge);background:#fff;color:var(--ink)}
+.parent .remind-when label{display:inline-flex;align-items:center;gap:8px;margin:0}
 .prize-row{display:grid;grid-template-columns:40px 1fr 90px auto;gap:8px;align-items:center;margin:10px 0}
 .prize-row input{width:100%}
 .prize-row .pe{font-size:1.6rem;text-align:center}
@@ -2189,6 +2385,10 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
 .log{border-collapse:collapse;font-size:.9rem;min-width:100%}
 .log th,.log td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
 .modal-bg{position:fixed;inset:0;background:rgba(58,45,30,.45);z-index:80;display:grid;place-items:center;padding:16px;animation:fade .2s;overflow-y:auto}
+.sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0} /* words for VoiceOver only */
+.modal:focus{outline:none}
+.gu-tip{text-align:left;margin:0 0 16px;padding-left:20px;line-height:1.4}.gu-tip li{margin:6px 0}
+${TIP_CSS}
 .modal{max-width:460px;width:100%;padding:26px;text-align:center;animation:pop .35s}
 .modal h2{font-size:1.7rem;margin-bottom:6px}
 .modal p{font-family:var(--font-read);font-size:1.15rem}
@@ -2247,6 +2447,8 @@ body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .
    The words "Clubhouse" and "Bone Shop" are hidden (VoiceOver still reads them), the game's name is cut short
    with "…" if it doesn't fit, and in a level ← Map sits beside the world's name with the progress dots under it. */
 @media (max-width:560px){
+  .stone .eg{display:none} /* (17 November 2026) a world map's white example boxes ran off the card on a phone; the level's own line says enough */
+  .stone{gap:12px;padding:8px 12px}.stone .num{width:46px;height:46px;font-size:1.3rem}.stone .lb{line-height:1.3}.stone .ls{font-size:1rem}
   .hud{flex-wrap:nowrap;gap:6px;margin-bottom:8px}
   .hud .lbl{display:none}
   .hud .icon-btn{min-width:44px;justify-content:center;padding:8px 10px;font-size:1.15rem}
@@ -2331,14 +2533,14 @@ function startGame(opts = {}) {
     <div class="meadow" aria-hidden="true"></div>
     <div class="butterfly" style="animation-delay:-2s" aria-hidden="true"><span>🦋</span></div>
     <div class="butterfly" style="animation-delay:-11s;animation-duration:24s;filter:hue-rotate(120deg)" aria-hidden="true"><span>🦋</span></div>
-    <div class="frog" id="frog" title="Ribbit!" aria-label="Frog"><span>🐸</span></div>
+    <div class="frog" id="frog" title="Ribbit!" aria-hidden="true"><span>🐸</span></div>
     <div id="app">
       <header class="hud">
-        <a class="icon-btn" href="${esc(GAME.homeHref)}" title="Back to the Clubhouse" aria-label="Clubhouse">🏠<span class="lbl"> Clubhouse</span></a>
-        <div class="title" id="homeLink" role="button" tabindex="0">${GAME.icon} <span id="appTitle"></span></div>
-        <div class="chip streak" id="streakChip" title="Right answers in a row">🔥 <span id="streakNum">0</span></div>
-        <div class="chip bones" id="boneChip" title="Your bones">🦴 <span id="boneNum">0</span></div>
-        <button class="icon-btn" id="shopBtn" aria-label="Bone Shop">🛍️<span class="lbl"> Bone Shop</span></button>
+        <a class="icon-btn" href="${esc(GAME.homeHref)}" title="Back to the Clubhouse" aria-label="Clubhouse"><span aria-hidden="true">🏠</span><span class="lbl"> Clubhouse</span></a>
+        <div class="title" id="homeLink" role="button" tabindex="0"><span aria-hidden="true">${GAME.icon}</span> <span id="appTitle"></span></div>
+        <div class="chip streak" id="streakChip" title="Right answers in a row"><span aria-hidden="true">🔥</span> <span id="streakNum">0</span><span class="sr"> right in a row</span></div>
+        <div class="chip bones" id="boneChip" title="Your bones"><span aria-hidden="true">🦴</span> <span id="boneNum">0</span><span class="sr"> bones</span></div>
+        <button class="icon-btn" id="shopBtn" aria-label="Bone Shop"><span aria-hidden="true">🛍️</span><span class="lbl"> Bone Shop</span></button>
       </header>
       <main id="screen"></main>
     </div>`);
@@ -2384,6 +2586,11 @@ window.Meadow = {
   // the App Store app's free taster and unlock
   players: { MAX: MAX_PLAYERS, KEY: PLAYERS_KEY, on: () => inApp(), list: playerList, add: addPlayer, switchTo: switchPlayer, remove: removePlayer },
   fullGame: { FREE_LEVELS, KEY: FULL_KEY, has: hasFullGame, paid: paidLevel, unlock: unlockScreen, check: checkFullGame },
+  // Bonnie's first-time help (the Clubhouse uses at() for the walk and the shop)
+  tips: { IDS: TIP_IDS, GROWNUPS_KEY: GROWNUPS_TIP_KEY, due: tipDue, at: tipAt, CSS: TIP_CSS },
+  // the App Store app's weekly reminders (for the tests)
+  reminders: { KEY: REMIND_KEY, IDS: REMIND_IDS, GAP_DAYS: REMIND_GAP_DAYS, HOURS: REMIND_HOURS, LINES: REMIND_LINES,
+    settings: reminderSettings, set: saveReminderSettings, dates: reminderDates, schedule: scheduleReminders, ask: askReminders },
   // UI kit for world files
   ui: { $, $$, esc, fmt, rand, randInt, shuffle, wait, plural, reduceMotion, say, hush, whenQuiet, sfx, tone, ac, animate, hearts, banner, confetti,
     shakeScreen, tickle, tickleEgg, revealOnPhone, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show,

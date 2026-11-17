@@ -788,7 +788,7 @@ function renderControls() {
 function updateAsk() {
   const b = inMM('#mmAsk'); if (!b) return;
   const label = ['Ask Bonnie for help', 'Show me step by step', 'Show me where to tap', 'Ask Bonnie again'][S.tier];
-  b.innerHTML = `${PAW} ${label}${!askedLevel && !S.locked ? `<span class="ask-bonus">+1${BONE}</span>` : ''}`;
+  b.innerHTML = `${PAW} ${label}${!askedLevel && !S.locked ? `<span class="ask-bonus" aria-hidden="true">+1${BONE}</span><span class="sr"> (earns 1 bone)</span>` : ''}`;
   b.disabled = S.locked;
 }
 function paintBoxes() {
@@ -1673,6 +1673,23 @@ const CSS = String.raw`
   .mm .choice { min-height: 64px; font-size: 30px; }
   .mm .choices.wordy .choice { font-size: 20px; white-space: normal; }
   .mm .actions .mbtn { min-height: 56px; }
+  /* Captain's Cove (17 November 2026): a smaller Captain beside a tighter scroll, and no "Prove it to me, matey!"
+     line under the conjecture (it only repeats the level's own story line), so his levels scroll less. */
+  .mm .claim { gap: 10px; }
+  .mm .host { width: 72px; }
+  .mm .scroll { padding: 8px 12px; }
+  .mm .scroll small { font-size: 12px; }
+  .mm .scroll b { font-size: 20px; }
+  .mm .scroll .sub { display: none; }
+  /* Prove It! (a conjecture with a picture): the picture comes straight after the conjecture, so its buttons
+     ("One each", + and −) sit above the number keys, and the sum to fill in comes after it, just above the keys.
+     The level's story line is left out: the Captain's conjecture says the same. */
+  .mm .stage:has(> .claim):has(> .visual:not([hidden])) > .quest { display: none; }
+  .mm .stage:has(> .claim):has(> .visual:not([hidden])) > .visual,
+  .mm .stage:has(> .claim):has(> .visual:not([hidden])) > .vis-tools { order: 1; }
+  .mm .stage:has(> .claim):has(> .visual:not([hidden])) > .eq { order: 2; font-size: 32px; gap: 8px; }
+  .mm .stage:has(> .claim) .gv-bowl { width: 112px; min-height: 64px; padding-top: 10px; padding-bottom: 14px; }
+  .mm .stage:has(> .claim) .gv-plate, .mm .stage:has(> .claim) .gv-lily { width: 112px; height: 112px; }
 }
 `;
 if (!document.getElementById('meadow-maths-kit')) {

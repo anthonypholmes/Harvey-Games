@@ -114,7 +114,7 @@ function playPhonics(item, ctx) {
   const slot = Array(n).fill(null), lock = Array(n).fill(false);
   const soundOf = (g, i) => (i === vIdx || i === eIdx) ? LONG[parts[vIdx]] : (PH[g] || g);
   const segmented = () => parts.map((g, i) => i === eIdx ? MAGIC_E : soundOf(g, i)).join('... ');
-  const clue = item.clue ? esc(fmt(item.clue)).replace('___', '<span class="gap">&nbsp;?&nbsp;</span>') : 'Build the word!';
+  const clue = item.clue ? esc(fmt(item.clue)).replace('___', '<span class="gap"><span aria-hidden="true">&nbsp;?&nbsp;</span><span class="sr">blank</span></span>') : 'Build the word!';
 
   const area = ctx.area;
   area.innerHTML = `

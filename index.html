@@ -151,6 +151,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 .btn:active{transform:translateY(3px);box-shadow:none}
 .name-card{display:grid;gap:14px;justify-items:center;text-align:center;background:var(--card);border:3px solid var(--card-edge);border-radius:28px;box-shadow:var(--shadow);padding:26px 20px;max-width:560px;margin:0 auto 22px}
 [hidden]{display:none!important}
+.sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0} /* words for VoiceOver only */
 .name-card label{font-size:clamp(1.5rem,4vw,2rem);font-weight:700}
 .name-card input{font-family:var(--font-ui);font-size:clamp(1.8rem,6vw,2.6rem);font-weight:600;text-align:center;width:100%;max-width:420px;padding:12px;border-radius:18px;border:3px solid var(--card-edge);background:#fff;color:var(--ink);user-select:text;-webkit-user-select:text}
 .name-card input:focus{outline:none;border-color:var(--accent)}
@@ -252,6 +253,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
   .bonnie{width:96px;height:96px}
   .screen{height:140px}
 }
+.shop-bones{display:none}
 /* ---------- Phones (16 November 2026): a smaller sign, Bonnie beside her words, and the two games side by side,
    so the Clubhouse is about one screen. ---------- */
 @media (max-width:560px){
@@ -279,6 +281,15 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
   .play,html.in-app .play{margin:auto 10px 12px;padding:10px 6px;font-size:1.15rem}
   .cab .stats{margin-bottom:8px}
   .shop-btn,html.in-app .shop-btn{margin-top:14px}
+  /* (17 November 2026) Less scrolling: the bones move from the top row onto the Bone Shop button (the top row's
+     Bone Shop link was the same as that button), the Bone Shop button is one line, and the four buttons at the
+     bottom share one row. */
+  .top{display:none}
+  .shop-btn,html.in-app .shop-btn{margin-top:12px;padding:10px 14px;font-size:1.25rem;justify-content:space-between}
+  .shop-btn small{display:none}
+  .shop-bones{display:inline-flex;align-items:center;gap:4px;flex:none;background:#fff;color:var(--ink);border-radius:999px;padding:4px 12px;font-size:1.1rem}
+  .foot,html.in-app .foot{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;margin-top:12px}
+  .foot .btn{padding:8px 4px;font-size:.92rem;line-height:1.2;text-align:center;display:flex;align-items:center;justify-content:center}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -290,12 +301,12 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 <div class="meadow" aria-hidden="true"></div>
 <div class="butterfly" style="animation-delay:-2s" aria-hidden="true"><span>🦋</span></div>
 <div class="butterfly" style="animation-delay:-11s;animation-duration:24s;filter:hue-rotate(120deg)" aria-hidden="true"><span>🦋</span></div>
-<div class="frog" id="frog" role="button" aria-label="Frog"><span>🐸</span></div>
+<div class="frog" id="frog" aria-hidden="true"><span>🐸</span></div>
 
 <div class="wrap">
   <div class="top">
     <a class="chip shop-link" href="meadow-words.html#shop" data-shop>🛍️ Bone Shop</a>
-    <div class="chip" id="boneChip" title="Bones in Bonnie's bone bowl">🦴 <span id="boneNum">0</span></div>
+    <div class="chip" id="boneChip" title="Bones in Bonnie's bone bowl"><span aria-hidden="true">🦴</span> <span id="boneNum">0</span><span class="sr"> bones in Bonnie's bowl</span></div>
   </div>
 
   <header class="sign">
@@ -346,13 +357,13 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
   </div>
 
   <main class="cabinets" id="cabinets"></main>
-  <a class="shop-btn" id="shopBig" href="meadow-words.html#shop" data-shop>🛍️ Bonnie's Bone Shop <small>hats, themes &amp; real prizes</small></a>
+  <a class="shop-btn" id="shopBig" href="meadow-words.html#shop" data-shop>🛍️ Bonnie's Bone Shop <small>hats, themes &amp; real prizes</small><span class="shop-bones" aria-hidden="true">🦴 <span id="shopBoneNum">0</span></span></a>
 
   <div class="foot">
     <button class="btn" id="soundBtn">🔊 Sound: on</button>
     <button class="btn" id="changeName">✏️ Change name</button>
     <button class="btn" id="switchPlayer" hidden>👥 Switch player</button>
-    <a class="btn" id="grownUps" href="meadow-maths.html#grownups" title="Settings, prizes and progress (with a sum to check you're a grown-up)">🔒 Grown-ups</a>
+    <a class="btn" id="grownUps" href="meadow-maths.html#grownups" title="Settings, prizes and progress (with a sum to check you're a grown-up)">🔒 Grown&#8209;ups</a>
   </div>
   <p class="note">Spend your bones on hats, themes and real prizes in Bonnie's Bone Shop.</p>
 </div>
@@ -464,13 +475,14 @@ function render() {
   document.getElementById('nameCancel').hidden = !S.hasName && !otherPlayers().length; // a new player can go back to the others
   document.getElementById('nameLabel').textContent = S.hasName ? 'What’s your new name?' : 'What’s your name?';
   document.getElementById('boneNum').textContent = S.bones;
+  document.getElementById('shopBoneNum').textContent = S.bones; // phones show the bones on the Bone Shop button instead of at the top
   document.getElementById('bonnie').innerHTML = bonnieSVG();
   document.getElementById('soundBtn').textContent = soundOn ? '🔊 Sound: on' : '🔇 Sound: off';
   document.getElementById('cabinets').innerHTML = CONFIG.GAMES.map(g => {
     const prog = progressFor(g);
     const inner = `
       <div class="marquee" style="background:${g.dark}">${esc(g.name)}<small>${esc(g.sub)}</small></div>
-      <div class="screen" style="background:${g.screen}">
+      <div class="screen" style="background:${g.screen}" aria-hidden="true">
         ${g.bits.map(([e, x, y], i) => `<span class="bit" style="left:${x}%;top:${y}%;animation-delay:${-i * .6}s">${e}</span>`).join('')}
         <span class="big" style="left:${g.big[1]}%;top:${g.big[2]}%">${esc(g.big[0])}</span>
       </div>
@@ -478,7 +490,7 @@ function render() {
       ${prog ? `<div class="stats">${prog}</div>` : ''}
       <div class="play" style="background:${g.dark};box-shadow:0 6px 0 rgba(0,0,0,.3);box-shadow:0 6px 0 color-mix(in srgb,${g.dark} 62%,#000)">${g.soon ? 'Coming soon' : '▶ PLAY'}</div>`;
     return g.soon || !g.href ? `<div class="cab soon">${inner}</div>`
-                             : `<a class="cab" href="${esc(g.href)}" data-name="${esc(g.name)}">${inner}</a>`;
+                             : `<a class="cab" href="${esc(g.href)}" data-name="${esc(g.name)}" aria-label="${esc(`Play ${g.name}: ${g.sub}.${prog ? ' ' + String(prog).replace(/<[^>]+>/g, '').replace(/[⭐🐾]/gu, '').trim() + '.' : ''}`)}">${inner}</a>`;
   }).join('');
   document.querySelectorAll('a.cab').forEach(a => a.addEventListener('click', e => { e.preventDefault(); goTo(a.getAttribute('href'), `Let's play ${a.dataset.name}!`); }));
 }
@@ -494,8 +506,19 @@ function greet() {
     const t = S.hasName ? LINES.newName : LINES.askName;
     document.getElementById('say').textContent = t; return t;
   }
-  const t = fmtN(rand(S.bones > 0 ? LINES.greetBones : LINES.greetStart)); document.getElementById('say').textContent = t; return t;
+  const t = clubTip() || fmtN(rand(S.bones > 0 ? LINES.greetBones : LINES.greetStart)); document.getElementById('say').textContent = t; return t;
 }
+/* Bonnie's first-time help (js/meadow-core.js): once per player, a glowing ring on Bonnie's Walk on the first
+   visit, and on a later visit with bones, on the Bone Shop. The line stays for this page, however often greet() runs. */
+let tipLine = null;
+function clubTip() {
+  if (tipLine) return tipLine;
+  const T = Meadow.tips;
+  if (T.at('walk', document.getElementById('walkBtn'))) tipLine = Meadow.LINES.tipWalk;
+  else if (T.at('shop', document.getElementById('shopBig'))) tipLine = Meadow.LINES.tipShop;
+  return tipLine;
+}
+{ const st = document.createElement('style'); st.textContent = Meadow.tips.CSS; document.head.appendChild(st); }
 const fmtN = s => s.replaceAll('{N}', S.childName);
 /* Everything Bonnie says here. tools/make-voice.mjs reads clubhouseLines() to make recorded clips. */
 const LINES = {

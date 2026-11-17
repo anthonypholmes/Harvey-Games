@@ -95,7 +95,7 @@ function playStory(item, ctx) {
   let html = '', pos = 0; const spans = [];
   story.split(/(\s+)/).forEach(tok => {
     if (/^\s+$/.test(tok)) { html += tok; pos += tok.length; return; }
-    if (tok.includes('___')) { html += `<span class="blank" id="blank">&nbsp;?&nbsp;</span>${esc(tok.replace('___', ''))}`; spans.push({ start: pos, idx: -1 }); pos += 3 + tok.replace('___', '').length; return; }
+    if (tok.includes('___')) { html += `<span class="blank" id="blank"><span aria-hidden="true">&nbsp;?&nbsp;</span><span class="sr">blank</span></span>${esc(tok.replace('___', ''))}`; spans.push({ start: pos, idx: -1 }); pos += 3 + tok.replace('___', '').length; return; }
     const i = spans.length; spans.push({ start: pos, idx: i }); html += `<span class="w" data-i="${i}">${esc(tok)}</span>`; pos += tok.length;
   });
   const area = ctx.area;
@@ -131,7 +131,7 @@ function playStory(item, ctx) {
       wordEls.forEach(el => { if (evWords.includes(el.textContent.toLowerCase().replace(/[^a-z']/g, ''))) el.classList.add('ev'); });
       return "I've highlighted a clue in the story and taken away one wrong answer!"; },
     () => { $$('.opt').forEach(x => x.dataset.o === answer ? x.classList.add('glow') : x.classList.add('wrong'));
-      return `The answer is <b>${esc(answer)}</b>. See the clue in green? Tap the shiny answer!`; },
+      return `The answer is <b>${esc(answer)}</b>. See the clue word? Tap the shiny answer!`; },
   ]);
   bubble(fmt(ctx.index === 0 ? "Snuggle up, {N}! Let's read a story together." : rand(["Here's another story!", "Ooh, I love this one!", "Story time! Ready?"])), false);
   later(() => readAloud(spoken + ' ... ' + q), 400);
@@ -150,7 +150,7 @@ function lines() {
     const story = fmt(item.story), answer = fmt(item.answer), q = fmt(item.q), spoken = story.replace('___', '...');
     add(spoken + ' ... ' + q, (item.type === 'rhyme' ? story.replace('___', answer) : answer) + '!');
     if (item.type === 'rhyme') item.wrong.map(fmt).forEach(o => add(text(`Does "<b>${esc(o)}</b>" rhyme? Say them together and listen!`)));
-    hint(3, `The answer is <b>${esc(answer)}</b>. See the clue in green? Tap the shiny answer!`);
+    hint(3, `The answer is <b>${esc(answer)}</b>. See the clue word? Tap the shiny answer!`);
   }));
   return out;
 }
