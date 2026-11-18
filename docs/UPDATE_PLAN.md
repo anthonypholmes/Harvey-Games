@@ -118,6 +118,7 @@ Submit within a few days of 1.0 being approved, so it is out well before Christm
   1. Commit the work so far (GitHub Desktop).
   2. Wait for 1.0 to be approved and released.
   3. In Xcode, set the version (`MARKETING_VERSION`) to 1.1 and the build number up by one, then upload to App Store Connect.
+     - **Version set to 1.1 on 18 November 2026** (build 5; 1.0 in review is build 4). Uploading to TestFlight while 1.0 is still in review is fine: TestFlight doesn't touch the 1.0 submission. Don't add the 1.1 version on the App Store tab until 1.0 is approved.
   4. TestFlight on a real iPhone: a small phone if one can be borrowed (or the iPhone SE simulator), sound with the silent switch on, and a full level of each world.
   5. iPhone screenshots (6.9-inch, 1320 × 2868), and the description and reviewer notes changed from "iPad" to "iPhone and iPad", with the reminders line in the reviewer notes.
      - **Ready 17 November 2026:** six iPhone pictures in `docs/screenshots/iphone/` (`sh tools/make-screenshots.sh iphone`), and the new promotional text, description, What's New and reviewer notes in `docs/APP_STORE_LISTING.md` under "Version 1.1 (iPhone)". Left: paste them into App Store Connect.
@@ -126,6 +127,14 @@ Submit within a few days of 1.0 being approved, so it is out well before Christm
   - After release: try Rate the app, and see a real reminder arrive after 5 days without play.
   - Two small 1.0.1 checks are still unticked and can be done any time before step 7: Back up progress through the share sheet (save, then restore from the file), and a listen to the newer clips.
 - **Don't hold 1.1 for the extras.** Once the iPhone work and the real-device checks are done, submit it. Whatever of the first-time help, first impressions and the two grown-ups buttons isn't finished moves to 1.2.
+
+- **A shop for every child (added 18 November 2026).** Anthony's worry after TestFlight: dressing Bonnie up was straying towards "girly", and children this age notice ("no, that's girly"). The aim is neutral on the whole, with things in the shop for every taste, not a "boys' version". Built 18 November 2026:
+  - **The shop's first tab is now "🎒 Bonnie's Gear"** (it was "🎀 Dress Up Bonnie"), and it opens on hats and helmets. The coat colours moved to the end, as "Bonnie's coat". The sections are "Hats and helmets", "Glasses and eyepatches" and "Collars, capes and jetpacks".
+  - **Six new things to wear,** drawn like the others: Ninja Headband (75), Pixel Shades (100), Gaming Headset (140), Space Helmet (220), Knight's Helmet (240) and Jetpack (280, worn on her back like the cape). Bonnie's "I love my …!" line for each was recorded the same day (6 clips, 140 characters). The Flower Crown, bow tie and the rest stay, so there's something for everyone.
+  - **Three new themes:** 8-Bit Meadow (150: blocky pixel clouds and grass, squarer cards), Outer Space (300: stars, planets and a moon-dust ground) and Volcano Island (450: a glowing volcano and drifting embers). Each has its own look for Bonnie's Walk, and all hold still with Reduce Motion. They're in `js/meadow-core.js` and `index.html` (the Clubhouse keeps its own copy of the theme styles), and in `js/first-paint.js`.
+  - **Less pink:** the pink butterfly is now a bee (the blue one stays), the meadow's pink flower is an orange poppy, the party hat is blue, the Clubhouse's Bone Shop button is blue (it was raspberry), and the shop's 🛍️ (pink shopping bags on iPhone) is now 🛒 everywhere. "Hats, themes & real prizes" now says "gear, themes & real prizes".
+  - **Screenshot 5** is now "Earn bones, unlock gear: Helmets, jetpacks, themes and real prizes", with Sam in the ninja headband, sunglasses and jetpack. Both the iPad and iPhone sets were made again.
+  - Checked: every test page passes, the six finger checks work, and pictures of every new theme on the Clubhouse, a world list, a level, the walk and the shop at iPhone size. **Still to check on Anthony's iPhone and iPad** (it needs a new TestFlight build, build 6), ideally with his son: what he goes for in the shop.
 
 **Folded in from the old 1.0.1:**
 
@@ -194,6 +203,15 @@ Submit within a few days of 1.0 being approved, so it is out well before Christm
 - **Website:** nothing (the section only shows in the app).
 - **Test page** with a pretend plugin, like `tests/unlock-test.html`: the next dates, switching off, refused permission, reopening the app, and the 4-reminder limit.
 
+**More game-like (added 18 November 2026),** for the children who love video games, without pushing anyone out. Do these alongside Money and Time; each is one or two sittings:
+
+- **Ranks.** A rank that goes up with every bone earned: Pup, Explorer, Ranger, Legend (and steps between), shown by the player's name, with a fanfare and a line from Bonnie when it changes. Gaming children care more about "I'm level 12" than about stars. Never goes down.
+- **Boss levels.** The last level of each world becomes a showdown, with Captain Croak as the meadow's cheeky rival who pops up to be beaten. Same questions, bigger moment: a "boss" bar that drops with each right answer.
+- **Beat your time.** An optional timed run on times tables and number bonds, with a personal best to beat. Off unless chosen, so it never stresses a child who doesn't want it, and nothing can be failed.
+- **Family leaderboard.** The players on this device (up to 4), ranked by bones this week. On the device only, so the Kids category rules and "Data Not Collected" stay true.
+- **More feeling in each answer:** a combo counter ("5 in a row! 🔥"), a bigger burst of bones on a streak, punchier sounds.
+- Needs some new Bonnie lines (ranks, bosses): check with `npm run voice:check`.
+
 **Money and Time:** the two biggest Year 2 maths topics the game doesn't cover yet.
 
 - **Money world:** coins and notes, making an amount, finding the total, giving change.
@@ -236,6 +254,8 @@ From the check against Apple's Human Interface Guidelines. None of these blocks 
 - **Larger Text.** Text that follows the iPad's setting. It touches every layout, so it is a version of its own, and it is what the Larger Text accessibility label needs.
 - **Other sound.** Opening the app stops a parent's music or podcast. That was a choice, so Bonnie is never muted. Leave it unless a parent complains.
 - **Dark mode.** The shop themes already give variety. Not worth the time yet.
+- **Build Bonnie's den (added 18 November 2026).** Spend bones on pieces to build and decorate a den, fort or treehouse: walls, a lookout tower, a flag, a zip line. Building something of their own is what Minecraft fans love, and it gives bones a use that never runs out. Our own drawings, never blocks or anything that looks like Minecraft. Big enough to be a release of its own (perhaps between 1.3 and 2.0).
+- **A collector's book (added 18 November 2026).** Cards for the meadow's creatures and characters (the frog, the rabbits, Captain Croak, the walk's animals, the story characters), some rare, earned by playing and never bought, so it stays inside the Kids category rules. Could go with the den release.
 
 ## Decisions for Anthony
 

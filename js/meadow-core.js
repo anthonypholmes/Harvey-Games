@@ -73,13 +73,13 @@ const STARTER_PRIZES = [
   [1200, 'Small buildable toy set', 'Choose a small building set.'],
   [1500, 'Special weekend outing with a parent', 'A big day out together.'],
 ].map(([cost, title, desc], i) => ({ id: 'u' + i, cost, title, desc }));
-/* Bonnie's dress-up. Each item goes in one slot, so she can wear a hat, something on her
+/* Bonnie's gear (the Bone Shop's Gear tab). Each item goes in one slot, so she can wear a hat, something on her
    face and something round her neck all at once. The save keeps them in hat, face and neck
    (owned ones are all listed in owned.hats, the name it had before there were slots). */
 const SLOTS = [
-  { id: 'head', key: 'hat', name: 'Hats', off: 'Take hat off' },
+  { id: 'head', key: 'hat', name: 'Hats and helmets', off: 'Take it off' },
   { id: 'face', key: 'face', name: 'Glasses and eyepatches', off: 'Take them off' },
-  { id: 'neck', key: 'neck', name: 'Collars and more', off: 'Take it off' },
+  { id: 'neck', key: 'neck', name: 'Collars, capes and jetpacks', off: 'Take it off' },
 ];
 const HATS = [
   { id: 'collar-red', slot: 'neck', name: 'Red Collar', cost: 30 },
@@ -89,17 +89,23 @@ const HATS = [
   { id: 'bandana', slot: 'neck', name: 'Spotty Bandana', cost: 60 },
   { id: 'specs', slot: 'face', name: 'Clever Specs', cost: 70 },
   { id: 'bowtie', slot: 'neck', name: 'Purple Bow Tie', cost: 70 },
+  { id: 'ninja', slot: 'head', name: 'Ninja Headband', cost: 75 },
   { id: 'party', slot: 'head', name: 'Party Hat', cost: 75 },
   { id: 'bobble', slot: 'head', name: 'Bobble Hat', cost: 80 },
   { id: 'flowers', slot: 'head', name: 'Flower Crown', cost: 90 },
+  { id: 'pixelshades', slot: 'face', name: 'Pixel Shades', cost: 100 },
   { id: 'scarf', slot: 'neck', name: 'Christmas Scarf', cost: 100 },
   { id: 'chef', slot: 'head', name: 'Chef’s Hat', cost: 110 },
   { id: 'santa', slot: 'head', name: 'Santa Hat', cost: 120 },
   { id: 'headphones', slot: 'head', name: 'DJ Headphones', cost: 130 },
+  { id: 'headset', slot: 'head', name: 'Gaming Headset', cost: 140 },
   { id: 'wizard', slot: 'head', name: 'Wizard Hat', cost: 150 },
   { id: 'cape', slot: 'neck', name: 'Superhero Cape', cost: 180 },
   { id: 'cowboy', slot: 'head', name: 'Cowboy Hat', cost: 200 },
+  { id: 'space', slot: 'head', name: 'Space Helmet', cost: 220 },
+  { id: 'knight', slot: 'head', name: 'Knight’s Helmet', cost: 240 },
   { id: 'medal', slot: 'neck', name: 'Gold Medal', cost: 250 },
+  { id: 'jetpack', slot: 'neck', name: 'Jetpack', cost: 280 },
   { id: 'crown', slot: 'head', name: 'Crown', cost: 300 },
 ];
 const itemOf = id => HATS.find(h => h.id === id);
@@ -111,6 +117,9 @@ const THEMES = [
   { id: 'night', name: 'Spooky Moonlit Night', cost: 250, sw: 'radial-gradient(circle at 75% 30%,#FFF6D5 0 10%,transparent 11%),linear-gradient(#1E2340,#3A3F6B)' },
   { id: 'christmas', name: 'Christmas Lights', cost: 350, sw: 'radial-gradient(circle at 22% 32%,#FF5A4E 0 8%,transparent 9%),radial-gradient(circle at 50% 24%,#FFD24A 0 8%,transparent 9%),radial-gradient(circle at 78% 32%,#6EDB7A 0 8%,transparent 9%),radial-gradient(circle at 30% 75%,#fff 0 3%,transparent 4%),radial-gradient(circle at 68% 68%,#fff 0 3%,transparent 4%),linear-gradient(#173B2C,#2E5E44)' },
   { id: 'snow', name: 'Winter Snow', cost: 400, sw: 'linear-gradient(#EEF5FB,#B4D4F0)' },
+  { id: 'pixel', name: '8-Bit Meadow', cost: 150, sw: 'linear-gradient(90deg,transparent 0 20%,#fff 20% 45%,transparent 45%) 0 22%/100% 10% no-repeat,linear-gradient(#8ED3FF 0 62%,#63C74D 62% 80%,#4FA83D 80%)' },
+  { id: 'space', name: 'Outer Space', cost: 300, sw: 'radial-gradient(circle at 72% 32%,#F6B66A 0 14%,transparent 15%),radial-gradient(circle at 25% 70%,#fff 0 2%,transparent 3%),radial-gradient(circle at 45% 25%,#fff 0 2%,transparent 3%),linear-gradient(#0F1430,#2A2470)' },
+  { id: 'volcano', name: 'Volcano Island', cost: 450, sw: "url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%2290%22><rect width=%22160%22 height=%2290%22 fill=%22%232A1A17%22/><circle cx=%2280%22 cy=%2290%22 r=%2270%22 fill=%22%23FF7A30%22 opacity=%22.35%22/><path d=%22M20 90 L66 30 H94 L140 90 Z%22 fill=%22%235A3A32%22/><path d=%22M66 30 H94 L88 38 Q84 34 80 44 Q76 34 72 38 Z%22 fill=%22%23FF8A3D%22/><path d=%22M80 44 Q78 60 72 70 Q82 62 84 48 Z%22 fill=%22%23FF8A3D%22/><circle cx=%2272%22 cy=%2218%22 r=%225%22 fill=%22%236B4A44%22/><circle cx=%2284%22 cy=%2210%22 r=%227%22 fill=%22%236B4A44%22/><circle cx=%2296%22 cy=%2216%22 r=%225%22 fill=%22%236B4A44%22/></svg>') center/cover" },
 ];
 /* Bonnie's coat colours (Bone Shop). Each sets the three fur colours she is drawn with.
    Chocolate is the real Bonnie, so everyone starts with it. */
@@ -775,7 +784,7 @@ const ear = (x, dir) => [[0, 42, 10], [dir * 3, 53, 10], [dir * 1, 64, 9.5], [di
   .map(([dx, y, r]) => `<circle cx="${x + dx}" cy="${y}" r="${r}"/>`).join('');
 function hatSVG(h) {
   switch (h) {
-    case 'party': return '<g class="hat"><path d="M44 27 L63 -6 L78 25 Z" fill="#F07CA8" stroke="#3E2F27" stroke-width="2" stroke-linejoin="round"/><path d="M50 16 L72 19 M56 5 L68 7" stroke="#FFE07A" stroke-width="4" stroke-linecap="round"/><circle cx="63" cy="-7" r="5" fill="#FFE07A" stroke="#3E2F27" stroke-width="2"/></g>';
+    case 'party': return '<g class="hat"><path d="M44 27 L63 -6 L78 25 Z" fill="#3BA8D9" stroke="#3E2F27" stroke-width="2" stroke-linejoin="round"/><path d="M50 16 L72 19 M56 5 L68 7" stroke="#FFE07A" stroke-width="4" stroke-linecap="round"/><circle cx="63" cy="-7" r="5" fill="#FFE07A" stroke="#3E2F27" stroke-width="2"/></g>';
     case 'crown': return '<g class="hat"><path d="M40 29 L42 9 L51 20 L60 4 L69 20 L78 9 L80 29 Z" fill="#F4C25B" stroke="#8A5A14" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="22" r="3.2" fill="#E2574C"/><circle cx="49" cy="25" r="2.3" fill="#3B7FC4"/><circle cx="71" cy="25" r="2.3" fill="#3F8B5C"/></g>';
     case 'wizard': return '<g class="hat"><path d="M40 30 Q60 35 80 30 L58 -16 Z" fill="#6C4BB4" stroke="#3A2470" stroke-width="2" stroke-linejoin="round"/><ellipse cx="60" cy="30" rx="27" ry="6" fill="#6C4BB4" stroke="#3A2470" stroke-width="2"/><path d="M60 4l1.6 3.4 3.6.4-2.7 2.4.8 3.6-3.3-1.8-3.3 1.8.8-3.6-2.7-2.4 3.6-.4z" fill="#FFE07A"/><circle cx="52" cy="20" r="1.6" fill="#FFE07A"/><circle cx="67" cy="17" r="1.3" fill="#FFE07A"/></g>';
     case 'santa': return '<g class="hat"><path d="M38 29 C40 10 58 -2 78 1 C90 3 96 12 95 24 C90 17 82 13 75 14 C79 19 82 24 82 29 Z" fill="#D9443A" stroke="#8E2A22" stroke-width="2" stroke-linejoin="round"/><rect x="35" y="23" width="50" height="11" rx="5.5" fill="#fff" stroke="#D8D2CC" stroke-width="1.5"/><circle cx="95" cy="25" r="6" fill="#fff" stroke="#D8D2CC" stroke-width="1.5"/></g>';
@@ -783,13 +792,18 @@ function hatSVG(h) {
     case 'flowers': return `<g class="hat"><path d="M34 33 Q60 20 86 33" stroke="#5FA35A" stroke-width="3" fill="none"/>${[[38, 30, '#F07CA8'], [49, 25, '#FFE07A'], [60, 23, '#B58BE0'], [71, 25, '#F07CA8'], [82, 30, '#FFE07A']].map(([x, y, c]) => `<g fill="${c}">${curls(x, y, 3.6, 5, 3.2)}</g><circle cx="${x}" cy="${y}" r="2.4" fill="#F4A13A"/>`).join('')}</g>`;
     case 'chef': return '<g class="hat"><g fill="#fff" stroke="#CFC8BF" stroke-width="1.6"><circle cx="47" cy="13" r="10"/><circle cx="60" cy="7" r="11"/><circle cx="73" cy="13" r="10"/><rect x="45" y="14" width="30" height="17" rx="2"/></g><path d="M45 25 H75" stroke="#CFC8BF" stroke-width="1.5"/></g>';
     case 'headphones': return '<g class="hat"><path d="M30 46 Q30 8 60 8 Q90 8 90 46" stroke="#2F3542" stroke-width="5" fill="none" stroke-linecap="round"/><rect x="22" y="38" width="14" height="22" rx="6" fill="#E2574C" stroke="#2F3542" stroke-width="2"/><rect x="84" y="38" width="14" height="22" rx="6" fill="#E2574C" stroke="#2F3542" stroke-width="2"/></g>';
+    case 'ninja': return '<g class="hat"><path d="M87 35 Q98 33 104 24 M87 39 Q99 42 106 36" stroke="#C0392B" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M33 35 Q60 26 87 35 L87 43 Q60 34 33 43 Z" fill="#D9443A" stroke="#7E1F16" stroke-width="1.8" stroke-linejoin="round"/><circle cx="88" cy="38" r="4" fill="#C0392B" stroke="#7E1F16" stroke-width="1.5"/></g>';
+    case 'headset': return '<g class="hat"><path d="M30 46 Q30 8 60 8 Q90 8 90 46" stroke="#22252E" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M40 14 Q60 4 80 14" stroke="#3BD16F" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="20" y="36" width="16" height="26" rx="7" fill="#2F3542" stroke="#15171C" stroke-width="2"/><rect x="84" y="36" width="16" height="26" rx="7" fill="#2F3542" stroke="#15171C" stroke-width="2"/><rect x="24" y="42" width="8" height="14" rx="4" fill="#3BD16F"/><rect x="88" y="42" width="8" height="14" rx="4" fill="#3BD16F"/><path d="M28 60 Q30 74 44 73" stroke="#22252E" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="45" cy="73" r="3.6" fill="#22252E"/></g>';
+    case 'space': return '<g class="hat"><path d="M60 19 V6" stroke="#9AA5B1" stroke-width="2.5"/><circle cx="60" cy="5" r="4" fill="#E2574C" stroke="#8E2A22" stroke-width="1.5"/><circle cx="60" cy="54" r="36" fill="rgba(200,230,255,.22)" stroke="#E3ECF5" stroke-width="3.5"/><circle cx="60" cy="54" r="36" fill="none" stroke="#9AA5B1" stroke-width="1.2"/><path d="M36 36 Q42 26 54 23" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/><path d="M30 80 Q60 96 90 80 L92 88 Q60 104 28 88 Z" fill="#E3ECF5" stroke="#9AA5B1" stroke-width="1.8" stroke-linejoin="round"/><rect x="54" y="88" width="12" height="6" rx="2" fill="#3B7FC4"/></g>';
+    case 'knight': return '<g class="hat"><path d="M60 9 Q70 -6 86 -2 Q76 2 72 10" fill="#D9443A" stroke="#8E2A22" stroke-width="1.6" stroke-linejoin="round"/><path d="M32 44 Q30 8 60 8 Q90 8 88 44 L80 44 Q79 26 60 26 Q41 26 40 44 Z" fill="#B8C0C8" stroke="#5E6670" stroke-width="2" stroke-linejoin="round"/><path d="M38 24 Q60 14 82 24" stroke="#5E6670" stroke-width="1.6" fill="none"/><circle cx="44" cy="20" r="1.6" fill="#5E6670"/><circle cx="76" cy="20" r="1.6" fill="#5E6670"/><path d="M57 26 H63 V47 Q60 50 57 47 Z" fill="#B8C0C8" stroke="#5E6670" stroke-width="1.8" stroke-linejoin="round"/></g>';
     case 'cowboy': return '<g class="hat"><path d="M44 29 Q41 6 52 7 Q60 12 68 7 Q79 6 76 29 Z" fill="#B5763A" stroke="#6E4520" stroke-width="2" stroke-linejoin="round"/><rect x="44" y="21" width="32" height="5" fill="#5A3A1A"/><path d="M22 27 Q60 40 98 27 Q100 33 92 34 Q60 42 28 34 Q20 33 22 27 Z" fill="#A0662E" stroke="#6E4520" stroke-width="2" stroke-linejoin="round"/></g>';
   }
   return '';
 }
 /* Neck things sit under her chin; the cape hangs behind her. */
 function neckSVG(id, back) {
-  if (back) return id === 'cape' ? '<path d="M40 84 Q18 104 22 122 Q60 128 98 122 Q102 104 80 84 Z" fill="#D9443A" stroke="#8E2A22" stroke-width="2" stroke-linejoin="round"/>' : '';
+  if (back) return id === 'cape' ? '<path d="M40 84 Q18 104 22 122 Q60 128 98 122 Q102 104 80 84 Z" fill="#D9443A" stroke="#8E2A22" stroke-width="2" stroke-linejoin="round"/>'
+    : id === 'jetpack' ? '<g class="jet"><path d="M5 110 Q13 132 21 110 Z M99 110 Q107 132 115 110 Z" fill="#FF8A2A"/><path d="M9 110 Q13 124 17 110 Z M103 110 Q107 124 111 110 Z" fill="#FFE27A"/><rect x="4" y="76" width="18" height="36" rx="8" fill="#9AA5B1" stroke="#4B5563" stroke-width="2"/><rect x="98" y="76" width="18" height="36" rx="8" fill="#9AA5B1" stroke="#4B5563" stroke-width="2"/><rect x="4" y="76" width="18" height="10" rx="5" fill="#E2574C" stroke="#4B5563" stroke-width="2"/><rect x="98" y="76" width="18" height="10" rx="5" fill="#E2574C" stroke="#4B5563" stroke-width="2"/><rect x="7" y="104" width="12" height="6" rx="2" fill="#4B5563"/><rect x="101" y="104" width="12" height="6" rx="2" fill="#4B5563"/><path d="M22 96 H34 M86 96 H98" stroke="#4B5563" stroke-width="5"/></g>' : '';
   const collar = (c, d) => `<path d="M36 85 Q60 98 84 85" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M36 85 Q60 98 84 85" stroke="${d}" stroke-width="1.6" fill="none" stroke-dasharray="2 5" stroke-linecap="round"/>`;
   switch (id) {
     case 'collar-red': return collar('#D9443A', '#FFD2CC') + '<circle cx="60" cy="98" r="4.5" fill="#F4C25B" stroke="#8A5A14" stroke-width="1.5"/>';
@@ -798,6 +812,7 @@ function neckSVG(id, back) {
     case 'bowtie': return '<path d="M60 92 L46 84 L46 100 Z M60 92 L74 84 L74 100 Z" fill="#8E6CD0" stroke="#3A2470" stroke-width="1.6" stroke-linejoin="round"/><circle cx="60" cy="92" r="4" fill="#6C4BB4" stroke="#3A2470" stroke-width="1.6"/>';
     case 'scarf': return '<path d="M34 83 Q60 97 86 83 L86 92 Q60 106 34 92 Z" fill="#C0392B" stroke="#7E1F16" stroke-width="1.5"/><path d="M45 89 v8 M58 92 v9 M71 89 v9" stroke="#fff" stroke-width="3"/><g transform="rotate(-12 72 96)"><rect x="66" y="94" width="11" height="22" rx="2" fill="#C0392B" stroke="#7E1F16" stroke-width="1.5"/><path d="M66 102 h11 M66 109 h11" stroke="#fff" stroke-width="3"/><path d="M67 116 v4 M71 116 v4 M75 116 v4" stroke="#C0392B" stroke-width="1.6"/></g>';
     case 'medal': return '<path d="M46 83 L58 101 M74 83 L62 101" stroke="#3B7FC4" stroke-width="5" stroke-linecap="round"/><circle cx="60" cy="105" r="8" fill="#F4C25B" stroke="#8A5A14" stroke-width="1.8"/><path d="M60 100.5l1.4 2.9 3.2.4-2.3 2.2.6 3.2-2.9-1.6-2.9 1.6.6-3.2-2.3-2.2 3.2-.4z" fill="#FFF3B0"/>';
+    case 'jetpack': return '<path d="M40 84 L45 112 M80 84 L75 112" stroke="#4B5563" stroke-width="4" stroke-linecap="round"/><rect x="52" y="94" width="16" height="10" rx="3" fill="#4B5563"/><circle cx="60" cy="99" r="2.6" fill="#3BD16F"/>';
     case 'cape': return '<circle cx="45" cy="86" r="3.5" fill="#F4C25B" stroke="#8A5A14" stroke-width="1.3"/><circle cx="75" cy="86" r="3.5" fill="#F4C25B" stroke="#8A5A14" stroke-width="1.3"/>';
   }
   return '';
@@ -807,6 +822,7 @@ function faceSVG(id) {
   switch (id) {
     case 'eyepatch': return '<g class="hat"><path d="M37 38 Q60 30 85 44" stroke="#222" stroke-width="2.4" fill="none"/><ellipse cx="71.5" cy="52" rx="7.5" ry="6.5" fill="#222"/></g>';
     case 'sunglasses': return '<g class="hat"><path d="M38 48 L31 44 M82 48 L89 44" stroke="#111" stroke-width="2.2" stroke-linecap="round"/><rect x="38" y="44" width="21" height="14" rx="6" fill="#1E1E2A" stroke="#111" stroke-width="1.6"/><rect x="61" y="44" width="21" height="14" rx="6" fill="#1E1E2A" stroke="#111" stroke-width="1.6"/><path d="M59 49 h2" stroke="#111" stroke-width="3"/><path d="M42 48 l6 0 M65 48 l6 0" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".55"/></g>';
+    case 'pixelshades': return '<g class="hat" shape-rendering="crispEdges"><rect x="32" y="44" width="56" height="4" fill="#111"/><rect x="36" y="48" width="20" height="8" fill="#111"/><rect x="64" y="48" width="20" height="8" fill="#111"/><rect x="40" y="56" width="12" height="4" fill="#111"/><rect x="68" y="56" width="12" height="4" fill="#111"/><rect x="40" y="48" width="4" height="4" fill="#fff"/><rect x="44" y="52" width="4" height="4" fill="#fff"/><rect x="68" y="48" width="4" height="4" fill="#fff"/><rect x="72" y="52" width="4" height="4" fill="#fff"/></g>';
     case 'specs': return '<g class="hat" fill="rgba(255,255,255,.18)" stroke="#6B3E1F" stroke-width="2.2"><circle cx="48.5" cy="52" r="8.5"/><circle cx="71.5" cy="52" r="8.5"/><path d="M57 51 Q60 48.5 63 51 M40 50 L33 46 M80 50 L87 46" fill="none"/></g>';
   }
   return '';
@@ -1022,7 +1038,7 @@ function homeScreen() {
         </button>`; }).join('') || '<p class="note on-bg">No worlds to show yet.</p>'}
     </div>
     <div class="home-actions">
-      <button class="btn green" id="goShop">🛍️ Bone Shop</button>
+      <button class="btn green" id="goShop">🛒 Bone Shop</button>
       <button class="btn ghost" id="goParent">🔒 Grown-ups</button>
     </div>`);
   const hb = $('#homeBonnie');
@@ -1623,19 +1639,20 @@ function walkInfo() {
 let shopTab = 'hats', shopFromClub = false;
 function shopScreen(opts = {}) {
   G = null; S = load();
-  const tabs = { hats: '🎀 Dress Up<span class="lbl"> Bonnie</span>', themes: '🎨 Themes', prizes: '🎁 <span class="lbl">Real </span>Prizes' }; // the words in .lbl are left out on a phone
+  const tabs = { hats: '🎒 <span class="lbl">Bonnie’s </span>Gear', themes: '🎨 Themes', prizes: '🎁 <span class="lbl">Real </span>Prizes' }; // the words in .lbl are left out on a phone
   const more = cost => `<span class="meter" aria-hidden="true"><i style="width:${Math.min(100, Math.round(S.bones / cost * 100))}%"></i></span><div class="note">${cost - S.bones} more to go!</div>`;
   let body = '';
-  if (shopTab === 'hats') body = `<h3 class="tier">Coat colours</h3>` + COATS.map(c => {
-    const own = S.owned.coats.includes(c.id), on = (S.coat || 'chocolate') === c.id;
-    return `<div class="card item"><div class="hatprev" style="${coatVars(c)}">${bonnieSVG('')}</div><b>${c.name}</b>
-      ${own ? (on ? '<div class="note">Wearing ✓</div>' : `<button class="btn small green" data-coat="${c.id}">Wear</button>`)
-        : `<div class="cost">🦴 ${c.cost}</div>${S.bones >= c.cost ? `<button class="btn small" data-buy="coats:${c.id}">Buy</button>` : more(c.cost)}`}</div>`; }).join('') + SLOTS.map(sl => `<h3 class="tier">${sl.name}</h3>` + HATS.filter(h => h.slot === sl.id).map(h => {
+  if (shopTab === 'hats') body = SLOTS.map(sl => `<h3 class="tier">${sl.name}</h3>` + HATS.filter(h => h.slot === sl.id).map(h => {
     const own = S.owned.hats.includes(h.id), on = S[sl.key] === h.id;
     return `<div class="card item"><div class="hatprev">${bonnieSVG(h.id)}</div><b>${h.name}</b>
       ${own ? (on ? `<div class="note">Wearing ✓</div><button class="btn small ghost" data-off="${sl.key}">${sl.off}</button>`
           : `<button class="btn small green" data-wear="${h.id}">Wear</button>`)
-        : `<div class="cost">🦴 ${h.cost}</div>${S.bones >= h.cost ? `<button class="btn small" data-buy="hats:${h.id}">Buy</button>` : more(h.cost)}`}</div>`; }).join('')).join('');
+        : `<div class="cost">🦴 ${h.cost}</div>${S.bones >= h.cost ? `<button class="btn small" data-buy="hats:${h.id}">Buy</button>` : more(h.cost)}`}</div>`; }).join('')).join('')
+    + `<h3 class="tier">Bonnie’s coat</h3>` + COATS.map(c => {
+    const own = S.owned.coats.includes(c.id), on = (S.coat || 'chocolate') === c.id;
+    return `<div class="card item"><div class="hatprev" style="${coatVars(c)}">${bonnieSVG('')}</div><b>${c.name}</b>
+      ${own ? (on ? '<div class="note">Wearing ✓</div>' : `<button class="btn small green" data-coat="${c.id}">Wear</button>`)
+        : `<div class="cost">🦴 ${c.cost}</div>${S.bones >= c.cost ? `<button class="btn small" data-buy="coats:${c.id}">Buy</button>` : more(c.cost)}`}</div>`; }).join('');
   if (shopTab === 'themes') body = THEMES.map(t => {
     const own = S.owned.themes.includes(t.id), on = S.theme === t.id;
     return `<div class="card item"><div class="swatch" style="background:${t.sw}"></div><b>${t.name}</b>
@@ -1653,7 +1670,7 @@ function shopScreen(opts = {}) {
     <div class="card shop" style="padding:20px">
       <div class="map-head">
         <button class="icon-btn" id="back">${shopFromClub ? '← Clubhouse' : '← Home'}</button>
-        <h2>🛍️ Bonnie's Bone Shop</h2>
+        <h2>🛒 Bonnie's Bone Shop</h2>
         <div class="chip bones" style="margin-left:auto">🦴 ${S.bones}</div>
       </div>
       <div class="shop-hello">
@@ -2142,7 +2159,21 @@ body[data-theme="christmas"]::after{content:'';position:fixed;left:0;right:0;poi
 body[data-theme="sea"]{--accent:#1E8C96;--accent-dark:#136A72;--bg1:#D4F3F1;--bg2:#6FBCD3;background:radial-gradient(800px 500px at 50% -10%,rgba(255,255,255,.55),transparent 60%),radial-gradient(900px 600px at 0% 100%,rgba(40,120,160,.35),transparent 60%),linear-gradient(180deg,#D4F3F1,#97D6E0 50%,#5FAFC8)!important;background-attachment:fixed}
 body[data-theme="sea"]::before{content:'';position:fixed;left:0;right:0;pointer-events:none;z-index:1;top:0;bottom:0;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='420' ><circle cx='0' cy='387' r='5.6' fill='%23fff' fill-opacity='.12' stroke='%23fff' stroke-opacity='.6' stroke-width='1.5'/><circle cx='-1.9599999999999997' cy='385.04' r='1.2' fill='%23fff' opacity='.75'/><circle cx='55' cy='306' r='7.8' fill='%23fff' fill-opacity='.12' stroke='%23fff' stroke-opacity='.6' stroke-width='1.5'/><circle cx='52.27' cy='303.27' r='1.7' fill='%23fff' opacity='.75'/><circle cx='86' cy='316' r='9.8' fill='%23fff' fill-opacity='.12' stroke='%23fff' stroke-opacity='.6' stroke-width='1.5'/><circle cx='82.57' cy='312.57' r='2.2' fill='%23fff' opacity='.75'/><circle cx='141' cy='287' r='8.7' fill='%23fff' fill-opacity='.12' stroke='%23fff' stroke-opacity='.6' stroke-width='1.5'/><circle cx='137.955' cy='283.955' r='1.9' fill='%23fff' opacity='.75'/><circle cx='212' cy='102' r='6.4' fill='%23fff' fill-opacity='.12' stroke='%23fff' stroke-opacity='.6' stroke-width='1.5'/><circle cx='209.76' cy='99.76' r='1.4' fill='%23fff' opacity='.75'/><circle cx='184' cy='293' r='3.5' fill='%23fff' fill-opacity='.12' stroke='%23fff' stroke-opacity='.6' stroke-width='1.5'/><circle cx='182.775' cy='291.775' r='0.8' fill='%23fff' opacity='.75'/><circle cx='178' cy='197' r='11.3' fill='%23fff' fill-opacity='.12' stroke='%23fff' stroke-opacity='.6' stroke-width='1.5'/><circle cx='174.045' cy='193.045' r='2.5' fill='%23fff' opacity='.75'/><circle cx='210' cy='52' r='7.6' fill='%23fff' fill-opacity='.12' stroke='%23fff' stroke-opacity='.6' stroke-width='1.5'/><circle cx='207.34' cy='49.34' r='1.7' fill='%23fff' opacity='.75'/><circle cx='240' cy='289' r='8.8' fill='%23fff' fill-opacity='.12' stroke='%23fff' stroke-opacity='.6' stroke-width='1.5'/><circle cx='236.92' cy='285.92' r='1.9' fill='%23fff' opacity='.75'/></svg>") 0 0/260px 420px,url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='340' height='560' ><circle cx='196' cy='511' r='8.0' fill='%23fff' fill-opacity='.1' stroke='%23fff' stroke-opacity='.5' stroke-width='1.2'/><circle cx='127' cy='188' r='7.5' fill='%23fff' fill-opacity='.1' stroke='%23fff' stroke-opacity='.5' stroke-width='1.2'/><circle cx='113' cy='85' r='4.3' fill='%23fff' fill-opacity='.1' stroke='%23fff' stroke-opacity='.5' stroke-width='1.2'/><circle cx='146' cy='165' r='8.1' fill='%23fff' fill-opacity='.1' stroke='%23fff' stroke-opacity='.5' stroke-width='1.2'/><circle cx='190' cy='408' r='7.8' fill='%23fff' fill-opacity='.1' stroke='%23fff' stroke-opacity='.5' stroke-width='1.2'/><circle cx='20' cy='153' r='5.9' fill='%23fff' fill-opacity='.1' stroke='%23fff' stroke-opacity='.5' stroke-width='1.2'/></svg>") 120px 0/340px 560px,url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23fff' stop-opacity='.42'/><stop offset='1' stop-color='%23fff' stop-opacity='0'/></linearGradient></defs><polygon points='8,0 14,0 28,100 16,100' fill='url(%23g)'/><polygon points='26,0 30,0 44,100 32,100' fill='url(%23g)'/><polygon points='47,0 54,0 68,100 56,100' fill='url(%23g)'/><polygon points='66,0 71,0 85,100 73,100' fill='url(%23g)'/><polygon points='86,0 92,0 106,100 94,100' fill='url(%23g)'/></svg>") 0 0/100% 75% no-repeat;animation:meadowBubbles 30s linear infinite}
 @keyframes meadowBubbles{to{background-position:0 -840px,120px -560px,0 0}}
-body[data-theme="sea"] .meadow{background:radial-gradient(9px 6px at 12% 50%,#F4B6B0 40%,transparent 44%),radial-gradient(6px 5px at 30% 62%,#fff 40%,transparent 44%),radial-gradient(10px 7px at 55% 45%,#F7D2A0 40%,transparent 44%),radial-gradient(6px 5px at 72% 60%,#C9B48A 40%,transparent 44%),radial-gradient(9px 6px at 90% 48%,#F4B6B0 40%,transparent 44%),linear-gradient(180deg,transparent 0 20%,#EBD9A6 20% 100%)}
+body[data-theme="sea"] .meadow{background:radial-gradient(9px 6px at 12% 50%,#F2C9A0 40%,transparent 44%),radial-gradient(6px 5px at 30% 62%,#fff 40%,transparent 44%),radial-gradient(10px 7px at 55% 45%,#F7D2A0 40%,transparent 44%),radial-gradient(6px 5px at 72% 60%,#C9B48A 40%,transparent 44%),radial-gradient(9px 6px at 90% 48%,#F2C9A0 40%,transparent 44%),linear-gradient(180deg,transparent 0 20%,#EBD9A6 20% 100%)}
+/* 1.2 themes (18 November 2026): 8-Bit Meadow, Outer Space, Volcano Island */
+body[data-theme="pixel"]{--accent:#2E86DE;--accent-dark:#1F5FA3;--bg1:#CBEFFF;--bg2:#8ED3FF;--radius:10px;background:linear-gradient(180deg,#8ED3FF,#CBEFFF 75%)!important;background-attachment:fixed}
+body[data-theme="pixel"]::before{content:'';position:fixed;left:0;right:0;pointer-events:none;z-index:1;top:0;bottom:0;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='220' shape-rendering='crispEdges'><g fill='%23fff' opacity='.92'><rect x='40' y='40' width='48' height='8'/><rect x='32' y='48' width='72' height='8'/><rect x='24' y='56' width='88' height='8'/><rect x='208' y='128' width='32' height='8'/><rect x='200' y='136' width='56' height='8'/><rect x='192' y='144' width='72' height='8'/></g></svg>") 0 0/320px 220px;animation:pixelClouds 90s linear infinite}
+@keyframes pixelClouds{to{background-position:320px 0}}
+body[data-theme="pixel"] .meadow{border-radius:0;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='90' shape-rendering='crispEdges'><rect y='16' width='64' height='74' fill='%2363C74D'/><rect y='8' width='16' height='8' fill='%2363C74D'/><rect x='32' y='12' width='16' height='4' fill='%2363C74D'/><rect y='44' width='64' height='46' fill='%234FA83D'/><rect x='16' y='36' width='8' height='8' fill='%234FA83D'/><rect x='48' y='40' width='8' height='4' fill='%234FA83D'/><rect x='6' y='0' width='6' height='6' fill='%23F7D96B'/><rect x='40' y='4' width='6' height='6' fill='%23fff'/><rect x='56' y='22' width='4' height='4' fill='%23F7D96B'/></svg>") repeat-x 0 0/64px 90px}
+body[data-theme="space"]{--on-bg:#EEF1FF;--accent:#3D8FD9;--accent-dark:#2A6AAB;background:radial-gradient(circle 64px at 88% 13%,#F6B66A 0 55%,#D9783A 92%,transparent 100%),radial-gradient(circle 20px at 10% 30%,#9FD3F0 0 60%,#5C9CC4 95%,transparent 100%),radial-gradient(900px 600px at 0% 100%,rgba(90,70,180,.38),transparent 60%),#0F1430!important;background-attachment:fixed}
+body[data-theme="space"]::before{content:'';position:fixed;left:0;right:0;pointer-events:none;z-index:1;top:0;bottom:0;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' ><circle cx='165' cy='77' r='1.5' fill='%23fff' opacity='0.5'/><circle cx='37' cy='274' r='0.8' fill='%23fff' opacity='0.85'/><circle cx='298' cy='29' r='2' fill='%23fff' opacity='0.7'/><circle cx='19' cy='44' r='1.5' fill='%23fff' opacity='1'/><circle cx='35' cy='123' r='0.8' fill='%23fff' opacity='1'/><circle cx='30' cy='289' r='0.8' fill='%23fff' opacity='0.7'/><circle cx='298' cy='31' r='2' fill='%23fff' opacity='1'/><circle cx='25' cy='113' r='0.8' fill='%23fff' opacity='0.7'/><circle cx='148' cy='214' r='1' fill='%23fff' opacity='0.5'/><circle cx='292' cy='157' r='2' fill='%23fff' opacity='0.7'/><circle cx='52' cy='297' r='2' fill='%23fff' opacity='0.7'/><circle cx='190' cy='49' r='2' fill='%23fff' opacity='0.5'/><circle cx='288' cy='30' r='2' fill='%23fff' opacity='0.7'/><circle cx='254' cy='272' r='1.5' fill='%23fff' opacity='0.85'/><circle cx='238' cy='299' r='1.5' fill='%23fff' opacity='0.85'/><circle cx='153' cy='127' r='1' fill='%23fff' opacity='0.7'/><circle cx='41' cy='294' r='1.2' fill='%23fff' opacity='1'/><circle cx='175' cy='229' r='1.2' fill='%23fff' opacity='0.5'/><circle cx='60' cy='262' r='1.5' fill='%23fff' opacity='0.7'/><circle cx='175' cy='77' r='1.5' fill='%23fff' opacity='1'/><circle cx='20' cy='39' r='2' fill='%23fff' opacity='0.85'/><circle cx='174' cy='179' r='2' fill='%23fff' opacity='1'/><circle cx='296' cy='233' r='0.8' fill='%23fff' opacity='0.5'/><circle cx='138' cy='242' r='0.8' fill='%23fff' opacity='0.5'/><circle cx='158' cy='295' r='1.5' fill='%23fff' opacity='0.85'/><circle cx='197' cy='177' r='0.8' fill='%23fff' opacity='1'/><circle cx='181' cy='86' r='2' fill='%23fff' opacity='0.5'/><circle cx='252' cy='30' r='1' fill='%23fff' opacity='0.85'/><circle cx='66' cy='126' r='1.5' fill='%23fff' opacity='1'/><circle cx='254' cy='41' r='1' fill='%23fff' opacity='1'/><circle cx='205' cy='281' r='1.2' fill='%23fff' opacity='0.7'/><circle cx='220' cy='281' r='1.2' fill='%23fff' opacity='1'/><circle cx='183' cy='194' r='1' fill='%23fff' opacity='0.7'/><circle cx='42' cy='90' r='1' fill='%23fff' opacity='0.7'/></svg>") 0 0/300px 300px,url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='460' height='460' ><circle cx='337' cy='119' r='1.6' fill='%23CFE0FF' opacity='1'/><circle cx='93' cy='134' r='2' fill='%23fff' opacity='0.6'/><circle cx='214' cy='273' r='2' fill='%23FFE9B0' opacity='1'/><circle cx='163' cy='64' r='2.4' fill='%23FFE9B0' opacity='1'/><circle cx='335' cy='346' r='2.4' fill='%23fff' opacity='0.8'/><circle cx='460' cy='445' r='2.4' fill='%23FFE9B0' opacity='0.8'/><circle cx='203' cy='204' r='2' fill='%23fff' opacity='0.8'/><circle cx='324' cy='205' r='1.6' fill='%23fff' opacity='0.6'/><circle cx='106' cy='225' r='1.6' fill='%23fff' opacity='0.8'/><circle cx='307' cy='26' r='1.6' fill='%23fff' opacity='1'/></svg>") 0 0/460px 460px;animation:spaceDrift 120s linear infinite}
+@keyframes spaceDrift{to{background-position:-300px 0,-920px 0}}
+body[data-theme="space"] .meadow{background:radial-gradient(18px 7px at 15% 55%,#6E7389 40%,transparent 44%),radial-gradient(12px 5px at 48% 70%,#6E7389 40%,transparent 44%),radial-gradient(20px 8px at 80% 50%,#6E7389 40%,transparent 44%),linear-gradient(180deg,transparent 0 20%,#9EA3B8 20% 100%)}
+body[data-theme="volcano"]{--on-bg:#FFF1E0;--accent:#E8622C;--accent-dark:#B8461A;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='200'><path d='M0 200 L130 60 Q150 46 170 52 Q190 46 210 60 L360 200 Z' fill='%23472A23'/><path d='M130 60 Q150 46 170 52 Q190 46 210 60 L196 74 Q186 64 176 84 Q166 66 154 76 Z' fill='%23FF7A30'/><path d='M176 84 Q172 120 160 150 Q182 126 186 92 Z' fill='%23FF8A3D' opacity='.9'/><circle cx='160' cy='34' r='12' fill='%235A3A32' opacity='.8'/><circle cx='182' cy='18' r='16' fill='%235A3A32' opacity='.7'/><circle cx='204' cy='4' r='12' fill='%235A3A32' opacity='.55'/></svg>") 88% calc(100% - 70px)/360px 200px no-repeat,radial-gradient(1100px 520px at 50% 118%,rgba(255,120,40,.62),transparent 65%),radial-gradient(700px 500px at 100% 0%,rgba(130,45,30,.5),transparent 60%),#2A1A17!important;background-attachment:fixed}
+body[data-theme="volcano"]::before{content:'';position:fixed;left:0;right:0;pointer-events:none;z-index:1;top:0;bottom:0;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='420' ><circle cx='77' cy='274' r='1.2' fill='%23FFC14D' opacity='0.9'/><circle cx='13' cy='36' r='1.6' fill='%23FF6A2A' opacity='0.7'/><circle cx='76' cy='324' r='2' fill='%23FFC14D' opacity='0.9'/><circle cx='186' cy='242' r='1.2' fill='%23FF8A3D' opacity='0.7'/><circle cx='238' cy='245' r='2.6' fill='%23FFC14D' opacity='0.5'/><circle cx='73' cy='52' r='2' fill='%23FF6A2A' opacity='0.7'/><circle cx='245' cy='354' r='1.6' fill='%23FF6A2A' opacity='0.5'/><circle cx='105' cy='270' r='2' fill='%23FF8A3D' opacity='0.9'/><circle cx='278' cy='13' r='2' fill='%23FF6A2A' opacity='0.5'/><circle cx='133' cy='265' r='2' fill='%23FF8A3D' opacity='0.7'/><circle cx='114' cy='272' r='2' fill='%23FF6A2A' opacity='0.5'/><circle cx='99' cy='412' r='1.6' fill='%23FFC14D' opacity='0.9'/><circle cx='116' cy='102' r='2.6' fill='%23FFC14D' opacity='0.9'/><circle cx='14' cy='14' r='2' fill='%23FFC14D' opacity='0.7'/><circle cx='99' cy='354' r='2' fill='%23FFC14D' opacity='0.9'/><circle cx='178' cy='186' r='1.2' fill='%23FF8A3D' opacity='0.5'/><circle cx='116' cy='240' r='1.6' fill='%23FFC14D' opacity='0.5'/><circle cx='247' cy='319' r='1.2' fill='%23FFC14D' opacity='0.9'/></svg>") 0 0/280px 420px,url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='420' ><circle cx='77' cy='274' r='1.2' fill='%23FFC14D' opacity='0.9'/><circle cx='13' cy='36' r='1.6' fill='%23FF6A2A' opacity='0.7'/><circle cx='76' cy='324' r='2' fill='%23FFC14D' opacity='0.9'/><circle cx='186' cy='242' r='1.2' fill='%23FF8A3D' opacity='0.7'/><circle cx='238' cy='245' r='2.6' fill='%23FFC14D' opacity='0.5'/><circle cx='73' cy='52' r='2' fill='%23FF6A2A' opacity='0.7'/><circle cx='245' cy='354' r='1.6' fill='%23FF6A2A' opacity='0.5'/><circle cx='105' cy='270' r='2' fill='%23FF8A3D' opacity='0.9'/><circle cx='278' cy='13' r='2' fill='%23FF6A2A' opacity='0.5'/><circle cx='133' cy='265' r='2' fill='%23FF8A3D' opacity='0.7'/><circle cx='114' cy='272' r='2' fill='%23FF6A2A' opacity='0.5'/><circle cx='99' cy='412' r='1.6' fill='%23FFC14D' opacity='0.9'/><circle cx='116' cy='102' r='2.6' fill='%23FFC14D' opacity='0.9'/><circle cx='14' cy='14' r='2' fill='%23FFC14D' opacity='0.7'/><circle cx='99' cy='354' r='2' fill='%23FFC14D' opacity='0.9'/><circle cx='178' cy='186' r='1.2' fill='%23FF8A3D' opacity='0.5'/><circle cx='116' cy='240' r='1.6' fill='%23FFC14D' opacity='0.5'/><circle cx='247' cy='319' r='1.2' fill='%23FFC14D' opacity='0.9'/></svg>") 140px 210px/280px 420px;animation:volcanoEmbers 24s linear infinite}
+@keyframes volcanoEmbers{to{background-position:0 -840px,140px -630px}}
+body[data-theme="volcano"] .meadow{background:radial-gradient(16px 6px at 20% 50%,#FF8A3D 40%,transparent 46%),radial-gradient(10px 5px at 55% 65%,#FFC14D 40%,transparent 46%),radial-gradient(18px 6px at 85% 45%,#FF8A3D 40%,transparent 46%),linear-gradient(180deg,transparent 0 20%,#4A2F28 20% 100%)}
+@media (prefers-reduced-motion:reduce){body[data-theme="pixel"]::before,body[data-theme="space"]::before,body[data-theme="volcano"]::before{animation:none}}
 @media (prefers-reduced-motion:reduce){body[data-theme="christmas"]::before{background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='48' ><path d='M0 5 Q40 29 80 5 Q120 29 160 5' fill='none' stroke='%23203026' stroke-width='2'/><circle cx='20' cy='26' r='11' fill='%23FF5A4E' opacity='.28'></circle><rect x='17' y='13' width='6' height='5' rx='1' fill='%233B4A40'/><ellipse cx='20' cy='25' rx='5' ry='7' fill='%23FF5A4E'/><ellipse cx='18.4' cy='22' rx='1.4' ry='2.4' fill='%23fff' opacity='.7'/><circle cx='60' cy='26' r='11' fill='%23FFD24A' opacity='.28'></circle><rect x='57' y='13' width='6' height='5' rx='1' fill='%233B4A40'/><ellipse cx='60' cy='25' rx='5' ry='7' fill='%23FFD24A'/><ellipse cx='58.4' cy='22' rx='1.4' ry='2.4' fill='%23fff' opacity='.7'/><circle cx='100' cy='26' r='11' fill='%236EDB7A' opacity='.28'></circle><rect x='97' y='13' width='6' height='5' rx='1' fill='%233B4A40'/><ellipse cx='100' cy='25' rx='5' ry='7' fill='%236EDB7A'/><ellipse cx='98.4' cy='22' rx='1.4' ry='2.4' fill='%23fff' opacity='.7'/><circle cx='140' cy='26' r='11' fill='%236AB8FF' opacity='.28'></circle><rect x='137' y='13' width='6' height='5' rx='1' fill='%233B4A40'/><ellipse cx='140' cy='25' rx='5' ry='7' fill='%236AB8FF'/><ellipse cx='138.4' cy='22' rx='1.4' ry='2.4' fill='%23fff' opacity='.7'/></svg>")}body[data-theme="christmas"]::after,body[data-theme="sea"]::before{animation:none}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
@@ -2281,6 +2312,15 @@ body[data-theme="snow"] .walk-sky .h1,body[data-theme="christmas"] .walk-sky .h1
 body[data-theme="snow"] .walk-sky .h2,body[data-theme="christmas"] .walk-sky .h2{background:#EEF4FA}
 body[data-theme="sea"] .walk-path{background:linear-gradient(180deg,#BCEBF2 0%,#DDF6F8 42%,#F3E2B8 62%,#EBD49C 100%);border-color:#9ED3D8}
 body[data-theme="sea"] .walk-sky .h1{background:#7CC9D6}body[data-theme="sea"] .walk-sky .h2{background:#F1DEAE}
+body[data-theme="space"] .walk-path{background:linear-gradient(180deg,#1B2150 0%,#2A3270 45%,#7A7F95 63%,#666B82 100%);border-color:#3B4380}
+body[data-theme="space"] .walk-sky .sun{background:radial-gradient(circle at 35% 40%,#F6B66A 55%,#D9783A 56%);box-shadow:0 0 0 8px rgba(246,182,106,.15)}
+body[data-theme="space"] .walk-sky .cloud,body[data-theme="space"] .walk-sky .cloud::before,body[data-theme="space"] .walk-sky .cloud::after{background:#3B4380}
+body[data-theme="space"] .walk-sky .h1{background:#8E93A8}body[data-theme="space"] .walk-sky .h2{background:#7A7F95}
+body[data-theme="volcano"] .walk-path{background:linear-gradient(180deg,#3A211B 0%,#5A2E22 45%,#4A2F28 63%,#3A2520 100%);border-color:#6B3A2C}
+body[data-theme="volcano"] .walk-sky .sun{background:radial-gradient(circle at 35% 40%,#FFC14D 55%,#FF6A2A 56%);box-shadow:0 0 0 8px rgba(255,120,40,.2)}
+body[data-theme="volcano"] .walk-sky .cloud,body[data-theme="volcano"] .walk-sky .cloud::before,body[data-theme="volcano"] .walk-sky .cloud::after{background:#6B4A44}
+body[data-theme="volcano"] .walk-sky .h1{background:#5A3A32}body[data-theme="volcano"] .walk-sky .h2{background:#4A2F28}
+body[data-theme="pixel"] .walk-sky .h1{background:#63C74D}body[data-theme="pixel"] .walk-sky .h2{background:#4FA83D}
 /* the dig */
 .dig{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
 .dig-head{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:#7E5430;background:#F6E7CF;border:2px dashed #C9A16E;border-radius:999px;padding:6px 16px}
@@ -2405,7 +2445,7 @@ ${TIP_CSS}
 .shake{animation:screenShake .4s}
 .float-plus{position:fixed;z-index:92;pointer-events:none;font-weight:700;font-size:1.5rem;color:var(--leaf-dark);animation:floatUp 1s ease-out forwards;text-shadow:0 2px 0 #fff}
 .drag-ghost{position:fixed!important;z-index:100;pointer-events:none;transform:scale(1.12) rotate(-4deg);box-shadow:0 18px 30px rgba(0,0,0,.25)!important;margin:0!important}
-.meadow{position:fixed;left:0;right:0;bottom:0;height:90px;z-index:1;pointer-events:none;background:radial-gradient(14px 10px at 8% 30%,#F7D96B 40%,transparent 42%),radial-gradient(12px 9px at 27% 45%,#fff 40%,transparent 42%),radial-gradient(14px 10px at 61% 35%,#F29BB0 40%,transparent 42%),radial-gradient(12px 9px at 83% 40%,#fff 40%,transparent 42%),radial-gradient(14px 10px at 94% 25%,#F7D96B 40%,transparent 42%),linear-gradient(180deg,transparent 0 20%,#9CCB7C 20% 100%);border-top-left-radius:50% 30px;border-top-right-radius:50% 30px}
+.meadow{position:fixed;left:0;right:0;bottom:0;height:90px;z-index:1;pointer-events:none;background:radial-gradient(14px 10px at 8% 30%,#F7D96B 40%,transparent 42%),radial-gradient(12px 9px at 27% 45%,#fff 40%,transparent 42%),radial-gradient(14px 10px at 61% 35%,#F08A4B 40%,transparent 42%),radial-gradient(12px 9px at 83% 40%,#fff 40%,transparent 42%),radial-gradient(14px 10px at 94% 25%,#F7D96B 40%,transparent 42%),linear-gradient(180deg,transparent 0 20%,#9CCB7C 20% 100%);border-top-left-radius:50% 30px;border-top-right-radius:50% 30px}
 .butterfly{position:fixed;z-index:1;font-size:1.8rem;pointer-events:none;animation:flutter 18s linear infinite}
 .butterfly span{display:inline-block;animation:flap .35s ease-in-out infinite alternate}
 .frog{position:fixed;bottom:32px;left:-60px;z-index:4;font-size:2.4rem;cursor:pointer;animation:frogTrip 26s linear infinite}
@@ -2532,7 +2572,7 @@ function startGame(opts = {}) {
   document.body.insertAdjacentHTML('afterbegin', `
     <div class="meadow" aria-hidden="true"></div>
     <div class="butterfly" style="animation-delay:-2s" aria-hidden="true"><span>🦋</span></div>
-    <div class="butterfly" style="animation-delay:-11s;animation-duration:24s;filter:hue-rotate(120deg)" aria-hidden="true"><span>🦋</span></div>
+    <div class="butterfly" style="animation-delay:-11s;animation-duration:24s" aria-hidden="true"><span>🐝</span></div>
     <div class="frog" id="frog" title="Ribbit!" aria-hidden="true"><span>🐸</span></div>
     <div id="app">
       <header class="hud">
@@ -2540,7 +2580,7 @@ function startGame(opts = {}) {
         <div class="title" id="homeLink" role="button" tabindex="0"><span aria-hidden="true">${GAME.icon}</span> <span id="appTitle"></span></div>
         <div class="chip streak" id="streakChip" title="Right answers in a row"><span aria-hidden="true">🔥</span> <span id="streakNum">0</span><span class="sr"> right in a row</span></div>
         <div class="chip bones" id="boneChip" title="Your bones"><span aria-hidden="true">🦴</span> <span id="boneNum">0</span><span class="sr"> bones</span></div>
-        <button class="icon-btn" id="shopBtn" aria-label="Bone Shop"><span aria-hidden="true">🛍️</span><span class="lbl"> Bone Shop</span></button>
+        <button class="icon-btn" id="shopBtn" aria-label="Bone Shop"><span aria-hidden="true">🛒</span><span class="lbl"> Bone Shop</span></button>
       </header>
       <main id="screen"></main>
     </div>`);

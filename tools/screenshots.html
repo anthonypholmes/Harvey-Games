@@ -46,7 +46,8 @@ const SHOTS = [
   { h: '6 maths worlds, 38 levels', p: 'The maths Year 2 children learn at school', page: '../meadow-maths.html' },
   { h: 'Phonics, spelling and stories', p: '4 English worlds, 20 levels', page: '../meadow-words.html',
     run: async w => { w.Meadow.startLevel('y2-english-phonics', levelId(w, 'y2-english-phonics', 0)); } },
-  { h: 'Earn bones for hats and prizes', p: 'Coats, hats, themes and real-life treats', page: '../meadow-words.html#shop' },
+  { h: 'Earn bones, unlock gear', p: 'Helmets, jetpacks, themes and real prizes', page: '../meadow-words.html#shop',
+    look: { hat: 'ninja', face: 'sunglasses', neck: 'jetpack' } },
   { h: 'A walk with Bonnie every day', p: '5 quick questions. Nothing can be failed.', page: '../bonnies-walk.html',
     run: async w => { await wait(600); w.Meadow.walk.skipHello(); await wait(3000); } },
 ];
@@ -77,7 +78,8 @@ if (PHONE) document.documentElement.classList.add('phone');
   const n = Math.max(1, Math.min(SHOTS.length, +(new URLSearchParams(location.search).get('shot')) || 1)), shot = SHOTS[n - 1];
   document.getElementById('capH').textContent = shot.h;
   document.getElementById('capP').textContent = shot.p;
-  makeSam(await open('../index.html'));
+  const sam = await open('../index.html'); makeSam(sam);
+  if (shot.look) sam.Meadow.save.mutate(s => { Object.assign(s, shot.look); s.owned.hats.push(...Object.values(shot.look)); });
   const w = await open(shot.page);
   // fade-ins don't always finish while Chrome is taking the picture, so switch them off
   w.document.head.insertAdjacentHTML('beforeend', '<style>*, *::before, *::after { animation: none !important; transition: none !important; } .butterfly { display: none !important; }</style>');

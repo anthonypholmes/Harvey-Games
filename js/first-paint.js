@@ -5,7 +5,7 @@
  * With Reduce Motion on there is no fade. */
 (function () {
   // each theme's main colour (keep in step with the themes in js/meadow-core.js); day is the same as the launch screen
-  var THEME_BG = { day: '#F6EBD3', sunset: '#FFE3D0', sea: '#D4F3F1', night: '#1C2140', snow: '#EEF5FB', christmas: '#173B2C' };
+  var THEME_BG = { day: '#F6EBD3', sunset: '#FFE3D0', sea: '#D4F3F1', night: '#1C2140', snow: '#EEF5FB', christmas: '#173B2C', pixel: '#8ED3FF', space: '#0F1430', volcano: '#2A1A17' };
   var bg = THEME_BG.day;
   try { bg = THEME_BG[localStorage.getItem('meadow-paint')] || bg; } catch (e) {}
   var st = document.createElement('style');

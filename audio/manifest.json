@@ -37,6 +37,7 @@
   "83957492": "clips/83957492-4crzui.mp3",
   "86420515": "clips/86420515-4crzui.mp3",
   "89054057": "clips/89054057-4crzui.mp3",
+  "93370360": "clips/93370360-4crzui.mp3",
   "95066311": "clips/95066311-4crzui.mp3",
   "96889344": "clips/96889344-4crzui.mp3",
   "17a48e86": "clips/17a48e86-4crzui.mp3",
@@ -2159,7 +2160,12 @@
   "64885efa": "clips/64885efa-4crzui.mp3",
   "1e917ea4": "clips/1e917ea4-4crzui.mp3",
   "5890f0c1": "clips/5890f0c1-4crzui.mp3",
-  "95b26e19": "clips/95b26e19-4crzui.mp3"
+  "95b26e19": "clips/95b26e19-4crzui.mp3",
+  "4cfc68de": "clips/4cfc68de-4crzui.mp3",
+  "e9b5240b": "clips/e9b5240b-4crzui.mp3",
+  "b33c407c": "clips/b33c407c-4crzui.mp3",
+  "76d8bb53": "clips/76d8bb53-4crzui.mp3",
+  "d359ad5f": "clips/d359ad5f-4crzui.mp3"
  },
  "names": {
   "harvey": "names/harvey-4crzui.mp3",
@@ -2308,6 +2314,7 @@
   "83957492": "\"Train\" doesn't need a capital letter here.",
   "86420515": "Sniff Clue Say it slowly with me: cute.",
   "89054057": "Your best here is still 2 stars.",
+  "93370360": "I love my Space Helmet!",
   "95066311": "plates of",
   "96889344": "Sniff Clue Say it slowly with me: tree.",
   "17a48e86": "Hee hee!",
@@ -4430,9 +4437,14 @@
   "64885efa": "Come for a walk with me.",
   "1e917ea4": "You've got bones!",
   "5890f0c1": "Come and see my shop.",
-  "95b26e19": "See the clue word?"
+  "95b26e19": "See the clue word?",
+  "4cfc68de": "I love my Ninja Headband!",
+  "e9b5240b": "I love my Pixel Shades!",
+  "b33c407c": "I love my Gaming Headset!",
+  "76d8bb53": "I love my Knight’s Helmet!",
+  "d359ad5f": "I love my Jetpack!"
  },
- "made": "2026-11-17T11:12:04.716Z",
+ "made": "2026-11-18T09:37:37.880Z",
  "said": {
   "11b54859": "Nnn...",
   "38deadf5": "rrrr.",

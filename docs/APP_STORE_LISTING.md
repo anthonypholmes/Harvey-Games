@@ -193,7 +193,7 @@ Six pictures are ready in `docs/screenshots/`, at the iPad 13-inch size Apple as
 | `2-help.png` | Help that teaches: Bonnie gives a clue, then shows how |
 | `3-maths-worlds.png` | 6 maths worlds, 38 levels |
 | `4-words.png` | Phonics, spelling and stories: 4 English worlds, 20 levels |
-| `5-bone-shop.png` | Earn bones for hats and prizes |
+| `5-bone-shop.png` | Earn bones, unlock gear: helmets, jetpacks, themes and real prizes (changed 18 November 2026; it was "Earn bones for hats and prizes") |
 | `6-walk.png` | A walk with Bonnie every day |
 
 **iPhone (from 1.1):** six more pictures are in `docs/screenshots/iphone/`, at the iPhone 6.9-inch size (1320 × 2868), with the same captions and the game at phone width. Drag them into the "iPhone 6.9-inch Display" box in the same order. The smaller iPhone sizes are filled in from these automatically. `sh tools/make-screenshots.sh iphone` makes them again. Bonnie's Walk picks its questions at random, so the walk picture can come out different each time: run it again if it looks too like the Words picture.
