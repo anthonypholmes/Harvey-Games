@@ -58,7 +58,7 @@ The Meadow Maths world list as the illustrated route. **New files only**; no gam
 ## Next steps (after Anthony approves the prototype)
 
 1. Fix whatever his look at the prototype turns up.
-2. **The Clubhouse meadow: prototype built 22 November 2026, waiting for Anthony's look.** See `docs/PROTOTYPE_MAP.md` ("The Clubhouse meadow"). Try it from `prototype-compare.html` (Screen: Clubhouse); its Maths gate opens the map prototype.
+2. **The Clubhouse meadow: prototype built 22 November 2026. Anthony liked the direction; refinement 1 (bolder gates, Bonnie's words beside her, a calmer lower half, stars on tags, labelled top buttons, press feedback) done the same day, waiting for his look.** Next, as he asked: look at the Maths map and the Words map next to the Clubhouse so the three feel like one place (the Words map isn't drawn yet). See `docs/PROTOTYPE_MAP.md` ("The Clubhouse meadow"). Try it from `prototype-compare.html` (Screen: Clubhouse); its Maths gate opens the map prototype.
 3. **The Meadow Words route:** draw Phonics Forest (letter trees), Tricky Word Trail (word signposts), Sentence Meadow and Bonnie's Story Nook in the same style, as a second route.
 4. Then the level maps, the Bone Shop and the journal, each as its own approved phase.
 5. To go live: move the map into `meadow-maths.html` behind a setting first, run every test page in `tests/`, then make it the default.

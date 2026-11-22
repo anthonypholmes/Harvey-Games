@@ -29,9 +29,18 @@ The Clubhouse page as one illustrated meadow that fits one screen: the clubhouse
 - **The Maths gate opens the map prototype**, and the map's Clubhouse button comes back here, so the two can be tried together. The Words gate opens the current Meadow Words.
 - It fits the screen: on an iPhone SE the signs are 16px; an iPad shows nearly all of the drawing, bigger.
 
-**Checks (`selftest=1`):** 15, all passing at 375 × 667, 393 × 852, 820 × 1180 and 1180 × 820 on 22 November 2026: the games, Walk, shop and Bonnie are tappable; taps at least 44 × 44 with VoiceOver names; everything on one screen with no scrolling; places don't overlap; the top buttons and Bonnie's words cover no place (nor the name); words a child reads 16px or more; the name, bones and stars show and the game names say their stars; the sound button works.
+### Refinement 1 (22 November 2026, from Anthony's notes)
 
-**Clubhouse gaps:** with a night or space theme only the sky changes (the meadow stays daytime green). The name card and "Who's playing?" card still look as they do now. The pages a gate opens still go back to `index.html` (except the map prototype). Bonnie's "Let's play…" lines are the Clubhouse's existing ones, already recorded.
+- **The game gates lead.** They are the biggest, most colourful things in the meadow: each game's own colour on the sign (Maths green, Words orange, as on the current cards) with a cream edge, a medallion on top (1+2, abc), and a pool of sunlight in the gateway. Their signs sway now and then (not with Reduce Motion).
+- **Bonnie's words sit beside her.** She has her own patch of meadow by the path, and her words are in a bubble next to her with its tail pointing at her mouth. If a line doesn't fit there, the bubble drops to 16px; if it still doesn't fit, it moves to a box under the top buttons with her face. Her longest Clubhouse line (80 letters) fits beside her at every size tested.
+- **A calmer lower half:** no flowers or signposts in front of the gates, one bush in the fork, and one small glimpse beyond each gate (the maths river and stones; two letter trees).
+- **Each game's stars hang from its gate** on a wooden tag, as on the current cards: "3 new stars this week", or "All stars!". New: a game the child hasn't started says "New! Start here"; one played before but not this week says "Ready when you are!".
+- **The top buttons say what they do:** a speaker with "On" or "Off"; the child's name, which opens "Change name" (and "Switch player" in the app); and "Grown-ups" with a padlock. Bigger on an iPad.
+- **Generous places with clear feedback:** the gates, Walk and shop are 88 × 88 or more even on an iPhone SE (the gates about 156 × 173). Pressing one shows a gold ring on the ground and dips it, with a soft tone; choosing a gate bounces its sign. Keyboard focus shows the ring too. Bonnie's first-time help ring shows as a pulsing gold ring.
+
+**Checks (`selftest=1`):** 23, all passing at 375 × 667, 393 × 852, 820 × 1180 and 1180 × 820 on 22 November 2026, tried with a new player and with stars this week and earlier: everything tappable, 44 × 44 or more and the four places 88 × 88 or more; VoiceOver names; one screen, no scrolling; nothing overlaps, and the top buttons and Bonnie's words cover no place, tag, name or Bonnie (her longest line too); words 16px or more, signs 16px or more (the game signs 19px on an SE); the name, bones and each game's stars show and are read out; the top buttons have words; the name opens "Change name"; the sound button works; pressing a gate lights it and lets go.
+
+**Clubhouse gaps:** the drawing now ends 30 units lower, so on an iPhone SE the foot of the gates is at the bottom edge. With a night or space theme only the sky changes (the meadow stays daytime green). The name card and "Who's playing?" card still look as they do now. The pages a gate opens still go back to `index.html` (except the map prototype). Bonnie's "Let's play…" lines are the Clubhouse's existing ones, already recorded.
 
 ## Checks (`selftest=1`)
 
