@@ -12,6 +12,9 @@
  * when they don't fit); a calmer lower half; each game's stars on a wooden tag hanging from its gate; the top
  * buttons say what they do; every place shows a gold ring and dips when pressed.
  *
+ * The explorer's journal (22 November 2026): tapping the clubhouse opens the child's journal (js/proto-journal.js):
+ * Bonnie trots to the door, it swings open and the journal opens. A "Journal" sign hangs by the door.
+ *
  * Page options (prototype-clubhouse.html?…):
  *   view=old     the current Clubhouse, unchanged
  *   words=…      where the Meadow Words gate goes (default prototype-words-map.html, the Words map prototype)
@@ -35,7 +38,7 @@
     walk: { hit: [94, 352, 116, 136], stand: [212, 490], href: 'bonnies-walk.html' },
     shop: { hit: [428, 340, 118, 164], stand: [418, 494], href: withCarry(Q.get('shop') || 'prototype-words-map.html') + '#shop' },
   };
-  const HOUSE = [226, 214, 188, 182];
+  const HOUSE = [226, 214, 188, 232]; // the clubhouse and the Journal sign at its step
   // what must always be on screen: from the clubhouse flag to the foot of the gates
   const NEED = [92, 160, 456, 690];
   const BONNIE_K = .62, MOUTH = [AT.bonnie[0] + 18, AT.bonnie[1] - 34];
@@ -60,6 +63,7 @@
     starOff: `<svg viewBox="-10 -10 20 20" aria-hidden="true">${A.star(0, 0, 9, false)}</svg>`,
     sparkle: `<svg viewBox="-11 -11 22 22" aria-hidden="true"><path d="M0 -10 Q2 -2 10 0 Q2 2 0 10 Q-2 2 -10 0 Q-2 -2 0 -10Z" fill="${C.gold}" stroke="${C.goldDk}" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
     trophy: `<svg viewBox="-11 -11 22 22" aria-hidden="true"><path d="M-7 -9 h14 v5 a7 7 0 0 1 -14 0 z" fill="${C.gold}" stroke="${C.goldDk}" stroke-width="1.5"/><path d="M-7 -7 h-3 a3 4 0 0 0 4 6 M7 -7 h3 a3 4 0 0 1 -4 6" fill="none" stroke="${C.goldDk}" stroke-width="1.5"/><rect x="-2" y="2" width="4" height="4" fill="${C.goldDk}"/><rect x="-6" y="6" width="12" height="4" rx="1.5" fill="${C.woodDk}"/></svg>`,
+    book: `<svg viewBox="-13 -11 26 22" aria-hidden="true"><path d="M0 -6 Q-6 -10 -12 -8 V8 Q-6 6 0 10 Z" fill="#3F6B47"/><path d="M0 -6 Q6 -10 12 -8 V8 Q6 6 0 10 Z" fill="#4E8257"/><path d="M0 -6 V10" stroke="#2C4E33" stroke-width="1.4"/><circle cx="6" cy="1" r="3" fill="none" stroke="${C.gold}" stroke-width="1.4"/></svg>`,
     paw: `<svg viewBox="-12 -13 24 24" aria-hidden="true">${A.paw(0, 0, 1, C.woodInk)}</svg>`,
     bone: `<svg viewBox="-22 -14 44 28" aria-hidden="true">${A.bone(0, 0, 1)}</svg>`,
     soundOn: `<svg viewBox="-14 -12 28 24" aria-hidden="true"><path d="M-11 -4 h5 l7 -6 v20 l-7 -6 h-5 z" fill="${C.woodInk}"/><path d="M5 -5 q4 5 0 10 M8 -9 q8 9 0 18" fill="none" stroke="${C.woodInk}" stroke-width="2.4" stroke-linecap="round"/></svg>`,
@@ -224,10 +228,11 @@
         ${hitBtn('phWords', 'place', PLACES.words.hit, gameLabel('words'), 'words')}
         ${hitBtn('phWalk', 'place', PLACES.walk.hit, walkLabel, 'walk')}
         ${hitBtn('phShop', 'place', PLACES.shop.hit, `Bonnie's Bone Shop. You have ${S.bones} ${S.bones === 1 ? 'bone' : 'bones'}.`, 'shop')}
-        ${hitBtn('phHouse', 'house', HOUSE, 'The clubhouse. Bonnie pops in and says hello again')}
+        ${hitBtn('phHouse', 'house', HOUSE, `The clubhouse: open ${S.hasName ? 'your' : 'the'} explorer's journal`)}
         ${pg.maths ? progTag('maths', pg.maths) : ''}
         ${pg.words ? progTag('words', pg.words) : ''}
         ${label(AT.shop[0], AT.shop[1] + 6, 'bone', String(S.bones))}
+        ${label(AT.house[0], AT.house[1] + 12, 'book', 'Journal')}
         ${walk.streak >= 2 ? label(AT.walk[0], AT.walk[1] - 104, 'paw', `${walk.streak} days in a row!`, true) : ''}
       </div>`;
     keepOnScreen(root);
@@ -301,8 +306,8 @@
       btn.addEventListener('click', () => { btn.classList.remove('tip-ring'); art.classList.remove('tip'); $(from).classList.remove('tip-ring'); }, { once: true });
     });
   }
-  /* The clubhouse isn't a dead end: tap it and Bonnie trots to the door, it swings open, she says her line again
-     (usually what to do next: pick a game, or try the Walk), then she trots back. No new words: her lines are recorded. */
+  /* The clubhouse holds the explorer's journal: tap it and Bonnie trots to the door, it swings open, and the journal
+     opens (js/proto-journal.js). Closing the journal brings her back to her patch, with her words as they were. */
   let houseTimer = 0;
   function visitHouse() {
     if (busy) return; busy = true;
@@ -310,13 +315,10 @@
     d.classList.add('open'); tone(520, .08, 'triangle', .08); tone(660, .1, 'triangle', .08, .08);
     $('phSay').classList.add('away');
     if (!reduce()) { bon.classList.remove('giggle', 'hop'); void bon.getBoundingClientRect(); bon.classList.add('hop'); bon.style.transform = bonnieAt(step); }
-    say(t); bubble(t);
     clearTimeout(houseTimer);
-    houseTimer = setTimeout(() => {
-      d.classList.remove('open');
-      if (!reduce()) { bon.classList.remove('hop'); void bon.getBoundingClientRect(); bon.classList.add('hop'); bon.style.transform = bonnieAt(AT.bonnie); }
-      setTimeout(() => { $('phSay').classList.remove('away'); bubble($('say').textContent); busy = false; }, reduce() ? 0 : 700);
-    }, 2200);
+    const back = () => { d.classList.remove('open'); bon.classList.remove('hop'); bon.style.transform = bonnieAt(AT.bonnie); $('phSay').classList.remove('away'); bubble(t); busy = false; };
+    if (!window.ProtoJournal) { say(t); bubble(t); houseTimer = setTimeout(back, 2200); return; } // (the journal not loaded: as before)
+    houseTimer = setTimeout(() => window.ProtoJournal.open({ onClose: back }), reduce() ? 0 : 800);
   }
   function wiggle(cls) {
     const g = $('phBonnie'); if (!g || reduce()) return;
@@ -411,11 +413,14 @@
     ok('…and lets go again', !$('art-maths').classList.contains('pressed'));
     ok('the whole gateway is tappable: sign, medallion, posts and the sunlight', ['maths', 'words'].every(id => { const a = r($('art-' + id)), b = r($(id === 'maths' ? 'phMaths' : 'phWords')); return a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1; }));
     ok('the Walk arch and shop stall are inside their tap areas', ['walk', 'shop'].every(id => { const a = r($('art-' + id)), b = r($(id === 'walk' ? 'phWalk' : 'phShop')); return a.left >= b.left - 6 && a.right <= b.right + 6 && a.top >= b.top - 6 && a.bottom <= b.bottom + 6; }));
-    // the clubhouse: Bonnie pops to the door and says her line again
+    // the clubhouse: Bonnie trots to the door and the journal opens; closing it brings her back
     const said = $('say').textContent; $('phHouse').click(); await wait(100);
-    ok('tapping the clubhouse opens its door, and Bonnie says hello again', $('art-door').classList.contains('open') && $('phSays').textContent === said);
-    await wait(3100);
-    ok('…then the door closes and Bonnie is back by her words', !$('art-door').classList.contains('open') && !busy && $('phSay').classList.contains('near'));
+    ok('tapping the clubhouse opens its door, and Bonnie trots over', $('art-door').classList.contains('open'));
+    await wait(1200);
+    const pj = document.getElementById('pj');
+    ok("…then the explorer's journal opens", !window.ProtoJournal || (pj && !pj.hidden));
+    if (window.ProtoJournal) window.ProtoJournal.close(); await wait(100);
+    ok('…and closing it shuts the door, with Bonnie back by her words', !$('art-door').classList.contains('open') && !busy && $('phSay').classList.contains('near') && $('phSays').textContent === said);
     const rm = matchMedia('(prefers-reduced-motion: reduce)').matches, anim = sel => getComputedStyle(document.querySelector(sel)).animationName;
     ok(rm ? 'Reduce Motion: nothing sways, blinks or wags' : 'Bonnie blinks and wags; the game signs sway now and then',
       rm ? ['#art-maths .sign', '#phBonnie .eyes', '#phBonnie .tail'].every(s => anim(s) === 'none' || parseFloat(getComputedStyle(document.querySelector(s)).animationDuration) < .01)

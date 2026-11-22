@@ -7,7 +7,7 @@
 <!-- PROTOTYPE of the Clubhouse meadow (design iteration 2, Direction B). Not linked from the game and not in the app build.
      It loads index.html exactly as it is and adds the meadow on top (js/proto-hub.js), so every Clubhouse function is
      index.html's own. Options: ?view=old (the current Clubhouse), ?demo=1 or ?demo=new (a pretend save, shared with the
-     map prototype: the real save is never touched), ?selftest=1 (the checks). See docs/PROTOTYPE_MAP.md. -->
+     map prototype: the real save is never touched), ?selftest=1 (the checks), #journal or ?journal=maths|words|walks (the explorer's journal), ?journaltest=1 (its checks). See docs/PROTOTYPE_MAP.md. -->
 </head>
 <body>
 <script>
@@ -29,7 +29,7 @@
                  .replace('<script src="worlds/y2-maths-captains-cove.js"><\/script>', `$&<script src="js/proto-demo.js${v}"><\/script><script>ProtoDemo.seed('${demo}');Meadow.save.load();<\/script>`);
     }
     if (Q.get('view') !== 'old')
-      html = html.replace('</body>', `<script src="js/proto-map-art.js${v}"><\/script><script src="js/proto-hub-art.js${v}"><\/script><script src="js/proto-hub.js${v}"><\/script>\n</body>`);
+      html = html.replace('</body>', `<script src="js/proto-map-art.js${v}"><\/script><script src="js/proto-hub-art.js${v}"><\/script><script src="js/proto-hub.js${v}"><\/script><script src="js/proto-journal.js${v}"><\/script>\n</body>`);
     document.open(); document.write(html); document.close();
   })();
 </script>

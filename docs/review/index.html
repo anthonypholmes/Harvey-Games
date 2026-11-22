@@ -42,12 +42,12 @@
 </head>
 <body>
 <main>
-  <h1>Meadow prototypes: Clubhouse, maps, level maps and the Bone Shop</h1>
+  <h1>Meadow prototypes: Clubhouse, maps, level maps, the Bone Shop and the journal</h1>
   <p class="soft">22 November 2026 · branch <code>prototype-meadow-map</code> · nothing in the game, the website or 1.1 has changed. Every picture uses the pretend player "Sam" (86 bones, a 3-day walk streak, Partitioning Park finished, 5 burrow stars this week).</p>
-  <nav aria-label="On this page"><a href="#club">Clubhouse</a><a href="#map">Maths map</a><a href="#words">Words map</a><a href="#levels">Level maps</a><a href="#shop">Bone Shop</a><a href="#states">States and themes</a><a href="#checks">Checks</a><a href="#open">Compromises</a><a href="../../prototype-compare.html">Try it live</a></nav>
+  <nav aria-label="On this page"><a href="#club">Clubhouse</a><a href="#map">Maths map</a><a href="#words">Words map</a><a href="#levels">Level maps</a><a href="#shop">Bone Shop</a><a href="#journal">Journal</a><a href="#states">States and themes</a><a href="#checks">Checks</a><a href="#open">Compromises</a><a href="../../prototype-compare.html">Try it live</a></nav>
 
   <h2 id="club">The Clubhouse</h2>
-  <p>The whole of each gate (sign, arch and posts) is one tap, and it lights up the moment a finger lands. Both gates fit on the iPhone SE with no scrolling. New players see "New! Start here"; returning players see this week's stars. Tap the clubhouse and its door opens, Bonnie hops to the step and says her line again.</p>
+  <p>The whole of each gate (sign, arch and posts) is one tap, and it lights up the moment a finger lands. Both gates fit on the iPhone SE with no scrolling. New players see "New! Start here"; returning players see this week's stars. Tap the clubhouse and its door opens, Bonnie hops to the step, and the explorer's journal opens (a "Journal" sign hangs by the door).</p>
   <div class="sizes" role="group" aria-label="Clubhouse screen size" data-for="club"><button data-size="se" aria-pressed="true">iPhone SE</button><button data-size="iphone">iPhone</button><button data-size="ipad">iPad</button></div>
   <div class="pair" id="clubPair"></div>
 
@@ -127,6 +127,28 @@
     <figure><img src="img/shop-mid.jpg" alt="Part-way, 86 bones and a red collar: trying on the Ninja Headband, Buy for 75" loading="lazy"><figcaption>Part-way: trying on a headband</figcaption></figure>
   </div>
 
+  <h2 id="journal">The explorer's journal (new)</h2>
+  <p>The journal lives in the clubhouse: tap it, Bonnie trots to the door and the book opens on the desk. It has three ribbons: <b>Maths</b>, <b>Words</b> and <b>Walks</b>.</p>
+  <p>Every place on the maps has a <b>stamp</b>, in that place's own ink with its own drawing (the park's trees, the burrow's rabbit, the river stones, the orchard, the pond, the Captain's boat, the forest, the signpost, the daisy, the story book). There are three states, told apart by shape first:</p>
+  <ul>
+    <li><b>Not visited yet:</b> a pale, dashed outline, as if pencilled in, waiting.</li>
+    <li><b>Stamped:</b> the place's first star stamps it in solid ink, slightly crooked like a real stamp, with "★ 17 of 24" under it.</li>
+    <li><b>Gold seal:</b> every star in the place adds a gold seal with a ribbon, and "★ Every star!".</li>
+  </ul>
+  <p>A stamp won since the last look is stamped on with a thunk and a "New stamp!" label, and Bonnie says so; the journal opens at that page. Tap a stamp and its page opens: the stamp, a stone for each level with its stars, how many are left to try, and a button to go there (it opens that place's level map). The <b>Walks</b> page is the last five weeks, with Bonnie's paw print on each day there was a walk, today ringed, and "3 days in a row!".</p>
+  <p>It only reads the save the game already keeps (stars and walks). It writes nothing to it; which stamps have been seen is kept in a small note of its own beside the save.</p>
+  <div class="states">
+    <figure><img src="img/jn-iphone.jpg" alt="The journal's Maths page: three inked stamps with their stars, three dashed ones not visited yet, Bonnie saying 3 stamps so far" loading="lazy"><figcaption>Maths page (further on)</figcaption></figure>
+    <figure><img src="img/jn-seal.jpg" alt="Partitioning Park with a gold seal, New stamp! label, Bonnie: Every star! Here's your gold seal" loading="lazy"><figcaption>A new gold seal</figcaption></figure>
+    <figure><img src="img/jn-words.jpg" alt="Words page: Tricky Word Trail just stamped, New stamp! label; two places not visited yet" loading="lazy"><figcaption>A new stamp (Words)</figcaption></figure>
+    <figure><img src="img/jn-place.jpg" alt="The Partitioning Park page: its stamp, eight level stones with their stars, 17 of 24 stars, Go to The Partitioning Park" loading="lazy"><figcaption>A place's page</figcaption></figure>
+    <figure><img src="img/jn-walks.jpg" alt="Walks page: five weeks, paw prints on the last three days, today ringed, 3 days in a row, Go for a walk" loading="lazy"><figcaption>Bonnie's walks</figcaption></figure>
+    <figure><img src="img/jn-new.jpg" alt="A new player: every stamp dashed, Not visited yet; Bonnie: Every place you visit gets a stamp" loading="lazy"><figcaption>New player</figcaption></figure>
+    <figure><img src="img/jn-se.jpg" alt="The journal on the iPhone SE: two stamps across" loading="lazy"><figcaption>iPhone SE</figcaption></figure>
+    <figure><img src="img/jn-ipad.jpg" alt="The journal on iPad: three stamps across" loading="lazy"><figcaption>iPad</figcaption></figure>
+    <figure><img src="img/jn-club.jpg" alt="The Clubhouse with a Journal sign at the clubhouse door" loading="lazy"><figcaption>The Journal sign by the door</figcaption></figure>
+  </div>
+
   <h2 id="states">States and themes</h2>
   <p>All at iPhone size.</p>
   <div class="states">
@@ -151,6 +173,7 @@
       <tr><td>Maths map: 27 automatic checks (a place per world, generous tap areas, sign sizes, signs inside tap areas, nothing overlapping, Bonnie's bubble clear of every sign wherever she stands, padlocks, shorter trail, press feedback, "Places", the real level map and its unlocking, the way back)</td><td>The same 6 sizes; Sam, a new player, and the free app</td><td class="ok">All pass at every size and state</td></tr>
       <tr><td>Words map: the same 27 checks as the Maths map</td><td>The same 6 sizes; Sam, a new player, and the free app. Also the walk from the Clubhouse's Words gate into the map and back, keeping the same pretend child</td><td class="ok">All pass at every size and state</td></tr>
       <tr><td>Level maps: 23 automatic checks (a stone per level, one clear "Next", locked levels identical in every world, the name sign's size, the map opening at the next level and coming back there after a level, each stone's state and VoiceOver name match the game's own list, generous tap rows, tags inside their rows and on screen, nothing overlapping, text sizes, Bonnie on a level you can play, press feedback, a locked level stays put, a full-game level opens the full-game box, an open level starts, the map comes back after, "Meadow" goes back)</td><td>The same 6 sizes, every Maths and Words place; a new player, part-way, further on, the free app, and Reduce Motion</td><td class="ok">All pass at every size and state</td></tr>
+      <tr><td>Journal: 21 to 24 automatic checks (it opens from the clubhouse and has a sign; one stamp for every place on each map, in map order, each saying what the save says; not visited, stamped and gold seal look different by shape; taps 44 or more; VoiceOver names; text 16px or more, the names round the stamps too; nothing wider than the screen; the ribbons and turning pages; Bonnie dressed as in the shop; a place's page with each level's stars and the way there, with the same child; Escape closes it; a new stamp says so once only; the walks page matches the save's walk days and streak; the stamp count; Reduce Motion; speed; saves nothing; "Clubhouse" brings back the meadow). The Clubhouse's own 30 checks now include the clubhouse opening the journal</td><td>The same 6 sizes; a new player, Sam, part-way, further on, and Reduce Motion</td><td class="ok">All pass at every size and state</td></tr>
       <tr><td>Bone Shop: 31 to 38 automatic checks (each card, badge, panel and button saying the same state in its own colour, dashed for trying on; the rail's arrows, faded edges, section name and "N of M yours"; a half-hidden card brought into view; themes changing the wall, window and magic with Bonnie still clear; prizes quieter; a real purchase becoming Wearing and "New in your collection!", then the save put back; every item on the rail, each one's buy/wear/take off/using/swap/more-bones state the same as the game's own shop, prizes grouped the same, generous cards, VoiceOver names with prices, text sizes, fits one screen, Bonnie big and clear of her words, trying on saves nothing, Buy opens the game's own box and "Not now" spends nothing, Wear and Take it off work, themes and coats preview, Swap opens the grown-up's hold, changing prizes asks the grown-ups' sum, the "more bones" button does nothing, speed, the save left as it was)</td><td>The same 6 sizes; a new player, part-way, further on, and Reduce Motion; opened from the Clubhouse's stall and from the map</td><td class="ok">All pass at every size and state</td></tr>
       <tr><td>Reduce Motion</td><td>Forced on in the browser: no hops, wags or blinks; taps still work</td><td class="ok">Pass</td></tr>
       <tr><td>Keyboard</td><td>Real Tab presses through both screens, the name menu, and the "Places" list (Enter to choose, Escape to close)</td><td class="ok">Pass, after 2 fixes (below)</td></tr>
@@ -178,6 +201,9 @@
     <li><b>Full-game levels each say "Full game".</b> In the free app that's every level after the first (in Captain's Cove, five). It's one short tag each, and the gold padlock tells them apart from ordinary locked levels. Showing it only once would leave the other levels looking like ordinary locked ones.</li>
     <li><b>The paw prints are faint on purpose.</b> They show the way you've come without competing with the stones.</li>
     <li><b>The Sharing Pond's fraction levels</b> are part of that pond's trail, as they are in the game's list now; they don't get a place of their own.</li>
+    <li><b>Journal: Bonnie's journal lines aren't recorded</b> ("A new stamp! You visited…", "Every place you visit gets a stamp…"), so they use the device's voice for now.</li>
+    <li><b>Journal: which stamps have been seen</b> is kept in its own small note beside the save (so a new stamp only thunks once). Going into the game, it would sit in the save and come with a back-up; on the first open, stamps already won count as seen, so nobody gets a flood of "New stamp!".</li>
+    <li><b>Journal: tapping the clubhouse now opens the journal</b> instead of Bonnie saying her line again at the door. The collector's book (creature cards) is still a later phase.</li>
     <li><b>Bone Shop: the boxes that pop up are still the game's own</b> ("Buy it for 150 bones?", "Get a grown-up!" with the hold button, the grown-ups' sum). They keep their emoji pictures; restyling them would mean changing the game's engine, so it waits until the new look goes in.</li>
     <li><b>Bone Shop: Bonnie's new lines aren't recorded.</b> Trying something on uses her recorded "Do I look smart?"; "Keep playing to earn 60 more bones!" is new and uses the device's voice for now.</li>
     <li><b>Bone Shop: one row of cards on phones,</b> so a child swipes (or taps the arrows) to see the 25 gear items. The iPad shows two rows. The section names on the rail ("Hats and helmets") stay as small signs.</li>

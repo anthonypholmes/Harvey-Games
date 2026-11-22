@@ -111,6 +111,17 @@ The Clubhouse page as one illustrated meadow that fits one screen: the clubhouse
 - **Prizes:** the last, smaller, paper-coloured tab (`.minor`), smaller pictures (`.prize`), "Set by your grown-up".
 - **Checks:** 31 to 38 depending on the save (new ones: states and colours, badge/panel/button agreement, rail arrows and fade, half-hidden card, section name, collection count, theme magic and halo, prizes quieter, a real purchase then the save restored). All pass at SE, 393, 430, 768, 820 and 1180, with a new player, demo 1, mid, later and Reduce Motion. Maths (27), level maps (23) and Clubhouse (29) still pass.
 
+## The explorer's journal (22 November 2026)
+
+`js/proto-journal.js`, loaded by `prototype-clubhouse.html` after `js/proto-hub.js`. Tapping the clubhouse (now with a "Journal" sign at its step; its tap area covers the sign) opens the door, Bonnie hops over and the journal opens; closing it brings her back. Options: `#journal` or `journal=maths|words|walks` opens it straight away; `world=<id>` opens a place's page; `newstamp=<id>` treats a stamp as new (screenshots); `journaltest=1` runs its checks. `prototype-compare.html` has a "Journal" screen.
+
+- **Read only.** Stars come from `Meadow.stars()` for each level of `Meadow.visibleWorlds()` (in `Meadow.worlds()` order, the map order, so the grown-ups' year setting applies); walks from the save's `walks.days` and `walks.streak`. Nothing is written to the save. Which stamps have been seen is kept in `meadow-proto-journal-seen:<save key>` (a list of `world:stamped` / `world:all`); the first open counts everything already won as seen.
+- **Stamps** (`stampSVG`): the design sheet's stamp (dashed outer ring, inner ring, the name round the top at 18 units, so 16px or more at 150px), in the world's colour darkened for ink, with a drawing per place (`INNER`). Not visited: pale, dashed, no tilt. Stamped: solid ink, tilted a few degrees. Every star: the gold seal and ribbon. A new one gets "New stamp!", a thunk animation and sound (none with Reduce Motion), and Bonnie's line.
+- **A place's page** (`detail`): stamp, the place's tag line, a numbered stone per level with 0–3 stars, what's left, "Back to my journal" and "Go to …" (the map prototype with `level=<id>` and the same pretend child).
+- **Walks:** five weeks (Monday first) with a paw print on walked days, today ringed, the streak when it is 2 or more and still current, a VoiceOver list of walk days, and "Go for a walk".
+- **Checks:** 21 to 24 (fewer for a new player), all passing at SE, 393, 430, 768, 820 and 1180 wide with a new player, Sam, part-way, further on and Reduce Motion. The Clubhouse's checks (now 30) pass too. One check reads the open ribbon's style rule rather than its measured height, because the headless test browser sometimes keeps a stale size with Reduce Motion on (the real browser is fine).
+- **Gaps:** Bonnie's journal lines aren't recorded. The seen-stamps note would move into the save when this goes into the game. Not yet tried with real VoiceOver or on the 2018 iPad.
+
 ## Checks (`selftest=1`, first version)
 
 All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180): every maths world has a place; every tap target is at least 44 × 44; every place has a VoiceOver name that says its stars; places don't overlap; nothing is wider than the screen; Bonnie has a button; tapping a place opens the real level map with the engine's locks; the top bar comes back; "Meadow" returns.
@@ -118,5 +129,5 @@ All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180
 ## Known gaps
 
 - Bonnie's new lines aren't recorded, so the website uses the device voice for them and the app would say nothing.
-- The explorer's journal comes in a later phase.
+- The collector's book (creature cards) comes in a later phase.
 - `tools/build-app.mjs` copies the whole `js/` folder, so the two prototype files would ride along in an app build (unused). Leave this branch out of app builds.
