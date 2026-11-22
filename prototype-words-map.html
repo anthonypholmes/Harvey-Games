@@ -37,8 +37,8 @@
     testVoice: 'Hello {N}! I am Bonnie. Shall we read together?',
     saveKey: demo ? ProtoDemo.KEY : undefined, needName: !demo,
   });
-  if (demo) { ProtoDemo.seed(demo); Meadow.save.load(); Meadow.home(); }
+  if (demo) { ProtoDemo.seed(demo); Meadow.save.load(); if (location.hash === '#shop') Meadow.shop({ welcome: true }); else Meadow.home(); }
 </script>
-<script>fresh('js/proto-map-art.js'); fresh('js/proto-map.js'); fresh('js/proto-level.js');</script>
+<script>fresh('js/proto-map-art.js'); fresh('js/proto-map.js'); fresh('js/proto-level.js'); fresh('js/proto-shop.js');</script>
 </body>
 </html>

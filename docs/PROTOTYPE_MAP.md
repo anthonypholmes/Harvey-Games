@@ -89,6 +89,19 @@ The Clubhouse page as one illustrated meadow that fits one screen: the clubhouse
 - **Pretend saves:** `demo=mid` (Partitioning Park 3 of 8, Phonics Forest 2 of 5) and `demo=later` (Partitioning 7 of 8, Phonics 4 of 5, and more), alongside `demo=new` and `demo=1`. The Clubhouse and both maps accept them.
 - **Checks:** 23 now (one clear "Next", locked looks identical across worlds, name sign size, opening at the next level, coming back there after a level). All pass at the six sizes with every pretend save, the free app and Reduce Motion; the map (27) and Clubhouse (29) checks still pass.
 
+## The Bone Shop: Bonnie's dressing room (22 November 2026)
+
+`js/proto-shop.js`, loaded by both map pages: when the engine draws the Bone Shop (`Meadow.shop`), it shows a dressing room instead. Opened from the Clubhouse prototype's shop stall (`prototype-words-map.html#shop`, Back goes to the Clubhouse) or from a map's bones tag (Back goes to the meadow). Options: `#shop` opens it straight away; `shoptab=gear|coats|themes|prizes`; `try=<item id>` starts with that tried on (for screenshots); `shoptest=1` runs the checks. `prototype-compare.html` has a "Bone Shop" screen.
+
+- **The room** is drawn to fit the space above the rail: planked wall, panelling, floorboards, bunting, a hat stand, a wardrobe with open doors, a window and a rug. Bonnie (the game's own drawing, in her outfit and coat) stands big in the middle; her words are in a bubble above her (the engine's `#shopSay`, mirrored as it changes).
+- **The rail** along the bottom holds every item as a card (picture, name, price or "Yours"/"Wearing", and a "how close" bar), in four sections: Gear (the three slots, with small signs), Coats, Themes, Prizes (grouped as the engine groups them, with a "Grown-ups: change these prizes" card). One row on phones (arrows and swiping), two on tall iPads.
+- **Trying on:** tapping a card shows it on Bonnie without spending anything. Gear: Bonnie is drawn by the engine's `bonnieSVG()` with that item put in the save object for the moment of drawing, then put back (never saved). Coats: her fur colours. Themes: the room's wall and window ("Just looking"), plus the theme's colour wash.
+- **The panel** under Bonnie names the chosen thing and has one button: Buy (price), Wear it, Take it off, Use it, Wearing/Using, Swap (price), or "N more" with a bar. Every one presses **the engine's own button** for that item (`data-buy`, `data-wear`, `data-off`, `data-coat`, `data-usetheme`, `data-prize`, `#editPrizes`), so the engine's confirm box, the grown-up's hold, the sum check, the prices and the save are unchanged. "N more" only has Bonnie say "Keep playing to earn N more bones!".
+- **Prizes** are drawn (cookie, notes, screen, ice cream, moon, sweet, clapperboard, bowling, brick, cards, tree, pizza, gift), chosen by the same word tests as the engine's emoji, so a prize a grown-up types gets a picture too.
+- **The pretend saves** now include shop things: `demo=mid` wears a red collar; `demo=later` has 240 bones, a party hat, sunglasses, the red collar, a bobble hat, the golden coat and the sunset theme. Older pretend saves start again (`-v` 2).
+- **Checks:** 25 (19 to 22 with fewer bones or nothing owned, where some can't apply), all passing at the six sizes with a new player, part-way, further on and Reduce Motion, from the stall and from the map. The map (27), level-map (22–23) and Clubhouse (29) checks still pass.
+- **Gaps:** the engine's pop-up boxes keep their emoji (changing them means changing the engine). "Keep playing to earn N more bones!" isn't recorded. Not yet tried with real VoiceOver or on the 2018 iPad.
+
 ## Checks (`selftest=1`, first version)
 
 All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180): every maths world has a place; every tap target is at least 44 × 44; every place has a VoiceOver name that says its stars; places don't overlap; nothing is wider than the screen; Bonnie has a button; tapping a place opens the real level map with the engine's locks; the top bar comes back; "Meadow" returns.
@@ -96,5 +109,5 @@ All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180
 ## Known gaps
 
 - Bonnie's new lines aren't recorded, so the website uses the device voice for them and the app would say nothing.
-- The Bone Shop and the explorer's journal come in later phases.
+- The explorer's journal comes in a later phase.
 - `tools/build-app.mjs` copies the whole `js/` folder, so the two prototype files would ride along in an app build (unused). Leave this branch out of app builds.

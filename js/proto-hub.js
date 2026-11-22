@@ -33,7 +33,7 @@
     maths: { hit: [96, 636, 190, 210], stand: [AT.maths[0], AT.maths[1] + 14], href: withCarry(Q.get('maths') || 'prototype-maths-map.html'), game: 0 },
     words: { hit: [354, 636, 190, 210], stand: [AT.words[0], AT.words[1] + 14], href: withCarry(Q.get('words') || 'prototype-words-map.html'), game: 1 },
     walk: { hit: [94, 352, 116, 136], stand: [212, 490], href: 'bonnies-walk.html' },
-    shop: { hit: [428, 340, 118, 164], stand: [418, 494], href: 'meadow-words.html#shop' },
+    shop: { hit: [428, 340, 118, 164], stand: [418, 494], href: withCarry(Q.get('shop') || 'prototype-words-map.html') + '#shop' },
   };
   const HOUSE = [226, 214, 188, 182];
   // what must always be on screen: from the clubhouse flag to the foot of the gates

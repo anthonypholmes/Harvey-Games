@@ -39,8 +39,8 @@
     greets: ["Woof! I'm Bonnie. Stuck? Tap Ask Bonnie and we'll do it together.", "Hi {N}! Pick a world and let's do some maths!", "Hello {N}! Shall we count some bones?"],
     saveKey: demo ? ProtoDemo.KEY : undefined, needName: !demo,
   });
-  if (demo) { ProtoDemo.seed(demo); Meadow.save.load(); Meadow.home(); }
+  if (demo) { ProtoDemo.seed(demo); Meadow.save.load(); if (location.hash === '#shop') Meadow.shop({ welcome: true }); else Meadow.home(); }
 </script>
-<script>fresh('js/proto-map-art.js'); fresh('js/proto-map.js'); fresh('js/proto-level.js');</script>
+<script>fresh('js/proto-map-art.js'); fresh('js/proto-map.js'); fresh('js/proto-level.js'); fresh('js/proto-shop.js');</script>
 </body>
 </html>

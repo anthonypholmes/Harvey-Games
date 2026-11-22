@@ -20,12 +20,17 @@ window.ProtoDemo = {
     const dress = () => { M.save.mutate(s => { s.theme = theme; if (!s.owned.themes.includes(theme)) s.owned.themes.push(theme); }); if (document.body) document.body.dataset.theme = theme; };
     const get = k => { try { return localStorage.getItem(this.KEY + k); } catch (e) { return null; } };
     const put = (k, v) => { try { localStorage.setItem(this.KEY + k, v); } catch (e) {} };
-    if (!M.save.load().name || get('-variant') !== want || get('-given') === null) { // (a pretend save from before 22 November's change starts again)
+    if (!M.save.load().name || get('-variant') !== want || get('-given') === null || get('-v') !== '2') { // (an older pretend save starts again: -v 2 has the Bone Shop things)
       // a fresh pretend child
       try { localStorage.removeItem(this.KEY); } catch (e) {}
       M.save.load();
-      M.save.mutate(s => { s.name = 'Sam'; if (want !== 'new') { s.bones = 86; s.walks.streak = 3; s.walks.last = day(0); [0, 1, 2].forEach(n => { s.walks.days[day(n)] = 1; }); } });
-      put('-variant', want); put('-given', '[]');
+      M.save.mutate(s => { s.name = 'Sam'; if (want !== 'new') { s.bones = 86; s.walks.streak = 3; s.walks.last = day(0); [0, 1, 2].forEach(n => { s.walks.days[day(n)] = 1; }); }
+        // the Bone Shop: part-way, a red collar on; further on, more bones and a few things bought
+        if (want === 'mid') { s.owned.hats.push('collar-red'); s.neck = 'collar-red'; }
+        if (want === 'later') { s.bones = 240; s.owned.hats.push('collar-red', 'sunglasses', 'party', 'bobble'); s.hat = 'party'; s.face = 'sunglasses'; s.neck = 'collar-red';
+          s.owned.coats.push('golden'); s.owned.themes.push('sunset'); s.redeemed.push({ title: 'Choose the after-school snack', cost: 30, when: '15/11/2026' }); }
+      });
+      put('-variant', want); put('-given', '[]'); put('-v', '2');
     }
     // each game's progress is added the first time a page that has its worlds is opened (a page only loads its own game)
     if (want !== 'new') {
