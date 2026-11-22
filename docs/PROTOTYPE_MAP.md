@@ -2,6 +2,8 @@
 
 **Branch:** `prototype-meadow-map` (from `app-store`, 22 November 2026). **Start with `docs/HANDOFF_REDESIGN.md`.** Nothing in the game changes: these are new files only, and none of the game's pages link to them.
 
+**In the game (branch `redesign-1-1`, 22 November 2026, for 1.1).** The real pages now carry the meadow look themselves: `index.html`, `meadow-maths.html`, `meadow-words.html` and `bonnies-walk.html` load the scripts below, and `js/meadow-look.js` is the one switch (`ON = false`, or `?view=old` on one page, brings back the old screens). The `prototype-*.html` pages are now thin test pages around the real ones (`js/proto-page.js`): a pretend child (`demo=`), `taster=1`, `dig=`, and the checks. `node tools/look-check.mjs` runs every check (Clubhouse, journal, both maps, both level maps, the shop from both, the Walk) at six phone and iPad sizes, two pretend children, and `--rm` for Reduce Motion. Fixed on the way: the shop's arrows now move by whole columns of cards (on an 11-inch iPad the snap carried the last card seen out of view), and a card tapped under an arrow lands on a snap point clear of it.
+
 The world list drawn as an illustrated meadow route, from design iteration 2 (Direction B: the Clubhouse meadow with separate Maths and Words routes). The design sheet is the "Meadow Clubhouse design sheet" canvas.
 
 ## Try it

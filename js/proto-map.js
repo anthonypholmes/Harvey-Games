@@ -221,7 +221,7 @@
     }).join('');
     const [bl, bt] = px(bfx - 40, bfy - 78);
     const carry = ['demo', 'theme'].filter(k => Q.get(k)).map(k => `${k}=${encodeURIComponent(Q.get(k))}`).join('&');
-    const home = /prototype-clubhouse/.test(document.referrer) ? 'prototype-clubhouse.html' + (carry ? '?' + carry : '') : 'index.html';
+    const club = (window.MeadowLook ? window.MeadowLook.pages : { club: 'prototype-clubhouse.html', maths: 'prototype-maths-map.html', words: 'prototype-words-map.html', walk: 'prototype-walk.html' }).club, home = club + (carry && /^prototype-/.test(club) ? '?' + carry : '');
     ui.show(`<div class="pm" style="width:${view.W}px;--k:${Math.min(1.25, view.k).toFixed(3)}">
       <div class="pm-bar">
         <div class="pm-tags">
@@ -410,6 +410,6 @@
   }
 
   window.ProtoMap = { install, draw, PLACES, selftest };
-  if (Q.get('view') !== 'old') install();
+  if (Q.get('view') !== 'old' && !(window.MeadowLook && !window.MeadowLook.on)) install();
   if (Q.get('selftest')) selftest();
 })();

@@ -84,10 +84,10 @@ export function serve(PORT) {
 
 /* ---------- talking to Chrome ---------- */
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
-export async function startChrome(DEBUG_PORT) {
+export async function startChrome(DEBUG_PORT, extra = []) {
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'phone-check-'));
   const proc = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--mute-audio', '--no-first-run', '--no-default-browser-check',
-    `--remote-debugging-port=${DEBUG_PORT}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+    `--remote-debugging-port=${DEBUG_PORT}`, `--user-data-dir=${profile}`, ...extra, 'about:blank'], { stdio: 'ignore' });
   for (let i = 0; i < 50; i++) {
     try { const list = await (await fetch(`http://127.0.0.1:${DEBUG_PORT}/json/list`)).json(); const page = list.find(t => t.type === 'page'); if (page) return { proc, profile, ws: page.webSocketDebuggerUrl }; } catch (e) {}
     await sleep(200);

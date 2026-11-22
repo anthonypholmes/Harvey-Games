@@ -16,6 +16,8 @@
  */
 (function () {
   const Q = new URLSearchParams(location.search);
+  if (window.MeadowLook && !window.MeadowLook.on) return; // the old look (js/meadow-look.js)
+  const LINKS = (window.MeadowLook ? window.MeadowLook.pages : { club: 'prototype-clubhouse.html', maths: 'prototype-maths-map.html', words: 'prototype-words-map.html', walk: 'prototype-walk.html' });
   const M = window.Meadow, A = window.ProtoArt, C = A.C, ui = M.ui, esc = ui.esc;
   const $ = id => document.getElementById(id);
   const reduce = () => ui.reduceMotion();
@@ -329,7 +331,7 @@
   function shut() { const sh = $('pjSheet'), id = sh.querySelector('h2') && sh.dataset.world; sh.hidden = true; sh.innerHTML = ''; const b = root.querySelector('.pj-stamp:focus') || root.querySelector('.pj-stamp'); if (b) b.focus({ preventScroll: true }); }
   // the place's own level map, in the map prototype, with the same pretend child
   function placeHref(w) {
-    const base = hub() ? hub().PLACES[w.subject === 'english' ? 'words' : 'maths'].href : (w.subject === 'english' ? 'prototype-words-map.html' : 'prototype-maths-map.html');
+    const base = hub() ? hub().PLACES[w.subject === 'english' ? 'words' : 'maths'].href : (w.subject === 'english' ? LINKS.words : LINKS.maths);
     return base + (base.includes('?') ? '&' : '?') + 'level=' + encodeURIComponent(w.id);
   }
   function go(href, line) { if (window.goTo) goTo(href, line); else location.href = href; }
@@ -421,7 +423,7 @@
     const lis = [...$('pjSheet').querySelectorAll('.pj-lv li')];
     ok("tapping a stamp opens the place's page: a stone for each level with its stars", !$('pjSheet').hidden && lis.length === w.levels.length && lis.every((li, i) => li.getAttribute('aria-label').includes(s.stars[i] ? `${s.stars[i]} star` : 'not played')), `${w.name}: ${s.stars.join(' ')}`);
     const goHref = placeHref(w);
-    ok('…and "Go to" leads to that place on its map, with the same child', /prototype-(maths|words)-map\.html/.test(goHref) && goHref.includes('level=' + encodeURIComponent(w.id)) && (!Q.get('demo') || goHref.includes('demo=' + Q.get('demo'))), goHref);
+    ok('…and "Go to" leads to that place on its map, with the same child', [LINKS.maths, LINKS.words].some(p => goHref.startsWith(p)) && goHref.includes('level=' + encodeURIComponent(w.id)) && (!Q.get('demo') || goHref.includes('demo=' + Q.get('demo'))), goHref);
     ok('…which fits on the screen', r($('pjSheet').querySelector('.pj-card')).bottom <= innerHeight + 1 && r($('pjSheet').querySelector('.pj-card')).top >= -1);
     root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); await wait(40);
     ok('Escape (or "Back to my journal") closes it', $('pjSheet').hidden);

@@ -3,35 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Meadow Clubhouse: meadow prototype</title>
-<!-- PROTOTYPE of the Clubhouse meadow (design iteration 2, Direction B). Not linked from the game and not in the app build.
-     It loads index.html exactly as it is and adds the meadow on top (js/proto-hub.js), so every Clubhouse function is
-     index.html's own. Options: ?view=old (the current Clubhouse), ?demo=1 or ?demo=new (a pretend save, shared with the
-     map prototype: the real save is never touched), ?selftest=1 (the checks), #journal or ?journal=maths|words|walks (the explorer's journal), ?journaltest=1 (its checks). See docs/PROTOTYPE_MAP.md. -->
+<title>Meadow Clubhouse: test page</title>
+<!-- TEST PAGE for the meadow look: index.html exactly as it is, with a pretend child and test helpers (js/proto-page.js).
+     Not linked from the game and not in the app build. Options: ?demo=new|1|mid|later, ?theme=…, ?view=old, ?selftest=1, #journal or ?journal=maths|words|walks, ?world=…, ?newstamp=…, ?journaltest=1. See docs/PROTOTYPE_MAP.md. -->
+<script src="js/proto-page.js"></script>
 </head>
 <body>
-<script>
-  (async () => {
-    const Q = new URLSearchParams(location.search), demo = ['new', '1', 'mid', 'later'].includes(Q.get('demo')) ? Q.get('demo') : '';
-    // the prototype's own scripts are always fetched fresh (?v=), so a phone or iPad never shows an old copy
-    const v = '?v=' + Date.now();
-    let html = await (await fetch('index.html', { cache: 'no-store' })).text();
-    // no service worker from a prototype page
-    html = html.replace("navigator.serviceWorker.register('sw.js')", 'Promise.resolve()');
-    if (demo) {
-      // the pretend save: the engine is loaded with its save key changed (only here, never in the file), then set up
-      // (the default save and the players list both get pretend keys, so nothing of the family's is read or written)
-      const core = (await (await fetch('js/meadow-core.js', { cache: 'no-store' })).text())
-        .replace("const DEFAULT_KEY = 'meadow-save-v1';", "const DEFAULT_KEY = 'meadow-save-proto-demo';")
-        .replace("const PLAYERS_KEY = 'meadow-players'", "const PLAYERS_KEY = 'meadow-players-proto-demo'");
-      if (!core.includes("'meadow-save-proto-demo'") || !core.includes("'meadow-players-proto-demo'")) throw new Error('could not set the pretend save');
-      html = html.replace('<script src="js/meadow-core.js"><\/script>', () => `<script>${core.replace(/<\/script/gi, '<\\/script')}<\/script>`)
-                 .replace('<script src="worlds/y2-maths-captains-cove.js"><\/script>', `$&<script src="js/proto-demo.js${v}"><\/script><script>ProtoDemo.seed('${demo}');Meadow.save.load();<\/script>`);
-    }
-    if (Q.get('view') !== 'old')
-      html = html.replace('</body>', `<script src="js/proto-map-art.js${v}"><\/script><script src="js/proto-hub-art.js${v}"><\/script><script src="js/proto-hub.js${v}"><\/script><script src="js/proto-journal.js${v}"><\/script>\n</body>`);
-    document.open(); document.write(html); document.close();
-  })();
-</script>
+<script>ProtoPage.load('index.html');</script>
 </body>
 </html>

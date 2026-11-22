@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v22';
+const CACHE_VERSION = 'meadow-club-v23';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -23,6 +23,16 @@ const CORE_ASSETS = [
   './js/meadow-core.js',
   './js/app-storage.js',
   './js/first-paint.js',
+  // the meadow look (js/meadow-look.js)
+  './js/meadow-look.js',
+  './js/proto-map-art.js',
+  './js/proto-hub-art.js',
+  './js/proto-hub.js',
+  './js/proto-journal.js',
+  './js/proto-map.js',
+  './js/proto-level.js',
+  './js/proto-shop.js',
+  './js/proto-walk.js',
   // the worlds (keep in step with the <script> lines in the pages)
   './worlds/y2-english-phonics.js',
   './worlds/y2-english-tricky-words.js',

@@ -19,6 +19,7 @@
 (function () {
   const Q = new URLSearchParams(location.search);
   if (Q.get('view') === 'old') return;
+  if (window.MeadowLook && !window.MeadowLook.on) return; // the old look (js/meadow-look.js)
   const A = window.ProtoArt, M = window.Meadow, ui = M.ui, C = A.C;
   const reduce = () => ui.reduceMotion();
   const save = () => M.save.get() || M.save.load();
@@ -469,8 +470,13 @@
   // the chosen card, fully in view and clear of the arrows
   function inView(card) {
     const r = ui.$('#psRail'), a = card.getBoundingClientRect(), b = r.getBoundingClientRect(), pad = 62;
-    const d = a.left < b.left + pad ? a.left - b.left - pad : a.right > b.right - pad ? a.right - b.right + pad : 0;
-    if (d) r.scrollBy({ left: d, behavior: reduce() || Q.get('shoptest') ? 'auto' : 'smooth' });
+    let d = a.left < b.left + pad ? a.left - b.left - pad : a.right > b.right - pad ? a.right - b.right + pad : 0;
+    if (!d) return;
+    // land on a snap point (a card's start 56 in from the edge), going at least as far as needed, so the snap can't pull it back
+    const snaps = [...new Set(ui.$$('.ps-card', r).map(c => Math.round(c.getBoundingClientRect().left - b.left - 56)))];
+    const fwd = snaps.filter(s => s >= d).sort((x, y) => x - y)[0], back = snaps.filter(s => s <= d).sort((x, y) => y - x)[0];
+    if (d > 0 && fwd !== undefined && a.left - fwd >= b.left + 56) d = fwd; else if (d < 0 && back !== undefined) d = back;
+    r.scrollBy({ left: d, behavior: reduce() || Q.get('shoptest') ? 'auto' : 'smooth' });
   }
   // the first time, the rail slides a little and back, to show it moves
   function peek() {
@@ -516,7 +522,14 @@
     });
     const rail = ui.$('#psRail');
     rail.addEventListener('scroll', () => { railX[tab] = rail.scrollLeft; arrows(); ui.$$('.ps-card.pressed').forEach(c => c.classList.remove('pressed')); }, { passive: true });
-    const step = () => Math.max(120, rail.clientWidth - 150); // a page, less a card, so the last one seen stays in view
+    // a page, in whole columns of cards, less one, so the last column seen stays in view and the cards land where they snap
+    const step = () => {
+      const xs = [...new Set(ui.$$('.ps-card', rail).map(c => Math.round(c.offsetLeft)))].sort((a, b) => a - b);
+      const pitch = xs.length > 1 ? xs[1] - xs[0] : 0, cw = (ui.$('.ps-card', rail) || {}).offsetWidth || 0;
+      if (pitch < 40) return Math.max(120, rail.clientWidth - 150);
+      const fit = Math.floor((rail.clientWidth - 112 + (pitch - cw)) / pitch); // 56 each side is kept clear for the arrows
+      return Math.max(1, fit - 1) * pitch;
+    };
     const go = d => { peeked = true; rail.scrollBy({ left: d * step(), behavior: reduce() || Q.get('shoptest') ? 'auto' : 'smooth' }); if (ui.tone) ui.tone(520, .05, 'sine', .05); };
     ui.$('#psL').onclick = () => go(-1); ui.$('#psR').onclick = () => go(1);
     const bon = ui.$('#psBon');
@@ -525,7 +538,7 @@
     ui.$('#psBack').onclick = () => {
       if (viaClub) { // the engine's own Back goes to the real Clubhouse; the prototype goes to the prototype's
         const carry = ['demo', 'theme'].filter(k => Q.get(k)).map(k => `${k}=${encodeURIComponent(Q.get(k))}`).join('&');
-        location.href = Q.get('demo') || /prototype-clubhouse/.test(document.referrer) ? 'prototype-clubhouse.html' + (carry ? '?' + carry : '') : 'index.html';
+        const club = (window.MeadowLook ? window.MeadowLook.pages : { club: 'prototype-clubhouse.html', maths: 'prototype-maths-map.html', words: 'prototype-words-map.html', walk: 'prototype-walk.html' }).club; location.href = club + (carry && /^prototype-/.test(club) ? '?' + carry : '');
         return;
       }
       const b = engShop().querySelector('#back'); leave(); if (b) b.click(); else M.home();

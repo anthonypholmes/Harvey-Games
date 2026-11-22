@@ -17,6 +17,7 @@
  */
 (function () {
   const Q = new URLSearchParams(location.search);
+  if (window.MeadowLook && !window.MeadowLook.on) return; // the old look (js/meadow-look.js)
   const M = window.Meadow, A = window.ProtoArt, C = A.C, ui = M.ui, esc = ui.esc;
   const $ = (s, el = document) => el.querySelector(s), $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const reduce = () => ui.reduceMotion();

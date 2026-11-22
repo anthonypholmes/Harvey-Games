@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script src="js/first-paint.js"></script><!-- the background at once, then a fade: no blank flash between pages -->
+<script src="js/meadow-look.js"></script><!-- the meadow look: its on/off switch and where its places link -->
 <title>Meadow Clubhouse</title>
 <!-- Install as an app (PWA): works offline from the home screen -->
 <link rel="manifest" href="manifest.json">
@@ -628,5 +629,7 @@ window.addEventListener('storage', e => { if (e.key === Meadow.save.key || e.key
 window.addEventListener('pageshow', e => { if (e.persisted) { render(); greet(); } });
 }
 </script>
+<!-- the meadow look (see js/meadow-look.js) -->
+<script src="js/proto-map-art.js"></script><script src="js/proto-hub-art.js"></script><script src="js/proto-hub.js"></script><script src="js/proto-journal.js"></script>
 </body>
 </html>

@@ -3,40 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bonnie's Walk: meadow prototype</title>
-<!-- PROTOTYPE of Bonnie's Walk in the illustrated meadow. Not linked from the game and not in the app build.
-     It loads bonnies-walk.html exactly as it is and adds the meadow on top (js/proto-walk.js), so the Walk is the
-     engine's own: the same questions, mixes, help, Teach Bonnie, dig, bones and streak.
-     Options: ?view=old (the current Walk, unchanged), ?demo=1|new|mid|later (a pretend save, shared with the other
-     prototypes: the real save is never touched), ?theme=…, ?dig=1 (the surprise dig on this walk, for screenshots),
-     ?stop=N (answer the first N-1 stops at once, for screenshots), ?end=1 (finish the walk at once, for screenshots),
-     ?walktest=1 (the checks). See docs/PROTOTYPE_MAP.md. -->
+<title>Bonnie's Walk: test page</title>
+<!-- TEST PAGE for the meadow look: bonnies-walk.html exactly as it is, with a pretend child and test helpers (js/proto-page.js).
+     Not linked from the game and not in the app build. Options: ?demo=…, ?theme=…, ?view=old, ?dig=1|0, ?stop=N, ?end=1, ?digshot=1, ?digfind=1, ?walktest=1. See docs/PROTOTYPE_MAP.md. -->
+<script src="js/proto-page.js"></script>
 </head>
 <body>
-<script>
-  (async () => {
-    const Q = new URLSearchParams(location.search), demo = ['new', '1', 'mid', 'later'].includes(Q.get('demo')) ? Q.get('demo') : '';
-    const v = '?v=' + Date.now();
-    let html = await (await fetch('bonnies-walk.html', { cache: 'no-store' })).text();
-    html = html.replace("navigator.serviceWorker.register('sw.js')", 'Promise.resolve()');
-    // the Clubhouse link goes back to the Clubhouse prototype, with the same pretend child
-    const carry = ['demo', 'theme'].filter(k => Q.get(k)).map(k => `${k}=${encodeURIComponent(Q.get(k))}`).join('&');
-    const club = 'prototype-clubhouse.html' + (carry ? '?' + carry : '');
-    if (Q.get('view') !== 'old') html = html.replace("homeHref: 'index.html'", () => `homeHref: ${JSON.stringify(club)}`);
-    if (demo) {
-      const core = (await (await fetch('js/meadow-core.js', { cache: 'no-store' })).text())
-        .replace("const DEFAULT_KEY = 'meadow-save-v1';", "const DEFAULT_KEY = 'meadow-save-proto-demo';")
-        .replace("const PLAYERS_KEY = 'meadow-players'", "const PLAYERS_KEY = 'meadow-players-proto-demo'");
-      if (!core.includes("'meadow-save-proto-demo'") || !core.includes("'meadow-players-proto-demo'")) throw new Error('could not set the pretend save');
-      html = html.replace('<script src="js/meadow-core.js"><\/script>', () => `<script>${core.replace(/<\/script/gi, '<\\/script')}<\/script>`)
-                 .replace('<script src="worlds/y2-maths-captains-cove.js"><\/script>', `$&<script src="js/proto-demo.js${v}"><\/script><script>ProtoDemo.seed('${demo}');Meadow.save.load();<\/script>`);
-    }
-    // for screenshots: a dig on this walk
-    if (Q.get('dig')) html = html.replace('<script>\nMeadow.startGame(', `<script>Meadow.walk.dig.chance = ${Q.get('dig') === '0' ? 0 : 1};<\/script>$&`);
-    if (Q.get('view') !== 'old')
-      html = html.replace('</body>', `<script src="js/proto-map-art.js${v}"><\/script><script src="js/proto-walk.js${v}"><\/script>\n</body>`);
-    document.open(); document.write(html); document.close();
-  })();
-</script>
+<script>ProtoPage.load('bonnies-walk.html');</script>
 </body>
 </html>

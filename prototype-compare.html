@@ -46,7 +46,7 @@
     walk: 'Both sides are the real Bonnie\'s Walk: the same questions, help, dig and bones. With "Pretend", bones and the walk go to the pretend child only; with "This device\'s", a walk really counts, just as in the game.',
     maths: 'Both screens run the same game engine with the same progress. Play a level on either side, then reload to see the stars on both. "Pretend" progress is kept apart from the family\'s real save.' };
   // the Clubhouse: with pretend progress, both sides load index.html through the prototype page (its view=old is index.html untouched)
-  const clubSrc = view => demo === '0' ? (view === 'old' ? 'index.html' : 'prototype-clubhouse.html') : `prototype-clubhouse.html?${view === 'old' ? 'view=old&' : ''}demo=${demo}`;
+  const clubSrc = view => demo === '0' ? (view === 'old' ? 'index.html?view=old' : 'prototype-clubhouse.html') : `prototype-clubhouse.html?${view === 'old' ? 'view=old&' : ''}demo=${demo}`;
   function draw() {
     const [w, h] = size.split('x').map(Number), ipad = w > 600;
     const fitW = (innerWidth - 80) / (ipad ? 1 : 2) / (w + 24), fitH = (innerHeight - 150) / (h + 24);
@@ -54,7 +54,7 @@
     const q = `demo=${demo}${taster ? '&taster=1' : ''}`;
     const frame = (label, view) => `<figure class="${ipad ? 'ipad' : ''}" style="width:${(w + 24) * k}px">
       <div class="device" style="width:${w}px;transform:scale(${k});margin-bottom:${-(h + 24) * (1 - k)}px;margin-left:${-(w + 24) * (1 - k) / 2}px;margin-right:${-(w + 24) * (1 - k) / 2}px">
-      <iframe title="${label}" src="${page === 'walk' ? (demo === '0' ? (view === 'old' ? 'bonnies-walk.html' : 'prototype-walk.html') : `prototype-walk.html?${view === 'old' ? 'view=old&' : ''}demo=${demo}`) : page === 'journal' ? clubSrc(view) + (view === 'old' ? '' : '#journal') : page === 'club' ? clubSrc(view) : page === 'shop' ? `prototype-words-map.html?view=${view}&${q}#shop` : `prototype-${page}-map.html?view=${view}&${q}`}" style="width:${w}px;height:${h}px"></iframe></div><figcaption>${label}</figcaption></figure>`;
+      <iframe title="${label}" src="${page === 'walk' ? (demo === '0' ? (view === 'old' ? 'bonnies-walk.html?view=old' : 'prototype-walk.html') : `prototype-walk.html?${view === 'old' ? 'view=old&' : ''}demo=${demo}`) : page === 'journal' ? clubSrc(view) + (view === 'old' ? '' : '#journal') : page === 'club' ? clubSrc(view) : page === 'shop' ? `prototype-words-map.html?view=${view}&${q}#shop` : `prototype-${page}-map.html?view=${view}&${q}`}" style="width:${w}px;height:${h}px"></iframe></div><figcaption>${label}</figcaption></figure>`;
     document.getElementById('main').innerHTML = frame('Now', 'old') + frame(page === 'walk' ? "Prototype: Bonnie's Walk in the meadow" : page === 'journal' ? "Prototype: the explorer's journal" : page === 'club' ? 'Prototype: the Clubhouse meadow' : page === 'shop' ? "Prototype: Bonnie's dressing room" : page === 'words' ? 'Prototype: the Words map' : 'Prototype: the Maths map', 'new');
     document.getElementById('note').textContent = NOTES[page] || NOTES.maths;
     document.querySelectorAll('.maths-only').forEach(el => el.hidden = page === 'club' || page === 'shop' || page === 'journal' || page === 'walk');

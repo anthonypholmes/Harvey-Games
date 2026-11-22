@@ -24,6 +24,8 @@
  */
 (function () {
   const Q = new URLSearchParams(location.search);
+  if (window.MeadowLook && !window.MeadowLook.on) return; // the old look (js/meadow-look.js)
+  const PAGES = (window.MeadowLook ? window.MeadowLook.pages : { club: 'prototype-clubhouse.html', maths: 'prototype-maths-map.html', words: 'prototype-words-map.html', walk: 'prototype-walk.html' });
   const A = window.ProtoArt, ART = window.ProtoHubArt, M = window.Meadow, C = A.C, AT = ART.AT;
   const $ = id => document.getElementById(id);
   const esc = M.ui.esc;
@@ -34,10 +36,10 @@
   const carry = ['demo', 'theme'].filter(k => Q.get(k)).map(k => `${k}=${encodeURIComponent(Q.get(k))}`).join('&');
   const withCarry = href => carry && /^prototype-/.test(href) ? href + (href.includes('?') ? '&' : '?') + carry : href;
   const PLACES = {
-    maths: { hit: [96, 636, 190, 210], stand: [AT.maths[0], AT.maths[1] + 14], href: withCarry(Q.get('maths') || 'prototype-maths-map.html'), game: 0 },
-    words: { hit: [354, 636, 190, 210], stand: [AT.words[0], AT.words[1] + 14], href: withCarry(Q.get('words') || 'prototype-words-map.html'), game: 1 },
-    walk: { hit: [94, 352, 116, 136], stand: [212, 490], href: withCarry(Q.get('walk') || 'prototype-walk.html') },
-    shop: { hit: [428, 340, 118, 164], stand: [418, 494], href: withCarry(Q.get('shop') || 'prototype-words-map.html') + '#shop' },
+    maths: { hit: [96, 636, 190, 210], stand: [AT.maths[0], AT.maths[1] + 14], href: withCarry(Q.get('maths') || PAGES.maths), game: 0 },
+    words: { hit: [354, 636, 190, 210], stand: [AT.words[0], AT.words[1] + 14], href: withCarry(Q.get('words') || PAGES.words), game: 1 },
+    walk: { hit: [94, 352, 116, 136], stand: [212, 490], href: withCarry(Q.get('walk') || PAGES.walk) },
+    shop: { hit: [428, 340, 118, 164], stand: [418, 494], href: withCarry(Q.get('shop') || PAGES.words) + '#shop' },
   };
   const HOUSE = [226, 214, 188, 232]; // the clubhouse and the Journal sign at its step
   // what must always be on screen: from the clubhouse flag to the foot of the gates
@@ -412,7 +414,11 @@
     ok('pressing a game gate lights it up and dips it', $('art-maths').classList.contains('on') && $('art-maths').classList.contains('pressed'));
     $('phMaths').dispatchEvent(new PointerEvent('pointerleave', { bubbles: true })); await wait(30);
     ok('…and lets go again', !$('art-maths').classList.contains('pressed'));
+    // (measured at rest: the signs sway now and then, and the gate just pressed may still be springing back)
+    const still = document.createElement('style'); still.textContent = '#art-maths,#art-maths *,#art-words,#art-words *{animation:none!important;transition:none!important}';
+    document.head.appendChild(still); void document.body.offsetHeight;
     ok('the whole gateway is tappable: sign, medallion, posts and the sunlight', ['maths', 'words'].every(id => { const a = r($('art-' + id)), b = r($(id === 'maths' ? 'phMaths' : 'phWords')); return a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1; }));
+    still.remove();
     ok('the Walk arch and shop stall are inside their tap areas', ['walk', 'shop'].every(id => { const a = r($('art-' + id)), b = r($(id === 'walk' ? 'phWalk' : 'phShop')); return a.left >= b.left - 6 && a.right <= b.right + 6 && a.top >= b.top - 6 && a.bottom <= b.bottom + 6; }));
     // the clubhouse: Bonnie trots to the door and the journal opens; closing it brings her back
     const said = $('say').textContent; $('phHouse').click(); await wait(100);

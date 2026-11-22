@@ -3,44 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Meadow Maths: map prototype</title>
-<!-- PROTOTYPE of the illustrated world map (design iteration 2). Not linked from the game and not in the app build.
-     Compare it with the current design in prototype-compare.html. See docs/PROTOTYPE_MAP.md. -->
-<script>
-  // ?taster=1 shows the App Store app's free taster (padlocks after level 1), as if inside the app.
-  var Q = new URLSearchParams(location.search);
-  window.MEADOW_IN_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || Q.get('taster') === '1';
-  if (Q.get('taster') === '1') { try { localStorage.removeItem('meadow-full-game'); } catch (e) {} }
-</script>
-<link href="fonts/fonts.css" rel="stylesheet">
+<title>Meadow Maths: test page</title>
+<!-- TEST PAGE for the meadow look: meadow-maths.html exactly as it is, with a pretend child and test helpers (js/proto-page.js).
+     Not linked from the game and not in the app build. Options: ?demo=…, ?taster=1, ?theme=…, ?view=old, ?level=…, #shop, ?selftest=1, ?leveltest=1, ?shoptest=1. See docs/PROTOTYPE_MAP.md. -->
+<script src="js/proto-page.js"></script>
 </head>
 <body>
-<script src="bonnie-voice.js"></script>
-<script src="js/meadow-core.js"></script>
-<script src="worlds/y2-maths-kit.js"></script>
-<script src="worlds/y2-maths-partitioning.js"></script>
-<script src="worlds/y2-maths-number-bonds.js"></script>
-<script src="worlds/y2-maths-number-lines.js"></script>
-<script src="worlds/y2-maths-arrays.js"></script>
-<script src="worlds/y2-maths-sharing.js"></script>
-<script src="worlds/y2-maths-sharing-fractions.js"></script>
-<script src="worlds/y2-maths-captains-cove.js"></script>
-<script>
-  // the prototype's own scripts are always fetched fresh, so a phone or iPad never shows an old copy
-  var fresh = src => document.write('<script src="' + src + '?v=' + Date.now() + '"><\/script>');
-  fresh('js/proto-demo.js');
-</script>
-<script>
-  // demo=1 (some progress) or demo=new (a new player): a pretend save of its own (js/proto-demo.js), so the family's real progress is never touched.
-  var demo = ['new', '1', 'mid', 'later'].includes(Q.get('demo')) ? Q.get('demo') : '';
-  Meadow.startGame({
-    subject: 'maths', title: 'Meadow Maths', icon: '🔢', homeHref: 'index.html', readAloudOption: true,
-    otherGames: [{ title: 'Meadow Words', icon: '🌼', href: 'meadow-words.html' }],
-    greets: ["Woof! I'm Bonnie. Stuck? Tap Ask Bonnie and we'll do it together.", "Hi {N}! Pick a world and let's do some maths!", "Hello {N}! Shall we count some bones?"],
-    saveKey: demo ? ProtoDemo.KEY : undefined, needName: !demo,
-  });
-  if (demo) { ProtoDemo.seed(demo); Meadow.save.load(); if (location.hash === '#shop') Meadow.shop({ welcome: true }); else Meadow.home(); }
-</script>
-<script>fresh('js/proto-map-art.js'); fresh('js/proto-map.js'); fresh('js/proto-level.js'); fresh('js/proto-shop.js');</script>
+<script>ProtoPage.load('meadow-maths.html');</script>
 </body>
 </html>

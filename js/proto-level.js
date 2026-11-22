@@ -23,6 +23,7 @@
     if (w) window.Meadow.worldMap(w.id);
   }, 700);
   if (Q.get('view') === 'old') return;
+  if (window.MeadowLook && !window.MeadowLook.on) return; // the old look (js/meadow-look.js)
   const A = window.ProtoArt, M = window.Meadow, ui = M.ui, C = A.C, P = A.places;
   const reduce = () => ui.reduceMotion();
   const W = 640, PHONE_X = 125, PHONE_W = 390, HEAD_H = 270, ROW = 150, TOP = 92;
@@ -378,7 +379,9 @@
     ok('opening a world scrolls to its next level', onScreen(), `${deep.w.id.replace(/^y2-[a-z]+-/, '')}, level ${cur + 1}, scrolled ${Math.round(scrollY)}`);
     const played = cur; ui.$$('.pl-hit')[cur].click(); await wait(1400);
     window.scrollTo(0, 0); M.worldMap(deep.w.id); await wait(200);
-    ok('back from a level, the map opens at the next level, not the top', onScreen() && (cur <= 1 || scrollY > 0), `played level ${played + 1}, next ${cur + 1}, scrolled ${Math.round(scrollY)}`);
+    // (at the top is right only when the next level already fits on the first screen: the map scrolls only when it must)
+    const fitsAtTop = () => { const g = ui.$('#plTag' + cur); return !!g && r(g).bottom + scrollY <= innerHeight; };
+    ok('back from a level, the map opens at the next level, not the top', onScreen() && (cur <= 1 || scrollY > 0 || fitsAtTop()), `played level ${played + 1}, next ${cur + 1}, scrolled ${Math.round(scrollY)}`);
     // pressing, and taps going to the engine (in the first world)
     const w0 = ws[0]; M.worldMap(w0.id); await wait(80);
     const h0 = ui.$('.pl-hit'); h0.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); await wait(30);

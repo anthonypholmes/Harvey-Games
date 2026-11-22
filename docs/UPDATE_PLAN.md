@@ -15,8 +15,8 @@
 
 | Release | Target | What's in it |
 |---|---|---|
-| **1.1 iPhone** | Submit within a few days of 1.0 being approved (late November 2026) | The same app on iPhone, held upright, with the old 1.0.1 checks and weekly reminders. Bonnie's first-time help, first impressions, the two grown-ups buttons and the VoiceOver fixes. **Features and fixes finished 17 November 2026;** what's left is the release steps (see "Left before submitting 1.1") |
-| **1.2 Money and Time** | Mid-December 2026 | Two new Year 2 maths worlds, and anything moved from 1.1 (weekly reminders moved into 1.1 on 17 November 2026) |
+| **1.1 iPhone** | Submit within a few days of 1.0 being approved (late November 2026) | The same app on iPhone, held upright, with the old 1.0.1 checks and weekly reminders. Bonnie's first-time help, first impressions, the two grown-ups buttons and the VoiceOver fixes. **Features and fixes finished 17 November 2026;** what's left is the release steps (see "Left before submitting 1.1"). **The meadow redesign joins 1.1 (decided 22 November 2026,** while 1.0 is still in review): about a week to ten days more; see `docs/HANDOFF_REDESIGN.md`, step 8 |
+| **1.2 Money and Time** | Mid-December 2026 (later if the redesign in 1.1 runs long) | Two new Year 2 maths worlds, and anything moved from 1.1 (weekly reminders moved into 1.1 on 17 November 2026) |
 | **1.3 Spelling and Grammar** | Late January 2027 | Two new Year 2 English worlds, and a small Shapes world |
 | **2.0 Year 3** | Spring 2027 (about April) | The first Year 3 maths and English worlds |
 
