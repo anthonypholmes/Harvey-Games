@@ -389,5 +389,7 @@ const tint = (theme, w, h) => { const t = TINTS[theme]; return t ? `<rect class=
 
 window.ProtoArt = { C, mathsRoute, F, ROUTE_H, wordsRoute, WORDS_H, tint, TINTS, bonnie, bubble, star, bone, paw, shadow,
   // the drawing kit, shared with the Clubhouse meadow (js/proto-hub-art.js)
-  Scene, rng, tree, bush, tuft, flowers, rock, fence, path, cloud, butterfly, meadowFloor, scatter };
+  Scene, rng, tree, bush, tuft, flowers, rock, fence, path, cloud, butterfly, meadowFloor, scatter, river, signpost, letterBadge,
+  // each place on its own, for the top of its level map (js/proto-level.js)
+  places: { park, burrow, riverStones, orchard, pond, cove, forest, trickyTrail, sentenceMeadow, storyNook } };
 })();

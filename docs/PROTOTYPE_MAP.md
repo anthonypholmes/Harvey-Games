@@ -66,6 +66,18 @@ The Clubhouse page as one illustrated meadow that fits one screen: the clubhouse
 - **Checks:** 27, all passing at 375 × 667, 393 × 852, 430 × 932, 768 × 1024, 820 × 1180 and 1180 × 820, with Sam, a new player, the free app and Reduce Motion.
 - **Gaps:** on phones the edge of the "one" signpost and the nook's books are cut off at the side (scenery only). Bonnie's new Words lines aren't recorded.
 
+## The level maps (22 November 2026)
+
+`js/proto-level.js`, loaded by both map pages: when a place is tapped, its levels show as a trail of stepping stones through that place instead of the engine's list. Extra options: `level=arrays` (or any world id, or its end such as `phonics`) opens that place's level map straight away, also with `view=old`; `leveltest=1` runs the level-map checks.
+
+- **The drawing:** the place at the top is the same drawing as on the map (`ProtoArt.places`), with its name and stars on a wooden sign and the engine's own introduction below. The stones zigzag down a path, a river (Stepping Stone River, Sharing Pond) or the sea (Captain's Cove); the border trees suit the place (apple trees, pines with sounds, blossom).
+- **The stones**, in the design sheet's states: done (its stars above, a paw), new (a red flag), next (a gold dashed ring; Bonnie sits beside it), locked (grey, ivy, a grey padlock), full game (grey, a gold padlock). Each has a wooden tag: "Level n", the name, and its stars, "New!", "Locked" or "Full game". The whole row is one tap.
+- **The engine is not changed.** Its level list is still drawn, only hidden (`body.pl-on`); each tap presses the engine's own button for that level, so unlocking, the locked line, the full-game box and starting a level are the engine's. Each row's VoiceOver name is the engine's own (it still includes the level's description).
+- **Bonnie** sits by the level to play next: the one played last if it isn't finished, else the first new level, else the first without 3 stars. She says "Level 2 next! Tap my stone." Tap a stone and she hops over, then the level starts. A locked stone shakes its tag and the engine says why.
+- **The top bar** is the map's own wooden one (Meadow, grown-ups, bones); the engine's bar with the streak and shop is hidden here.
+- **Checks:** 18, all passing at 375 × 667, 393 × 852, 430 × 932, 768 × 1024, 820 × 1180 and 1180 × 820, for every Maths and Words place, with Sam, a new player, the free app and Reduce Motion. The two map selftests (27) and the Clubhouse's (29) still pass.
+- **Gaps:** the level descriptions are only read by VoiceOver now, not shown. Bonnie's level-map line isn't recorded. Not yet tried with real VoiceOver or on the 2018 iPad.
+
 ## Checks (`selftest=1`, first version)
 
 All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180): every maths world has a place; every tap target is at least 44 × 44; every place has a VoiceOver name that says its stars; places don't overlap; nothing is wider than the screen; Bonnie has a button; tapping a place opens the real level map with the engine's locks; the top bar comes back; "Meadow" returns.
@@ -73,5 +85,5 @@ All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180
 ## Known gaps
 
 - Bonnie's new lines aren't recorded, so the website uses the device voice for them and the app would say nothing.
-- Only Meadow Maths has a route. The Clubhouse meadow, the Words route, level stones and the Bone Shop come in later phases.
+- The Bone Shop and the explorer's journal come in later phases.
 - `tools/build-app.mjs` copies the whole `js/` folder, so the two prototype files would ride along in an app build (unused). Leave this branch out of app builds.

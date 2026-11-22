@@ -64,8 +64,9 @@ The Meadow Maths world list as the illustrated route. **New files only**; no gam
 2. **Final prototype refinements done 22 November 2026, waiting for Anthony's review** (`docs/review/`, details in `docs/PROTOTYPE_MAP.md`). Nothing goes into the game until he approves.
    **The Clubhouse meadow: prototype built 22 November 2026. Anthony liked the direction; refinement 1 (bolder gates, Bonnie's words beside her, a calmer lower half, stars on tags, labelled top buttons, press feedback) done the same day, waiting for his look.** Next, as he asked: look at the Maths map and the Words map next to the Clubhouse so the three feel like one place (the Words map isn't drawn yet). See `docs/PROTOTYPE_MAP.md` ("The Clubhouse meadow"). Try it from `prototype-compare.html` (Screen: Clubhouse); its Maths gate opens the map prototype.
 3. **The Meadow Words route: prototype built 22 November 2026, waiting for Anthony's look** (`prototype-words-map.html`, in `docs/review/` and `prototype-compare.html`).
-4. Then the level maps, the Bone Shop and the journal, each as its own approved phase.
-5. To go live: move the map into `meadow-maths.html` behind a setting first, run every test page in `tests/`, then make it the default.
+4. **The level maps (stepping stones): prototype built 22 November 2026, waiting for Anthony's look** (`js/proto-level.js`, used by both map pages; in `docs/review/` under "Level maps"; details in `docs/PROTOTYPE_MAP.md`).
+5. Then the Bone Shop and the journal, each as its own approved phase.
+6. To go live: move the map into `meadow-maths.html` behind a setting first, run every test page in `tests/`, then make it the default.
 
 ## Rules to keep
 

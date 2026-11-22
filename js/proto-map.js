@@ -402,7 +402,7 @@
     ok('a place opens the real level map', !!back && !!ui.$('.stone'), back ? back.textContent : 'no map');
     const w2 = M.world(second.dataset.w), stones = ui.$$('.stone');
     ok('the level map keeps the engine\'s unlocking', stones.every((st, l) => { const paid = M.fullGame.paid(w2, l), un = !paid && M.levelUnlocked(w2, l); return st.classList.contains('locked') === (!paid && !un) && st.classList.contains('paid') === paid; }));
-    ok('the top bar is back on the level map', getComputedStyle(ui.$('.hud')).display !== 'none');
+    ok('the level map has a top bar (the engine\'s, or the drawn level map\'s own)', getComputedStyle(ui.$('.hud')).display !== 'none' || !!ui.$('#plBack'));
     if (back) back.click(); await wait(300);
     ok('"Meadow" goes back to the meadow', !!ui.$('.pm'));
     const pre = document.createElement('pre'); pre.id = 'selftest'; pre.textContent = JSON.stringify({ size: [innerWidth, innerHeight], passed: out.filter(x => x.pass).length, of: out.length, results: out }, null, 1);
