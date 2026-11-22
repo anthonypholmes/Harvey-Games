@@ -11,7 +11,7 @@
    The live parts (the child's name, Bonnie, her words, stars, bones) are drawn by js/proto-hub.js.
    Plain SVG strings, drawn once per theme. No libraries. Exposes window.ProtoHubArt. */
 (function () {
-const { C, Scene, rng, tree, bush, tuft, flowers, path, cloud, butterfly, meadowFloor, scatter, bone, paw, shadow } = window.ProtoArt;
+const { C, Scene, rng, tree, bush, tuft, flowers, path, cloud, butterfly, meadowFloor, scatter, bone, paw, shadow, tint } = window.ProtoArt;
 const W = 640, H = 1000;
 // the size of the words on the signs, in drawing units: 16px or more on the smallest phone (an iPhone SE shows the drawing at about 0.82)
 const SIGN = 20, GATE_SIGN = 23;
@@ -75,7 +75,7 @@ function gate(id, x, y) {
   }).join('');
   const sw = 184, sy = y - 152; // the sign: width, top
   return `<g class="place gate" id="art-${id}">
-    ${halo(x, y + 2, 104, 22)}
+    ${halo(x, y + 2, 90, 14)}
     <ellipse cx="${x}" cy="${y - 2}" rx="56" ry="13" fill="${C.pathLt}" opacity=".9"/>
     ${shadow(x, y + 2, 66, 7)}
     <rect x="${x - 64}" y="${y - 110}" width="12" height="112" rx="4" fill="${C.woodDk}"/><rect x="${x + 52}" y="${y - 110}" width="12" height="112" rx="4" fill="${C.woodDk}"/>
@@ -91,26 +91,32 @@ function gate(id, x, y) {
   </g>`;
 }
 function shopStall(x, y) {
-  return `<g class="place" id="art-shop">${halo(x, y + 2, 66, 14)}${shadow(x, y + 2, 52, 6)}
+  return `<g class="place" id="art-shop">${halo(x, y + 2, 56, 12)}${shadow(x, y + 2, 52, 6)}
     <rect x="${x - 48}" y="${y - 42}" width="96" height="42" rx="3" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="2"/>
     <rect x="${x - 54}" y="${y - 46}" width="108" height="8" rx="3" fill="${C.woodLt}" stroke="${C.woodDk}" stroke-width="1.5"/>
     <rect x="${x - 48}" y="${y - 100}" width="5" height="58" fill="${C.woodDk}"/><rect x="${x + 43}" y="${y - 100}" width="5" height="58" fill="${C.woodDk}"/>
     <path d="M${x - 58} ${y - 88} L${x - 48} ${y - 112} H${x + 48} L${x + 58} ${y - 88} Z" fill="#FFF6E2"/>
-    ${[0, 1, 2, 3, 4].map(i => `<path d="M${x - 48 + i * 24} ${y - 112} L${x - 58 + i * 29} ${y - 88} H${x - 58 + i * 29 + 14.5} L${x - 48 + i * 24 + 12} ${y - 112} Z" fill="${C.berry}"/>`).join('')}
-    ${[0, 1, 2, 3, 4].map(i => `<path d="M${x - 58 + i * 29} ${y - 88} a7.25 6 0 0 0 14.5 0" fill="${C.berry}"/><path d="M${x - 43.5 + i * 29} ${y - 88} a7.25 6 0 0 0 14.5 0" fill="#FFF6E2"/>`).join('')}
+    ${[0, 2, 4, 6].map(i => `<path d="M${x - 48 + i * 12} ${y - 112} L${x - 58 + i * 14.5} ${y - 88} H${x - 58 + (i + 1) * 14.5} L${x - 48 + (i + 1) * 12} ${y - 112} Z" fill="${C.berry}"/>`).join('')}
+    ${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<path d="M${x - 58 + i * 14.5} ${y - 88} a7.25 6 0 0 0 14.5 0" fill="${i % 2 ? '#FFF6E2' : C.berry}"/>`).join('')}
     <path d="M${x - 30} ${y - 46} L${x - 20} ${y - 68} L${x - 10} ${y - 46} Z" fill="#3BA8D9" stroke="#2179A3" stroke-width="1.2"/><circle cx="${x - 20}" cy="${y - 69}" r="3" fill="${C.gold}"/>
     <path d="M${x - 2} ${y - 46} l2 -18 l7 9 l7 -12 l7 12 l7 -9 l2 18 Z" fill="${C.gold}" stroke="${C.goldDk}" stroke-width="1.2" stroke-linejoin="round"/>
     <rect x="${x - 46}" y="${y - 36}" width="92" height="30" rx="5" fill="${C.woodLt}" stroke="${C.woodDk}" stroke-width="1.2"/>${bone(x - 29, y - 21.5, .38)}<text x="${x + 9}" y="${y - 14}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="${SIGN}" fill="${C.woodInk}">SHOP</text></g>`;
 }
 function walkArch(x, y) {
-  return `<g class="place" id="art-walk">${halo(x, y + 2, 62, 14)}${shadow(x, y + 2, 46, 6)}
+  return `<g class="place" id="art-walk">${halo(x, y + 2, 54, 12)}${shadow(x, y + 2, 46, 6)}
     <path d="M${x - 44} ${y} V${y - 52} Q${x} ${y - 102} ${x + 44} ${y - 52} V${y}" fill="none" stroke="${C.leafDk}" stroke-width="20" stroke-linecap="round"/>
     <path d="M${x - 44} ${y - 2} V${y - 52} Q${x} ${y - 100} ${x + 44} ${y - 52} V${y - 2}" fill="none" stroke="${C.leaf}" stroke-width="14" stroke-linecap="round"/>
     ${[[-44, -40], [-33, -74], [0, -88], [33, -74], [44, -40], [-44, -14], [44, -18]].map(([a, b], i) => `<circle cx="${x + a}" cy="${y + b}" r="3.4" fill="${C.flowers[i % 5]}"/>`).join('')}
     <rect x="${x - 46}" y="${y - 62}" width="92" height="30" rx="7" fill="${C.woodLt}" stroke="${C.woodDk}" stroke-width="1.6"/>${paw(x - 29, y - 46, .6, C.woodInk)}<text x="${x + 9}" y="${y - 40}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="${SIGN}" fill="${C.woodInk}">WALK</text></g>`;
 }
+// the clubhouse door, drawn open: shown when the clubhouse is tapped and Bonnie pops in to say hello
+function door(x, y) {
+  return `<g id="art-door" class="door"><path d="M${x - 22} ${y - 4} V${y - 62} Q${x} ${y - 82} ${x + 22} ${y - 62} V${y - 4} Z" fill="#3B2414"/>
+    <ellipse cx="${x + 4}" cy="${y - 24}" rx="14" ry="18" fill="${C.gold}" opacity=".45"/>
+    <path d="M${x - 22} ${y - 4} V${y - 62} L${x - 36} ${y - 57} V${y - 9} Z" fill="#7A4A26" stroke="#5A3418" stroke-width="1.2"/><circle cx="${x - 32}" cy="${y - 33}" r="2" fill="${C.gold}"/></g>`;
+}
 function places() {
-  return { walk: walkArch(...AT.walk), shop: shopStall(...AT.shop), maths: gate('maths', ...AT.maths), words: gate('words', ...AT.words) };
+  return { walk: walkArch(...AT.walk), shop: shopStall(...AT.shop), maths: gate('maths', ...AT.maths), words: gate('words', ...AT.words), door: door(...AT.house) };
 }
 
 /* ---------- the scene behind them ---------- */
@@ -154,7 +160,7 @@ function scene(theme) {
   scatter(s, 9, 46, [0, 250, 640, 560], [[96, 340, 120, 170], [200, 200, 240, 240], [424, 330, 140, 170], [130, 500, 430, 150]]);
   scatter(s, 11, 14, [0, 560, 90, 1000]); scatter(s, 12, 14, [560, 560, 640, 1000]);
   butterfly(s, 255, 330, '#F07CA8'); butterfly(s, 420, 300, '#F7D24A');
-  return s.render();
+  return s.render() + tint(theme, W, H); // dark and seasonal themes wash over the meadow (not the places, Bonnie or the signs)
 }
 
 const cache = {};

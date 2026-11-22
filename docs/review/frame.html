@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Frame</title>
+<!-- Shows one page at an exact phone size, for the review screenshots (headless Chrome can't make a window narrower than 500px). -->
+<style>html,body{margin:0;background:#fff}iframe{position:absolute;left:50%;top:0;transform:translateX(-50%);border:0}</style>
+<script>const q=new URLSearchParams(location.search);document.write(`<iframe src="../../${q.get('src')}" style="width:${q.get('w')}px;height:${q.get('h')}px"></iframe>`)</script>

@@ -7,6 +7,7 @@ The world list drawn as an illustrated meadow route, from design iteration 2 (Di
 ## Try it
 
 - `prototype-compare.html`: the current screen and the prototype side by side, for the **Clubhouse** or the **Maths map** (the Screen buttons), at iPhone SE, iPhone or iPad size. Choose pretend progress (a separate save, "Sam") or this device's real progress, and switch on the App Store app's free taster to see the padlocks.
+- `docs/review/` (http://localhost:8000/docs/review/): **the final review page**: old and new side by side at three sizes, the states and themes, what was checked, and the compromises. Its screenshots are in `docs/review/img/`; `docs/review/frame.html` shows a page at an exact phone size for remaking them.
 - `prototype-maths-map.html` on its own. Options after `?`: `demo=1` (the pretend save `meadow-save-proto-demo`), `taster=1` (padlocks as in the app), `view=old` (the current world list), `selftest=1` (runs the checks below and prints the results).
 
 Open them through a local web server or the website, not by double-clicking the file.
@@ -42,7 +43,19 @@ The Clubhouse page as one illustrated meadow that fits one screen: the clubhouse
 
 **Clubhouse gaps:** the drawing now ends 30 units lower, so on an iPhone SE the foot of the gates is at the bottom edge. With a night or space theme only the sky changes (the meadow stays daytime green). The name card and "Who's playing?" card still look as they do now. The pages a gate opens still go back to `index.html` (except the map prototype). Bonnie's "Let's play…" lines are the Clubhouse's existing ones, already recorded.
 
-## Checks (`selftest=1`)
+## Final refinements (22 November 2026, Anthony's "final prototype refinements" brief)
+
+**Clubhouse:** the whole of each gate (sign, arch, posts) is inside its tap area and lights on touch; the Walk arch and shop stall likewise; both gates fit an iPhone SE with no scrolling. Tapping the clubhouse opens its door, Bonnie hops to the step and says her line again, then goes back (no new feature behind it). The scenery takes a wash for dark and seasonal themes (night, space, snow, Christmas, sunset, sea, volcano), so it no longer stays daytime green. The name tag opens a menu ("Change name", and "Switch player" when there's more than one); Tab out of it or Escape closes it.
+
+**Maths map:** each place's name is on a big wooden sign (19px or more) with its progress in a tag: "x / y" stars, "All stars!", or "New!", plus a padlock in the free app. Names are no longer painted into the drawing. Each tap area covers the picture and its sign; pressing lights the sign and a gold ring, and Bonnie hops over. The trail is about a fifth shorter (1,280 units instead of 1,600). Returning players get a **Places** button: a list of every world with its progress (a proper dialog: focus stays inside, Escape closes it); choosing one scrolls there and opens it. Bonnie's bubble is narrower and placed so it covers no sign wherever she stands.
+
+**Shared:** `js/proto-demo.js` is one pretend save (`meadow-save-proto-demo`, players list `meadow-players-proto-demo`) used by both pages with `?demo=1` (Sam, with progress) or `?demo=new` (a new player); add `&theme=night` (any theme id) to dress it. The Clubhouse page loads the engine with those keys swapped in memory only. The prototype pages fetch their own scripts fresh each time, so a phone never shows an old copy. `prototype-compare.html` passes the pretend save to the Clubhouse too, and has a "New player" option.
+
+**Checks:** Clubhouse 29, map 27. All pass at 375 × 667, 393 × 852, 430 × 932, 768 × 1024, 820 × 1180 and 1180 × 820, with Sam, a new player, the free app (map) and Reduce Motion. Tab, Enter and Escape were tried for real. The family's real save was unchanged after using both prototypes with the pretend save, and no game file differs from `app-store`.
+
+**Still open:** real VoiceOver and the 2018 iPad not yet tried by hand; "Start here" (the brief said "Start there"); the map's top buttons are icons without words; on an SE the foot of the gates touches the bottom edge; the Words map isn't drawn; Bonnie's new lines aren't recorded.
+
+## Checks (`selftest=1`, first version)
 
 All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180): every maths world has a place; every tap target is at least 44 × 44; every place has a VoiceOver name that says its stars; places don't overlap; nothing is wider than the screen; Bonnie has a button; tapping a place opens the real level map with the engine's locks; the top bar comes back; "Meadow" returns.
 

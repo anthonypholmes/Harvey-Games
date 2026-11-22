@@ -187,7 +187,7 @@ function park(s, x, y) { // x,y = centre of the lawn
     <path d="M${gx - 40} ${gy - 40} Q${gx} ${gy - 62} ${gx + 40} ${gy - 40}" stroke="${C.woodDk}" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M${gx - 40} ${gy - 42} Q${gx} ${gy - 64} ${gx + 40} ${gy - 42}" stroke="${C.woodLt}" stroke-width="12" fill="none" stroke-linecap="round" id="parkArc"/>
     <defs><path id="parkTxt" d="M${gx - 40} ${gy - 39} Q${gx} ${gy - 61} ${gx + 40} ${gy - 39}"/></defs>
-    <text font-family="Fredoka" font-weight="700" font-size="8.5" fill="${C.woodInk}"><textPath href="#parkTxt" startOffset="50%" text-anchor="middle">PARTITIONING PARK</textPath></text>
+    ${[-24, -8, 8, 24].map(d => `<circle cx="${gx + d}" cy="${gy - 50 - (d === 8 || d === -8 ? 4 : 0)}" r="3" fill="${C.flowers[(d + 24) / 16 + 1]}"/>`).join('')}
     `);
 }
 function burrow(s, x, y) {
@@ -206,7 +206,7 @@ function burrow(s, x, y) {
   s.add(y + 22, rab(x - 20, y + 22, 1));
   // log with the name
   s.add(y + 44, `${shadow(x - 40, y + 44, 44, 5)}<rect x="${x - 82}" y="${y + 22}" width="82" height="22" rx="11" fill="${C.trunk}"/><ellipse cx="${x}" cy="${y + 33}" rx="7" ry="11" fill="${C.woodLt}" stroke="${C.trunkDk}" stroke-width="1.6"/><ellipse cx="${x}" cy="${y + 33}" rx="3" ry="5" fill="none" stroke="${C.woodDk}" stroke-width="1.2"/>
-    <text x="${x - 42}" y="${y + 37}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="9.5" fill="${C.woodLt}">BONDS BURROW</text>`);
+    <path d="M${x - 70} ${y + 30} q20 4 40 0 M${x - 56} ${y + 38} q18 3 36 0" stroke="${C.trunkDk}" stroke-width="1.4" fill="none" opacity=".6"/>`);
   bush(s, x + 98, y - 30, 1, undefined, C.berry);
 }
 function riverStones(s, x, y) { // where the trail crosses the river
@@ -216,7 +216,6 @@ function riverStones(s, x, y) { // where the trail crosses the river
     <g transform="translate(${x + 92} ${y + 12})"><ellipse cx="0" cy="-4" rx="9" ry="7" fill="#5DA34B"/><circle cx="-5" cy="-11" r="4" fill="#5DA34B"/><circle cx="5" cy="-11" r="4" fill="#5DA34B"/><circle cx="-5" cy="-11" r="2" fill="#fff"/><circle cx="5" cy="-11" r="2" fill="#fff"/><circle cx="-4.6" cy="-10.6" r="1.1" fill="#2B2B2B"/><circle cx="5.4" cy="-10.6" r="1.1" fill="#2B2B2B"/><path d="M-4 -3 q4 3 8 0" stroke="#2F5B2A" stroke-width="1.3" fill="none" stroke-linecap="round"/></g>`);
   // reeds
   [[x - 96, y - 18], [x - 86, y - 14], [x + 120, y - 20], [x + 128, y - 14]].forEach(([rx, ry]) => s.add(ry, `<path d="M${rx} ${ry} q-2 -18 1 -28" stroke="${C.leafDk}" stroke-width="2.4" fill="none" stroke-linecap="round"/><rect x="${rx - 2}" y="${ry - 34}" width="4.5" height="11" rx="2.2" fill="${C.trunk}"/>`));
-  nameBoard(s, x - 98, y - 16, 'Stepping Stone River', null, { fs: 12 });
 }
 function orchard(s, x, y) {
   s.g(`<rect x="${x - 104}" y="${y - 70}" width="208" height="150" rx="40" fill="${C.meadowLt}" opacity=".8"/>`);
@@ -225,8 +224,7 @@ function orchard(s, x, y) {
   fence(s, [[x + 48, y + 87], [x + 108, y + 84], [x + 112, y + 30]], .9);
   // crate with the name
   s.add(y + 98, `${shadow(x + 24, y + 98, 30, 5)}<rect x="${x - 6}" y="${y + 72}" width="60" height="26" rx="3" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="1.6"/><path d="M${x - 6} ${y + 85} h60" stroke="${C.woodDk}" stroke-width="1.2"/>
-    ${[x + 4, x + 14, x + 24, x + 34, x + 44].map((ax, i) => `<circle cx="${ax}" cy="${y + 70 - (i % 2) * 2}" r="5" fill="${C.apple}"/>`).join('')}
-    <text x="${x + 24}" y="${y + 95}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="8.5" fill="${C.woodInk}">ORCHARD</text>`);
+    ${[x + 4, x + 14, x + 24, x + 34, x + 44].map((ax, i) => `<circle cx="${ax}" cy="${y + 70 - (i % 2) * 2}" r="5" fill="${C.apple}"/>`).join('')}`);
   s.over(`<g></g>`);
 }
 function pond(s, x, y) {
@@ -237,7 +235,6 @@ function pond(s, x, y) {
   s.add(y + 2, `<g transform="translate(${x - 4} ${y + 2})"><ellipse cx="0" cy="0" rx="13" ry="7" fill="#FFFDF6"/><path d="M8 -2 q8 -2 10 -9 q-5 3 -10 2" fill="#FFFDF6"/><circle cx="-8" cy="-8" r="6" fill="#3F8B5C"/><path d="M-14 -8 l-6 1.5 l6 1.5z" fill="#F2A33C"/><circle cx="-8" cy="-9.5" r="1" fill="#1D1D1D"/><path d="M-12 -3 h8" stroke="#FFFDF6" stroke-width="2"/></g>`);
   // jetty with the name
   s.add(y + 40, `${shadow(x + 76, y + 46, 30, 4)}<rect x="${x + 50}" y="${y + 10}" width="52" height="30" rx="3" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="1.5"/>${[0, 1, 2, 3].map(i => `<path d="M${x + 50 + i * 13} ${y + 10} v30" stroke="${C.woodDk}" stroke-width="1"/>`).join('')}<rect x="${x + 52}" y="${y + 40}" width="4" height="8" fill="${C.woodDk}"/><rect x="${x + 96}" y="${y + 40}" width="4" height="8" fill="${C.woodDk}"/>`);
-  nameBoard(s, x + 40, y + 84, 'Sharing Pond', null, { fs: 12 });
   ['#9ED07A'].forEach(() => [[x - 92, y - 20], [x - 84, y - 30], [x + 88, y - 34]].forEach(([rx, ry]) => s.add(ry, `<path d="M${rx} ${ry} q-2 -16 1 -24" stroke="${C.leafDk}" stroke-width="2.2" fill="none" stroke-linecap="round"/><rect x="${rx - 2}" y="${ry - 30}" width="4" height="10" rx="2" fill="${C.trunk}"/>`)));
 }
 function cove(s, x, y) {
@@ -251,37 +248,51 @@ function cove(s, x, y) {
   s.add(y + 60, `<g transform="translate(${x - 70} ${y - 22}) scale(.42)">${croak()}</g>`);
   // treasure chest and a flag with the name
   s.add(y - 4, `${shadow(x + 66, y - 4, 22, 4)}<rect x="${x + 48}" y="${y - 26}" width="36" height="22" rx="4" fill="${C.woodDk}"/><path d="M${x + 48} ${y - 18} Q${x + 66} ${y - 36} ${x + 84} ${y - 18} Z" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="2"/><rect x="${x + 48}" y="${y - 19}" width="36" height="4" fill="${C.gold}"/><rect x="${x + 63}" y="${y - 20}" width="6" height="9" rx="1.5" fill="${C.gold}" stroke="${C.goldDk}" stroke-width="1"/>`);
-  s.add(y - 30, `${shadow(x + 110, y - 30, 8, 2)}<rect x="${x + 108}" y="${y - 110}" width="4" height="80" rx="2" fill="${C.woodDk}"/><path d="M${x + 112} ${y - 108} L${x + 186} ${y - 98} L${x + 112} ${y - 82} Z" fill="${C.berry}" stroke="#A93E4F" stroke-width="1.5" stroke-linejoin="round"/><text x="${x + 140}" y="${y - 92.5}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="8.5" fill="#fff">CAPTAIN'S COVE</text>`);
+  s.add(y - 30, `${shadow(x + 110, y - 30, 8, 2)}<rect x="${x + 108}" y="${y - 110}" width="4" height="80" rx="2" fill="${C.woodDk}"/><path d="M${x + 112} ${y - 108} L${x + 186} ${y - 98} L${x + 112} ${y - 82} Z" fill="${C.berry}" stroke="#A93E4F" stroke-width="1.5" stroke-linejoin="round"/><path d="M${x + 124} ${y - 99} l20 2" stroke="#fff" stroke-width="2" opacity=".7"/>`);
   s.over(`<g></g>`);
   rock(s, x - 140, y - 16, 1.2); rock(s, x + 150, y + 4, .9);
 }
 
 /* ---------------- the Maths route ---------------- */
+/* Refinement (22 November 2026): the trail is shorter. F() moves every height in the original drawing (1500 tall) to the
+   shorter one (1280 tall), section by section, so each place keeps its shape and the river and path still join them up. */
+const ROUTE_H = 1280;
+const Y_STOPS = [[-100, -95], [0, 0], [200, 190], [420, 390], [632, 575], [860, 770], [1040, 935], [1400, 1180], [1500, 1280], [1600, 1380]];
+function F(y) {
+  for (let i = 1; i < Y_STOPS.length; i++) { const [a0, b0] = Y_STOPS[i - 1], [a1, b1] = Y_STOPS[i]; if (y <= a1 || i === Y_STOPS.length - 1) return b0 + (y - a0) * (b1 - b0) / (a1 - a0); }
+}
+const mapD = d => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (m, x, y) => `${x} ${Math.round(F(+y))}`);
 function mathsRoute() {
-  const s = new Scene(640, 1500);
+  const s = new Scene(640, ROUTE_H);
   meadowFloor(s, 7);
   // the waterway: comes in top right, crosses the trail, fills the pond, runs to the cove
-  river(s, 'M700 470 C600 520 560 560 470 590 S300 640 220 650 S80 700 96 800 S190 920 200 980', 34);
-  river(s, 'M200 1090 C190 1180 230 1240 300 1290 S330 1330 330 1360', 28);
-  path(s, 'M320 -20 C320 40 300 70 280 110 S330 250 380 300 S470 380 420 450 S300 540 330 640 S470 720 470 800 S440 900 400 980 S330 1080 350 1140 S420 1190 360 1260', 30);
-  park(s, 220, 200);
-  burrow(s, 440, 420);
-  riverStones(s, 330, 632);
-  orchard(s, 440, 860);
-  pond(s, 210, 1040);
-  cove(s, 330, 1400);
+  river(s, mapD('M700 470 C600 520 560 560 470 590 S300 640 220 650 S80 700 96 800 S190 920 200 980'), 34);
+  river(s, mapD('M200 1090 C190 1180 230 1240 300 1290 S330 1330 330 1360'), 28);
+  path(s, mapD('M320 -20 C320 40 300 70 280 110 S330 250 380 300 S470 380 420 450 S300 540 330 640 S470 720 470 800 S440 900 400 980 S330 1080 350 1140 S420 1190 360 1260'), 30);
+  park(s, 220, F(200));
+  burrow(s, 440, F(420));
+  riverStones(s, 330, F(632));
+  orchard(s, 440, F(860));
+  pond(s, 210, F(1040));
+  cove(s, 330, F(1400));
   // border woods and hedges (frame the phone view, fill the iPad edges)
   const r = rng(99);
-  [[40, 120], [90, 70], [600, 90], [560, 180], [610, 300], [30, 330], [70, 420], [600, 640], [560, 720], [20, 560], [610, 980], [580, 1100], [40, 1220], [610, 1200], [26, 860]].forEach(([tx, ty], i) => tree(s, tx, ty, .9 + r() * .4, i % 3 === 0 ? 'pine' : (i % 5 === 1 ? 'blossom' : 'round'), i * 7));
-  [[150, 330, 1], [520, 260, .9], [270, 470, .9], [560, 520, 1], [250, 760, .8], [130, 900, .9], [520, 1010, 1], [250, 1180, .9], [470, 1170, .8]].forEach(([bx, by, k], i) => bush(s, bx, by, k, undefined, i % 3 ? null : C.berry));
-  rock(s, 540, 600, .8); rock(s, 200, 560, .7); rock(s, 300, 960, .7);
-  scatter(s, 5, 120, [0, 0, 640, 1320], [[300, 600, 80, 70]]);
-  butterfly(s, 260, 340, '#F7D24A'); butterfly(s, 500, 760, '#F07CA8'); butterfly(s, 120, 980, '#B58BE0');
+  [[40, 120], [90, 70], [600, 90], [560, 180], [610, 300], [30, 330], [70, 420], [600, 640], [560, 720], [20, 560], [610, 980], [580, 1100], [40, 1220], [610, 1200], [26, 860]].forEach(([tx, ty], i) => tree(s, tx, F(ty), .9 + r() * .4, i % 3 === 0 ? 'pine' : (i % 5 === 1 ? 'blossom' : 'round'), i * 7));
+  [[150, 330, 1], [520, 260, .9], [270, 470, .9], [560, 520, 1], [250, 760, .8], [130, 900, .9], [520, 1010, 1], [250, 1180, .9], [470, 1170, .8]].forEach(([bx, by, k], i) => bush(s, bx, F(by), k, undefined, i % 3 ? null : C.berry));
+  rock(s, 540, F(600), .8); rock(s, 200, F(560), .7); rock(s, 300, F(960), .7);
+  scatter(s, 5, 100, [0, 0, 640, F(1320)], [[300, F(600), 80, 60]]);
+  butterfly(s, 260, F(340), '#F7D24A'); butterfly(s, 500, F(760), '#F07CA8'); butterfly(s, 120, F(980), '#B58BE0');
   return s;
 }
 
 
-window.ProtoArt = { C, mathsRoute, bonnie, bubble, star, bone, paw, shadow,
+/* The Bone Shop themes, on the meadow: a wash of colour over the scenery (not over signs, Bonnie or the buttons).
+   Night and space darken it, Christmas and snow frost it, sunset and volcano warm it, sea cools it. */
+const TINTS = { night: ['#141A3A', .42], space: ['#0B0F2A', .48], christmas: ['#E9F3FF', .22], snow: ['#FFFFFF', .3], sunset: ['#FF9A5A', .14],
+  volcano: ['#3A1408', .34], sea: ['#3FA7C9', .14] };
+const tint = (theme, w, h) => { const t = TINTS[theme]; return t ? `<rect class="tint" width="${w}" height="${h}" fill="${t[0]}" opacity="${t[1]}" pointer-events="none"/>` : ''; };
+
+window.ProtoArt = { C, mathsRoute, F, ROUTE_H, tint, TINTS, bonnie, bubble, star, bone, paw, shadow,
   // the drawing kit, shared with the Clubhouse meadow (js/proto-hub-art.js)
   Scene, rng, tree, bush, tuft, flowers, rock, fence, path, cloud, butterfly, meadowFloor, scatter };
 })();

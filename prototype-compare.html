@@ -30,8 +30,8 @@
     <button data-page="club">Clubhouse</button><button data-page="maths">Maths map</button></div>
   <div class="group" role="group" aria-label="Screen size"><b>Size</b>
     <button data-size="375x667">iPhone SE</button><button data-size="393x852">iPhone</button><button data-size="820x1180">iPad</button></div>
-  <div class="group maths-only" role="group" aria-label="Progress"><b>Progress</b>
-    <button data-demo="1">Pretend (Sam)</button><button data-demo="0">This device's</button></div>
+  <div class="group" role="group" aria-label="Progress"><b>Progress</b>
+    <button data-demo="1">Pretend (Sam)</button><button data-demo="new">New player</button><button data-demo="0">This device's</button></div>
   <label class="chk maths-only"><input type="checkbox" id="taster"> App taster (padlocks)</label>
 </header>
 <p class="note" id="note"></p>
@@ -40,8 +40,10 @@
   const P = new URLSearchParams(location.search);
   let size = P.get('size') || (innerWidth < 900 ? '375x667' : '393x852'), demo = P.get('demo') ?? '1', taster = P.get('taster') === '1', page = P.get('page') || 'club';
   const NOTES = {
-    club: 'Both sides are the real Clubhouse with this device\'s own save: the name, bones, sound and players are shared. On the prototype, the Maths gate opens the map prototype.',
+    club: 'Both sides are the real Clubhouse. "Pretend" and "New player" use a pretend save kept apart from the family\'s; "This device\'s" uses the real one. On the prototype, the Maths gate opens the map prototype.',
     maths: 'Both screens run the same game engine with the same progress. Play a level on either side, then reload to see the stars on both. "Pretend" progress is kept apart from the family\'s real save.' };
+  // the Clubhouse: with pretend progress, both sides load index.html through the prototype page (its view=old is index.html untouched)
+  const clubSrc = view => demo === '0' ? (view === 'old' ? 'index.html' : 'prototype-clubhouse.html') : `prototype-clubhouse.html?${view === 'old' ? 'view=old&' : ''}demo=${demo}`;
   function draw() {
     const [w, h] = size.split('x').map(Number), ipad = w > 600;
     const fitW = (innerWidth - 80) / (ipad ? 1 : 2) / (w + 24), fitH = (innerHeight - 150) / (h + 24);
@@ -49,7 +51,7 @@
     const q = `demo=${demo}${taster ? '&taster=1' : ''}`;
     const frame = (label, view) => `<figure class="${ipad ? 'ipad' : ''}" style="width:${(w + 24) * k}px">
       <div class="device" style="width:${w}px;transform:scale(${k});margin-bottom:${-(h + 24) * (1 - k)}px;margin-left:${-(w + 24) * (1 - k) / 2}px;margin-right:${-(w + 24) * (1 - k) / 2}px">
-      <iframe title="${label}" src="${page === 'club' ? (view === 'old' ? 'index.html' : 'prototype-clubhouse.html') : `prototype-maths-map.html?view=${view}&${q}`}" style="width:${w}px;height:${h}px"></iframe></div><figcaption>${label}</figcaption></figure>`;
+      <iframe title="${label}" src="${page === 'club' ? clubSrc(view) : `prototype-maths-map.html?view=${view}&${q}`}" style="width:${w}px;height:${h}px"></iframe></div><figcaption>${label}</figcaption></figure>`;
     document.getElementById('main').innerHTML = frame('Now', 'old') + frame(page === 'club' ? 'Prototype: the Clubhouse meadow' : 'Prototype: the meadow map', 'new');
     document.getElementById('note').textContent = NOTES[page];
     document.querySelectorAll('.maths-only').forEach(el => el.hidden = page !== 'maths');

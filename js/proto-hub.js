@@ -140,13 +140,16 @@
   .ph-say.top .face{display:block;width:46px;height:46px;flex:none;border-radius:50%;background:#E6F3D8;overflow:hidden}
   .ph-say.top .face svg{width:100%;height:auto;transform:translateY(4px) scale(1.5);transform-origin:50% 30%}
   #phBonnie{transition:transform .7s cubic-bezier(.45,.05,.3,1)}
+  #phBonnie .eyes{transform-box:fill-box;transform-origin:50% 50%;animation:blink 5s infinite}
+  #phBonnie .tail{transform-box:fill-box;transform-origin:0% 100%;animation:wag 1.4s ease-in-out infinite}
+  .door{opacity:0;transition:opacity .2s}.door.open{opacity:1}
   #phBonnie.hop>g{animation:phHop .35s ease-in-out 2}
   #phBonnie.giggle>g{animation:phWig .9s ease-in-out}
   #phBonnie.bonnie-spin>g{animation:phSpin 1.2s cubic-bezier(.3,1.2,.5,1);transform-box:fill-box;transform-origin:50% 100%}
   @keyframes phHop{50%{transform:translateY(-14px)}}
   @keyframes phWig{20%,60%{transform:rotate(-6deg)}40%,80%{transform:rotate(6deg)}}
   @keyframes phSpin{35%{transform:translateY(-40px) rotate(180deg)}70%{transform:translateY(-10px) rotate(360deg)}100%{transform:none}}
-  @media (prefers-reduced-motion:reduce){#phBonnie,.ph-say,.place,.place .halo{transition:none}#phBonnie>g,.gate .sign,.place .halo{animation:none!important}.place.pressed{transform:none}}
+  @media (prefers-reduced-motion:reduce){#phBonnie,.ph-say,.place,.place .halo,.door{transition:none}#phBonnie>g,#phBonnie .eyes,#phBonnie .tail,.gate .sign,.place .halo{animation:none!important}.place.pressed{transform:none}}
   .ph .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}`;
 
   /* Fit the drawing to the screen: everything in NEED shows, as big as it can be, and the rest of the screen
@@ -209,7 +212,7 @@
       </div>
       <div class="ph-stage" style="--k:${view.k.toFixed(3)};width:${view.W.toFixed(1)}px;height:${view.H.toFixed(1)}px;top:${view.top.toFixed(0)}px">
         <svg viewBox="${vb}" aria-hidden="true">${ART.scene(theme)}</svg>
-        <svg viewBox="${vb}" aria-hidden="true" id="phPlaces">${art.walk}${art.shop}${art.maths}${art.words}${clubName()}
+        <svg viewBox="${vb}" aria-hidden="true" id="phPlaces">${art.door}${art.walk}${art.shop}${art.maths}${art.words}${clubName()}
           <g id="phBonnie" style="transform:${bonnieAt(at)}"><g>${A.bonnie(0, 0, BONNIE_K)}</g></g></svg>
         <h1 class="sr">${esc($('title').textContent)}</h1>
         <div class="ph-say near" id="phSay"><span class="face" aria-hidden="true">${M.ui.bonnieSVG()}</span><span id="phSays" aria-live="polite"></span></div>
@@ -218,7 +221,7 @@
         ${hitBtn('phWords', 'place', PLACES.words.hit, gameLabel('words'), 'words')}
         ${hitBtn('phWalk', 'place', PLACES.walk.hit, walkLabel, 'walk')}
         ${hitBtn('phShop', 'place', PLACES.shop.hit, `Bonnie's Bone Shop. You have ${S.bones} ${S.bones === 1 ? 'bone' : 'bones'}.`, 'shop')}
-        ${hitBtn('phHouse', 'house', HOUSE, 'The clubhouse. Hear Bonnie again')}
+        ${hitBtn('phHouse', 'house', HOUSE, 'The clubhouse. Bonnie pops in and says hello again')}
         ${pg.maths ? progTag('maths', pg.maths) : ''}
         ${pg.words ? progTag('words', pg.words) : ''}
         ${label(AT.shop[0], AT.shop[1] + 6, 'bone', String(S.bones))}
@@ -269,11 +272,14 @@
     const closeMenu = () => { menu.hidden = true; me.setAttribute('aria-expanded', 'false'); };
     me.onclick = e => { e.stopPropagation(); const open = menu.hidden; menu.hidden = !open; me.setAttribute('aria-expanded', String(open)); if (open) menu.querySelector('button').focus(); };
     menu.addEventListener('keydown', e => { if (e.key === 'Escape') { closeMenu(); me.focus(); } });
+    me.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) closeMenu(); });
+    // Tab out of the menu closes it, as a menu should
+    menu.addEventListener('focusout', e => { if (!e.relatedTarget || !e.relatedTarget.closest('#phMenu, #phMe')) closeMenu(); });
     document.addEventListener('pointerdown', e => { if (!menu.hidden && !e.target.closest('#phMenu, #phMe')) closeMenu(); }, { capture: true });
     $('phRename').onclick = () => { closeMenu(); $('changeName').click(); };
     if ($('phPlayers')) $('phPlayers').onclick = () => { closeMenu(); $('switchPlayer').click(); };
     $('phBonnieBtn').onclick = tickle;
-    $('phHouse').onclick = () => { if (busy) return; wiggle('giggle'); const t = $('say').textContent; bubble(t); say(t); };
+    $('phHouse').onclick = visitHouse;
     const lines = { maths: `Let's play ${CONFIG.GAMES[0].name}!`, words: `Let's play ${CONFIG.GAMES[1].name}!`, walk: LINES.walk, shop: LINES.shop };
     document.querySelectorAll('.ph-hit.place').forEach(btn => {
       const id = btn.dataset.place, art = () => $('art-' + id);
@@ -291,6 +297,23 @@
       btn.classList.add('tip-ring'); art.classList.add('tip', 'on');
       btn.addEventListener('click', () => { btn.classList.remove('tip-ring'); art.classList.remove('tip'); $(from).classList.remove('tip-ring'); }, { once: true });
     });
+  }
+  /* The clubhouse isn't a dead end: tap it and Bonnie trots to the door, it swings open, she says her line again
+     (usually what to do next: pick a game, or try the Walk), then she trots back. No new words: her lines are recorded. */
+  let houseTimer = 0;
+  function visitHouse() {
+    if (busy) return; busy = true;
+    const bon = $('phBonnie'), d = $('art-door'), t = $('say').textContent, step = [AT.house[0] - 30, AT.house[1] + 22];
+    d.classList.add('open'); tone(520, .08, 'triangle', .08); tone(660, .1, 'triangle', .08, .08);
+    $('phSay').classList.add('away');
+    if (!reduce()) { bon.classList.remove('giggle', 'hop'); void bon.getBoundingClientRect(); bon.classList.add('hop'); bon.style.transform = bonnieAt(step); }
+    say(t); bubble(t);
+    clearTimeout(houseTimer);
+    houseTimer = setTimeout(() => {
+      d.classList.remove('open');
+      if (!reduce()) { bon.classList.remove('hop'); void bon.getBoundingClientRect(); bon.classList.add('hop'); bon.style.transform = bonnieAt(AT.bonnie); }
+      setTimeout(() => { $('phSay').classList.remove('away'); bubble($('say').textContent); busy = false; }, reduce() ? 0 : 700);
+    }, 2200);
   }
   function wiggle(cls) {
     const g = $('phBonnie'); if (!g || reduce()) return;
@@ -383,6 +406,19 @@
     ok('pressing a game gate lights it up and dips it', $('art-maths').classList.contains('on') && $('art-maths').classList.contains('pressed'));
     $('phMaths').dispatchEvent(new PointerEvent('pointerleave', { bubbles: true })); await wait(30);
     ok('…and lets go again', !$('art-maths').classList.contains('pressed'));
+    ok('the whole gateway is tappable: sign, medallion, posts and the sunlight', ['maths', 'words'].every(id => { const a = r($('art-' + id)), b = r($(id === 'maths' ? 'phMaths' : 'phWords')); return a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1; }));
+    ok('the Walk arch and shop stall are inside their tap areas', ['walk', 'shop'].every(id => { const a = r($('art-' + id)), b = r($(id === 'walk' ? 'phWalk' : 'phShop')); return a.left >= b.left - 6 && a.right <= b.right + 6 && a.top >= b.top - 6 && a.bottom <= b.bottom + 6; }));
+    // the clubhouse: Bonnie pops to the door and says her line again
+    const said = $('say').textContent; $('phHouse').click(); await wait(100);
+    ok('tapping the clubhouse opens its door, and Bonnie says hello again', $('art-door').classList.contains('open') && $('phSays').textContent === said);
+    await wait(3100);
+    ok('…then the door closes and Bonnie is back by her words', !$('art-door').classList.contains('open') && !busy && $('phSay').classList.contains('near'));
+    const rm = matchMedia('(prefers-reduced-motion: reduce)').matches, anim = sel => getComputedStyle(document.querySelector(sel)).animationName;
+    ok(rm ? 'Reduce Motion: nothing sways, blinks or wags' : 'Bonnie blinks and wags; the game signs sway now and then',
+      rm ? ['#art-maths .sign', '#phBonnie .eyes', '#phBonnie .tail'].every(s => anim(s) === 'none' || parseFloat(getComputedStyle(document.querySelector(s)).animationDuration) < .01)
+         : anim('#phBonnie .eyes') === 'blink' && anim('#phBonnie .tail') === 'wag' && anim('#art-maths .sign') === 'phSway', rm ? 'reduce' : 'motion');
+    const t0 = performance.now(); draw(); const ms = performance.now() - t0;
+    ok('drawing is quick and modest (for the 2018 iPad)', ms < 300 && document.querySelectorAll('.ph-stage svg *').length < 4000, `${document.querySelectorAll('.ph-stage svg *').length} SVG elements, drawn in ${ms.toFixed(0)} ms`);
     const pre = document.createElement('pre'); pre.id = 'selftest';
     pre.style.cssText = 'position:fixed;z-index:99;left:0;right:0;bottom:0;max-height:60vh;overflow:auto;margin:0;background:#fff;font:12px monospace';
     pre.textContent = JSON.stringify({ size: [innerWidth, innerHeight], k: +view.k.toFixed(2), passed: out.filter(x => x.pass).length, of: out.length, results: out }, null, 1);
