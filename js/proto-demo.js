@@ -4,6 +4,8 @@
  *   demo=1    Sam: 86 bones, a 3-day walk streak; in Meadow Maths every star in Partitioning Park, two levels of the
  *             burrow (this week) and one of the river (played last); in Meadow Words two levels, last month
  *   demo=new  Sam, with nothing played yet
+ *   demo=mid  Sam part-way: three levels of Partitioning Park (level 3 played last), two of Phonics Forest
+ *   demo=later  Sam further on: seven of Partitioning Park's eight levels, four of Phonics Forest's five, and more
  *   theme=night (or any theme id) dresses the pretend save in that theme; without it, the usual day
  * Each page loads only its own game's worlds, so each game's progress is added the first time one of its pages opens.
  * Load after the engine and the world files. */
@@ -13,7 +15,7 @@ window.ProtoDemo = {
   seed(variant) {
     const M = window.Meadow;
     if (!variant || M.save.key !== this.KEY) return;
-    const want = variant === 'new' ? 'new' : 'progress';
+    const want = variant === 'new' ? 'new' : variant === 'mid' || variant === 'later' ? variant : 'progress';
     const theme = new URLSearchParams(location.search).get('theme') || 'day';
     const dress = () => { M.save.mutate(s => { s.theme = theme; if (!s.owned.themes.includes(theme)) s.owned.themes.push(theme); }); if (document.body) document.body.dataset.theme = theme; };
     const get = k => { try { return localStorage.getItem(this.KEY + k); } catch (e) { return null; } };
@@ -22,18 +24,24 @@ window.ProtoDemo = {
       // a fresh pretend child
       try { localStorage.removeItem(this.KEY); } catch (e) {}
       M.save.load();
-      M.save.mutate(s => { s.name = 'Sam'; if (want === 'progress') { s.bones = 86; s.walks.streak = 3; s.walks.last = day(0); [0, 1, 2].forEach(n => { s.walks.days[day(n)] = 1; }); } });
+      M.save.mutate(s => { s.name = 'Sam'; if (want !== 'new') { s.bones = 86; s.walks.streak = 3; s.walks.last = day(0); [0, 1, 2].forEach(n => { s.walks.days[day(n)] = 1; }); } });
       put('-variant', want); put('-given', '[]');
     }
     // each game's progress is added the first time a page that has its worlds is opened (a page only loads its own game)
-    if (want === 'progress') {
+    if (want !== 'new') {
       const given = JSON.parse(get('-given') || '[]');
-      const PLAN = [['y2-maths-partitioning', 99, true, 20], ['y2-maths-number-bonds', 2, false, 0], ['y2-maths-number-lines', 1, false, 20, 1], ['y2-english-phonics', 2, false, 30]];
-      PLAN.forEach(([id, n, all, ago, started]) => {
+      // [world, stars for each level played, how many days ago, the level played last (1, 2, ...)]
+      const PLANS = {
+        progress: [['y2-maths-partitioning', [3, 3, 3, 3, 3, 3, 3, 3], 20], ['y2-maths-number-bonds', [3, 2], 0], ['y2-maths-number-lines', [3], 20, 1], ['y2-english-phonics', [3, 2], 30]],
+        mid: [['y2-maths-partitioning', [3, 2, 2], 1, 3], ['y2-english-phonics', [3, 2], 1, 2]],
+        later: [['y2-maths-partitioning', [3, 3, 2, 3, 1, 3, 2], 1, 7], ['y2-maths-number-bonds', [3, 3, 2, 3, 3], 3], ['y2-maths-number-lines', [3, 2], 2],
+          ['y2-english-phonics', [3, 2, 3, 3], 1, 4], ['y2-english-tricky-words', [3, 3], 2]],
+      };
+      PLANS[want].forEach(([id, stars, ago, last]) => {
         const w = M.world(id); if (!w || given.includes(id)) return;
         M.save.mutate(s => {
-          w.levels.slice(0, n).forEach((L, i) => { const k = id + '/' + L.id, st = all || i % 2 === 0 ? 3 : 2; s.stars[k] = st; s.starLog.push({ key: k, day: day(ago), from: 0, to: st }); });
-          if (started) s.levelStarts.push({ key: id + '/' + w.levels[0].id, day: day(started), via: 'map' }); // played last
+          w.levels.slice(0, stars.length).forEach((L, i) => { const k = id + '/' + L.id; s.stars[k] = stars[i]; s.starLog.push({ key: k, day: day(ago), from: 0, to: stars[i] }); });
+          if (last) s.levelStarts.push({ key: id + '/' + w.levels[last - 1].id, day: day(1), via: 'map' }); // played last
         });
         given.push(id);
       });

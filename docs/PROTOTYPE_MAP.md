@@ -75,8 +75,19 @@ The Clubhouse page as one illustrated meadow that fits one screen: the clubhouse
 - **The engine is not changed.** Its level list is still drawn, only hidden (`body.pl-on`); each tap presses the engine's own button for that level, so unlocking, the locked line, the full-game box and starting a level are the engine's. Each row's VoiceOver name is the engine's own (it still includes the level's description).
 - **Bonnie** sits by the level to play next: the one played last if it isn't finished, else the first new level, else the first without 3 stars. She says "Level 2 next! Tap my stone." Tap a stone and she hops over, then the level starts. A locked stone shakes its tag and the engine says why.
 - **The top bar** is the map's own wooden one (Meadow, grown-ups, bones); the engine's bar with the streak and shop is hidden here.
-- **Checks:** 18, all passing at 375 × 667, 393 × 852, 430 × 932, 768 × 1024, 820 × 1180 and 1180 × 820, for every Maths and Words place, with Sam, a new player, the free app and Reduce Motion. The two map selftests (27) and the Clubhouse's (29) still pass.
+- **Checks:** 18 at first (23 after refinement 1), all passing at 375 × 667, 393 × 852, 430 × 932, 768 × 1024, 820 × 1180 and 1180 × 820, for every Maths and Words place, with Sam, a new player, the free app and Reduce Motion. The two map selftests (27) and the Clubhouse's (29) still pass.
 - **Gaps:** the level descriptions are only read by VoiceOver now, not shown. Bonnie's level-map line isn't recorded. Not yet tried with real VoiceOver or on the 2018 iPad.
+
+### Level maps refinement 1 (22 November 2026, Anthony's level-map brief)
+
+- **The next level:** the first new level (then the one played last if it isn't on 3 stars, then the first without 3 stars). Its tag gets a gold "Next" ribbon and gold edge; its stone a gold glow and ring; Bonnie sits beside it.
+- **Locked levels:** one look in every world (grey stone, ivy, padlock on the right, grey tag, no stars or flag); full-game levels differ only by a gold padlock and "Full game".
+- **Scrolling:** opening a world glides to the next level if it isn't on the first screen. Back from a level (the engine's "world name" button after "Level complete!"), the map opens at the next level at once, and Bonnie hops from the stone just played to the next. Paw prints (gold dots in water) mark the trail already walked.
+- **World name sign:** 26px (was 22px), thicker frame and a shadow. Captain Croak moved up so it doesn't hide him.
+- **Captain's Cove:** a dotted boat route links the rocks in order; the sandbanks are smaller and at the edges.
+- **Scenery:** a soft wash over both sides of the trail keeps the border trees quieter than the stones.
+- **Pretend saves:** `demo=mid` (Partitioning Park 3 of 8, Phonics Forest 2 of 5) and `demo=later` (Partitioning 7 of 8, Phonics 4 of 5, and more), alongside `demo=new` and `demo=1`. The Clubhouse and both maps accept them.
+- **Checks:** 23 now (one clear "Next", locked looks identical across worlds, name sign size, opening at the next level, coming back there after a level). All pass at the six sizes with every pretend save, the free app and Reduce Motion; the map (27) and Clubhouse (29) checks still pass.
 
 ## Checks (`selftest=1`, first version)
 

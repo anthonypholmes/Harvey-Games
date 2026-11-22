@@ -32,7 +32,7 @@
 </script>
 <script>
   // demo=1 (some progress) or demo=new (a new player): a pretend save of its own (js/proto-demo.js), so the family's real progress is never touched.
-  var demo = Q.get('demo') === 'new' ? 'new' : Q.get('demo') === '1' ? '1' : '';
+  var demo = ['new', '1', 'mid', 'later'].includes(Q.get('demo')) ? Q.get('demo') : '';
   Meadow.startGame({
     subject: 'maths', title: 'Meadow Maths', icon: '🔢', homeHref: 'index.html', readAloudOption: true,
     otherGames: [{ title: 'Meadow Words', icon: '🌼', href: 'meadow-words.html' }],

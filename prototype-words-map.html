@@ -29,7 +29,7 @@
 </script>
 <script>
   // demo=1 (some progress) or demo=new (a new player): the pretend save shared with the other prototypes (js/proto-demo.js)
-  var demo = Q.get('demo') === 'new' ? 'new' : Q.get('demo') === '1' ? '1' : '';
+  var demo = ['new', '1', 'mid', 'later'].includes(Q.get('demo')) ? Q.get('demo') : '';
   Meadow.startGame({
     subject: 'english', title: 'Meadow Words', icon: '🌼', homeHref: 'index.html',
     otherGames: [{ title: 'Meadow Maths', icon: '🔢', href: 'meadow-maths.html' }],
