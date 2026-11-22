@@ -1,6 +1,6 @@
 # Meadow Maths map prototype
 
-**Branch:** `prototype-meadow-map` (from `app-store`, 22 November 2026). Nothing in the game changes: these are new files only, and none of the game's pages link to them.
+**Branch:** `prototype-meadow-map` (from `app-store`, 22 November 2026). **Start with `docs/HANDOFF_REDESIGN.md`.** Nothing in the game changes: these are new files only, and none of the game's pages link to them.
 
 The world list drawn as an illustrated meadow route, from design iteration 2 (Direction B: the Clubhouse meadow with separate Maths and Words routes). The design sheet is the "Meadow Clubhouse design sheet" canvas.
 
