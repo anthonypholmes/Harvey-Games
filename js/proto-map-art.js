@@ -286,13 +286,108 @@ function mathsRoute() {
 }
 
 
+/* ---------------- the Meadow Words route (22 November 2026) ----------------
+   Four places down one trail, in the same landscape style as the Maths route: Phonics Forest (trees wearing their
+   sounds), Tricky Word Trail (signposts of tricky words, and a footbridge over the brook), Sentence Meadow (bunting
+   that makes a sentence, from a capital to a full stop) and Bonnie's Story Nook (a hollow oak with a reading bench).
+   The trail comes down from the Clubhouse's Words gate, so it starts in the forest the gate looks into. */
+const WORDS_H = 1060;
+const letterBadge = (x, y, t, ring = C.leafDk, ink = C.leafDeep, r = 11) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${C.paper}" stroke="${ring}" stroke-width="1.6"/><text x="${x}" y="${y + 4}" text-anchor="middle" font-family="Andika" font-size="${t.length > 2 ? 9.5 : 12}" fill="${ink}">${t}</text>`;
+function forest(s, x, y) { // x,y = middle of the glade
+  s.g(`<path d="M${x - 118} ${y + 20} Q${x - 110} ${y - 72} ${x} ${y - 80} Q${x + 110} ${y - 74} ${x + 120} ${y + 18} Q${x + 104} ${y + 74} ${x} ${y + 76} Q${x - 106} ${y + 74} ${x - 118} ${y + 20}Z" fill="#7DB862" opacity=".45"/>`);
+  [[x - 78, y - 30, 'pine', 'sh', 1.05], [x - 22, y - 54, 'round', 'ai', 1.1], [x + 40, y - 40, 'pine', 'oo', 1], [x + 88, y - 4, 'round', 'ee', .9], [x - 92, y + 30, 'round', 'ch', .85], [x + 20, y + 22, 'pine', 'a-e', .95]].forEach(([tx, ty, kind, t, k], i) => {
+    tree(s, tx, ty, k, kind, 60 + i * 5);
+    s.add(ty + 1, `<g>${letterBadge(tx, ty - (kind === 'pine' ? 34 : 46) * k, t)}</g>`);
+  });
+  // toadstools and a log
+  [[x - 40, y + 50], [x - 30, y + 56], [x + 66, y + 44]].forEach(([mx, my], i) => s.add(my, `<rect x="${mx - 1.6}" y="${my - 8}" width="3.2" height="8" fill="#F6EEDC"/><path d="M${mx - 7} ${my - 7} Q${mx} ${my - 17} ${mx + 7} ${my - 7} Z" fill="${i % 2 ? '#E07A3F' : C.berry}"/><circle cx="${mx - 2}" cy="${my - 11}" r="1.3" fill="#fff"/><circle cx="${mx + 3}" cy="${my - 9}" r="1" fill="#fff"/>`));
+  s.add(y + 62, `${shadow(x + 6, y + 62, 34, 4)}<rect x="${x - 26}" y="${y + 48}" width="62" height="15" rx="7.5" fill="${C.trunk}"/><ellipse cx="${x + 36}" cy="${y + 55.5}" rx="5" ry="7.5" fill="${C.woodLt}" stroke="${C.trunkDk}" stroke-width="1.4"/>`);
+  flowers(s, x + 104, y + 52, 5, 71, 18);
+}
+function signpost(s, x, y, words, flip = false) {
+  let g = `${shadow(x, y, 12, 3)}<rect x="${x - 3}" y="${y - 70}" width="6" height="70" rx="2" fill="${C.woodDk}"/>`;
+  words.forEach((w, i) => {
+    const by = y - 64 + i * 22, wd = w.length * 7.6 + 20, dir = (i % 2 ? -1 : 1) * (flip ? -1 : 1), x0 = dir > 0 ? x - 6 : x + 6 - wd;
+    const pts = dir > 0 ? `${x0},${by} ${x0 + wd},${by} ${x0 + wd + 9},${by + 8} ${x0 + wd},${by + 16} ${x0},${by + 16}` : `${x0},${by} ${x0 + wd},${by} ${x0 + wd},${by + 16} ${x0},${by + 16} ${x0 - 9},${by + 8}`;
+    g += `<polygon points="${pts}" fill="${C.woodLt}" stroke="${C.woodDk}" stroke-width="1.5" stroke-linejoin="round"/><text x="${x0 + wd / 2}" y="${by + 12}" text-anchor="middle" font-family="Andika" font-size="12" fill="${C.woodInk}">${w}</text>`;
+  });
+  s.add(y, g);
+}
+function trickyTrail(s, x, y) {
+  signpost(s, x - 6, y - 36, ['said', 'the']);
+  signpost(s, x + 66, y + 4, ['was', 'one'], true);
+  signpost(s, x + 40, y + 96, ['they', 'could']);
+  // the footbridge where the trail crosses the brook
+  const bx = x - 92, by = y + 52;
+  s.add(by + 12, `${shadow(bx, by + 16, 40, 5)}<path d="M${bx - 34} ${by + 10} Q${bx} ${by - 4} ${bx + 34} ${by + 10}" stroke="${C.woodDk}" stroke-width="16" fill="none"/>
+    <path d="M${bx - 34} ${by + 8} Q${bx} ${by - 6} ${bx + 34} ${by + 8}" stroke="${C.wood}" stroke-width="12" fill="none"/>
+    ${[-24, -12, 0, 12, 24].map(d => `<path d="M${bx + d} ${by + 1 + Math.abs(d) * .2} v8" stroke="${C.woodDk}" stroke-width="1.2"/>`).join('')}
+    <path d="M${bx - 32} ${by - 6} Q${bx} ${by - 22} ${bx + 32} ${by - 6}" stroke="${C.woodDk}" stroke-width="3" fill="none"/>
+    ${[-30, -10, 10, 30].map(d => `<path d="M${bx + d} ${by - 6 - (Math.abs(d) < 20 ? 10 : 4)} v12" stroke="${C.woodDk}" stroke-width="2.6"/>`).join('')}`);
+  rock(s, x + 120, y + 70, .8); bush(s, x - 20, y + 116, .9, undefined, C.berry);
+  flowers(s, x + 20, y - 4, 4, 81, 14);
+}
+function sentenceMeadow(s, x, y) {
+  s.g(`<ellipse cx="${x}" cy="${y + 20}" rx="128" ry="70" fill="${C.meadowLt}" opacity=".7"/>`);
+  // bunting between two posts, one word on each flag: a capital to start and a full stop to end
+  const x0 = x - 96, x1 = x + 96, top = y - 64, sag = q => top + 26 * Math.sin(Math.PI * q);
+  let g = `${shadow(x0, y, 8, 2)}${shadow(x1, y, 8, 2)}<rect x="${x0 - 3}" y="${top - 6}" width="6" height="${y - top + 6}" rx="2" fill="${C.woodDk}"/><rect x="${x1 - 3}" y="${top - 6}" width="6" height="${y - top + 6}" rx="2" fill="${C.woodDk}"/>
+    <path d="M${x0} ${top} Q${x} ${top + 52} ${x1} ${top}" stroke="${C.woodInk}" stroke-width="1.6" fill="none"/>`;
+  const flags = [['The', '#E07A3F'], ['dog', '#F2C14E'], ['can', '#7DB862'], ['run', '#6CC0E0'], ['.', '#D9596B']];
+  flags.forEach(([w, col], i) => {
+    const q = (i + .5) / flags.length, fx = x0 + (x1 - x0) * q, fy = sag(q);
+    g += `<path d="M${fx - 17} ${fy} L${fx + 17} ${fy} L${fx} ${fy + 34} Z" fill="${col}" stroke="${C.paper}" stroke-width="1.4" stroke-linejoin="round"/><text x="${fx}" y="${fy + 14}" text-anchor="middle" font-family="Andika" font-weight="700" font-size="${w === '.' ? 20 : 11.5}" fill="${C.ink}">${w}</text>`;
+  });
+  s.add(y, g);
+  // sunflowers and a beehive
+  [[x - 112, y + 54], [x - 96, y + 64], [x + 108, y + 48]].forEach(([fx, fy]) => s.add(fy, `<path d="M${fx} ${fy} v-34" stroke="${C.leafDk}" stroke-width="2.6"/><path d="M${fx} ${fy - 14} q8 -6 12 0" stroke="${C.leafDk}" stroke-width="2" fill="${C.leaf}"/>${Array.from({ length: 10 }, (_, i) => `<ellipse cx="${fx + Math.cos(i * .628) * 7}" cy="${fy - 38 + Math.sin(i * .628) * 7}" rx="4.6" ry="2.4" transform="rotate(${i * 36} ${fx + Math.cos(i * .628) * 7} ${fy - 38 + Math.sin(i * .628) * 7})" fill="${C.gold}"/>`).join('')}<circle cx="${fx}" cy="${fy - 38}" r="5" fill="${C.trunk}"/>`));
+  s.add(y + 46, `${shadow(x + 64, y + 46, 18, 4)}<rect x="${x + 52}" y="${y + 40}" width="24" height="6" fill="${C.woodDk}"/>${[0, 1, 2, 3].map(i => `<ellipse cx="${x + 64}" cy="${y + 34 - i * 8}" rx="${16 - i * 3}" ry="5.5" fill="${i % 2 ? '#F2C14E' : '#E6B33E'}" stroke="${C.goldDk}" stroke-width="1"/>`).join('')}<path d="M${x + 59} ${y + 38} a5 5 0 0 1 10 0" fill="${C.earthDk}"/>`);
+  flowers(s, x - 30, y + 70, 7, 91, 26); flowers(s, x + 30, y + 64, 5, 92, 20);
+}
+function storyNook(s, x, y) {
+  // the hollow oak: a wide trunk with a round door and a lit window, under a big canopy
+  s.add(y, `${shadow(x, y + 2, 76, 12, .2)}
+    <path d="M${x - 56} ${y} Q${x - 46} ${y - 40} ${x - 40} ${y - 96} L${x + 40} ${y - 96} Q${x + 46} ${y - 40} ${x + 58} ${y} Z" fill="${C.trunk}"/>
+    <path d="M${x - 66} ${y} q10 -8 16 -2 M${x + 50} ${y - 2} q12 -6 18 2" stroke="${C.trunk}" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M${x - 22} ${y - 36} q6 -22 0 -50 M${x + 26} ${y - 30} q-4 -30 2 -56" stroke="${C.trunkDk}" stroke-width="2" fill="none" opacity=".45"/>
+    <path d="M${x - 18} ${y} V${y - 34} a18 18 0 0 1 36 0 V${y} Z" fill="#7E5FA8" stroke="${C.trunkDk}" stroke-width="2.4"/><circle cx="${x + 10}" cy="${y - 16}" r="2.2" fill="${C.gold}"/>
+    <circle cx="${x + 30}" cy="${y - 66}" r="11" fill="#FFE9A8" stroke="${C.trunkDk}" stroke-width="2.4"/><path d="M${x + 30} ${y - 77} v22 M${x + 19} ${y - 66} h22" stroke="${C.trunkDk}" stroke-width="1.6"/>
+    <circle cx="${x}" cy="${y - 150}" r="64" fill="${C.leafDk}"/><circle cx="${x - 52}" cy="${y - 118}" r="40" fill="${C.leafDk}"/><circle cx="${x + 54}" cy="${y - 116}" r="42" fill="${C.leafDk}"/>
+    <circle cx="${x - 6}" cy="${y - 158}" r="54" fill="${C.leaf}"/><circle cx="${x - 48}" cy="${y - 126}" r="32" fill="${C.leaf}"/><circle cx="${x + 48}" cy="${y - 124}" r="34" fill="${C.leaf}"/>
+    <circle cx="${x - 22}" cy="${y - 180}" r="22" fill="${C.leafLt}" opacity=".9"/><circle cx="${x + 30}" cy="${y - 150}" r="12" fill="${C.leafLt}" opacity=".7"/>`);
+  // a reading rug, a bench, a stack of books and a lantern
+  s.g(`<ellipse cx="${x - 6}" cy="${y + 16}" rx="52" ry="12" fill="#B9A3DA" opacity=".85"/><ellipse cx="${x - 6}" cy="${y + 16}" rx="40" ry="8" fill="none" stroke="#FFFBF1" stroke-width="2" stroke-dasharray="5 5" opacity=".7"/>`);
+  s.add(y + 30, `${shadow(x - 84, y + 30, 26, 4)}<rect x="${x - 108}" y="${y + 10}" width="48" height="7" rx="2" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="1.3"/><rect x="${x - 108}" y="${y}" width="48" height="6" rx="2" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="1.3"/><rect x="${x - 104}" y="${y + 17}" width="4" height="13" fill="${C.woodDk}"/><rect x="${x - 68}" y="${y + 17}" width="4" height="13" fill="${C.woodDk}"/>`);
+  s.add(y + 28, `${shadow(x + 76, y + 28, 22, 4)}${[['#8E7CC3', 0, 34], ['#E07A3F', 7, 30], ['#6CC0E0', 14, 32], ['#F2C14E', 21, 26]].map(([c, d, w]) => `<rect x="${x + 76 - w / 2 + (d % 2) * 3}" y="${y + 20 - d}" width="${w}" height="7" rx="1.5" fill="${c}" stroke="${C.ink}" stroke-opacity=".25" stroke-width="1"/>`).join('')}<path d="M${x + 66} ${y - 14} q10 -8 20 0 v-2 q-10 -8 -20 0 Z" fill="#FFFBF1" stroke="${C.soft}" stroke-width="1"/>`);
+  s.add(y + 6, `${shadow(x + 120, y + 6, 8, 2)}<rect x="${x + 118}" y="${y - 48}" width="4" height="54" fill="${C.woodInk}"/><path d="M${x + 120} ${y - 48} h-14" stroke="${C.woodInk}" stroke-width="3"/><rect x="${x + 100}" y="${y - 46}" width="12" height="15" rx="3" fill="#FFE9A8" stroke="${C.woodInk}" stroke-width="1.6"/><circle cx="${x + 106}" cy="${y - 38}" r="12" fill="${C.gold}" opacity=".22"/>`);
+  flowers(s, x - 70, y + 50, 5, 101, 20);
+}
+function wordsRoute() {
+  const s = new Scene(640, WORDS_H);
+  meadowFloor(s, 17);
+  // the brook: comes in from the right, runs under the footbridge on the Tricky Word Trail and leaves to the left
+  river(s, 'M700 380 C600 400 520 470 420 486 S300 500 230 510 S90 560 -20 600', 26);
+  path(s, 'M320 -20 C320 50 300 90 320 140 S420 220 400 260 S320 330 310 400 S330 480 340 540 S420 640 400 700 S310 780 300 860 S340 980 330 1080', 30);
+  forest(s, 262, 150);
+  trickyTrail(s, 408, 432);
+  sentenceMeadow(s, 252, 690);
+  storyNook(s, 428, 900);
+  const r = rng(77);
+  [[40, 80, 'pine'], [600, 60, 'round'], [580, 170, 'pine'], [30, 300, 'round'], [610, 330, 'blossom'], [40, 470, 'pine'], [600, 600, 'round'], [30, 820, 'blossom'], [600, 790, 'pine'], [60, 1000, 'round'], [610, 1020, 'round'], [180, 940, 'pine']].forEach(([tx, ty, kind], i) => tree(s, tx, ty, .9 + r() * .35, kind, 200 + i * 7));
+  [[150, 330, 1], [520, 300, .9], [470, 590, .9], [120, 560, .8], [250, 1010, .9]].forEach(([bx, by, k], i) => bush(s, bx, by, k, undefined, i % 2 ? null : C.berry));
+  rock(s, 560, 250, .8); rock(s, 110, 900, .7);
+  scatter(s, 9, 80, [0, 0, 640, WORDS_H], [[130, 60, 270, 200], [300, 340, 230, 200], [120, 600, 270, 160], [340, 700, 240, 260]]);
+  butterfly(s, 330, 200, '#F7D24A'); butterfly(s, 160, 620, '#F07CA8'); butterfly(s, 540, 760, '#B58BE0');
+  return s;
+}
+
 /* The Bone Shop themes, on the meadow: a wash of colour over the scenery (not over signs, Bonnie or the buttons).
    Night and space darken it, Christmas and snow frost it, sunset and volcano warm it, sea cools it. */
 const TINTS = { night: ['#141A3A', .42], space: ['#0B0F2A', .48], christmas: ['#E9F3FF', .22], snow: ['#FFFFFF', .3], sunset: ['#FF9A5A', .14],
   volcano: ['#3A1408', .34], sea: ['#3FA7C9', .14] };
 const tint = (theme, w, h) => { const t = TINTS[theme]; return t ? `<rect class="tint" width="${w}" height="${h}" fill="${t[0]}" opacity="${t[1]}" pointer-events="none"/>` : ''; };
 
-window.ProtoArt = { C, mathsRoute, F, ROUTE_H, tint, TINTS, bonnie, bubble, star, bone, paw, shadow,
+window.ProtoArt = { C, mathsRoute, F, ROUTE_H, wordsRoute, WORDS_H, tint, TINTS, bonnie, bubble, star, bone, paw, shadow,
   // the drawing kit, shared with the Clubhouse meadow (js/proto-hub-art.js)
   Scene, rng, tree, bush, tuft, flowers, rock, fence, path, cloud, butterfly, meadowFloor, scatter };
 })();

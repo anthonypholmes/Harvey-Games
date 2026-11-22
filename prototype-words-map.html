@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meadow Words: map prototype</title>
+<!-- PROTOTYPE of the Meadow Words route (22 November 2026), the same map as prototype-maths-map.html with its own drawing.
+     Not linked from the game and not in the app build. Options: ?demo=1 or ?demo=new (pretend save), ?taster=1 (padlocks
+     as in the app), ?view=old (the current world list), ?theme=night, ?selftest=1. See docs/PROTOTYPE_MAP.md. -->
+<script>
+  var Q = new URLSearchParams(location.search);
+  window.MEADOW_IN_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || Q.get('taster') === '1';
+  if (Q.get('taster') === '1') { try { localStorage.removeItem('meadow-full-game'); } catch (e) {} }
+  window.PROTO_ROUTE = 'words';
+</script>
+<link href="fonts/fonts.css" rel="stylesheet">
+</head>
+<body>
+<script src="bonnie-voice.js"></script>
+<script src="js/meadow-core.js"></script>
+<script src="worlds/y2-english-phonics.js"></script>
+<script src="worlds/y2-english-tricky-words.js"></script>
+<script src="worlds/y2-english-sentences.js"></script>
+<script src="worlds/y2-english-stories.js"></script>
+<script>
+  // the prototype's own scripts are always fetched fresh, so a phone or iPad never shows an old copy
+  var fresh = src => document.write('<script src="' + src + '?v=' + Date.now() + '"><\/script>');
+  fresh('js/proto-demo.js');
+</script>
+<script>
+  // demo=1 (some progress) or demo=new (a new player): the pretend save shared with the other prototypes (js/proto-demo.js)
+  var demo = Q.get('demo') === 'new' ? 'new' : Q.get('demo') === '1' ? '1' : '';
+  Meadow.startGame({
+    subject: 'english', title: 'Meadow Words', icon: '🌼', homeHref: 'index.html',
+    otherGames: [{ title: 'Meadow Maths', icon: '🔢', href: 'meadow-maths.html' }],
+    greets: ["Hello {N}! Shall we go on a word adventure?", "Woof! Hi {N}! Pick a world to explore!", "Hi {N}! I've hidden some words in the meadow. Let's find them!"],
+    testVoice: 'Hello {N}! I am Bonnie. Shall we read together?',
+    saveKey: demo ? ProtoDemo.KEY : undefined, needName: !demo,
+  });
+  if (demo) { ProtoDemo.seed(demo); Meadow.save.load(); Meadow.home(); }
+</script>
+<script>fresh('js/proto-map-art.js'); fresh('js/proto-map.js');</script>
+</body>
+</html>

@@ -3,3 +3,9 @@
 <!-- Shows one page at an exact phone size, for the review screenshots (headless Chrome can't make a window narrower than 500px). -->
 <style>html,body{margin:0;background:#fff}iframe{position:absolute;left:50%;top:0;transform:translateX(-50%);border:0}</style>
 <script>const q=new URLSearchParams(location.search);document.write(`<iframe src="../../${q.get('src')}" style="width:${q.get('w')}px;height:${q.get('h')}px"></iframe>`)</script>
+<script>
+  // for the phone-size checks: copy the page's selftest results out of the frame, so a headless browser can read them
+  // phones draw their scrollbar over the page, taking no width: do the same here (a desktop scrollbar would narrow the page)
+  document.querySelector('iframe').addEventListener('load', e => { try { e.target.contentDocument.head.insertAdjacentHTML('beforeend', '<style>html{scrollbar-width:none}html::-webkit-scrollbar{display:none}</style>'); } catch (x) {} });
+  setInterval(() => { try { const pre = document.querySelector('iframe').contentDocument.getElementById('selftest'); if (pre && !document.getElementById('selftest')) document.body.appendChild(pre.cloneNode(true)); } catch (e) {} }, 300);
+</script>

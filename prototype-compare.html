@@ -27,7 +27,7 @@
 <header>
   <h1>Now and the prototype</h1>
   <div class="group" role="group" aria-label="Screen"><b>Screen</b>
-    <button data-page="club">Clubhouse</button><button data-page="maths">Maths map</button></div>
+    <button data-page="club">Clubhouse</button><button data-page="maths">Maths map</button><button data-page="words">Words map</button></div>
   <div class="group" role="group" aria-label="Screen size"><b>Size</b>
     <button data-size="375x667">iPhone SE</button><button data-size="393x852">iPhone</button><button data-size="820x1180">iPad</button></div>
   <div class="group" role="group" aria-label="Progress"><b>Progress</b>
@@ -51,10 +51,10 @@
     const q = `demo=${demo}${taster ? '&taster=1' : ''}`;
     const frame = (label, view) => `<figure class="${ipad ? 'ipad' : ''}" style="width:${(w + 24) * k}px">
       <div class="device" style="width:${w}px;transform:scale(${k});margin-bottom:${-(h + 24) * (1 - k)}px;margin-left:${-(w + 24) * (1 - k) / 2}px;margin-right:${-(w + 24) * (1 - k) / 2}px">
-      <iframe title="${label}" src="${page === 'club' ? clubSrc(view) : `prototype-maths-map.html?view=${view}&${q}`}" style="width:${w}px;height:${h}px"></iframe></div><figcaption>${label}</figcaption></figure>`;
-    document.getElementById('main').innerHTML = frame('Now', 'old') + frame(page === 'club' ? 'Prototype: the Clubhouse meadow' : 'Prototype: the meadow map', 'new');
-    document.getElementById('note').textContent = NOTES[page];
-    document.querySelectorAll('.maths-only').forEach(el => el.hidden = page !== 'maths');
+      <iframe title="${label}" src="${page === 'club' ? clubSrc(view) : `prototype-${page}-map.html?view=${view}&${q}`}" style="width:${w}px;height:${h}px"></iframe></div><figcaption>${label}</figcaption></figure>`;
+    document.getElementById('main').innerHTML = frame('Now', 'old') + frame(page === 'club' ? 'Prototype: the Clubhouse meadow' : page === 'words' ? 'Prototype: the Words map' : 'Prototype: the Maths map', 'new');
+    document.getElementById('note').textContent = NOTES[page] || NOTES.maths;
+    document.querySelectorAll('.maths-only').forEach(el => el.hidden = page === 'club');
     document.querySelectorAll('[data-page]').forEach(b => b.setAttribute('aria-pressed', b.dataset.page === page));
     document.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-pressed', b.dataset.size === size));
     document.querySelectorAll('[data-demo]').forEach(b => b.setAttribute('aria-pressed', b.dataset.demo === demo));

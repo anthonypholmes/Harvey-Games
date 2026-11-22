@@ -29,6 +29,7 @@ The Meadow Maths world list as the illustrated route. **New files only**; no gam
 | `prototype-clubhouse.html` | **The Clubhouse meadow prototype** (22 November): `index.html` unchanged, with the meadow on top. `?view=old`, `?selftest=1` |
 | `js/proto-hub-art.js`, `js/proto-hub.js` | The Clubhouse drawing, and its live parts wired to index.html's own functions |
 | `docs/review/` | **The final review page** (22 November): old and new side by side at three sizes, states, themes, checks and compromises |
+| `prototype-words-map.html` | **The Meadow Words map prototype** (22 November): Phonics Forest, Tricky Word Trail, Sentence Meadow, Bonnie's Story Nook. The Clubhouse's Words gate opens it |
 | `js/proto-demo.js` | The pretend save ("Sam" or a new player) shared by both prototypes, kept apart from the family's |
 | `prototype-compare.html` | The current screen and the prototype side by side (Clubhouse or Maths map), at iPhone SE, iPhone or iPad size; pretend or real progress; the app's padlocks on or off |
 | `prototype-maths-map.html` | The prototype. `?demo=1` pretend save, `?taster=1` padlocks, `?view=old` the current list, `?selftest=1` the checks |
@@ -62,7 +63,7 @@ The Meadow Maths world list as the illustrated route. **New files only**; no gam
 1. Fix whatever his look at the prototype turns up.
 2. **Final prototype refinements done 22 November 2026, waiting for Anthony's review** (`docs/review/`, details in `docs/PROTOTYPE_MAP.md`). Nothing goes into the game until he approves.
    **The Clubhouse meadow: prototype built 22 November 2026. Anthony liked the direction; refinement 1 (bolder gates, Bonnie's words beside her, a calmer lower half, stars on tags, labelled top buttons, press feedback) done the same day, waiting for his look.** Next, as he asked: look at the Maths map and the Words map next to the Clubhouse so the three feel like one place (the Words map isn't drawn yet). See `docs/PROTOTYPE_MAP.md` ("The Clubhouse meadow"). Try it from `prototype-compare.html` (Screen: Clubhouse); its Maths gate opens the map prototype.
-3. **The Meadow Words route:** draw Phonics Forest (letter trees), Tricky Word Trail (word signposts), Sentence Meadow and Bonnie's Story Nook in the same style, as a second route.
+3. **The Meadow Words route: prototype built 22 November 2026, waiting for Anthony's look** (`prototype-words-map.html`, in `docs/review/` and `prototype-compare.html`).
 4. Then the level maps, the Bone Shop and the journal, each as its own approved phase.
 5. To go live: move the map into `meadow-maths.html` behind a setting first, run every test page in `tests/`, then make it the default.
 

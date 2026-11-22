@@ -42,9 +42,9 @@
 </head>
 <body>
 <main>
-  <h1>Meadow prototypes: final refinements</h1>
+  <h1>Meadow prototypes: Clubhouse, Maths map and Words map</h1>
   <p class="soft">22 November 2026 · branch <code>prototype-meadow-map</code> · nothing in the game, the website or 1.1 has changed. Every picture uses the pretend player "Sam" (86 bones, a 3-day walk streak, Partitioning Park finished, 5 burrow stars this week).</p>
-  <nav aria-label="On this page"><a href="#club">Clubhouse</a><a href="#map">Maths map</a><a href="#states">States and themes</a><a href="#checks">Checks</a><a href="#open">Compromises</a><a href="../../prototype-compare.html">Try it live</a></nav>
+  <nav aria-label="On this page"><a href="#club">Clubhouse</a><a href="#map">Maths map</a><a href="#words">Words map</a><a href="#states">States and themes</a><a href="#checks">Checks</a><a href="#open">Compromises</a><a href="../../prototype-compare.html">Try it live</a></nav>
 
   <h2 id="club">The Clubhouse</h2>
   <p>The whole of each gate (sign, arch and posts) is one tap, and it lights up the moment a finger lands. Both gates fit on the iPhone SE with no scrolling. New players see "New! Start here"; returning players see this week's stars. Tap the clubhouse and its door opens, Bonnie hops to the step and says her line again.</p>
@@ -56,6 +56,11 @@
   <div class="sizes" role="group" aria-label="Map screen size" data-for="map"><button data-size="se" aria-pressed="true">iPhone SE</button><button data-size="iphone">iPhone</button><button data-size="ipad">iPad</button></div>
   <div class="pair" id="mapPair"></div>
 
+  <h2 id="words">The Meadow Words map (new)</h2>
+  <p>The Words route, drawn in the same style and working the same way as the Maths map. Its trail comes down from the Clubhouse's Words gate into <b>Phonics Forest</b> (trees wearing their sounds), then the <b>Tricky Word Trail</b> (signposts of tricky words and a footbridge over the brook), <b>Sentence Meadow</b> (bunting that spells a sentence, from a capital to a full stop) and <b>Bonnie's Story Nook</b> (a hollow oak with a reading bench). Four places, so it's shorter than the Maths trail: about a screen and a half on a phone.</p>
+  <div class="sizes" role="group" aria-label="Words map screen size" data-for="words"><button data-size="se" aria-pressed="true">iPhone SE</button><button data-size="iphone">iPhone</button><button data-size="ipad">iPad</button></div>
+  <div class="pair" id="wordsPair"></div>
+
   <h2 id="states">States and themes</h2>
   <p>All at iPhone size.</p>
   <div class="states">
@@ -65,7 +70,11 @@
     <figure><img src="img/map-newplayer.jpg" alt="Maths map for a new player: every sign says New!, no Places button" loading="lazy"><figcaption>Map, new player (no "Places" yet)</figcaption></figure>
     <figure><img src="img/map-taster.jpg" alt="Maths map in the free app: a small padlock in each sign's star tag" loading="lazy"><figcaption>Map, free app (padlock on each sign)</figcaption></figure>
     <figure><img src="img/map-night.jpg" alt="Maths map in the night theme" loading="lazy"><figcaption>Map, night theme</figcaption></figure>
-    <figure><img src="img/map-route-phone.jpg" alt="The whole Maths trail on a phone, from the park to Captain's Cove" loading="lazy"><figcaption>The whole trail, top to bottom</figcaption></figure>
+    <figure><img src="img/words-newplayer.jpg" alt="Words map for a new player" loading="lazy"><figcaption>Words map, new player</figcaption></figure>
+    <figure><img src="img/words-taster.jpg" alt="Words map in the free app, a padlock in each sign's tag" loading="lazy"><figcaption>Words map, free app</figcaption></figure>
+    <figure><img src="img/words-night.jpg" alt="Words map in the night theme" loading="lazy"><figcaption>Words map, night theme</figcaption></figure>
+    <figure><img src="img/words-route-phone.jpg" alt="The whole Words trail on a phone, from Phonics Forest to Bonnie's Story Nook" loading="lazy"><figcaption>The whole Words trail</figcaption></figure>
+    <figure><img src="img/map-route-phone.jpg" alt="The whole Maths trail on a phone, from the park to Captain's Cove" loading="lazy"><figcaption>The whole Maths trail</figcaption></figure>
   </div>
 
   <h2 id="checks">What was checked</h2>
@@ -74,6 +83,7 @@
     <tbody>
       <tr><td>Clubhouse: 29 automatic checks (whole gate tappable, art inside its tap area, press feedback, progress wording, SE fit, Bonnie beside her words, house response, menus, sizes, speed)</td><td>iPhone SE, iPhone, iPhone Pro Max, iPad portrait (2 sizes) and landscape; Sam and a new player</td><td class="ok">29 / 29 at every size</td></tr>
       <tr><td>Maths map: 27 automatic checks (a place per world, generous tap areas, sign sizes, signs inside tap areas, nothing overlapping, Bonnie's bubble clear of every sign wherever she stands, padlocks, shorter trail, press feedback, "Places", the real level map and its unlocking, the way back)</td><td>The same 6 sizes; Sam, a new player, and the free app</td><td class="ok">All pass at every size and state</td></tr>
+      <tr><td>Words map: the same 27 checks as the Maths map</td><td>The same 6 sizes; Sam, a new player, and the free app. Also the walk from the Clubhouse's Words gate into the map and back, keeping the same pretend child</td><td class="ok">All pass at every size and state</td></tr>
       <tr><td>Reduce Motion</td><td>Forced on in the browser: no hops, wags or blinks; taps still work</td><td class="ok">Pass</td></tr>
       <tr><td>Keyboard</td><td>Real Tab presses through both screens, the name menu, and the "Places" list (Enter to choose, Escape to close)</td><td class="ok">Pass, after 2 fixes (below)</td></tr>
       <tr><td>VoiceOver names</td><td>Every place reads its name and progress, e.g. "World 2: Number Bonds Burrow. Adding and taking away. 5 of 21 stars."</td><td class="ok">Checked in the accessibility tree</td></tr>
@@ -91,13 +101,14 @@
     <li><b>On the iPhone SE the feet of the two gates touch the bottom edge.</b> Both gates and their star tags are fully visible and tappable, but there's no breathing room below them.</li>
     <li><b>The free-app padlock is now an icon inside the star tag</b> rather than the words "Level 1 free" (those didn't fit on the iPad). VoiceOver still says "Level 1 is free to play", and the level map shows its padlocks as before.</li>
     <li><b>Bonnie's bubbles are narrower</b> (three short lines at most) so they never cover a sign on small phones.</li>
-    <li><b>The Meadow Words map isn't drawn yet</b>, so its gate still opens the current Words screen.</li>
+    <li><b>Words map:</b> on a phone, the edge of one signpost ("one") and the story nook's book pile are just cut off at the side. They're scenery, not something to tap; the iPad shows them whole. Its places' new Bonnie lines (e.g. "Shall we read the tricky signposts?") aren't recorded either.</li>
+    <li><b>The "Places" button floats over the bottom corner</b> of both maps, so as you scroll it sometimes sits over part of a sign for a moment. Both stay tappable.</li>
     <li><b>Bonnie's new lines aren't recorded.</b> The website uses the device's voice for them; the app would be silent until they're recorded.</li>
     <li><b>Both prototypes are separate pages.</b> Nothing has been put into the game; that waits for your approval.</li>
   </ul>
 </main>
 <script>
-  const SHOTS = { club: ['club-old', 'club-new', 'The current Clubhouse', 'The Clubhouse meadow'], map: ['map-old', 'map-new', 'The current Maths list', 'The meadow map'] };
+  const SHOTS = { club: ['club-old', 'club-new', 'The current Clubhouse', 'The Clubhouse meadow'], map: ['map-old', 'map-new', 'The current Maths list', 'The meadow map'], words: ['words-old', 'words-new', 'The current Words list', 'The Words map'] };
   function show(which, size) {
     const [o, n, lo, ln] = SHOTS[which], el = document.getElementById(which + 'Pair');
     el.className = 'pair' + (size === 'ipad' ? ' ipad' : '');
@@ -106,7 +117,7 @@
     document.querySelectorAll(`[data-for="${which}"] button`).forEach(b => b.setAttribute('aria-pressed', b.dataset.size === size));
   }
   document.querySelectorAll('.sizes').forEach(g => g.querySelectorAll('button').forEach(b => b.onclick = () => show(g.dataset.for, b.dataset.size)));
-  show('club', 'se'); show('map', 'se');
+  show('club', 'se'); show('map', 'se'); show('words', 'se');
 </script>
 </body>
 </html>

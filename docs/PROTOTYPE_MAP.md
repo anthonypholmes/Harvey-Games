@@ -55,6 +55,17 @@ The Clubhouse page as one illustrated meadow that fits one screen: the clubhouse
 
 **Still open:** real VoiceOver and the 2018 iPad not yet tried by hand; "Start here" (the brief said "Start there"); the map's top buttons are icons without words; on an SE the foot of the gates touches the bottom edge; the Words map isn't drawn; Bonnie's new lines aren't recorded.
 
+## The Meadow Words map (22 November 2026)
+
+`prototype-words-map.html`: the Words world list as an illustrated route, the same map as Maths (`js/proto-map.js` now serves both; the page sets `window.PROTO_ROUTE = 'words'`). Same options: `demo=1`, `demo=new`, `taster=1`, `view=old`, `theme=`, `selftest=1`. It loads the engine and the four Words worlds exactly as `meadow-words.html` does.
+
+- **The drawing** (`wordsRoute()` in `js/proto-map-art.js`, 640 × 1060, about a screen and a half on a phone): the trail comes down from the Clubhouse's Words gate into **Phonics Forest** (trees wearing sounds: sh, ai, oo, ee, ch, a-e), crosses the brook by a footbridge on the **Tricky Word Trail** (signposts: said, the, was, one, they, could), passes **Sentence Meadow** (bunting spelling "The dog can run ." with sunflowers and a beehive) and ends at **Bonnie's Story Nook** (a hollow oak with a purple door, a reading rug, a bench, books and a lantern).
+- **The same signs, progress, tap areas, press feedback, Bonnie, "Places" list, themes and checks** as the Maths map. "Bonnie's Story Nook" wraps onto two lines (`signW`) so it fits its tap area on phones.
+- **The Clubhouse's Words gate now opens it**, and both gates carry the pretend save and theme into the maps (`demo=`, `theme=`); each map's home button goes back to the Clubhouse prototype the same way. `prototype-compare.html` has a "Words map" screen.
+- **The pretend save** now adds each game's progress the first time a page with that game's worlds opens (a page loads only its own game). Before, opening the Words map first in a fresh browser crashed the set-up and showed a new player; pretend saves made before this change start again.
+- **Checks:** 27, all passing at 375 × 667, 393 × 852, 430 × 932, 768 × 1024, 820 × 1180 and 1180 × 820, with Sam, a new player, the free app and Reduce Motion.
+- **Gaps:** on phones the edge of the "one" signpost and the nook's books are cut off at the side (scenery only). Bonnie's new Words lines aren't recorded.
+
 ## Checks (`selftest=1`, first version)
 
 All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180): every maths world has a place; every tap target is at least 44 × 44; every place has a VoiceOver name that says its stars; places don't overlap; nothing is wider than the screen; Bonnie has a button; tapping a place opens the real level map with the engine's locks; the top bar comes back; "Meadow" returns.

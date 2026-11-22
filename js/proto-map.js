@@ -1,4 +1,7 @@
-/* Meadow Maths map PROTOTYPE (not part of the game yet).
+/* Meadow Maths and Meadow Words map PROTOTYPE (not part of the game yet).
+ *
+ * One map for both games: window.PROTO_ROUTE ('maths', the default, or 'words') picks the drawing and the places.
+ * The Words route was added on 22 November 2026, in the same style and with the same signs, checks and "Places".
  *
  * The world list as an illustrated meadow route (design iteration 2, Direction B). It runs on the real engine:
  * the worlds, stars, unlocking and the full-game padlocks all come from js/meadow-core.js, and tapping a place
@@ -14,7 +17,7 @@
  * - "Places": a list of every world for a child who knows where they want to go (shown once they've played)
  * - the Bone Shop themes wash over the meadow; Bonnie blinks and wags as she does everywhere else
  *
- * Page options (prototype-maths-map.html?…):
+ * Page options (prototype-maths-map.html?… or prototype-words-map.html?…):
  *   view=old     the current world list, unchanged (for the side-by-side comparison)
  *   demo=1       a separate pretend save (meadow-save-proto-demo) with some progress, so the real save is never touched
  *   demo=new     the same pretend save, but a new player with no stars
@@ -29,7 +32,7 @@
   /* Where each world lives in the drawing. Written in the original drawing's units and moved to the shorter trail by F().
      hit: the whole tappable area (the picture and its sign). sign: the top middle of its name sign.
      bonnie: where she stands (her feet). bub: her speech bubble [x, y, 'above'|'below'] (y is its bottom edge for 'above', its top for 'below'). */
-  const RAW = {
+  const RAW_MATHS = {
     'y2-maths-partitioning': { hit: [96, 40, 228, 342], sign: [220, 282], bonnie: [372, 300], bub: [330, 232, 'above'],
       ask: 'Shall we build some numbers in the park?', go: 'Off to the park!' },
     'y2-maths-number-bonds': { hit: [326, 340, 234, 200], sign: [452, 432], bonnie: [440, 540], bub: [340, 542, 'below'],
@@ -43,10 +46,27 @@
     'y2-maths-captains-cove': { hit: [100, 1250, 420, 240], sign: [206, 1268], bonnie: [365, 1262], bub: [330, 1170, 'above'],
       ask: 'Captain Croak has an idea. Shall we check it?', go: 'Ahoy! To the Cove!' },
   };
-  const PLACES = Object.fromEntries(Object.entries(RAW).map(([id, p]) => [id, { ...p,
-    hit: [p.hit[0], F(p.hit[1]), p.hit[2], F(p.hit[1] + p.hit[3]) - F(p.hit[1])],
-    sign: [p.sign[0], F(p.sign[1])], bonnie: [p.bonnie[0], F(p.bonnie[1])], bub: [p.bub[0], F(p.bub[1]), p.bub[2]] }]));
-  const WORLD_W = 640, WORLD_H = A.ROUTE_H, PHONE_X = 125, PHONE_W = 390;
+  // the Meadow Words route (drawn at its own height, so no moving)
+  const RAW_WORDS = {
+    'y2-english-phonics': { hit: [130, 30, 240, 372], sign: [262, 290], bonnie: [404, 236], bub: [330, 170, 'above'],
+      ask: 'Shall we find some sounds in the forest?', go: 'Into the forest!' },
+    'y2-english-tricky-words': { hit: [300, 408, 260, 222], sign: [452, 532], bonnie: [300, 420], bub: [131, 438, 'below'],
+      ask: 'Shall we read the tricky signposts?', go: 'Off along the trail!' },
+    'y2-english-sentences': { hit: [126, 640, 238, 220], sign: [236, 766], bonnie: [404, 690], bub: [340, 706, 'below'],
+      ask: 'Shall we fix some sentences in the meadow?', go: 'Off to the meadow!' },
+    'y2-english-stories': { hit: [366, 650, 200, 400], sign: [440, 948], signW: 150, bonnie: [300, 900], bub: [131, 912, 'below'],
+      ask: 'Shall we read a story in my nook?', go: 'Story time!' },
+  };
+  const ROUTES = {
+    maths: { subject: 'maths', title: 'Meadow Maths', raw: RAW_MATHS, F, H: A.ROUTE_H, scene: A.mathsRoute, maxH: 1280 },
+    words: { subject: 'english', title: 'Meadow Words', raw: RAW_WORDS, F: y => y, H: A.WORDS_H, scene: A.wordsRoute, maxH: 1100 },
+  };
+  const R = ROUTES[window.PROTO_ROUTE] || ROUTES.maths, G = R.F;
+  const PLACES = Object.fromEntries(Object.entries(R.raw).map(([id, p]) => [id, { ...p,
+    hit: [p.hit[0], G(p.hit[1]), p.hit[2], G(p.hit[1] + p.hit[3]) - G(p.hit[1])],
+    sign: [p.sign[0], G(p.sign[1])], bonnie: [p.bonnie[0], G(p.bonnie[1])], bub: [p.bub[0], G(p.bub[1]), p.bub[2]] }]));
+  const WORLD_W = 640, WORLD_H = R.H, PHONE_X = 125, PHONE_W = 390;
+  const short = id => id.replace(/^y2-[a-z]+-/, '');
 
   let on = false, busy = false, at = null, scene = null, view = null;
 
@@ -67,9 +87,9 @@
     for (let n = 0; n < ws.length; n++) { const w = ws[(i + n) % ws.length]; if (!info(w).mastered) return w; }
     return null; // every star won
   }
-  const placed = () => M.visibleWorlds('maths').filter(w => PLACES[w.id]);
-  const unplaced = () => M.visibleWorlds('maths').filter(w => !PLACES[w.id]);
-  const returning = () => M.visibleWorlds('maths').some(w => info(w).played);
+  const placed = () => M.visibleWorlds(R.subject).filter(w => PLACES[w.id]);
+  const unplaced = () => M.visibleWorlds(R.subject).filter(w => !PLACES[w.id]);
+  const returning = () => M.visibleWorlds(R.subject).some(w => info(w).played);
 
   /* ---------- drawn icons (no emoji) ---------- */
   const svgI = (vb, body) => `<svg viewBox="${vb}" aria-hidden="true">${body}</svg>`;
@@ -167,8 +187,8 @@
   const px = (x, y) => [(x - view.x0) * view.k, y * view.k];
 
   function signHTML(w) {
-    const [x, y] = PLACES[w.id].sign, [l, t] = px(x, y), p = progress(w);
-    return `<div class="pm-sign" id="pmSign-${w.id}" style="left:${l.toFixed(1)}px;top:${t.toFixed(1)}px" aria-hidden="true">
+    const [x, y] = PLACES[w.id].sign, [l, t] = px(x, y), p = progress(w), sw = PLACES[w.id].signW; // signW: a narrower sign, so a long name wraps
+    return `<div class="pm-sign" id="pmSign-${w.id}" style="left:${l.toFixed(1)}px;top:${t.toFixed(1)}px${sw ? `;max-width:calc(${sw}px * var(--k,1))` : ''}" aria-hidden="true">
       <b>${ui.esc(w.name)}</b><span class="pg ${p.main.cls}">${icons[p.main.icon]}${ui.esc(p.main.text)}${p.f.taster ? `<span class="lk">${icons.lock}</span>` : ''}</span></div>`;
   }
   function haloSVG(w) {
@@ -187,7 +207,7 @@
     on = true; busy = false;
     document.body.classList.add('pm-on');
     layout();
-    if (!scene) scene = A.mathsRoute().render();
+    if (!scene) scene = R.scene().render();
     const ws = placed(), sug = suggestion(ws), s = save(), theme = document.body.dataset.theme || 'day';
     at = sug || ws[0];
     const vb = `${view.x0} 0 ${view.w} ${WORLD_H}`;
@@ -200,14 +220,15 @@
       return `<button class="pm-hit" data-w="${ui.esc(w.id)}" style="left:${l.toFixed(1)}px;top:${t.toFixed(1)}px;width:${width.toFixed(1)}px;height:${height.toFixed(1)}px" aria-label="${ui.esc(label.replace(/([.?!])\./g, '$1'))}"></button>`;
     }).join('');
     const [bl, bt] = px(bfx - 40, bfy - 78);
-    const home = /prototype-clubhouse/.test(document.referrer) ? 'prototype-clubhouse.html' : 'index.html';
+    const carry = ['demo', 'theme'].filter(k => Q.get(k)).map(k => `${k}=${encodeURIComponent(Q.get(k))}`).join('&');
+    const home = /prototype-clubhouse/.test(document.referrer) ? 'prototype-clubhouse.html' + (carry ? '?' + carry : '') : 'index.html';
     ui.show(`<div class="pm" style="width:${view.W}px;--k:${Math.min(1.25, view.k).toFixed(3)}">
       <div class="pm-bar">
         <div class="pm-tags">
           <a class="pm-tag" href="${home}" aria-label="Back to the Clubhouse"><svg viewBox="-14 -14 28 28" aria-hidden="true"><path d="M-12 0 L0 -11 L12 0" fill="${C.berry}" stroke="#A93E4F" stroke-width="2" stroke-linejoin="round"/><rect x="-9" y="-1" width="18" height="13" rx="1.5" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="1.6"/><rect x="-2.5" y="4" width="5" height="8" fill="${C.woodDk}"/></svg></a>
           <button class="pm-tag" id="pmGrown" aria-label="Grown-ups"><svg viewBox="-12 -12 24 24" aria-hidden="true"><path d="M-6 -1 v-4 a6 6 0 0 1 12 0 v4" fill="none" stroke="${C.woodInk}" stroke-width="2.6"/><rect x="-9" y="-1" width="18" height="13" rx="3" fill="${C.woodInk}"/><circle cx="0" cy="5" r="2" fill="${C.woodLt}"/></svg></button>
         </div>
-        <h1 class="pm-title">Meadow Maths</h1>
+        <h1 class="pm-title">${R.title}</h1>
         <button class="pm-tag" id="pmBones" aria-label="${s.bones} bones. Open the Bone Shop">${A.bone(0, 0, 1).replace('<g transform="translate(0 0) scale(1)">', '<svg viewBox="-22 -14 44 28" aria-hidden="true"><g>').replace(/<\/g>$/, '</g></svg>')}<span>${s.bones}</span></button>
       </div>
       ${returning() ? `<button class="pm-jump" id="pmJump" aria-haspopup="dialog">${icons.places}Places</button>` : ''}
@@ -252,7 +273,7 @@
   /* "Places": every world in a list, for a child who knows where they're going. Choosing one goes there the same
      way as tapping it on the map (Bonnie trots over, then its level map opens). */
   function openPlaces() {
-    const opener = ui.$('#pmJump'), ws = M.visibleWorlds('maths');
+    const opener = ui.$('#pmJump'), ws = M.visibleWorlds(R.subject);
     const bg = document.createElement('div'); bg.className = 'pm-sheet-bg';
     bg.innerHTML = `<div class="pm-sheet" role="dialog" aria-modal="true" aria-labelledby="pmSheetH" tabindex="-1"><h2 id="pmSheetH">Go straight to…</h2><ul>${ws.map(w => {
       const p = progress(w); return `<li><button data-w="${ui.esc(w.id)}" class="${at && at.id === w.id ? 'here' : ''}" aria-label="${ui.esc(`${w.name}. ${p.say}${at && at.id === w.id ? ' Bonnie is here.' : ''}`)}"><span>${ui.esc(w.name)}</span><span class="pg">${icons[p.main.icon]}${ui.esc(p.main.text)}</span></button></li>`; }).join('')}</ul>
@@ -327,9 +348,9 @@
     const t0 = performance.now(); draw(); const drawMs = performance.now() - t0;
     const r = el => el.getBoundingClientRect();
     const cross = (a, b) => a.left < b.right - 2 && b.left < a.right - 2 && a.top < b.bottom - 2 && b.top < a.bottom - 2;
-    const ws = M.visibleWorlds('maths'), hits = ui.$$('.pm-hit[data-w]');
+    const ws = M.visibleWorlds(R.subject), hits = ui.$$('.pm-hit[data-w]');
     ok('the meadow is showing', !!ui.$('.pm'));
-    ok('every maths world has a place', hits.length + ui.$$('.pm-hit-more').length === ws.length, `${hits.length} places for ${ws.length} worlds`);
+    ok(`every ${R.title} world has a place`, hits.length + ui.$$('.pm-hit-more').length === ws.length, `${hits.length} places for ${ws.length} worlds`);
     const small = hits.concat(ui.$$('.pm-tag'), ui.$$('.pm-jump')).filter(b => r(b).width < 44 || r(b).height < 44);
     ok('every tap target is at least 44 × 44', !small.length, small.map(b => b.getAttribute('aria-label')).join(', '));
     ok('each place is a generous target (at least 120 × 100)', hits.every(b => r(b).width >= 120 && r(b).height >= 100), hits.map(b => `${r(b).width.toFixed(0)}×${r(b).height.toFixed(0)}`).join(', '));
@@ -344,13 +365,13 @@
     const nameSizes = signs.map(s => parseFloat(getComputedStyle(s.querySelector('b')).fontSize)), pgSizes = signs.map(s => parseFloat(getComputedStyle(s.querySelector('.pg')).fontSize));
     ok('names are 19px or more, progress 16px or more', Math.min(...nameSizes) >= 19 && Math.min(...pgSizes) >= 16, `names ${Math.min(...nameSizes)}px, progress ${Math.min(...pgSizes)}px`);
     ok('each sign is inside its place\'s tap area', ws.every((w, i) => { const a = r(signs[i]), b = r(hits[i]); return a.left >= b.left - 24 && a.right <= b.right + 24 && a.top >= b.top - 2 && a.bottom <= b.bottom + 2; }),
-      ws.map((w, i) => { const a = r(signs[i]), b = r(hits[i]); return `${w.id.replace('y2-maths-', '')} ${Math.round(a.left - b.left)},${Math.round(b.right - a.right)},${Math.round(a.top - b.top)},${Math.round(b.bottom - a.bottom)}`; }).join(' | '));
+      ws.map((w, i) => { const a = r(signs[i]), b = r(hits[i]); return `${short(w.id)} ${Math.round(a.left - b.left)},${Math.round(b.right - a.right)},${Math.round(a.top - b.top)},${Math.round(b.bottom - a.bottom)}`; }).join(' | '));
     ok('signs are on the screen and do not overlap each other', signs.every(s => r(s).left >= 0 && r(s).right <= innerWidth) && !signs.some((a, i) => signs.some((b, j) => j > i && cross(r(a), r(b)))));
     const bub = r(document.getElementById('pmBubble'));
     ok("Bonnie's bubble covers no sign", !signs.some(s => cross(r(s), bub)), signs.filter(s => cross(r(s), bub)).map(s => s.id).join(', '));
     { // and wherever she hops to, with her longest line there
       const bubEl = document.getElementById('pmBubble'), keep = bubEl.innerHTML, bad = [];
-      ws.forEach(w => { bubEl.innerHTML = bubbleSVG(w, PLACES[w.id].ask.length > 30 ? PLACES[w.id].ask : `Woof! Let's start at ${shortName(w)}!`); const br = r(bubEl); signs.forEach(s => { if (cross(r(s), br)) { const a = r(s); bad.push(w.id.replace('y2-maths-', '') + '→' + s.id.replace('pmSign-y2-maths-', '') + ` (bubble ${[br.left, br.top, br.right, br.bottom].map(Math.round)} sign ${[a.left, a.top, a.right, a.bottom].map(Math.round)})`); } }); });
+      ws.forEach(w => { bubEl.innerHTML = bubbleSVG(w, PLACES[w.id].ask.length > 30 ? PLACES[w.id].ask : `Woof! Let's start at ${shortName(w)}!`); const br = r(bubEl); signs.forEach(s => { if (cross(r(s), br)) { const a = r(s); bad.push(short(w.id) + '→' + short(s.id.replace('pmSign-', '')) + ` (bubble ${[br.left, br.top, br.right, br.bottom].map(Math.round)} sign ${[a.left, a.top, a.right, a.bottom].map(Math.round)})`); } }); });
       bubEl.innerHTML = keep;
       ok("…nor does it at any other place", !bad.length, bad.join(', '));
     }
@@ -358,7 +379,7 @@
     ok('the free taster shows its padlock on each sign (only in the app)', ws.every((w, i) => !!signs[i].querySelector('.lk') === info(w).taster), tasterOn ? 'taster on' : 'taster off');
     ok('Bonnie is on the map, with a button', !!ui.$('#pmBonnie') && !!ui.$('#pmBonnieBtn'));
     const svgCount = ui.$$('.pm-stage svg *').length; ok('drawing size is modest (for the 2018 iPad)', svgCount < 6000 && drawMs < 400, `${svgCount} SVG elements, drawn in ${drawMs.toFixed(0)} ms`);
-    ok('the trail is shorter', WORLD_H === 1280 && r(ui.$('.pm-stage')).height <= 1280 * view.k + 1, `${Math.round(r(ui.$('.pm-stage')).height)}px tall`);
+    ok('the trail is short', WORLD_H <= R.maxH && r(ui.$('.pm-stage')).height <= R.maxH * view.k + 1, `${Math.round(r(ui.$('.pm-stage')).height)}px tall`);
     // pressing a place lights it
     hits[0].dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); await wait(30);
     const sg0 = signs[0];
