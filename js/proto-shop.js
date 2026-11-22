@@ -32,7 +32,9 @@
   const TIERS = [[0, 'Little treats'], [100, 'Small prizes'], [300, 'Medium prizes'], [1000, 'Big goals']];
   const tierOf = c => TIERS.filter(([m]) => c >= m).pop()[1];
   const viaClub = location.hash === '#shop';
-  let on = false, tab = null, sel = null, said = null, refocus = null, lastDraw = 0;
+  let on = false, tab = null, sel = null, said = null, refocus = null, lastDraw = 0, ownedWas = null, peeked = false;
+  let fresh = new Set(); // just bought: their cards pop and say "New in your collection!"
+  const ownedNow = () => { const S = save(); return [...S.owned.hats, ...S.owned.coats, ...S.owned.themes]; };
   const railX = {};
 
   /* ---------- what's in the shop, and what the engine lets you do with each thing ---------- */
@@ -57,6 +59,11 @@
     if (it.own) return it.on ? (it.kind === 'gear' ? 'off' : 'using') : 'wear';
     return b >= it.cost ? 'buy' : 'short';
   }
+  // the five things a card can be, each with its own colour, mark and words, used on the card, by Bonnie and in the panel:
+  //   active (green tick: Wearing / Using now), owned (purple star: Yours), buy (gold: its price), short (grey: its price
+  //   and how close), prize (a real prize: its price, quieter)
+  const kindOf = st => st === 'off' || st === 'using' ? 'active' : st === 'wear' ? 'owned' : st === 'swap' ? 'prize' : st;
+  const activeWord = it => it.kind === 'theme' ? 'Using now' : 'Wearing';
   const esc = s => CSS.escape(String(s));
   const ENG = {
     buy: it => `[data-buy="${it.kind === 'gear' ? 'hats' : it.kind === 'coat' ? 'coats' : 'themes'}:${esc(it.id)}"]`,
@@ -70,6 +77,7 @@
 
   /* ---------- drawings ---------- */
   const boneIcon = `<svg viewBox="-22 -14 44 28" aria-hidden="true">${A.bone(0, 0, 1)}</svg>`;
+  const starIcon = `<svg viewBox="-10 -10 20 20" aria-hidden="true"><path d="M0 -8.5 L2.5 -2.8 L8.6 -2.6 L3.9 1.4 L5.4 7.4 L0 4 L-5.4 7.4 L-3.9 1.4 L-8.6 -2.6 L-2.5 -2.8 Z" fill="currentColor"/></svg>`;
   const tick = `<svg viewBox="-10 -10 20 20" aria-hidden="true"><path d="M-6 0 L-2 5 L7 -6" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const lockIcon = `<svg viewBox="-12 -12 24 24" aria-hidden="true"><path d="M-6 -1 v-4 a6 6 0 0 1 12 0 v4" fill="none" stroke="${C.woodInk}" stroke-width="2.6"/><rect x="-9" y="-1" width="18" height="13" rx="3" fill="${C.woodInk}"/><circle cx="0" cy="5" r="2" fill="${C.woodLt}"/></svg>`;
   const svg = (inner, vb = '-20 -20 40 40') => `<svg viewBox="${vb}" aria-hidden="true">${inner}</svg>`;
@@ -114,8 +122,25 @@
     return svg(PRIZE_ART[prizeKind(it.name)]);
   }
 
-  // the room, drawn to fit the space it has (W × H px); theme = the one shown (tried on, or in use)
-  function roomSVG(W, H, theme, top) {
+  // each theme's touch of magic on the wall (behind Bonnie, so she and the words stay clear)
+  function themeMagic(theme, W, top, fl, f) {
+    const r = A.rng(theme.length * 31 + 7), pts = n => Array.from({ length: n }, () => [r() * W, top + 30 + r() * (fl - top - 110 * f)]);
+    const star = (x, y, k, c) => `<path class="ps-twinkle" style="animation-delay:${(r() * 3).toFixed(2)}s" d="M${x} ${y - 6 * k} L${x + 1.6 * k} ${y - 1.6 * k} L${x + 6 * k} ${y} L${x + 1.6 * k} ${y + 1.6 * k} L${x} ${y + 6 * k} L${x - 1.6 * k} ${y + 1.6 * k} L${x - 6 * k} ${y} L${x - 1.6 * k} ${y - 1.6 * k} Z" fill="${c}"/>`;
+    const n = Math.round(W / 26);
+    const M = {
+      night: () => pts(n).map(([x, y]) => star(x, y, .8 + r() * .7, '#FFF6D5')).join(''),
+      space: () => pts(n).map(([x, y]) => star(x, y, .6 + r() * .8, '#fff')).join('') + `<circle cx="${W * .86}" cy="${top + 70 * f}" r="${18 * f}" fill="#F6B66A"/><ellipse cx="${W * .86}" cy="${top + 70 * f}" rx="${30 * f}" ry="${7 * f}" fill="none" stroke="#FFD9A0" stroke-width="3"/>`,
+      christmas: () => { let o = ''; for (let i = 0, k = Math.ceil(W / 30); i <= k; i++) { const x = i * 30 + 6, t = x / W, y = top + 10 + 4 * t * (1 - t) * 26 * f; o += `<circle class="ps-twinkle" style="animation-delay:${(i % 4) * .4}s" cx="${x}" cy="${y + 9}" r="${5 * f}" fill="${['#FF5A4E', '#FFD24A', '#6EDB7A', '#5AB4FF'][i % 4]}"/>`; } return o; },
+      snow: () => pts(n + 6).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${(2 + r() * 3) * f}" fill="#fff" opacity=".95"/>`).join(''),
+      sea: () => pts(Math.round(n * .7)).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${(3 + r() * 6) * f}" fill="none" stroke="#fff" stroke-width="2" opacity=".85"/>`).join('') + `<path d="M${W * .14} ${top + 90 * f} q14 -12 30 0 q-16 12 -30 0 z m30 0 l10 -8 v16 z" fill="#FF9A5A" opacity=".9"/>`,
+      sunset: () => `<ellipse cx="${W / 2}" cy="${fl - 70 * f}" rx="${W * .6}" ry="${fl * .7}" fill="#FFB36B" opacity=".25"/>`,
+      volcano: () => pts(n).map(([x, y]) => `<circle class="ps-twinkle" style="animation-delay:${(r() * 3).toFixed(2)}s" cx="${x}" cy="${y}" r="${(1.6 + r() * 2.4) * f}" fill="#FF8A3D"/>`).join(''),
+      pixel: () => pts(Math.round(n * .6)).map(([x, y]) => { const q = 7 * f; return `<g fill="#fff" opacity=".9"><rect x="${x}" y="${y}" width="${q * 3}" height="${q}"/><rect x="${x + q}" y="${y - q}" width="${q}" height="${q}"/></g>`; }).join(''),
+    };
+    return M[theme] ? `<g class="ps-magic" data-theme="${theme}">${M[theme]()}</g>` : '';
+  }
+  // the room, drawn to fit the space it has (W × H px); theme = the one shown (tried on, or in use); bon = where Bonnie stands
+  function roomSVG(W, H, theme, top, bon) {
     const f = Math.max(.72, Math.min(1.45, H / 340)), cx = W / 2, fl = Math.round(H - 64 * f), o = [];
     o.push(`<rect width="${W}" height="${fl}" fill="#F3DDB0" fill-opacity=".58"/>`); // the theme shows through, as wallpaper
     for (let x = 14; x < W; x += 38) o.push(`<path d="M${x} 0 V${fl - 70 * f}" stroke="#E5C88F" stroke-width="2"/>`);
@@ -147,14 +172,20 @@
       <path d="M${hx - 22 * f} ${hy + 18 * f} L${hx} ${hy + 6 * f} L${hx + 22 * f} ${hy + 18 * f}" fill="none" stroke="${C.woodDk}" stroke-width="${5 * f}" stroke-linecap="round"/>
       <g transform="translate(${hx - 22 * f} ${hy + 22 * f}) scale(${f})"><path d="M-12 8 L0 -18 L12 8 Z" fill="${C.berry}" stroke="#A93E4F" stroke-width="1.6" stroke-linejoin="round"/><circle cy="-18" r="4" fill="${C.gold}"/></g>
       <g transform="translate(${hx + 20 * f} ${hy + 22 * f}) scale(${f})"><path d="M-6 -2 q6 -4 12 0 l-2 40 h-8 z" fill="${C.apple}"/><path d="M-6 6 h12 M-5 16 h11 M-4 26 h10" stroke="#fff" stroke-width="3"/></g>`);
+    o.push(A.tint(theme, W, H)); // the theme's colour wash over the room (not over Bonnie or her glow)
+    o.push(themeMagic(theme, W, top, fl, f));
+    // a soft light on Bonnie, so she stands out on every theme
+    if (bon) o.push(`<defs><radialGradient id="psGlow"><stop offset="0" stop-color="#FFF8E6" stop-opacity=".85"/><stop offset=".6" stop-color="#FFF8E6" stop-opacity=".35"/><stop offset="1" stop-color="#FFF8E6" stop-opacity="0"/></radialGradient></defs>
+      <ellipse id="psHalo" cx="${bon.x}" cy="${bon.y}" rx="${bon.w * .82}" ry="${bon.h * .62}" fill="url(#psGlow)"/>`);
     // the rug Bonnie stands on
     const rx = Math.min(W * .3, 170 * f);
     o.push(`<ellipse cx="${cx}" cy="${H - 22 * f}" rx="${rx}" ry="${20 * f}" fill="${C.berry}"/><ellipse cx="${cx}" cy="${H - 22 * f}" rx="${rx - 9 * f}" ry="${13 * f}" fill="none" stroke="${C.gold}" stroke-width="${3 * f}" stroke-dasharray="2 ${8 * f}" stroke-linecap="round"/>`);
-    return { svg: o.join('') + A.tint(theme, W, H), f, fl,
+    return { svg: o.join(''), f, fl,
       window: { x: hx + 40 * f, y: fl - 200 * f, w: Math.max(60, cx - Math.max(W * .16, 86 * f) - (hx + 40 * f)), h: 116 * f } };
   }
 
   /* ---------- the screen ---------- */
+  const ON = '#4E8F3E', ON_DK = '#356B2A', OWN = '#7E5BB5', OWN_DK = '#5B3F8C'; // Wearing (green) and Yours (purple)
   const STYLE = `
   .ps-on #screen>.card.shop,.ps-on .hud,.ps-on .butterfly,.ps-on .frog,.ps-on .meadow{display:none!important}
   .ps-on #app{max-width:none;padding:0;min-height:0}
@@ -177,22 +208,32 @@
   @keyframes psHop{30%{transform:translateY(-16px)}60%{transform:translateY(0)}80%{transform:translateY(-5px)}}
   .ps-bon .eyes{transform-box:fill-box;transform-origin:50% 50%;animation:blink 5s infinite}
   .ps-bon .tail{transform-box:fill-box;transform-origin:0% 100%;animation:wag 1.4s ease-in-out infinite}
-  .ps-try{position:absolute;z-index:3;padding:3px 12px 4px;border-radius:999px;background:${C.gold};border:2px solid ${C.goldDk};font:700 16px/1.1 Fredoka,system-ui,sans-serif;color:${C.woodInk};white-space:nowrap;box-shadow:0 3px 0 ${C.goldDk}}
+  .ps-try{position:absolute;z-index:3;display:inline-flex;align-items:center;gap:5px;padding:4px 12px 5px;border-radius:999px;font:700 16px/1.1 Fredoka,system-ui,sans-serif;white-space:nowrap}
+  .ps-try svg{width:16px;height:16px;flex:none}
+  .ps-try.k-buy,.ps-try.k-short{background:rgba(255,251,241,.95);color:${C.woodInk};border:2.5px dashed ${C.goldDk}}
+  .ps-try.k-owned{background:${OWN};color:#fff;border:2.5px solid ${OWN_DK};box-shadow:0 3px 0 ${OWN_DK}}
+  .ps-try.k-active{background:${ON};color:#fff;border:2.5px solid ${ON_DK};box-shadow:0 3px 0 ${ON_DK}}
+  .ps-twinkle{animation:psTw 2.6s ease-in-out infinite}
+  @keyframes psTw{50%{opacity:.35}}
   .ps-low{flex:none;position:relative;z-index:4;background:#F6E7C8;border-top:4px solid ${C.woodDk};padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
   .ps-act{display:flex;align-items:center;gap:10px;min-height:60px;padding:0 12px;max-width:780px;margin:0 auto}
   .ps-what{flex:1;min-width:0}
   .ps-what b{display:block;font:700 19px/1.15 Fredoka,system-ui,sans-serif;color:${C.woodInk};overflow:hidden;text-overflow:ellipsis}
-  .ps-what small{display:block;margin-top:2px;font:600 16px/1.2 Fredoka,system-ui,sans-serif;color:#7A5A38}
+  .ps-what small{display:flex;align-items:center;gap:4px;margin-top:3px;font:600 16px/1.2 Fredoka,system-ui,sans-serif;color:#7A5A38}
+  .ps-what small svg{width:16px;height:16px;flex:none}
+  .ps-what small.k-active{color:${ON_DK}}.ps-what small.k-owned{color:${OWN_DK}}.ps-what small.k-buy{color:#8A6516}.ps-what small.k-short{color:#6B655A}.ps-what small.k-prize{color:#8E4452}
+  .ps-what small.k-fresh{color:${OWN_DK};animation:psPop .6s ease-out}
   .ps-what .ps-hint{font:400 17px/1.3 Andika,system-ui,sans-serif;color:${C.ink}}
   .ps-do{flex:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;min-width:128px;max-width:52%;padding:4px 16px;border:0;border-radius:14px;
     font:700 20px/1.1 Fredoka,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   .ps-do>span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
   .ps-do svg{width:30px;height:20px;flex:none}
   .ps-do.buy{background:${C.gold};color:${C.woodInk};box-shadow:0 4px 0 ${C.goldDk}}
-  .ps-do.wear{background:#5E9E4E;color:#fff;box-shadow:0 4px 0 #3F7A3A}
+  .ps-do.wear{background:${ON};color:#fff;box-shadow:0 4px 0 ${ON_DK}}
   .ps-do.off{background:${C.woodLt};color:${C.woodInk};box-shadow:0 4px 0 ${C.woodDk}}
   .ps-do.swap{background:${C.berry};color:#fff;box-shadow:0 4px 0 #A93E4F}
-  .ps-do.using,.ps-do.short{background:#EAE3D6;color:#4F4A42;box-shadow:0 4px 0 #A89F8E;cursor:default}
+  .ps-do.using{background:#E3F1DC;color:${ON_DK};box-shadow:0 4px 0 #A9CC98;cursor:default}
+  .ps-do.short{background:#EAE3D6;color:#4F4A42;box-shadow:0 4px 0 #A89F8E;cursor:default}
   .ps-do.short{font-size:17px}
   .ps-do:not(.using):not(.short):active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
   .ps-do:focus-visible,.ps-tab:focus-visible,.ps-card:focus-visible{outline:4px solid ${C.goldDk};outline-offset:2px}
@@ -202,14 +243,35 @@
     background:${C.woodLt};font:700 17px/1 Fredoka,system-ui,sans-serif;color:${C.woodInk};box-shadow:0 3px 0 ${C.woodDk};cursor:pointer;touch-action:manipulation}
   .ps-tab[aria-pressed="true"]{background:${C.paper};border-color:${C.goldDk};box-shadow:0 3px 0 ${C.goldDk},0 0 0 3px rgba(242,193,78,.55)}
   .ps-tab svg{width:26px;height:26px;flex:none}
+  .ps-tab.minor{flex:0 1 auto;max-width:130px;margin-left:6px;background:${C.paper};border-color:#C9B79A;box-shadow:0 3px 0 #C9B79A;color:#7A5A38;font-weight:600}
+  .ps-tab.minor svg{opacity:.7}
   @media (max-width:440px){.ps-tab{font-size:16px;gap:3px;padding:0 3px}.ps-tab svg{width:20px;height:20px}.ps-tabs{gap:4px;padding-left:6px;padding-right:6px}}
+  .ps-where{display:flex;align-items:center;justify-content:space-between;gap:8px;max-width:780px;margin:6px auto 0;padding:0 14px;font:600 16px/1.2 Fredoka,system-ui,sans-serif;color:#7A5A38;min-height:24px}
+  .ps-where b{font-weight:700;color:${C.woodInk};overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ps-coll{flex:none;display:inline-flex;align-items:center;gap:4px;padding:2px 10px 3px;border-radius:999px;background:${OWN};color:#fff;font:700 16px/1.15 Fredoka,system-ui,sans-serif}
+  .ps-coll svg{width:15px;height:15px}
+  .ps-coll.soft{background:transparent;color:#7A5A38;padding:0;font-weight:600}
   .ps-railwrap{position:relative}
+  .ps-railwrap::before,.ps-railwrap::after{content:'';position:absolute;top:0;bottom:0;width:30px;z-index:1;pointer-events:none;opacity:0;transition:opacity .2s}
+  .ps-railwrap::before{left:0;background:linear-gradient(90deg,#F6E7C8,rgba(246,231,200,0))}.ps-railwrap::after{right:0;background:linear-gradient(270deg,#F6E7C8,rgba(246,231,200,0))}
+  .ps-railwrap.more-l::before,.ps-railwrap.more-r::after{opacity:1}
+  .ps-track{position:relative;height:8px;margin:0 auto 2px;width:min(60%,320px);border-radius:4px;background:rgba(154,106,58,.22)}
+  .ps-track i{position:absolute;top:0;bottom:0;border-radius:4px;background:${C.woodDk}}
   .ps-rail{display:grid;grid-auto-flow:column;grid-template-rows:repeat(var(--rows,1),auto);grid-auto-columns:auto;gap:10px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;
     scroll-snap-type:x proximity;scroll-padding:0 56px;padding:10px 14px 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .ps-rail::-webkit-scrollbar{display:none}
   .ps-card{scroll-snap-align:start;position:relative;display:grid;grid-template-rows:auto 1fr auto;justify-items:center;align-items:start;gap:4px;margin:0;padding:8px 6px 9px;border:2px solid #D9C7A6;border-radius:14px;
     background:${C.paper};box-shadow:0 3px 0 #D9C7A6;cursor:pointer;color:${C.ink};text-align:center;font:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .12s}
-  .ps-card[aria-pressed="true"]{border-color:${C.goldDk};background:#FFF4D6;box-shadow:0 3px 0 ${C.goldDk},0 0 0 4px rgba(242,193,78,.6);transform:translateY(-3px)}
+  .ps-card.k-active{border:3px solid ${ON};box-shadow:0 3px 0 ${ON_DK}}
+  .ps-card.k-owned{border:3px solid ${OWN};background:#F8F3FF;box-shadow:0 3px 0 ${OWN_DK}}
+  .ps-card.k-short .ps-th{opacity:.7}
+  .ps-card.k-prize{border-color:#E2D3B4;box-shadow:0 2px 0 #E2D3B4}
+  .ps-card .ps-badge{position:absolute;top:-8px;right:-6px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.2)}
+  .ps-card .ps-badge svg{width:16px;height:16px}
+  .ps-card.k-active .ps-badge{background:${ON}}.ps-card.k-owned .ps-badge{background:${OWN}}
+  .ps-card[aria-pressed="true"]{transform:translateY(-4px);box-shadow:0 0 0 4px ${C.gold},0 0 0 6px ${C.goldDk},0 6px 10px rgba(74,59,44,.25)}
+  .ps-card.fresh{animation:psPop .7s ease-out}
+  @keyframes psPop{0%{transform:scale(.85)}55%{transform:scale(1.08)}100%{transform:scale(1)}}
   .ps-card{width:var(--cw,124px)}
   .ps-card.pressed{transform:translateY(2px)}
   .ps-th{display:grid;place-items:center;width:var(--th,84px);height:var(--th,84px)}
@@ -219,53 +281,83 @@
   .ps-card b{font:700 16px/1.15 Fredoka,system-ui,sans-serif;color:${C.woodInk};display:-webkit-box;-webkit-line-clamp:var(--lines,2);-webkit-box-orient:vertical;overflow:hidden}
   .ps-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 9px 3px;border-radius:999px;background:${C.woodLt};font:700 16px/1.15 Fredoka,system-ui,sans-serif;color:${C.woodInk};white-space:nowrap}
   .ps-chip svg{width:24px;height:16px;flex:none}
-  .ps-chip.yes{background:#DDEFD3;color:#2F5F2E}.ps-chip.yes svg{width:16px;height:16px}
+  .ps-chip.k-active{background:${ON};color:#fff}.ps-chip.k-owned{background:${OWN};color:#fff}
+  .ps-chip.k-active svg,.ps-chip.k-owned svg{width:15px;height:15px}
+  .ps-chip.k-buy{background:${C.gold};color:${C.woodInk}}
+  .ps-chip.k-short{background:#E6E0D4;color:#5A554C}
+  .ps-chip.k-prize{background:#F3E6E8;color:#8E4452}
   .ps-card .ps-meter{width:84%;height:6px;margin-top:2px}
+  .ps-card.prize .ps-th{width:calc(var(--th) * .72);height:calc(var(--th) * .72)}
+  .ps-card.prize{border-color:#E2D3B4;box-shadow:0 2px 0 #E2D3B4}
   .ps-head{grid-row:1/-1;align-self:stretch;width:82px;box-sizing:border-box;display:grid;place-items:center;padding:8px 6px;border-radius:12px;background:${C.woodLt};border:2px solid ${C.woodDk};box-shadow:0 3px 0 ${C.woodDk};
     font:700 16px/1.2 Fredoka,system-ui,sans-serif;color:${C.woodInk};text-align:center}
   .ps-card.ps-edit{background:#EAE3D6;border-color:#A89F8E;box-shadow:0 3px 0 #A89F8E}
-  .ps-arrow{position:absolute;top:50%;z-index:2;width:46px;height:46px;margin-top:-23px;padding:0;border-radius:50%;border:2px solid ${C.woodDk};background:${C.woodLt};box-shadow:0 3px 0 ${C.woodDk};display:grid;place-items:center;cursor:pointer}
-  .ps-arrow svg{width:22px;height:22px}.ps-arrow.l{left:4px}.ps-arrow.r{right:4px}.ps-arrow[hidden]{display:none}
-  @media (prefers-reduced-motion:reduce){.ps-bon.hop,.ps-bon .eyes,.ps-bon .tail{animation:none!important}.ps-card{transition:none}.ps-rail{scroll-behavior:auto}}`;
+  .ps-arrow{position:absolute;top:50%;z-index:2;width:52px;height:52px;margin-top:-26px;padding:0;border-radius:50%;border:2px solid ${C.woodDk};background:${C.woodLt};box-shadow:0 3px 0 ${C.woodDk};display:grid;place-items:center;cursor:pointer}
+  .ps-arrow svg{width:24px;height:24px}.ps-arrow.l{left:4px}.ps-arrow.r{right:4px}.ps-arrow[hidden]{display:none}
+  .ps-arrow:active{transform:translateY(2px);box-shadow:0 1px 0 ${C.woodDk}}
+  @media (prefers-reduced-motion:reduce){.ps-bon.hop,.ps-bon .eyes,.ps-bon .tail,.ps-twinkle,.ps-card.fresh,.ps-what small.k-fresh{animation:none!important}.ps-card{transition:none}.ps-rail{scroll-behavior:auto}}
+  @media (max-height:700px){.ps-track{display:none}.ps-tab{min-height:46px}.ps-tabs{padding-top:6px}.ps-act{min-height:54px}.ps-do{min-height:50px}.ps-low{padding-top:6px}
+    .ps-say{font-size:16px;padding:8px 14px 9px}.ps-where{margin-top:3px}.ps-rail{padding-top:8px;padding-bottom:10px}}`;
 
   function sizes() {
     const W = Math.min(document.documentElement.clientWidth || innerWidth, 1400), Hh = innerHeight, big = W >= 600;
-    return { W, H: Math.max(Hh, 560), big, rows: big && Hh >= 1000 ? 2 : 1, th: big ? 104 : 84, cw: big ? 150 : 124, cwPrize: big ? 184 : 150 };
+    return { W, H: Math.max(Hh, 560), big, rows: big && Hh >= 1000 ? 2 : 1, th: big ? 104 : Hh < 700 ? 74 : 84, cw: big ? 150 : 124, cwPrize: big ? 184 : 150 };
   }
   const label = it => {
-    const st = state(it), more = it.cost - save().bones;
-    const what = st === 'off' ? 'Bonnie is wearing it' : st === 'using' ? (it.kind === 'theme' ? 'You are using it' : 'Bonnie is wearing it') : st === 'wear' ? 'You have it'
-      : st === 'short' ? `${it.cost} bones. ${more} more to go` : `${it.cost} bones`;
+    const st = state(it), k = kindOf(st), more = it.cost - save().bones;
+    const what = k === 'active' ? (it.kind === 'theme' ? 'Yours, and you are using it' : 'Yours, and Bonnie is wearing it') : k === 'owned' ? 'Yours'
+      : k === 'short' ? `${it.cost} bones. You need ${more} more` : `${it.cost} bones`;
     return `${it.name}. ${what}.`;
   };
+  const meter = it => { const more = it.cost - save().bones; return `<span class="ps-meter" aria-hidden="true"><i style="width:${Math.max(4, Math.round((it.cost - more) / it.cost * 100))}%"></i></span>`; };
   function chipHTML(it) {
-    const st = state(it), more = it.cost - save().bones;
-    if (st === 'off' || st === 'using') return `<span class="ps-chip yes">${tick}${it.kind === 'theme' ? 'Using' : 'Wearing'}</span>`;
-    if (st === 'wear') return `<span class="ps-chip yes">${tick}Yours</span>`;
-    return `<span class="ps-chip">${boneIcon}${it.cost}</span>${st === 'short' ? `<span class="ps-meter" aria-hidden="true"><i style="width:${Math.max(4, Math.round((it.cost - more) / it.cost * 100))}%"></i></span>` : ''}`;
+    const k = kindOf(state(it));
+    if (k === 'active') return `<span class="ps-chip k-active">${tick}${activeWord(it)}</span>`;
+    if (k === 'owned') return `<span class="ps-chip k-owned">${starIcon}Yours</span>`;
+    return `<span class="ps-chip k-${k}">${boneIcon}${it.cost}</span>${k === 'short' ? meter(it) : ''}`;
   }
   function cardHTML(it) {
-    return `<button class="ps-card" data-id="${ui.esc(it.id)}" aria-pressed="${!!(sel && sel.tab === tab && sel.id === it.id)}" aria-label="${ui.esc(label(it))}">
-      <span class="ps-th" aria-hidden="true">${thumb(it)}</span><b aria-hidden="true">${ui.esc(it.name)}</b><span aria-hidden="true">${chipHTML(it)}</span></button>`;
+    const k = kindOf(state(it)), badge = k === 'active' ? tick : k === 'owned' ? starIcon : '';
+    return `<button class="ps-card k-${k}${it.kind === 'prize' ? ' prize' : ''}${fresh.has(it.id) ? ' fresh' : ''}" data-id="${ui.esc(it.id)}" data-k="${k}" aria-pressed="${!!(sel && sel.tab === tab && sel.id === it.id)}" aria-label="${ui.esc(label(it))}">
+      ${badge ? `<span class="ps-badge" aria-hidden="true">${badge}</span>` : ''}<span class="ps-th" aria-hidden="true">${thumb(it)}</span><b aria-hidden="true">${ui.esc(it.name)}</b><span aria-hidden="true">${chipHTML(it)}</span></button>`;
+  }
+  // the words on Bonnie's badge in the room, for the thing chosen
+  function tryWords(it) {
+    const k = kindOf(state(it)), look = it.kind === 'theme';
+    if (k === 'active') return [k, tick, activeWord(it)];
+    if (k === 'owned') return [k, starIcon, look ? 'Yours: just looking' : 'Yours: trying on'];
+    return [k, '', look ? 'Just looking' : 'Trying on'];
+  }
+  // how much of this section is the child's: "4 of 25 yours"
+  function collHTML() {
+    if (tab === 'prizes') return `<span class="ps-coll soft">Set by your grown-up</span>`;
+    const list = all(tab), n = list.filter(x => x.own).length;
+    return `<span class="ps-coll" id="psColl" aria-label="${n} of ${list.length} are yours">${starIcon}${n} of ${list.length} yours</span>`;
   }
   // the panel under Bonnie: what's chosen, and the one thing you can do with it
   function actHTML() {
     const it = chosen();
     if (!it) {
-      const hint = tab === 'prizes' ? 'Real prizes are set by your grown-up. Tap one to see it.' : tab === 'themes' ? 'Tap a theme to see it in the window.' : 'Tap something on the rail to try it on!';
+      const hint = tab === 'prizes' ? 'Real prizes are set by your grown-up. Tap one to see it.' : tab === 'themes' ? 'Tap a theme to see it in Bonnie\'s room.' : 'Tap something on the rail to try it on!';
       return `<div class="ps-what"><span class="ps-hint">${hint}</span></div>`;
     }
-    const st = state(it), more = it.cost - save().bones;
-    const sub = it.kind === 'gear' ? it.slot.name : it.kind === 'coat' ? "Bonnie's coat" : it.kind === 'theme' ? 'A theme for the meadow' : (it.desc || tierOf(it.cost));
+    const st = state(it), k = kindOf(st), more = it.cost - save().bones;
+    // what it is to the child, in words and the state's colour
+    const sub = fresh.has(it.id) ? ['fresh', starIcon, 'New in your collection!']
+      : k === 'active' ? ['active', tick, it.kind === 'theme' ? 'Yours, and on now' : 'Yours. Bonnie is wearing it']
+      : k === 'owned' ? ['owned', starIcon, 'Yours! In your collection']
+      : k === 'buy' ? ['buy', '', 'Not yours yet. You have enough bones!']
+      : k === 'prize' ? ['prize', '', it.desc || 'A real prize. A grown-up says yes.']
+      : ['short', '', it.kind === 'prize' ? `A real prize. Save up ${more} more bones` : `Not yours yet. Save up ${more} more bones`];
     const btn = {
       buy: [`<span>Buy ${boneIcon}${it.cost}</span>`, `Buy the ${it.name} for ${it.cost} bones`],
       wear: [`<span>${it.kind === 'theme' ? 'Use it' : 'Wear it'}</span>`, `${it.kind === 'theme' ? 'Use' : 'Wear'} the ${it.name}`],
       off: [`<span>Take it off</span>`, `Take off the ${it.name}`],
-      using: [`<span>${tick}${it.kind === 'theme' ? 'Using' : 'Wearing'}</span>`, it.kind === 'theme' ? `You are using the ${it.name}` : `Bonnie is wearing the ${it.name}`],
+      using: [`<span>${tick}${activeWord(it)}</span>`, it.kind === 'theme' ? `You are using the ${it.name}` : `Bonnie is wearing the ${it.name}`],
       swap: [`<span>Swap ${boneIcon}${it.cost}</span>`, `Swap ${it.cost} bones for: ${it.name}`],
-      short: [`<span>${more} more ${boneIcon}</span><span class="ps-meter" aria-hidden="true"><i style="width:${Math.max(4, Math.round((it.cost - more) / it.cost * 100))}%"></i></span>`, `${it.cost} bones. You need ${more} more bones`],
+      short: [`<span>${more} more ${boneIcon}</span>${meter(it)}`, `${it.cost} bones. You need ${more} more bones`],
     }[st];
-    return `<div class="ps-what"><b>${ui.esc(it.name)}</b><small>${ui.esc(sub)}</small></div>
+    return `<div class="ps-what"><b>${ui.esc(it.name)}</b><small class="k-${sub[0]}">${sub[1]}${ui.esc(sub[2])}</small></div>
       <button class="ps-do ${st}" id="psDo" aria-label="${ui.esc(btn[1])}"${st === 'using' || st === 'short' ? ' aria-disabled="true"' : ''}>${btn[0]}</button>`;
   }
 
@@ -279,6 +371,7 @@
     const want = TABS.find(x => x.id === tab).eng;
     if (engTab() !== want) { const b = engShop().querySelector(`[data-tab="${want}"]`); if (b) { b.click(); return; } }
     const z = sizes(), S = save(), back = viaClub ? 'Clubhouse' : 'Meadow';
+    const own = ownedNow(); if (ownedWas) own.filter(id => !ownedWas.includes(id)).forEach(id => fresh.add(id)); ownedWas = own;
     const engSay = engShop().querySelector('#shopSay');
     if (said === null) said = engSay ? engSay.textContent : '';
     const el = document.createElement('div');
@@ -302,21 +395,25 @@
       </div>
       <div class="ps-low">
         <div class="ps-act" id="psAct">${actHTML()}</div>
-        <div class="ps-tabs" role="group" aria-label="Shop sections">${TABS.map(x => `<button class="ps-tab" data-tab="${x.id}" aria-pressed="${x.id === tab}">${TAB_ICONS[x.id]}<span>${x.name}</span></button>`).join('')}</div>
+        <div class="ps-tabs" role="group" aria-label="Shop sections">${TABS.map(x => `<button class="ps-tab${x.id === 'prizes' ? ' minor' : ''}" data-tab="${x.id}" aria-pressed="${x.id === tab}">${TAB_ICONS[x.id]}<span>${x.name}</span></button>`).join('')}</div>
+        <div class="ps-where"><b id="psWhere" aria-hidden="true">${ui.esc(gs[0] ? gs[0].head : '')}</b>${collHTML()}</div>
         <div class="ps-railwrap">
           <button class="ps-arrow l" id="psL" tabindex="-1" aria-hidden="true"><svg viewBox="-12 -12 24 24"><path d="M5 -8 L-5 0 L5 8" fill="none" stroke="${C.woodInk}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <div class="ps-rail" id="psRail" role="group" aria-label="${TABS.find(x => x.id === tab).name}" style="--rows:${z.rows};--cw:${tab === 'prizes' ? z.cwPrize : z.cw}px;--th:${z.th}px;--lines:${tab === 'prizes' ? 3 : 2}">${rail}</div>
           <button class="ps-arrow r" id="psR" tabindex="-1" aria-hidden="true"><svg viewBox="-12 -12 24 24"><path d="M-5 -8 L5 0 L-5 8" fill="none" stroke="${C.woodInk}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
+        <div class="ps-track" aria-hidden="true"><i id="psThumb"></i></div>
       </div>`;
     const old = ui.$('#screen > .ps'); if (old) old.remove();
     ui.$('#screen').appendChild(el);
     const railEl = ui.$('#psRail');
     railEl.scrollLeft = railX[tab] || 0;
-    if (railX[tab] === undefined && sel) { const c = railEl.querySelector(`[data-id="${esc(sel.id)}"]`); if (c) railEl.scrollLeft = c.offsetLeft - 60; }
     paint();
     wire();
     arrows();
+    peek();
+    if (sel) { const c = railEl.querySelector(`[data-id="${esc(sel.id)}"]`); if (c && railX[tab] === undefined) inView(c); }
+    setTimeout(() => { fresh.clear(); }, 50); // their pop plays once
     // Bonnie mirrors what the engine has her say (after buying, wearing, swapping)
     if (engSay) new MutationObserver(() => setSay(engSay.textContent, true)).observe(engSay, { childList: true, characterData: true, subtree: true });
     if (refocus) { const f = ui.$(refocus); if (f) f.focus({ preventScroll: true }); refocus = null; }
@@ -329,40 +426,64 @@
     const W = room.clientWidth, H = room.clientHeight, S = save(), it = chosen();
     const theme = it && it.kind === 'theme' ? it.id : (S.theme || 'day');
     const barB = ui.$('.ps .pm-bar').getBoundingClientRect().bottom - room.getBoundingClientRect().top;
-    const R = roomSVG(W, H, theme, barB);
+    const say = ui.$('#psSay'); say.style.top = (barB + 10) + 'px';
+    const sayB = say.offsetTop + say.offsetHeight + 14;
+    const bh = Math.max(96, Math.min(H - sayB - 8, W * .6, 360)), bw = bh * 120 / 124;
+    const R = roomSVG(W, H, theme, barB, { x: W / 2, y: H - 10 - bh * .5, w: bw, h: bh });
     const art = ui.$('#psRoomArt'); art.setAttribute('viewBox', `0 0 ${W} ${H}`); art.innerHTML = R.svg;
     Object.assign(ui.$('#psWall').style, { height: R.fl + 'px', background: (M.THEMES.find(x => x.id === theme) || M.THEMES[0]).sw });
     const win = ui.$('#psWin'), th = M.THEMES.find(x => x.id === theme) || M.THEMES[0], ww = Math.min(R.window.w, 150 * R.f);
     Object.assign(win.style, { left: (R.window.x) + 'px', top: R.window.y + 'px', width: ww + 'px', height: R.window.h + 'px', background: th.sw });
-    const say = ui.$('#psSay'); say.style.top = (barB + 10) + 'px';
-    const sayB = say.offsetTop + say.offsetHeight + 14;
-    const bh = Math.max(96, Math.min(H - sayB - 8, W * .6, 360)), bw = bh * 120 / 124;
     const bon = ui.$('#psBon');
     Object.assign(bon.style, { width: bw + 'px', height: bh + 'px', left: (W / 2 - bw / 2) + 'px', top: (H - 10 - bh) + 'px' });
     const over = it && it.kind === 'gear' ? { [it.slot.key]: it.id } : null;
     bon.innerHTML = lookSVG(over);
     bon.style.cssText += it && it.kind === 'coat' ? ';' + coatStyle(it.coat) : ';--fur:;--fur-dk:;--fur-lt:';
     if (!(it && it.kind === 'coat')) ['--fur', '--fur-dk', '--fur-lt'].forEach(p => bon.style.removeProperty(p));
-    // "Trying on" when what she has on isn't hers yet (or isn't what she wears)
-    const tr = ui.$('#psTry'), trying = it && it.kind !== 'prize' && !it.on;
-    tr.hidden = !trying; tr.textContent = it && it.kind === 'theme' ? 'Just looking' : 'Trying on';
-    if (trying) { tr.style.left = Math.min(W - 8 - tr.offsetWidth, W / 2 + bw * .4) + 'px'; tr.style.top = (H - 10 - bh * .42) + 'px'; }
-    bon.setAttribute('aria-label', `Bonnie the dog${trying && it.kind !== 'theme' ? `, trying on the ${it.name}` : ''}. Tap to tickle her`);
+    // Bonnie's badge: "Trying on" / "Just looking" (dashed: not yours), "Yours: trying on" (purple), "Wearing" / "Using now" (green)
+    const tr = ui.$('#psTry'), show = it && it.kind !== 'prize';
+    tr.hidden = !show;
+    if (show) {
+      const [k, icon, words] = tryWords(it);
+      tr.className = 'ps-try k-' + k; tr.innerHTML = icon + ui.esc(words);
+      tr.style.left = Math.max(8, Math.min(W - 8 - tr.offsetWidth, W / 2 + bw * .36)) + 'px'; tr.style.top = (H - 10 - bh * .42) + 'px';
+    }
+    bon.setAttribute('aria-label', `Bonnie the dog${show && it.kind !== 'theme' ? `, ${tryWords(it)[2].toLowerCase().replace('yours: ', '')} the ${it.name}` : ''}. Tap to tickle her`);
   }
   function setSay(text, bounce) {
     said = text; const p = ui.$('#psSay'); if (!p) return;
     p.textContent = text; paint();
     if (bounce && !reduce()) ui.animate(ui.$('#psBon'), 'hop', 560);
   }
+  // the arrows, the faded edges, the track and the section name follow the rail
   function arrows() {
     const r = ui.$('#psRail'); if (!r) return;
-    ui.$('#psL').hidden = r.scrollLeft < 8; ui.$('#psR').hidden = r.scrollLeft + r.clientWidth > r.scrollWidth - 8;
+    const L = r.scrollLeft > 8, R = r.scrollLeft + r.clientWidth < r.scrollWidth - 8, wrap = r.parentNode;
+    ui.$('#psL').hidden = !L; ui.$('#psR').hidden = !R;
+    wrap.classList.toggle('more-l', L); wrap.classList.toggle('more-r', R);
+    const th = ui.$('#psThumb'); if (th) { const k = r.clientWidth / Math.max(r.scrollWidth, 1); th.style.width = Math.max(10, k * 100) + '%'; th.style.left = (r.scrollLeft / Math.max(r.scrollWidth, 1) * 100) + '%'; th.parentNode.hidden = k >= .99; }
+    // the section of the first card fully in view
+    const box = r.getBoundingClientRect(), first = [...r.children].find(c => { const b = c.getBoundingClientRect(); return b.left >= box.left + 40 && c.dataset.id; }) || r.querySelector('[data-id]');
+    if (first) { const g = groups(tab).find(g => g.list.some(x => x.id === first.dataset.id)); const w = ui.$('#psWhere'); if (g && w && w.textContent !== g.head) w.textContent = g.head; }
+  }
+  // the chosen card, fully in view and clear of the arrows
+  function inView(card) {
+    const r = ui.$('#psRail'), a = card.getBoundingClientRect(), b = r.getBoundingClientRect(), pad = 62;
+    const d = a.left < b.left + pad ? a.left - b.left - pad : a.right > b.right - pad ? a.right - b.right + pad : 0;
+    if (d) r.scrollBy({ left: d, behavior: reduce() || Q.get('shoptest') ? 'auto' : 'smooth' });
+  }
+  // the first time, the rail slides a little and back, to show it moves
+  function peek() {
+    const r = ui.$('#psRail'); if (peeked || !r || reduce() || Q.get('shoptest') || Q.get('try') || r.scrollWidth <= r.clientWidth + 8 || r.scrollLeft > 0) return;
+    peeked = true;
+    setTimeout(() => { if (!on) return; r.scrollTo({ left: 70, behavior: 'smooth' }); setTimeout(() => { if (on && Math.abs(r.scrollLeft - 70) < 10) r.scrollTo({ left: 0, behavior: 'smooth' }); }, 650); }, 900);
   }
 
   function pick(it, card) {
     sel = { tab, id: it.id };
     ui.$$('.ps-card[data-id]').forEach(c => c.setAttribute('aria-pressed', c === card));
     ui.$('#psAct').innerHTML = actHTML(); wireAct();
+    inView(card);
     paint();
     if (ui.tone) ui.tone(700, .06, 'sine', .07);
     if (!reduce()) ui.animate(ui.$('#psBon'), 'hop', 560);
@@ -394,9 +515,10 @@
       else { if (ui.sfx && ui.sfx.pop) ui.sfx.pop(); draw(); }
     });
     const rail = ui.$('#psRail');
-    rail.addEventListener('scroll', () => { railX[tab] = rail.scrollLeft; arrows(); }, { passive: true });
-    ui.$('#psL').onclick = () => rail.scrollBy({ left: -rail.clientWidth * .8, behavior: reduce() ? 'auto' : 'smooth' });
-    ui.$('#psR').onclick = () => rail.scrollBy({ left: rail.clientWidth * .8, behavior: reduce() ? 'auto' : 'smooth' });
+    rail.addEventListener('scroll', () => { railX[tab] = rail.scrollLeft; arrows(); ui.$$('.ps-card.pressed').forEach(c => c.classList.remove('pressed')); }, { passive: true });
+    const step = () => Math.max(120, rail.clientWidth - 150); // a page, less a card, so the last one seen stays in view
+    const go = d => { peeked = true; rail.scrollBy({ left: d * step(), behavior: reduce() || Q.get('shoptest') ? 'auto' : 'smooth' }); if (ui.tone) ui.tone(520, .05, 'sine', .05); };
+    ui.$('#psL').onclick = () => go(-1); ui.$('#psR').onclick = () => go(1);
     const bon = ui.$('#psBon');
     bon.onclick = () => { const t = ui.tickle(bon); setSay(t); ui.say(t, { pitch: 1.4 }); };
     const ed = ui.$('#psEdit'); if (ed) ed.onclick = () => { const e = engShop().querySelector('#editPrizes'); if (e) { leaveSoon(); e.click(); } };
@@ -475,6 +597,77 @@
     const bon = r(ui.$('#psBon')), sayR = r(ui.$('#psSay')), low = r(ui.$('.ps-low')), bar = r(ui.$('.ps .pm-bar'));
     ok('Bonnie is big, in the middle, and clear of her words, the bar and the panel', bon.height >= 110 && Math.abs((bon.left + bon.right) / 2 - innerWidth / 2) < 4 && !cross(bon, sayR) && bon.bottom <= low.top + 2 && sayR.top >= bar.bottom - 6, `${bon.height.toFixed(0)} tall`);
     ok('the tabs and the main button are 44 × 44 or more', ui.$$('.ps-tab').every(b => r(b).height >= 44 && r(b).width >= 44), ui.$$('.ps-tab').map(b => r(b).width.toFixed(0)).join(', '));
+    // the five states look and read differently, on the card, on Bonnie's badge and in the panel
+    {
+      const seen = {}, wrong = [];
+      for (const T of ['gear', 'coats', 'themes', 'prizes']) {
+        await tabTo(T);
+        ui.$$('.ps-card[data-id]').forEach(c => {
+          const it = all(T).find(x => x.id === c.dataset.id), k = kindOf(state(it)), chip = c.querySelector('.ps-chip');
+          const want = k === 'active' ? activeWord(it) : k === 'owned' ? 'Yours' : String(it.cost);
+          if (c.dataset.k !== k || !chip.classList.contains('k-' + k) || !chip.textContent.includes(want) || (k === 'short') !== !!c.querySelector('.ps-meter')) wrong.push(`${it.id} ${k}`);
+          if (!seen[k]) seen[k] = { bg: getComputedStyle(chip).backgroundColor, border: getComputedStyle(c).borderTopColor, T, id: it.id };
+        });
+      }
+      const ks = Object.keys(seen), looks = new Set(ks.map(k => seen[k].bg));
+      ok('each card shows its state: Wearing, Yours, its price, or its price and how close', !wrong.length, wrong.slice(0, 4).join(', '));
+      ok('the states have their own colours', looks.size === ks.length, ks.map(k => `${k} ${seen[k].bg}`).join('; '));
+      // Bonnie's badge and the panel, for one of each
+      const bad2 = [];
+      for (const k of ['active', 'owned', 'buy', 'short']) {
+        const x = seen[k]; if (!x || x.T === 'prizes') continue;
+        await tabTo(x.T); const it = all(x.T).find(i => i.id === x.id);
+        ui.$(`.ps-card[data-id="${esc(it.id)}"]`).click(); await wait(60);
+        const b = ui.$('#psTry'), sm = ui.$('#psAct small'), d = ui.$('#psDo');
+        const words = { active: activeWord(it), owned: 'Yours', buy: it.kind === 'theme' ? 'Just looking' : 'Trying on', short: it.kind === 'theme' ? 'Just looking' : 'Trying on' }[k];
+        const btn = { active: it.kind === 'gear' ? /Take it off/ : /Wearing|Using/, owned: /Wear it|Use it/, buy: new RegExp(`Buy.*${it.cost}`), short: /more/ }[k];
+        const panel = { active: /Yours/, owned: /Yours/, buy: /Not yours yet/, short: /Not yours yet.*more/ }[k];
+        if (b.hidden || !b.classList.contains('k-' + k) || !b.textContent.includes(words) || !btn.test(d.textContent) || !panel.test(sm.textContent)) bad2.push(`${k}: "${b.textContent}" / "${d.textContent.trim()}" / "${sm.textContent}"`);
+        if ((k === 'buy' || k === 'short') && getComputedStyle(b).borderTopStyle !== 'dashed') bad2.push(k + ' badge not dashed');
+      }
+      ok('Bonnie\'s badge and the panel say the same: Trying on / Just looking, Yours, Wearing, Buy, more bones', !bad2.length, bad2.join(' | ') || ks.join(', '));
+    }
+    // the rail: it shows it scrolls, its arrows are big and work, the chosen card stays clear of them, it says where you are
+    {
+      await tabTo('gear'); M.shop({}); await wait(150);
+      const rail = ui.$('#psRail'), R = ui.$('#psR'), L = ui.$('#psL'), wrap = rail.parentNode;
+      const over = rail.scrollWidth > rail.clientWidth + 8;
+      ok('the gear rail scrolls, with an arrow and a faded edge to say so', over && !R.hidden && wrap.classList.contains('more-r') && r(R).width >= 44 && r(R).height >= 44, `${rail.scrollWidth} in ${rail.clientWidth}, arrow ${r(R).width.toFixed(0)}`);
+      const x0 = rail.scrollLeft, firstIds = ui.$$('.ps-card[data-id]').filter(c => r(c).right <= r(rail).right - 2).map(c => c.dataset.id);
+      R.click(); await wait(80);
+      const lastSeen = firstIds[firstIds.length - 1], ls = ui.$(`.ps-card[data-id="${esc(lastSeen)}"]`);
+      ok('the right arrow moves along a page, keeping a card you\'d seen in view, and the left arrow appears', rail.scrollLeft > x0 + 60 && !L.hidden && r(ls).right > r(rail).left && r(ls).left < r(rail).right, `moved ${Math.round(rail.scrollLeft - x0)}`);
+      L.click(); await wait(80);
+      ok('…and the left arrow goes back', Math.abs(rail.scrollLeft - x0) < 4);
+      // a card half under the right arrow: tapping it brings it fully into view
+      const half = ui.$$('.ps-card[data-id]').find(c => r(c).left < r(rail).right && r(c).right > r(R).left);
+      if (half) { half.click(); await wait(80); const a = r(half), ar = r(R);
+        ok('a card half hidden at the edge comes fully into view when tapped, clear of the arrows', a.right <= ar.left + 2 && a.left >= r(rail).left, half.dataset.id); }
+      rail.scrollLeft = rail.scrollWidth; rail.dispatchEvent(new Event('scroll')); await wait(80);
+      const where = ui.$('#psWhere').textContent, lastHead = groups('gear').slice(-1)[0].head;
+      ok('the line above the rail names the section you\'re in as you go', where === lastHead, where);
+      const owned = all('gear').filter(x => x.own).length;
+      ok('…and counts what\'s yours ("4 of 25 yours")', ui.$('#psColl').textContent.includes(`${owned} of ${all('gear').length}`), ui.$('#psColl').textContent);
+      rail.scrollLeft = 0; await wait(40);
+    }
+    // a theme: the room changes (wall, window, its own magic) and Bonnie keeps her light; the words stay on paper
+    {
+      await tabTo('themes');
+      const t = all('themes').find(x => !x.on && x.id !== 'day' && x.id !== 'pixel') || all('themes').find(x => !x.on);
+      ui.$(`.ps-card[data-id="${esc(t.id)}"]`).click(); await wait(80);
+      const wall = ui.$('#psWall').style.background, magic = ui.$('#psRoomArt .ps-magic'), halo = ui.$('#psHalo');
+      const sayBg = getComputedStyle(ui.$('#psSay')).backgroundColor, bonOn = r(ui.$('#psBon')), haloR = r(halo);
+      ok('a theme changes the room: its wall, its window and its own touch (stars, lights, snow…)', !!wall && !!magic && magic.dataset.theme === t.id && ui.$('#psWin').style.background === wall, t.id);
+      ok('…while Bonnie keeps a soft light around her and her words stay on plain paper', !!halo && haloR.width >= bonOn.width && sayBg === 'rgb(255, 251, 241)', sayBg);
+    }
+    // prizes are there, but quieter than dressing Bonnie
+    {
+      const g = r(ui.$('.ps-tab[data-tab="gear"]')), pt = ui.$('.ps-tab[data-tab="prizes"]'), ptw = r(pt).width, last = pt === ui.$$('.ps-tab').slice(-1)[0], minor = pt.classList.contains('minor');
+      await tabTo('prizes');
+      const pth = ui.$('.ps-card.prize .ps-th'), pr = pth ? r(pth) : null;
+      await tabTo('gear'); const gth = r(ui.$('.ps-card .ps-th'));
+      ok('Prizes is the quiet tab, last and smaller, and its pictures are smaller', minor && ptw < g.width && last && (!pr || pr.width < gth.width), `${ptw.toFixed(0)} vs ${g.width.toFixed(0)}`);
+    }
     // trying on: Bonnie changes, nothing is saved
     const before = snap(), bonBefore = ui.$('#psBon').innerHTML;
     const nOwn = all('gear').find(it => !it.own) || all('gear')[0];
@@ -491,6 +684,17 @@
       ok('Buy opens the engine\'s own "Buy it for … bones?" box', !!m && new RegExp(`${buyIt.cost} bones`).test(m.textContent), buyIt.id);
       if (m) { const no = m.querySelector('[data-a="no"]'); if (no) no.click(); else m.remove(); await wait(150); }
       ok('…and "Not now" spends nothing', snap() === before);
+    }
+    // buying for real (the pretend save): the engine's "Yes, buy it!", then the card is Yours and Wearing, and pops
+    const toBuy = all('gear').find(it => state(it) === 'buy');
+    if (toBuy) {
+      await tabTo('gear');
+      ui.$(`.ps-card[data-id="${esc(toBuy.id)}"]`).click(); await wait(60); ui.$('#psDo').click(); await wait(150);
+      const yes = ui.$('.modal-bg [data-a="yes"]'); if (yes) yes.click(); await wait(300);
+      const c = ui.$(`.ps-card[data-id="${esc(toBuy.id)}"]`);
+      ok('after "Yes, buy it!", it is Bonnie\'s: the card says Wearing and pops, the panel says "New in your collection!"', save().owned.hats.includes(toBuy.id) && c && c.dataset.k === 'active' && c.classList.contains('fresh') && /New in your collection/.test(ui.$('#psAct').textContent), toBuy.id);
+      // put the pretend save back exactly as it was
+      M.save.mutate(s => { const o = JSON.parse(before); Object.keys(s).forEach(k => delete s[k]); Object.assign(s, o); }); ui.applyTheme(); M.shop({}); await wait(200);
     }
     // wearing and taking off, through the engine (the pretend save), then put back as it was
     const wearIt = all('gear').find(it => it.own && !it.on);

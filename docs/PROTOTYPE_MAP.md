@@ -102,6 +102,15 @@ The Clubhouse page as one illustrated meadow that fits one screen: the clubhouse
 - **Checks:** 25 (19 to 22 with fewer bones or nothing owned, where some can't apply), all passing at the six sizes with a new player, part-way, further on and Reduce Motion, from the stall and from the map. The map (27), level-map (22–23) and Clubhouse (29) checks still pass.
 - **Gaps:** the engine's pop-up boxes keep their emoji (changing them means changing the engine). "Keep playing to earn N more bones!" isn't recorded. Not yet tried with real VoiceOver or on the 2018 iPad.
 
+### Bone Shop refinement 1 (22 November 2026)
+
+- **One vocabulary for state** (`kindOf()`): active (green `#4E8F3E`, tick, "Wearing"/"Using now"), owned (purple `#7E5BB5`, star, "Yours"), buy (gold price), short (grey price and meter), prize (paper). The card (`k-*` class, corner badge, chip, aria-label), Bonnie's badge `#psTry` (dashed "Trying on"/"Just looking" for previews; "Yours: trying on"; "Wearing") and the panel's small line all use it. The chosen card has a gold double ring.
+- **Collection:** "★ N of M yours" above the rail (`#psColl`), "Yours! In your collection", and a pop plus "New in your collection!" after a purchase (found by comparing what's owned before and after the engine redraws).
+- **Rail:** 52px arrows, faded edges (`more-l`/`more-r`), the current section name (`#psWhere`), a scroll bar (`#psThumb`, hidden below 700px tall), `inView()` keeps a tapped card clear of the arrows, the arrow step keeps the last card seen, and one nudge (`peek()`) on first opening (not with Reduce Motion, `try=` or tests). Cards are 74px on short screens.
+- **Themes:** `themeMagic()` adds each theme's touch (stars, lights, snow, bubbles, glow, embers, blocks) to the wall (`#psWall`) and window; `#psHalo` keeps a soft light behind Bonnie; the bubble stays paper.
+- **Prizes:** the last, smaller, paper-coloured tab (`.minor`), smaller pictures (`.prize`), "Set by your grown-up".
+- **Checks:** 31 to 38 depending on the save (new ones: states and colours, badge/panel/button agreement, rail arrows and fade, half-hidden card, section name, collection count, theme magic and halo, prizes quieter, a real purchase then the save restored). All pass at SE, 393, 430, 768, 820 and 1180, with a new player, demo 1, mid, later and Reduce Motion. Maths (27), level maps (23) and Clubhouse (29) still pass.
+
 ## Checks (`selftest=1`, first version)
 
 All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180): every maths world has a place; every tap target is at least 44 × 44; every place has a VoiceOver name that says its stars; places don't overlap; nothing is wider than the screen; Bonnie has a button; tapping a place opens the real level map with the engine's locks; the top bar comes back; "Meadow" returns.
