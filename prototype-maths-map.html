@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meadow Maths: map prototype</title>
+<!-- PROTOTYPE of the illustrated world map (design iteration 2). Not linked from the game and not in the app build.
+     Compare it with the current design in prototype-compare.html. See docs/PROTOTYPE_MAP.md. -->
+<script>
+  // ?taster=1 shows the App Store app's free taster (padlocks after level 1), as if inside the app.
+  var Q = new URLSearchParams(location.search);
+  window.MEADOW_IN_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || Q.get('taster') === '1';
+  if (Q.get('taster') === '1') { try { localStorage.removeItem('meadow-full-game'); } catch (e) {} }
+</script>
+<link href="fonts/fonts.css" rel="stylesheet">
+</head>
+<body>
+<script src="bonnie-voice.js"></script>
+<script src="js/meadow-core.js"></script>
+<script src="worlds/y2-maths-kit.js"></script>
+<script src="worlds/y2-maths-partitioning.js"></script>
+<script src="worlds/y2-maths-number-bonds.js"></script>
+<script src="worlds/y2-maths-number-lines.js"></script>
+<script src="worlds/y2-maths-arrays.js"></script>
+<script src="worlds/y2-maths-sharing.js"></script>
+<script src="worlds/y2-maths-sharing-fractions.js"></script>
+<script src="worlds/y2-maths-captains-cove.js"></script>
+<script>
+  // demo=1: a pretend save of its own, so the family's real progress is never touched.
+  var demo = Q.get('demo') === '1';
+  Meadow.startGame({
+    subject: 'maths', title: 'Meadow Maths', icon: '🔢', homeHref: 'index.html', readAloudOption: true,
+    otherGames: [{ title: 'Meadow Words', icon: '🌼', href: 'meadow-words.html' }],
+    greets: ["Woof! I'm Bonnie. Stuck? Tap Ask Bonnie and we'll do it together.", "Hi {N}! Pick a world and let's do some maths!", "Hello {N}! Shall we count some bones?"],
+    saveKey: demo ? 'meadow-save-proto-demo' : undefined, needName: !demo,
+  });
+  if (demo && !Meadow.save.get().name) {
+    // some progress to look at: two places started, one finished, the rest new
+    var stars = {};
+    var give = function (id, n, all) { var w = Meadow.world(id); w.levels.slice(0, n).forEach(function (L, i) { stars[id + '/' + L.id] = all || i % 2 === 0 ? 3 : 2; }); };
+    give('y2-maths-partitioning', 99, true); give('y2-maths-number-bonds', 2); give('y2-maths-number-lines', 1);
+    Meadow.save.mutate(function (s) { s.name = 'Sam'; s.bones = 86; Object.assign(s.stars, stars);
+      s.levelStarts.push({ key: 'y2-maths-number-lines/' + Meadow.world('y2-maths-number-lines').levels[0].id, day: s.levelStarts.length ? s.levelStarts[0].day : new Date().toISOString().slice(0, 10), via: 'map' }); });
+    Meadow.home();
+  }
+</script>
+<script src="js/proto-map-art.js"></script>
+<script src="js/proto-map.js"></script>
+</body>
+</html>

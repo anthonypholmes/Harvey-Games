@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meadow Maths: now and the map prototype, side by side</title>
+<link href="fonts/fonts.css" rel="stylesheet">
+<style>
+  body{margin:0;background:#EFE6D2;color:#4A3B2C;font-family:Andika,system-ui,sans-serif}
+  header{padding:14px 18px 6px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+  h1{font:600 22px Fredoka,system-ui,sans-serif;margin:0 12px 0 0}
+  .group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .group b{font:600 14px Fredoka,system-ui,sans-serif;color:#7A6A58;margin-right:2px}
+  button,label.chk{min-height:44px;padding:0 14px;border-radius:10px;border:2px solid #D9C7A6;background:#FFFBF1;font:600 15px Fredoka,system-ui,sans-serif;color:#4A3B2C;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  button[aria-pressed="true"]{background:#5C3D1E;color:#FFF6E2;border-color:#5C3D1E}
+  .note{font-size:14px;color:#7A6A58;padding:0 18px 8px;max-width:900px}
+  main{display:flex;gap:28px;justify-content:center;align-items:flex-start;padding:8px 12px 30px;flex-wrap:wrap}
+  figure{margin:0;text-align:center}
+  figcaption{font:600 17px Fredoka,system-ui,sans-serif;margin-top:8px}
+  .device{background:#2B2622;padding:12px;border-radius:44px;transform-origin:top center}
+  .device iframe{display:block;border:0;border-radius:32px;background:#8FC46B}
+  .ipad .device{border-radius:30px}.ipad .device iframe{border-radius:18px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Meadow Maths: now and the map prototype</h1>
+  <div class="group" role="group" aria-label="Screen size"><b>Size</b>
+    <button data-size="375x667">iPhone SE</button><button data-size="393x852">iPhone</button><button data-size="820x1180">iPad</button></div>
+  <div class="group" role="group" aria-label="Progress"><b>Progress</b>
+    <button data-demo="1">Pretend (Sam)</button><button data-demo="0">This device's</button></div>
+  <label class="chk"><input type="checkbox" id="taster"> App taster (padlocks)</label>
+</header>
+<p class="note">Both screens run the same game engine with the same progress. Play a level on either side, then reload to see the stars on both. "Pretend" progress is kept apart from the family's real save.</p>
+<main id="main"></main>
+<script>
+  const P = new URLSearchParams(location.search);
+  let size = P.get('size') || (innerWidth < 900 ? '375x667' : '393x852'), demo = P.get('demo') ?? '1', taster = P.get('taster') === '1';
+  function draw() {
+    const [w, h] = size.split('x').map(Number), ipad = w > 600;
+    const fitW = (innerWidth - 80) / (ipad ? 1 : 2) / (w + 24), fitH = (innerHeight - 150) / (h + 24);
+    const k = Math.min(1, ipad ? fitH : Math.min(fitW, fitH));
+    const q = `demo=${demo}${taster ? '&taster=1' : ''}`;
+    const frame = (label, view) => `<figure class="${ipad ? 'ipad' : ''}" style="width:${(w + 24) * k}px">
+      <div class="device" style="width:${w}px;transform:scale(${k});margin-bottom:${-(h + 24) * (1 - k)}px;margin-left:${-(w + 24) * (1 - k) / 2}px;margin-right:${-(w + 24) * (1 - k) / 2}px">
+      <iframe title="${label}" src="prototype-maths-map.html?view=${view}&${q}" style="width:${w}px;height:${h}px"></iframe></div><figcaption>${label}</figcaption></figure>`;
+    document.getElementById('main').innerHTML = frame('Now', 'old') + frame('Prototype: the meadow map', 'new');
+    document.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-pressed', b.dataset.size === size));
+    document.querySelectorAll('[data-demo]').forEach(b => b.setAttribute('aria-pressed', b.dataset.demo === demo));
+    document.getElementById('taster').checked = taster;
+  }
+  document.querySelectorAll('[data-size]').forEach(b => b.onclick = () => { size = b.dataset.size; draw(); });
+  document.querySelectorAll('[data-demo]').forEach(b => b.onclick = () => { demo = b.dataset.demo; draw(); });
+  document.getElementById('taster').onchange = e => { taster = e.target.checked; draw(); };
+  let t; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(draw, 250); });
+  draw();
+</script>
+</body>
+</html>
