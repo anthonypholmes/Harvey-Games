@@ -138,7 +138,7 @@
     ui.show(`<div class="pm" style="width:${view.W}px">
       <div class="pm-bar">
         <div class="pm-tags">
-          <a class="pm-tag" href="${M.save.get() ? 'index.html' : 'index.html'}" aria-label="Back to the Clubhouse"><svg viewBox="-14 -14 28 28" aria-hidden="true"><path d="M-12 0 L0 -11 L12 0" fill="${C.berry}" stroke="#A93E4F" stroke-width="2" stroke-linejoin="round"/><rect x="-9" y="-1" width="18" height="13" rx="1.5" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="1.6"/><rect x="-2.5" y="4" width="5" height="8" fill="${C.woodDk}"/></svg></a>
+          <a class="pm-tag" href="${/prototype-clubhouse/.test(document.referrer) ? 'prototype-clubhouse.html' : 'index.html'}" aria-label="Back to the Clubhouse"><svg viewBox="-14 -14 28 28" aria-hidden="true"><path d="M-12 0 L0 -11 L12 0" fill="${C.berry}" stroke="#A93E4F" stroke-width="2" stroke-linejoin="round"/><rect x="-9" y="-1" width="18" height="13" rx="1.5" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="1.6"/><rect x="-2.5" y="4" width="5" height="8" fill="${C.woodDk}"/></svg></a>
           <button class="pm-tag" id="pmGrown" aria-label="Grown-ups"><svg viewBox="-14 -12 28 24" aria-hidden="true"><circle cx="-6" cy="0" r="6" fill="none" stroke="${C.woodInk}" stroke-width="3"/><path d="M0 0 h12 M8 0 v5 M12 0 v4" stroke="${C.woodInk}" stroke-width="3" stroke-linecap="round"/></svg></button>
         </div>
         <h1 class="pm-title">Meadow Maths</h1>

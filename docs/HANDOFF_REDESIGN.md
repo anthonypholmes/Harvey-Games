@@ -16,7 +16,7 @@
 2. **Design sheet, first version:** a "Meadow Trail" look: our own drawings, never emoji; flat rounded shapes with darker same-colour outlines (never black); things not cards (signs, stones, wooden tags, stamps); shape before colour for states; calm near questions; Reduce Motion respected. Fredoka for signs and titles and Andika for reading, both unchanged.
 3. **Second iteration (approved 22 November):** one connected landscape instead of separate green islands. The river runs from the burrow under the stepping stones, fills the Sharing Pond and reaches the sea at Captain's Cove. Each place is known by its scenery, and its name sits on something that belongs there (park gate arch, burrow log, apple crate, the Cove's pennant). Bonnie is the guide.
 4. **Layout: Direction B (approved 22 November).** A **Clubhouse meadow** that fits one screen (the clubhouse, Bonnie at the door, the Walk arch, the shop stall, and a gate for Meadow Maths and one for Meadow Words), with a **separate route for each game**. It was chosen over one long trail because each route stays short (4–9 places) and it scales to 15+ worlds: Year 3 adds gates, or the Maths route carries on by boat from the Cove.
-5. **Phases, each approved by Anthony before the next:** the Meadow Maths world map (prototype built, below), then the Clubhouse meadow, the Meadow Words route, the level maps (stepping stones), the Bone Shop (a dressing room, Bonnie in the middle; all prices and items kept), and the explorer's journal (stamps; later the collector's book). Ship the new look as its own release before the Spelling and Grammar worlds, so those are drawn in the new style from the start.
+5. **Phases, each approved by Anthony before the next:** the Meadow Maths world map (prototype built and **approved 22 November 2026**, below), then the Clubhouse meadow, the Meadow Words route, the level maps (stepping stones), the Bone Shop (a dressing room, Bonnie in the middle; all prices and items kept), and the explorer's journal (stamps; later the collector's book). Ship the new look as its own release before the Spelling and Grammar worlds, so those are drawn in the new style from the start.
 
 **The design canvas:** "Meadow Clubhouse design sheet" in Anthony's Claude artifacts (https://claude.ai/artifact/79A1v951UtQDQqwtRsKkQB). Page "Iteration 2: the world" is the approved direction, with iPhone and iPad mock-ups next to the current design. Page "First sheet" has the rules, colours, level stones, wooden tags, drawn icons and journal stamps.
 
@@ -26,7 +26,9 @@ The Meadow Maths world list as the illustrated route. **New files only**; no gam
 
 | File | What it is |
 |---|---|
-| `prototype-compare.html` | The current world list and the prototype side by side, at iPhone SE, iPhone or iPad size; pretend or real progress; the app's padlocks on or off |
+| `prototype-clubhouse.html` | **The Clubhouse meadow prototype** (22 November): `index.html` unchanged, with the meadow on top. `?view=old`, `?selftest=1` |
+| `js/proto-hub-art.js`, `js/proto-hub.js` | The Clubhouse drawing, and its live parts wired to index.html's own functions |
+| `prototype-compare.html` | The current screen and the prototype side by side (Clubhouse or Maths map), at iPhone SE, iPhone or iPad size; pretend or real progress; the app's padlocks on or off |
 | `prototype-maths-map.html` | The prototype. `?demo=1` pretend save, `?taster=1` padlocks, `?view=old` the current list, `?selftest=1` the checks |
 | `js/proto-map-art.js` | The meadow drawing (plain SVG, drawn once, about 2,500 shapes) |
 | `js/proto-map.js` | Stars, Bonnie, tappable places, and fitting into the engine |
@@ -47,15 +49,16 @@ The Meadow Maths world list as the illustrated route. **New files only**; no gam
 
 ### Not yet checked or done
 
-- **Bonnie's hop between places has not been seen working.** The test browser doesn't play animations. Look at it on a real iPad and iPhone first.
+- **Bonnie's hop works on the iPad** (Anthony, 22 November 2026). Not yet seen on an iPhone.
+- **First verdict (22 November 2026):** Anthony's 6-year-old likes the map much more than the current list, and Anthony finds it visually much better.
 - Bonnie's new lines (her suggestions and "Off to the orchard!") aren't recorded. The website uses the device voice for them; the app would be silent. Record them (with name-free versions) when the map goes into the game: `npm run voice:check` first.
-- **Waiting for Anthony's verdict on the prototype.** Likely questions: is the map easy for a 6-year-old to read, are the stars clear enough, is Bonnie's bubble in the way anywhere, is the iPhone SE too small.
+- **Still worth a look (the map is approved, these are polish):** is the map easy for a 6-year-old to read, are the stars clear enough, is Bonnie's bubble in the way anywhere, is the iPhone SE too small.
 - `tools/build-app.mjs` copies the whole `js/` folder, so don't build the app from this branch.
 
 ## Next steps (after Anthony approves the prototype)
 
 1. Fix whatever his look at the prototype turns up.
-2. **The Clubhouse meadow:** port `hub()` from `docs/design-source/scenes.mjs` the same way (the clubhouse, Walk arch, shop stall and two gates as tappable places; Bonnie at the door). It replaces the card layout in `index.html`, but keep every function: players, sound, change name, grown-ups, the Walk, the shop, the weekly stars on each game.
+2. **The Clubhouse meadow: prototype built 22 November 2026, waiting for Anthony's look.** See `docs/PROTOTYPE_MAP.md` ("The Clubhouse meadow"). Try it from `prototype-compare.html` (Screen: Clubhouse); its Maths gate opens the map prototype.
 3. **The Meadow Words route:** draw Phonics Forest (letter trees), Tricky Word Trail (word signposts), Sentence Meadow and Bonnie's Story Nook in the same style, as a second route.
 4. Then the level maps, the Bone Shop and the journal, each as its own approved phase.
 5. To go live: move the map into `meadow-maths.html` behind a setting first, run every test page in `tests/`, then make it the default.

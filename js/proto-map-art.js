@@ -281,5 +281,7 @@ function mathsRoute() {
 }
 
 
-window.ProtoArt = { C, mathsRoute, bonnie, bubble, star, bone, paw, shadow };
+window.ProtoArt = { C, mathsRoute, bonnie, bubble, star, bone, paw, shadow,
+  // the drawing kit, shared with the Clubhouse meadow (js/proto-hub-art.js)
+  Scene, rng, tree, bush, tuft, flowers, rock, fence, path, cloud, butterfly, meadowFloor, scatter };
 })();

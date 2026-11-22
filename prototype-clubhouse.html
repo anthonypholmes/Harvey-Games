@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meadow Clubhouse: meadow prototype</title>
+<!-- PROTOTYPE of the Clubhouse meadow (design iteration 2, Direction B). Not linked from the game and not in the app build.
+     It loads index.html exactly as it is and adds the meadow on top (js/proto-hub.js), so every Clubhouse function is
+     index.html's own. Options: ?view=old (the current Clubhouse), ?selftest=1 (the checks). See docs/PROTOTYPE_MAP.md. -->
+</head>
+<body>
+<script>
+  fetch('index.html', { cache: 'no-store' }).then(r => r.text()).then(html => {
+    // no service worker from a prototype page
+    html = html.replace("navigator.serviceWorker.register('sw.js')", 'Promise.resolve()');
+    if (new URLSearchParams(location.search).get('view') !== 'old')
+      html = html.replace('</body>', '<script src="js/proto-map-art.js"><\/script><script src="js/proto-hub-art.js"><\/script><script src="js/proto-hub.js"><\/script>\n</body>');
+    document.open(); document.write(html); document.close();
+  });
+</script>
+</body>
+</html>
