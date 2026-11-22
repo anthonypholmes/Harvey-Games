@@ -27,7 +27,7 @@
 <header>
   <h1>Now and the prototype</h1>
   <div class="group" role="group" aria-label="Screen"><b>Screen</b>
-    <button data-page="club">Clubhouse</button><button data-page="maths">Maths map</button><button data-page="words">Words map</button><button data-page="shop">Bone Shop</button><button data-page="journal">Journal</button></div>
+    <button data-page="club">Clubhouse</button><button data-page="maths">Maths map</button><button data-page="words">Words map</button><button data-page="shop">Bone Shop</button><button data-page="journal">Journal</button><button data-page="walk">Walk</button></div>
   <div class="group" role="group" aria-label="Screen size"><b>Size</b>
     <button data-size="375x667">iPhone SE</button><button data-size="393x852">iPhone</button><button data-size="820x1180">iPad</button></div>
   <div class="group" role="group" aria-label="Progress"><b>Progress</b>
@@ -43,6 +43,7 @@
     club: 'Both sides are the real Clubhouse. "Pretend" and "New player" use a pretend save kept apart from the family\'s; "This device\'s" uses the real one. On the prototype, the Maths gate opens the map prototype.',
     shop: 'Both sides are the real Bone Shop. With "Pretend", buying spends the pretend child\'s bones only. With "This device\'s", Buy and Swap really spend this device\'s bones, just as in the game.',
     journal: 'There is no journal in the game yet, so the left side is today\'s Clubhouse. On the right, the explorer\'s journal opens from the clubhouse (tap the clubhouse to open it again). It only reads the stars and walks; it saves nothing.',
+    walk: 'Both sides are the real Bonnie\'s Walk: the same questions, help, dig and bones. With "Pretend", bones and the walk go to the pretend child only; with "This device\'s", a walk really counts, just as in the game.',
     maths: 'Both screens run the same game engine with the same progress. Play a level on either side, then reload to see the stars on both. "Pretend" progress is kept apart from the family\'s real save.' };
   // the Clubhouse: with pretend progress, both sides load index.html through the prototype page (its view=old is index.html untouched)
   const clubSrc = view => demo === '0' ? (view === 'old' ? 'index.html' : 'prototype-clubhouse.html') : `prototype-clubhouse.html?${view === 'old' ? 'view=old&' : ''}demo=${demo}`;
@@ -53,10 +54,10 @@
     const q = `demo=${demo}${taster ? '&taster=1' : ''}`;
     const frame = (label, view) => `<figure class="${ipad ? 'ipad' : ''}" style="width:${(w + 24) * k}px">
       <div class="device" style="width:${w}px;transform:scale(${k});margin-bottom:${-(h + 24) * (1 - k)}px;margin-left:${-(w + 24) * (1 - k) / 2}px;margin-right:${-(w + 24) * (1 - k) / 2}px">
-      <iframe title="${label}" src="${page === 'journal' ? clubSrc(view) + (view === 'old' ? '' : '#journal') : page === 'club' ? clubSrc(view) : page === 'shop' ? `prototype-words-map.html?view=${view}&${q}#shop` : `prototype-${page}-map.html?view=${view}&${q}`}" style="width:${w}px;height:${h}px"></iframe></div><figcaption>${label}</figcaption></figure>`;
-    document.getElementById('main').innerHTML = frame('Now', 'old') + frame(page === 'journal' ? "Prototype: the explorer's journal" : page === 'club' ? 'Prototype: the Clubhouse meadow' : page === 'shop' ? "Prototype: Bonnie's dressing room" : page === 'words' ? 'Prototype: the Words map' : 'Prototype: the Maths map', 'new');
+      <iframe title="${label}" src="${page === 'walk' ? (demo === '0' ? (view === 'old' ? 'bonnies-walk.html' : 'prototype-walk.html') : `prototype-walk.html?${view === 'old' ? 'view=old&' : ''}demo=${demo}`) : page === 'journal' ? clubSrc(view) + (view === 'old' ? '' : '#journal') : page === 'club' ? clubSrc(view) : page === 'shop' ? `prototype-words-map.html?view=${view}&${q}#shop` : `prototype-${page}-map.html?view=${view}&${q}`}" style="width:${w}px;height:${h}px"></iframe></div><figcaption>${label}</figcaption></figure>`;
+    document.getElementById('main').innerHTML = frame('Now', 'old') + frame(page === 'walk' ? "Prototype: Bonnie's Walk in the meadow" : page === 'journal' ? "Prototype: the explorer's journal" : page === 'club' ? 'Prototype: the Clubhouse meadow' : page === 'shop' ? "Prototype: Bonnie's dressing room" : page === 'words' ? 'Prototype: the Words map' : 'Prototype: the Maths map', 'new');
     document.getElementById('note').textContent = NOTES[page] || NOTES.maths;
-    document.querySelectorAll('.maths-only').forEach(el => el.hidden = page === 'club' || page === 'shop' || page === 'journal');
+    document.querySelectorAll('.maths-only').forEach(el => el.hidden = page === 'club' || page === 'shop' || page === 'journal' || page === 'walk');
     document.querySelectorAll('[data-page]').forEach(b => b.setAttribute('aria-pressed', b.dataset.page === page));
     document.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-pressed', b.dataset.size === size));
     document.querySelectorAll('[data-demo]').forEach(b => b.setAttribute('aria-pressed', b.dataset.demo === demo));

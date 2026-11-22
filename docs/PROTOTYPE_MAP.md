@@ -122,6 +122,18 @@ The Clubhouse page as one illustrated meadow that fits one screen: the clubhouse
 - **Checks:** 21 to 24 (fewer for a new player), all passing at SE, 393, 430, 768, 820 and 1180 wide with a new player, Sam, part-way, further on and Reduce Motion. The Clubhouse's checks (now 30) pass too. One check reads the open ribbon's style rule rather than its measured height, because the headless test browser sometimes keeps a stale size with Reduce Motion on (the real browser is fine).
 - **Gaps:** Bonnie's journal lines aren't recorded. The seen-stamps note would move into the save when this goes into the game. Not yet tried with real VoiceOver or on the 2018 iPad.
 
+## Bonnie's Walk in the meadow (22 November 2026)
+
+`prototype-walk.html` loads `bonnies-walk.html` unchanged (with the pretend save when `demo=` is given, and its Clubhouse link pointed at the Clubhouse prototype) and adds `js/proto-walk.js`. The Clubhouse prototype's Walk arch, and the journal's "Go for a walk", now open it. Options: `view=old`, `demo=…`, `theme=…`, `dig=1` (a dig on this walk), `dig=1&digshot=1` / `stop=N` / `end=1` (answer through the engine for screenshots), `walktest=1` (the checks).
+
+- **Read from the engine's own walk strip** (`#walkPath`, now hidden): its stones (count, titles for Maths or Words), `aria-valuenow` (stops done), `#wdig` (`dug`), `#walkQ .game-main.digging`, and the engine's "Walk done!" box (`.modal-bg` with `.paw-stamp`). A MutationObserver redraws when any of these change. Nothing is written to the save by this file.
+- **The scene** (560 × 260 units, drawn with the `js/proto-map-art.js` kit): sky by theme, the Clubhouse, the stream and bridge, the burrow, the woods, the clearing, the picnic. Posts at fixed points; legs of the path between them (`#pwLeg0…5`) guide Bonnie's trot (a timer, ~1s) and the paw prints. Post numbers are 30 units (16px or more at the iPhone SE). On iPads the scene is capped by the screen height so the question keeps its room.
+- **Bonnie:** `A.bonnie()` (her own drawing and outfit). Classes `happy` (wag and hop), `sniff`, `dig`, `party`; Reduce Motion turns them all off and she moves at once.
+- **The dig:** the scene shows the mound beside the leg it interrupts; the dig screen keeps the engine's mounds and adds a drawn sniff and a meadow behind; each `.mound .find` emoji is replaced by a drawn find (`FINDS`).
+- **The finish:** the engine's box is hidden (`visibility:hidden`, `aria-hidden`) and drawn as the picnic: message, bones and breakdown read from the box, the streak line when it has one, this week's paw prints from `walks.days` (the journal's data), and buttons that press the box's own `data-a="home"` / `"again"`.
+- **Checks:** 29 to 31 (the dig adds one when the first mound is wrong), all passing at SE, 393, 430, 768, 820, 1180 and 1180 × 820, with a new player, Sam, part-way, further on and Reduce Motion. `tests/walk-test.html` (42) and `tests/dig-test.html` (18) still pass; the Clubhouse (30) and journal (23) checks too.
+- **Gaps:** "Stop the walk?" and the top bar are the engine's (emoji). The hidden old strip would go when this moves into the game. Not yet tried with real VoiceOver or on the 2018 iPad itself.
+
 ## Checks (`selftest=1`, first version)
 
 All 13 pass at iPhone SE (375 × 667), iPhone (393 × 852) and iPad (820 × 1180): every maths world has a place; every tap target is at least 44 × 44; every place has a VoiceOver name that says its stars; places don't overlap; nothing is wider than the screen; Bonnie has a button; tapping a place opens the real level map with the engine's locks; the top bar comes back; "Meadow" returns.

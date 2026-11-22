@@ -19,6 +19,7 @@
  *   view=old     the current Clubhouse, unchanged
  *   words=…      where the Meadow Words gate goes (default prototype-words-map.html, the Words map prototype)
  *   maths=…      where the Meadow Maths gate goes (default prototype-maths-map.html, the map prototype)
+ *   walk=…       where the Walk arch goes (default prototype-walk.html, the Walk prototype)
  *   selftest=1   run the checks and print the results on the page
  */
 (function () {
@@ -35,7 +36,7 @@
   const PLACES = {
     maths: { hit: [96, 636, 190, 210], stand: [AT.maths[0], AT.maths[1] + 14], href: withCarry(Q.get('maths') || 'prototype-maths-map.html'), game: 0 },
     words: { hit: [354, 636, 190, 210], stand: [AT.words[0], AT.words[1] + 14], href: withCarry(Q.get('words') || 'prototype-words-map.html'), game: 1 },
-    walk: { hit: [94, 352, 116, 136], stand: [212, 490], href: 'bonnies-walk.html' },
+    walk: { hit: [94, 352, 116, 136], stand: [212, 490], href: withCarry(Q.get('walk') || 'prototype-walk.html') },
     shop: { hit: [428, 340, 118, 164], stand: [418, 494], href: withCarry(Q.get('shop') || 'prototype-words-map.html') + '#shop' },
   };
   const HOUSE = [226, 214, 188, 232]; // the clubhouse and the Journal sign at its step
