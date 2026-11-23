@@ -107,7 +107,8 @@ function loadPages() {
     const c = vm.createContext({ ...ctx }); c.window = c;
     const html = fs.readFileSync(path.join(ROOT, file), 'utf8'), dir = path.dirname(path.join(ROOT, file));
     for (const m of html.matchAll(/<script src="([^"]+)"><\/script>/g))
-      if (!/meadow-backup/.test(m[1])) vm.runInContext(fs.readFileSync(path.resolve(dir, m[1]), 'utf8'), c, { filename: m[1] });
+      if (!SKIP.test(m[1])) vm.runInContext(fs.readFileSync(path.resolve(dir, m[1]), 'utf8'), c, { filename: m[1] });
+    look(c);
     const main = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('const CONFIG'));
     if (!main) throw new Error(`Could not find the main script in ${file}`);
     vm.runInContext(main, c, { filename: file });
@@ -119,22 +120,31 @@ function loadPages() {
     const c = vm.createContext({ ...ctx }); c.window = c;
     const html = fs.readFileSync(path.join(ROOT, file), 'utf8'), dir = path.dirname(path.join(ROOT, file));
     for (const m of html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)) {
-      if (m[1]) { if (!/meadow-backup/.test(m[1])) vm.runInContext(fs.readFileSync(path.resolve(dir, m[1]), 'utf8'), c, { filename: m[1] }); }
+      if (m[1]) { if (!SKIP.test(m[1])) vm.runInContext(fs.readFileSync(path.resolve(dir, m[1]), 'utf8'), c, { filename: m[1] }); }
       else if (m[2].includes('Meadow.startGame')) vm.runInContext(m[2], c, { filename: file });
     }
+    look(c);
     const hosts = vm.runInContext('Meadow.hostLines ? Meadow.hostLines() : {}', c);
     for (const [who, ls] of Object.entries(hosts)) (hostLines[who] ||= new Set()) && ls.forEach(l => hostLines[who].add(l));
     vm.runInContext('Meadow.numberLines ? Meadow.numberLines() : []', c).forEach(l => numberLines.add(l));
     JSON.parse(vm.runInContext('JSON.stringify(Meadow.characters || [])', c)).forEach(x => characters.set(x.name, x));
     return vm.runInContext('Meadow.spokenLines()', c);
   };
+  // The meadow look's drawing scripts (js/proto-*.js) need a real page, so they aren't run here; their words are in
+  // js/meadow-look.js, whose spokenLines() lists them for the worlds this page has.
+  const SKIP = /meadow-backup|js\/proto-/;
+  const lookLines = new Set();
+  function look(c) {
+    const got = vm.runInContext('window.MeadowLook && window.Meadow ? JSON.stringify(MeadowLook.spokenLines(Meadow)) : ""', c);
+    if (got) { const g = JSON.parse(got); g.lines.forEach(l => lookLines.add(l)); g.numberLines.forEach(l => numberLines.add(l)); }
+  }
   const characters = new Map(); // the story characters: name -> { name, pronoun, their }
   // A question made while listing names a stand-in character (see character() in js/meadow-core.js): make it for each one.
   const everyone = l => l.includes('Qqstory') ? [...characters.values()].map(x => l.replaceAll('Qqstorynameqq', x.name).replaceAll('Qqstorypronounqq', x.pronoun).replaceAll('Qqstorytheirqq', x.their)) : [l];
   const numberLines = new Set(); // sentences with numbers in them (cut at the numbers, see bonnie-voice.js)
   const hostLines = {}; // other speakers' lines: { captain: Set }
   const call = (f, ...a) => vm.runInContext(`BonnieVoice.${f}(${a.map(x => JSON.stringify(x)).join(',')})`, ctx);
-  const lines = [...new Set([...run('index.html', 'clubhouseLines'), ...CORE_PAGES.flatMap(runCore)].flatMap(everyone))];
+  const lines = [...new Set([...run('index.html', 'clubhouseLines'), ...CORE_PAGES.flatMap(runCore), ...lookLines].flatMap(everyone))];
   return {
     lines, numberLines: [...new Set([...numberLines].flatMap(everyone))], numberParts: text => call('numberParts', text),
     hosts: Object.fromEntries(Object.entries(hostLines).map(([k, v]) => [k, [...v]])),

@@ -145,11 +145,12 @@ const LINES = {
   praise: ['Pawsome, {N}!', 'Woof! Brilliant!', 'Tail-waggingly good!', 'Super job, {N}!', 'Bone-tastic!', 'Wow! Clever clogs!'],
   watched: 'Well done for watching and learning, {N}!',
   oops: ['Nearly! Have another sniff.', 'Ooh, so close! Try again.', "That's okay — mistakes help our brains grow!", 'Not quite. You can do it, {N}!'],
-  tickles: ['Hee hee! That tickles!', 'Ha ha! Stop it, {N}!', 'Ooh, my ears are ticklish!', 'Hehe! Do it again!', 'Woof! Not my tummy!',
-    'Ha ha! You found my ticklish spot!', 'Ooh, that makes my tail wag!', 'Hee hee! My paws have gone all wiggly!', 'Woof woof! Again, again!',
-    'Ha ha! My whiskers are wobbling!', 'Hee hee! Who taught you to tickle like that?'],
-  // the Easter egg: tickle her lots of times quickly and she does a spinning jump
-  tickleEgg: ['Okay, okay, you win! Watch my super spin!', "So many tickles! Time for a happy dance!", "Woof! You're the tickle champion, {N}!"],
+  // tapping Bonnie: a friendly hello (changed 23 November 2026 from tickling lines, some of which read badly to grown-ups)
+  tickles: ['Woof! Hello, {N}!', 'Boop! You found my nose!', 'High paw, {N}!', 'My ears went all flippy-floppy!', 'Woof! Is it snack time yet?',
+    'Ooh, are we playing a game?', 'Sniff sniff… I smell a clever explorer!', 'Woof! I was just thinking about bones!', 'You make me so happy, {N}!',
+    'Ooh, that makes my tail wag!', 'Hee hee! My paws have gone all wiggly!', 'Ha ha! My whiskers are wobbling!'],
+  // the Easter egg: tap her lots of times quickly and she does a spinning jump
+  tickleEgg: ['Okay, okay! Watch my super spin!', 'So much fun! Time for a happy dance!', "Woof! You're my best buddy, {N}!"],
   finish: { 3: "WOW, {N}! Three stars! You're a superstar!", 2: 'Brilliant work, {N}! Two shiny stars!', 1: 'You did it, {N}! Every try makes you stronger!' },
   already3: 'You already have 3 stars here: great practice!',
   stillBest: { 1: 'Your best here is still 1 star. Great practice!', 2: 'Your best here is still 2 stars. Great practice!' },
@@ -167,10 +168,12 @@ const LINES = {
   paid: 'This level is in the full game. Go and get a grown-up!',
   fullGame: 'Woof! Every world is open now! Thank you!',
   shownAll: "I've shown you the answer, {N}! Now you have a go. 🐾",
-  shopWelcome: 'Welcome to my shop, {N}! Bones from Meadow Maths and Meadow Words all go in the same bone bowl.',
-  hatOn: 'Do I look smart?',
-  hatOff: 'Ahh, that feels breezy!',
-  theme: "Ooh, it's beautiful! Thank you, {N}!",
+  shopWelcome: 'Welcome to my shop, {N}! Bones from Meadow Maths and Meadow Words all go in the same bone bowl.', // until something is bought
+  shopBack: ['Welcome back to my shop, {N}!', 'Ooh, what shall we look at today?', 'Hello again, {N}! Have a look around.'],
+  // the shop's lines come in lists, so a child trying things on doesn't hear the same words every time
+  hatOn: ['Do I look smart?', 'How do I look?', 'Ooh, I like this one!', 'Ta-da! What do you think?', 'Is this me, {N}?', 'Very fancy!'],
+  hatOff: ['Ahh, that feels breezy!', 'Back to plain old me!', "Ahh, that's comfy too!"],
+  theme: ["Ooh, it's beautiful! Thank you, {N}!", 'Wow, my room looks amazing!', 'I love it in here, {N}!'],
   grownUp: 'Go and get a grown-up! They hold the button to say yes.',
   prize: 'Hooray, {N}! Go and tell your grown-up what you unlocked!',
   testVoice: 'Hello {N}! I am Bonnie. Shall we play together?',
@@ -1009,6 +1012,12 @@ function wireHold(root, onDone) {
 /* =========================================================
    HOME (pick a world) and WORLD MAP (pick a level)
    ========================================================= */
+/* The shop's hello: the bone bowl explained until something has been bought, then a shorter one (the same all visit) */
+let shopHi = null;
+function shopHello() {
+  const s = S || load(), fresh = !s.redeemed.length && !s.owned.hats.length && s.owned.themes.length < 2 && s.owned.coats.length < 2;
+  return fresh ? LINES.shopWelcome : (shopHi = shopHi || rand(LINES.shopBack));
+}
 function shopTip() {
   setTimeout(() => { if (!G && tipAt('shop', $('#shopBtn'))) whenQuiet(() => { if (!G) say(LINES.tipShop); }); }, 400);
 }
@@ -1675,7 +1684,7 @@ function shopScreen(opts = {}) {
       </div>
       <div class="shop-hello">
         ${bonnieHTML('', 'shopBonnie')}
-        <p class="shop-say" id="shopSay">${esc(fmt(LINES.shopWelcome))}</p>
+        <p class="shop-say" id="shopSay">${esc(fmt(shopHello()))}</p>
       </div>
       <div class="tabs" role="group" aria-label="Shop sections">${Object.entries(tabs).map(([k, v]) => `<button class="tab ${shopTab === k ? 'on' : ''}" data-tab="${k}" aria-pressed="${shopTab === k}">${v}</button>`).join('')}</div>
       ${shopTab === 'prizes' ? `<p class="note">Real prizes are set by your grown-up. When you swap, a grown-up holds a button to say yes!</p>
@@ -1684,15 +1693,15 @@ function shopScreen(opts = {}) {
     </div>`);
   const shopSay = text => { $('#shopSay').textContent = fmt(text); say(text); };
   $('#back').onclick = () => { if (shopFromClub) location.href = GAME.homeHref; else homeScreen(); };
-  if (opts.welcome) setTimeout(() => say(LINES.shopWelcome), 250);
+  if (opts.welcome) setTimeout(() => say(shopHello()), 250);
   const sb = $('#shopBonnie'); sb.onclick = () => { const t = tickle(sb); $('#shopSay').textContent = t; say(t, { pitch: 1.4 }); };
   $$('[data-tab]').forEach(b => b.onclick = () => { shopTab = b.dataset.tab; sfx.pop(); shopScreen(); });
   if ($('#editPrizes')) $('#editPrizes').onclick = () => { parentFromClub = false; parentGate(() => { parentOpen.add('prizes'); parentScreen();
     const f = $('[data-fold="prizes"]'); if (f) f.scrollIntoView({ block: 'start' }); }, 'change the prizes'); };
   const dressed = line => setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); shopSay(line); }, 50);
-  $$('[data-wear]').forEach(b => b.onclick = () => { const id = b.dataset.wear; mutate(s => { s[slotKey(id)] = id; }); sfx.pop(); shopScreen(); dressed(LINES.hatOn); });
-  $$('[data-off]').forEach(b => b.onclick = () => { mutate(s => { s[b.dataset.off] = null; }); sfx.pop(); shopScreen(); dressed(LINES.hatOff); });
-  $$('[data-coat]').forEach(b => b.onclick = () => { mutate(s => { s.coat = b.dataset.coat; }); applyTheme(); sfx.pop(); shopScreen(); dressed(LINES.hatOn); });
+  $$('[data-wear]').forEach(b => b.onclick = () => { const id = b.dataset.wear; mutate(s => { s[slotKey(id)] = id; }); sfx.pop(); shopScreen(); dressed(rand(LINES.hatOn)); });
+  $$('[data-off]').forEach(b => b.onclick = () => { mutate(s => { s[b.dataset.off] = null; }); sfx.pop(); shopScreen(); dressed(rand(LINES.hatOff)); });
+  $$('[data-coat]').forEach(b => b.onclick = () => { mutate(s => { s.coat = b.dataset.coat; }); applyTheme(); sfx.pop(); shopScreen(); dressed(rand(LINES.hatOn)); });
   $$('[data-usetheme]').forEach(b => b.onclick = () => { mutate(s => { s.theme = b.dataset.usetheme; }); applyTheme(); sfx.pop(); shopScreen(); });
   $$('[data-buy]').forEach(b => b.onclick = () => { sfx.tap(); confirmBuy(...b.dataset.buy.split(':')); });
   $$('[data-prize]').forEach(b => b.onclick = () => { sfx.tap(); confirmPrize(b.dataset.prize); });
@@ -1712,7 +1721,7 @@ function confirmBuy(tab, id) {
       s.redeemed.push({ title: (tab === 'hats' ? 'Bonnie’s ' : tab === 'coats' ? 'Bonnie’s coat: ' : 'Theme: ') + it.name, cost: it.cost, when: todayGB() });
     });
     applyTheme(); sfx.fanfare(); confetti(20); shopScreen();
-    setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); const m = tab === 'hats' ? `Thank you {N}! I love my ${it.name}!` : tab === 'coats' ? `Thank you {N}! I love my ${it.line}!` : LINES.theme; $('#shopSay').textContent = fmt(m); say(m); }, 50);
+    setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); const m = tab === 'hats' ? `Thank you {N}! I love my ${it.name}!` : tab === 'coats' ? `Thank you {N}! I love my ${it.line}!` : rand(LINES.theme); $('#shopSay').textContent = fmt(m); say(m); }, 50);
   });
 }
 function confirmPrize(id) {
@@ -2102,7 +2111,7 @@ function spokenLines(game = GAME) {
   add(LINES.extraPractice, LINES.extraDone, LINES.warmUp, ...LINES.walkStart, ...LINES.walkOops, ...LINES.walkDone, LINES.walkStop);
   if (!game || game.walk) add(...digLines());
   add(...LINES.praise, LINES.watched, ...LINES.oops, ...LINES.tickles, ...LINES.tickleEgg, ...Object.values(LINES.finish), LINES.already3, ...Object.values(LINES.stillBest),
-    LINES.locked, LINES.paid, LINES.fullGame, LINES.tipWalk, LINES.tipAsk, LINES.tipShop, LINES.shownAll, LINES.shopWelcome, LINES.hatOn, LINES.hatOff, LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
+    LINES.locked, LINES.paid, LINES.fullGame, LINES.tipWalk, LINES.tipAsk, LINES.tipShop, LINES.shownAll, LINES.shopWelcome, ...LINES.shopBack, ...LINES.hatOn, ...LINES.hatOff, ...LINES.theme, LINES.grownUp, LINES.prize, (game && game.testVoice) || LINES.testVoice);
   [1, 2, 3].forEach(st => [1, 2].forEach(p => { if (st <= p) add(fmt(LINES.finish[st]) + ' ' + LINES.stillBest[p]); }));
   [1, 2, 3].forEach(st => add(fmt(LINES.finish[st]) + ' ' + LINES.already3));
   HATS.filter(h => h.cost > 0).forEach(h => add(`Thank you {N}! I love my ${h.name}!`));

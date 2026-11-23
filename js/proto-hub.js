@@ -299,7 +299,7 @@
       const up = () => { art().classList.remove('pressed'); on(btn.matches(':focus-visible')); };
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, up));
       btn.addEventListener('focus', () => on(btn.matches(':focus-visible'))); btn.addEventListener('blur', () => on(false));
-      btn.onclick = () => go(id, lines[id]);
+      btn.onclick = () => go(id, [].concat(lines[id])[Math.floor(Math.random() * [].concat(lines[id]).length)]); // (some are lists: a line picked each time)
     });
     // Bonnie's first-time help: index.html put the glowing ring on its own Walk or Shop button; show it on the drawing
     [['walkBtn', 'walk'], ['shopBig', 'shop']].forEach(([from, id]) => {

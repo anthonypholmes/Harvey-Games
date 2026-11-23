@@ -33,35 +33,27 @@
      hit: the whole tappable area (the picture and its sign). sign: the top middle of its name sign.
      bonnie: where she stands (her feet). bub: her speech bubble [x, y, 'above'|'below'] (y is its bottom edge for 'above', its top for 'below'). */
   const RAW_MATHS = {
-    'y2-maths-partitioning': { hit: [96, 40, 228, 342], sign: [220, 282], bonnie: [372, 300], bub: [330, 232, 'above'],
-      ask: 'Shall we build some numbers in the park?', go: 'Off to the park!' },
-    'y2-maths-number-bonds': { hit: [326, 340, 234, 200], sign: [452, 432], bonnie: [440, 540], bub: [340, 542, 'below'],
-      ask: 'Shall we dig up some number bonds?', go: 'Off to the burrow!' },
-    'y2-maths-number-lines': { hit: [126, 542, 394, 130], sign: [222, 552], bonnie: [352, 668], bub: [300, 674, 'below'],
-      ask: 'Shall we hop across the river today?', go: 'Hop, hop, to the river!' },
-    'y2-maths-arrays': { hit: [332, 760, 228, 292], sign: [440, 968], bonnie: [300, 840], bub: [130, 764, 'above'],
-      ask: 'Shall we pick apples in the orchard?', go: 'Off to the orchard!' },
-    'y2-maths-sharing': { hit: [100, 975, 228, 228], sign: [210, 1100], bonnie: [400, 1060], bub: [335, 1066, 'below'],
-      ask: 'Shall we share things out at the pond?', go: 'Down to the pond!' },
-    'y2-maths-captains-cove': { hit: [100, 1250, 420, 240], sign: [206, 1268], bonnie: [365, 1262], bub: [330, 1170, 'above'],
-      ask: 'Captain Croak has an idea. Shall we check it?', go: 'Ahoy! To the Cove!' },
+    'y2-maths-partitioning': { hit: [96, 40, 228, 342], sign: [220, 282], bonnie: [372, 300], bub: [330, 232, 'above'] },
+    'y2-maths-number-bonds': { hit: [326, 340, 234, 200], sign: [452, 432], bonnie: [440, 540], bub: [340, 542, 'below'] },
+    'y2-maths-number-lines': { hit: [126, 542, 394, 130], sign: [222, 552], bonnie: [352, 668], bub: [300, 674, 'below'] },
+    'y2-maths-arrays': { hit: [332, 760, 228, 292], sign: [440, 968], bonnie: [300, 840], bub: [130, 764, 'above'] },
+    'y2-maths-sharing': { hit: [100, 975, 228, 228], sign: [210, 1100], bonnie: [400, 1060], bub: [335, 1066, 'below'] },
+    'y2-maths-captains-cove': { hit: [100, 1250, 420, 240], sign: [206, 1268], bonnie: [365, 1262], bub: [330, 1170, 'above'] },
   };
   // the Meadow Words route (drawn at its own height, so no moving)
   const RAW_WORDS = {
-    'y2-english-phonics': { hit: [130, 30, 240, 372], sign: [262, 290], bonnie: [404, 236], bub: [330, 170, 'above'],
-      ask: 'Shall we find some sounds in the forest?', go: 'Into the forest!' },
-    'y2-english-tricky-words': { hit: [300, 408, 260, 222], sign: [452, 532], bonnie: [300, 420], bub: [131, 438, 'below'],
-      ask: 'Shall we read the tricky signposts?', go: 'Off along the trail!' },
-    'y2-english-sentences': { hit: [126, 640, 238, 220], sign: [236, 766], bonnie: [404, 690], bub: [340, 706, 'below'],
-      ask: 'Shall we fix some sentences in the meadow?', go: 'Off to the meadow!' },
-    'y2-english-stories': { hit: [366, 650, 200, 400], sign: [440, 948], signW: 150, bonnie: [300, 900], bub: [131, 912, 'below'],
-      ask: 'Shall we read a story in my nook?', go: 'Story time!' },
+    'y2-english-phonics': { hit: [130, 30, 240, 372], sign: [262, 290], bonnie: [404, 236], bub: [330, 170, 'above'] },
+    'y2-english-tricky-words': { hit: [300, 408, 260, 222], sign: [452, 532], bonnie: [300, 420], bub: [131, 438, 'below'] },
+    'y2-english-sentences': { hit: [126, 640, 238, 220], sign: [236, 766], bonnie: [404, 690], bub: [340, 706, 'below'] },
+    'y2-english-stories': { hit: [366, 650, 200, 400], sign: [440, 948], signW: 150, bonnie: [300, 900], bub: [131, 912, 'below'] },
   };
   const ROUTES = {
     maths: { subject: 'maths', title: 'Meadow Maths', raw: RAW_MATHS, F, H: A.ROUTE_H, scene: A.mathsRoute, maxH: 1280 },
     words: { subject: 'english', title: 'Meadow Words', raw: RAW_WORDS, F: y => y, H: A.WORDS_H, scene: A.wordsRoute, maxH: 1100 },
   };
   const R = ROUTES[window.PROTO_ROUTE] || ROUTES.maths, G = R.F;
+  // Bonnie's words (js/meadow-look.js, where tools/make-voice.mjs finds them to record)
+  const LL = window.MeadowLook.LINES, SAYS = id => LL.places[id] || [LL.offWeGo, LL.offWeGo];
   const PLACES = Object.fromEntries(Object.entries(R.raw).map(([id, p]) => [id, { ...p,
     hit: [p.hit[0], G(p.hit[1]), p.hit[2], G(p.hit[1] + p.hit[3]) - G(p.hit[1])],
     sign: [p.sign[0], G(p.sign[1])], bonnie: [p.bonnie[0], G(p.bonnie[1])], bub: [p.bub[0], G(p.bub[1]), p.bub[2]] }]));
@@ -216,7 +208,7 @@
     const vb = `${view.x0} 0 ${view.w} ${WORLD_H}`;
     // Bonnie's first-time help (js/meadow-core.js): once there are bones, she points out the Bone Shop (the ring goes on the bones tag below)
     const shopTip = !!(M.tips && M.tips.due('shop'));
-    const bonnieLine = shopTip ? ui.fmt(M.LINES.tipShop) : sug ? (info(sug).played ? PLACES[sug.id].ask : `Woof! Let's start at ${shortName(sug)}!`) : 'You have every star! Pick anywhere you like.';
+    const bonnieLine = shopTip ? ui.fmt(M.LINES.tipShop) : sug ? (info(sug).played ? SAYS(sug.id)[0] : LL.startAt(shortName(sug))) : LL.allStars;
     const [bfx, bfy] = at ? PLACES[at.id].bonnie : [320, 300];
     const hits = ws.map((w, i) => {
       const [x, y, ww, hh] = PLACES[w.id].hit, [l, t] = px(Math.max(x, view.x0), y), r = px(Math.min(x + ww, view.x0 + view.w), y + hh);
@@ -309,7 +301,7 @@
     const sg = document.getElementById('pmSign-' + id), h = document.getElementById('pmHalo-' + id);
     if (sg) { sg.classList.remove('pressed'); sg.classList.add('lit'); } if (h) h.classList.add('lit');
     const bon = document.getElementById('pmBonnie'), bub = document.getElementById('pmBubble'), p = PLACES[id];
-    const line = p ? p.go : `Off we go!`;
+    const line = p ? SAYS(id)[1] || LL.offWeGo : LL.offWeGo;
     const open = () => { leave(); M.worldMap(id); };
     if (!bon || !p) { setTimeout(open, 250); return; }
     if (viaBonnie || at && at.id === id || reduce()) {
@@ -377,7 +369,7 @@
     ok("Bonnie's bubble covers no sign", !signs.some(s => cross(r(s), bub)), signs.filter(s => cross(r(s), bub)).map(s => s.id).join(', '));
     { // and wherever she hops to, with her longest line there
       const bubEl = document.getElementById('pmBubble'), keep = bubEl.innerHTML, bad = [];
-      ws.forEach(w => { bubEl.innerHTML = bubbleSVG(w, PLACES[w.id].ask.length > 30 ? PLACES[w.id].ask : `Woof! Let's start at ${shortName(w)}!`); const br = r(bubEl); signs.forEach(s => { if (cross(r(s), br)) { const a = r(s); bad.push(short(w.id) + '→' + short(s.id.replace('pmSign-', '')) + ` (bubble ${[br.left, br.top, br.right, br.bottom].map(Math.round)} sign ${[a.left, a.top, a.right, a.bottom].map(Math.round)})`); } }); });
+      ws.forEach(w => { bubEl.innerHTML = bubbleSVG(w, SAYS(w.id)[0].length > 30 ? SAYS(w.id)[0] : LL.startAt(shortName(w))); const br = r(bubEl); signs.forEach(s => { if (cross(r(s), br)) { const a = r(s); bad.push(short(w.id) + '→' + short(s.id.replace('pmSign-', '')) + ` (bubble ${[br.left, br.top, br.right, br.bottom].map(Math.round)} sign ${[a.left, a.top, a.right, a.bottom].map(Math.round)})`); } }); });
       bubEl.innerHTML = keep;
       ok("…nor does it at any other place", !bad.length, bad.join(', '));
     }

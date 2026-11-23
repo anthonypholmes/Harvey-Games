@@ -276,7 +276,7 @@
     if (from !== cur) setTimeout(() => { const bon = ui.$('#plBonnie'); if (!on || !bon) return; bon.classList.add('hop'); bon.style.transform = `translate(${bonnieX(cur)}px,${by + 18}px)`; setTimeout(() => bon.classList.remove('hop'), 800); }, 500);
     if (shopTip) setTimeout(() => { if (on && !busy) ui.say(M.LINES.tipShop); }, 400);
     else if (cur >= 0) {
-      if (!Q.get('leveltest')) setTimeout(() => { if (on && !busy) ui.say(rows[cur].played ? `Shall we play ${rows[cur].L.name} again?` : `Level ${cur + 1} next! Tap my stone.`); }, 400);
+      if (!Q.get('leveltest')) setTimeout(() => { if (on && !busy) ui.say(rows[cur].played ? window.MeadowLook.LINES.levelAgain(rows[cur].L.name) : window.MeadowLook.LINES.levelNext(cur + 1)); }, 400);
     }
   }
 

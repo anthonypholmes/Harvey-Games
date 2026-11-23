@@ -17,6 +17,7 @@
 (function () {
   const Q = new URLSearchParams(location.search);
   if (window.MeadowLook && !window.MeadowLook.on) return; // the old look (js/meadow-look.js)
+  const J = window.MeadowLook.LINES.journal; // Bonnie's words (js/meadow-look.js, where tools/make-voice.mjs finds them)
   const LINKS = (window.MeadowLook ? window.MeadowLook.pages : { club: 'prototype-clubhouse.html', maths: 'prototype-maths-map.html', words: 'prototype-words-map.html', walk: 'prototype-walk.html' });
   const M = window.Meadow, A = window.ProtoArt, C = A.C, ui = M.ui, esc = ui.esc;
   const $ = id => document.getElementById(id);
@@ -290,11 +291,11 @@
     const rows = ws.map(w => { const s = stateOf(w); return { w, s, isNew: isNew(w, s, seen) }; });
     const got = rows.filter(r => r.s.k !== 'none').length, all = rows.filter(r => r.s.k === 'all').length, nw = rows.filter(r => r.isNew);
     rows.forEach(r => { if (r.isNew) { fresh.add(r.w.id + ':stamped'); if (r.s.k === 'all') fresh.add(r.w.id + ':all'); } });
-    const line = nw.length ? (nw[0].s.k === 'all' ? `Every star in ${nw[0].w.name}! Here's your gold seal!` : `A new stamp! You visited ${nw[0].w.name}!`)
-      : !got ? `Every place you visit in ${g.name} gets a stamp in here. Let's go exploring!`
-      : got === rows.length && all === rows.length ? `Every stamp, and every gold seal! You're a real explorer!`
-      : got === rows.length ? `You've got every ${g.name} stamp! Can you win gold seals too?`
-      : `${got} ${got === 1 ? 'stamp' : 'stamps'} from ${g.name} so far. Where next?`;
+    const line = nw.length ? (nw[0].s.k === 'all' ? J.seal(nw[0].w.name) : J.stamp(nw[0].w.name))
+      : !got ? J.empty(g.name)
+      : got === rows.length && all === rows.length ? J.everything
+      : got === rows.length ? J.allStamps(g.name)
+      : J.soFar(got, g.name);
     return `${bonnieHead(line)}
       <h2 class="pj-title">${esc(g.name)} <small>${got} of ${rows.length} stamped</small></h2>
       <div class="pj-key" aria-hidden="true"><span><i class="k-none"></i>Not visited yet</span><span><i class="k-stamped"></i>Stamped</span><span><i class="k-all"></i>Gold seal: every star</span></div>
@@ -310,9 +311,7 @@
   /* a place's page: its stamp, a stone for each level with its stars, and the way there */
   function detail(w) {
     const s = stateOf(w), game = w.subject === 'english' ? 'words' : 'maths', g = GAMES[game], sh = $('pjSheet');
-    const words = s.k === 'none' ? `You haven't been to ${w.name} yet. Shall we go?`
-      : s.k === 'all' ? `Every star in ${w.name}! That's a gold seal.`
-      : `${s.got} of ${s.max} stars here. ${s.played < w.levels.length ? `${w.levels.length - s.played} ${w.levels.length - s.played === 1 ? 'level' : 'levels'} still to try.` : 'Every level played! More stars to win.'}`;
+    const words = s.k === 'none' ? J.notYet(w.name) : s.k === 'all' ? J.placeAll(w.name) : J.placeSome(s.got, s.max, Math.max(0, w.levels.length - s.played));
     sh.innerHTML = `<div class="pj-card" role="dialog" aria-modal="true" aria-labelledby="pjCardName" style="--col:${g.col};--dk:${g.dk}">
       <span class="pj-art">${stampSVG(w, s.k)}</span>
       <h2 id="pjCardName">${esc(w.name)}</h2>
@@ -324,7 +323,7 @@
     sh.hidden = false;
     $('pjShut').onclick = shut;
     sh.onclick = e => { if (e.target === sh) shut(); };
-    $('pjGo').onclick = () => go(placeHref(w), `Let's go to ${w.name}!`);
+    $('pjGo').onclick = () => go(placeHref(w), J.goTo(w.name));
     $('pjShut').focus({ preventScroll: true });
     if (window.say) say(words);
   }
@@ -345,7 +344,7 @@
     const shown = days.filter(d => localDay(d) <= t && walked(d)), all = Object.values(w.days || {}).reduce((a, b) => a + b, 0);
     const streak = w.streak >= 2 && (w.last === t || w.last === localDay(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1))) ? w.streak : 0;
     const nm = d => d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-    const line = walked(today) ? `We went for a walk today! There's my paw print.` : shown.length ? `Every walk gets my paw print. Shall we go for another?` : `Take me for a walk and I'll put my paw print here!`;
+    const line = walked(today) ? J.walkToday : shown.length ? J.walkAgain : J.walkFirst;
     return `${bonnieHead(line)}
       <h2 class="pj-title">Bonnie's Walks <small>${all} ${all === 1 ? 'walk' : 'walks'} so far</small></h2>
       ${streak ? `<div class="pj-streak">${icons.paw}<span>${streak} days in a row!</span></div>` : ''}

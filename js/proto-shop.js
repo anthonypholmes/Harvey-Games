@@ -493,12 +493,12 @@
     paint();
     if (ui.tone) ui.tone(700, .06, 'sine', .07);
     if (!reduce()) ui.animate(ui.$('#psBon'), 'hop', 560);
-    if ((it.kind === 'gear' || it.kind === 'coat') && !it.on) { setSay(ui.fmt(M.LINES.hatOn)); ui.say(M.LINES.hatOn); }
+    if ((it.kind === 'gear' || it.kind === 'coat') && !it.on) { const on = [].concat(M.LINES.hatOn), l = on[Math.floor(Math.random() * on.length)]; setSay(ui.fmt(l)); ui.say(l); }
   }
   function act() {
     const it = chosen(); if (!it) return;
     const st = state(it);
-    if (st === 'short') { const n = it.cost - save().bones, line = `Keep playing to earn ${n} more ${n === 1 ? 'bone' : 'bones'}!`; setSay(line, true); ui.say(line); return; }
+    if (st === 'short') { const n = it.cost - save().bones, line = window.MeadowLook.LINES.shopShort(n); setSay(line, true); ui.say(line); return; }
     if (st === 'using') return;
     const b = engBtn(it, st); if (!b) return;
     refocus = '#psDo';
