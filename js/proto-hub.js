@@ -276,6 +276,7 @@
   }
 
   /* ---------- taps ---------- */
+  let outsideTap = null;
   function wire() {
     $('phSound').onclick = () => $('soundBtn').click();      // index.html turns the sound on or off, then render() redraws this
     $('phGrown').onclick = () => { location.href = $('grownUps').getAttribute('href'); };
@@ -284,9 +285,17 @@
     me.onclick = e => { e.stopPropagation(); const open = menu.hidden; menu.hidden = !open; me.setAttribute('aria-expanded', String(open)); if (open) menu.querySelector('button').focus(); };
     menu.addEventListener('keydown', e => { if (e.key === 'Escape') { closeMenu(); me.focus(); } });
     me.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) closeMenu(); });
-    // Tab out of the menu closes it, as a menu should
-    menu.addEventListener('focusout', e => { if (!e.relatedTarget || !e.relatedTarget.closest('#phMenu, #phMe')) closeMenu(); });
-    document.addEventListener('pointerdown', e => { if (!menu.hidden && !e.target.closest('#phMenu, #phMe')) closeMenu(); }, { capture: true });
+    /* Tab out of the menu closes it, as a menu should: but only when focus really moves to something else. On the
+       iPhone and iPad a tap on a button doesn't focus it, it just takes focus off whatever had it (here the first menu
+       button, focused as the menu opened), with nowhere for it to go (relatedTarget is empty). The menu used to read that
+       as "left the menu" and close itself before the tap arrived, so Change name and Switch player did nothing there
+       (found 24 November 2026; Chrome focuses tapped buttons, so the checks there never saw it). A tap outside the menu
+       closes it through the pointerdown below instead. */
+    menu.addEventListener('focusout', e => { if (e.relatedTarget && !e.relatedTarget.closest('#phMenu, #phMe')) closeMenu(); });
+    if (!outsideTap) { // (once: the Clubhouse is redrawn often, and each redraw used to add another of these)
+      outsideTap = e => { const m = $('phMenu'); if (m && !m.hidden && !e.target.closest('#phMenu, #phMe')) { m.hidden = true; const b = $('phMe'); if (b) b.setAttribute('aria-expanded', 'false'); } };
+      document.addEventListener('pointerdown', outsideTap, { capture: true });
+    }
     $('phRename').onclick = () => { closeMenu(); $('changeName').click(); };
     if ($('phPlayers')) $('phPlayers').onclick = () => { closeMenu(); $('switchPlayer').click(); };
     $('phBonnieBtn').onclick = tickle;

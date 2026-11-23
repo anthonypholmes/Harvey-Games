@@ -832,6 +832,13 @@ function faceSVG(id) {
 }
 /* One drawing of Bonnie for every game.
    look: leave out for what she is wearing, 'none' for nothing, or one item id (a shop picture). */
+/* The bone: the game's money, drawn the same everywhere it is counted (the top bars, the Bone Shop, the level and walk
+   totals, the grown-ups area). js/proto-map-art.js draws its bones with this too. 42 × 24 around 0,0. */
+const BONE_D = 'M-8.1 -4.5 H8.1 A6.5 6.5 0 1 1 18 0 A6.5 6.5 0 1 1 8.1 4.5 H-8.1 A6.5 6.5 0 1 1 -18 0 A6.5 6.5 0 1 1 -8.1 -4.5 Z';
+function bonePath(fill = '#FFF6E2', stroke = '#C9A777') {
+  return `<path d="${BONE_D}" fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/><path d="M-7 -1.6 H7" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".75"/>`;
+}
+const boneSVG = () => `<svg class="bone-i" viewBox="-22 -14 44 28" aria-hidden="true">${bonePath()}</svg>`;
 function bonnieSVG(look) {
   let hat, face, neck;
   if (look === undefined) ({ hat, face, neck } = S || {});
@@ -906,7 +913,7 @@ function addBones(n, fromEl, label, also) {
       setTimeout(() => { b.style.transform = `translate(${t.left - r.left - r.width / 2 + 20}px, ${t.top - r.top - r.height / 2}px) scale(.6) rotate(360deg)`; b.style.opacity = '.3'; }, 30 + i * 70);
       setTimeout(() => { b.remove(); animate(chip, 'bump', 450); sfx.coin(); }, 850 + i * 70);
     }
-    const f = document.createElement('div'); f.className = 'float-plus'; f.textContent = `+${n} 🦴${label ? ' ' + label : ''}`;
+    const f = document.createElement('div'); f.className = 'float-plus'; f.innerHTML = `+${n} ${boneSVG()}${label ? ' ' + esc(label) : ''}`;
     f.style.left = (r.left + r.width / 2 - 30) + 'px'; f.style.top = (r.top - 10) + 'px'; document.body.appendChild(f); setTimeout(() => f.remove(), 1100);
   } else { animate(chip, 'bump', 450); sfx.coin(); }
 }
@@ -1054,7 +1061,7 @@ function homeScreen() {
   hb.onclick = () => { const t = tickle(hb); $('#homeSay').textContent = t; say(t, { pitch: 1.4 }); };
   $$('.world-card').forEach(b => b.onclick = () => { sfx.pop(); worldScreen(b.dataset.w); });
   $('#goShop').onclick = () => shopScreen({ welcome: true });
-  $('#goParent').onclick = () => { parentFromClub = false; parentGate(); };
+  $('#goParent').onclick = () => openGrownUps();
   setTimeout(() => say(greet), 250);
 }
 
@@ -1310,7 +1317,7 @@ function finishLevel() {
     <div class="stars-big" aria-label="${plural(stars, 'star')}">${[0, 1, 2].map(i => `<span class="${i < stars ? 'on' : 'off'}" style="animation-delay:${.2 + i * .25}s">${i < stars ? '⭐' : '☆'}</span>`).join('')}</div>
     <p>${esc(msg)}</p>
     ${extra ? `<p class="kind">${esc(extra)}</p>` : ''}
-    <p class="earned"><b>🦴 ${total} bones</b> earned this level!</p>
+    <p class="earned"><b>${boneSVG()} ${total} bones</b> earned this level!</p>
     <p class="note">${parts.join(' · ')}</p>
     <div class="btns">
       ${hasNext ? '<button class="btn green" data-a="next">Next level →</button>' : ''}
@@ -1616,7 +1623,7 @@ function finishWalk() {
     <h2>Walk done!</h2>
     <p>${esc(msg)}</p>
     ${up ? `<p class="kind">🐾 ${days} days in a row!</p>` : ''}
-    <p class="earned"><b>🦴 ${total} bones</b> on our walk!</p>
+    <p class="earned"><b>${boneSVG()} ${total} bones</b> on our walk!</p>
     <p class="note">${parts.join(' · ')}</p>
     <div class="btns">
       <button class="btn green" data-a="home">🏠 Back to the Clubhouse</button>
@@ -1696,8 +1703,7 @@ function shopScreen(opts = {}) {
   if (opts.welcome) setTimeout(() => say(shopHello()), 250);
   const sb = $('#shopBonnie'); sb.onclick = () => { const t = tickle(sb); $('#shopSay').textContent = t; say(t, { pitch: 1.4 }); };
   $$('[data-tab]').forEach(b => b.onclick = () => { shopTab = b.dataset.tab; sfx.pop(); shopScreen(); });
-  if ($('#editPrizes')) $('#editPrizes').onclick = () => { parentFromClub = false; parentGate(() => { parentOpen.add('prizes'); parentScreen();
-    const f = $('[data-fold="prizes"]'); if (f) f.scrollIntoView({ block: 'start' }); }, 'change the prizes'); };
+  if ($('#editPrizes')) $('#editPrizes').onclick = () => openGrownUps('rewards', 'change the prizes', 'prizes');
   const dressed = line => setTimeout(() => { animate($('#shopBonnie'), 'happy', 550); shopSay(line); }, 50);
   $$('[data-wear]').forEach(b => b.onclick = () => { const id = b.dataset.wear; mutate(s => { s[slotKey(id)] = id; }); sfx.pop(); shopScreen(); dressed(rand(LINES.hatOn)); });
   $$('[data-off]').forEach(b => b.onclick = () => { mutate(s => { s[b.dataset.off] = null; }); sfx.pop(); shopScreen(); dressed(rand(LINES.hatOff)); });
@@ -1762,7 +1768,7 @@ function parentGate(then = parentScreen, what = 'open settings') {
     <p style="font-size:2rem;font-weight:700">${a} × ${b} = ?</p>
     <input type="number" inputmode="numeric" id="gateAns" aria-label="Answer"><p class="note" id="gateMsg" aria-live="polite"></p>
     <div class="btns"><button class="btn green" data-a="ok">Unlock</button><button class="btn ghost" data-a="cancel">Cancel</button></div>`, act => {
-    if (act === 'cancel') { if (parentFromClub) location.href = GAME.homeHref; return; }
+    if (act === 'cancel') { if (GAME.grownUpsPage) leaveParent(); else if (parentFromClub) location.href = GAME.homeHref; return; }
     if (+$('#gateAns').value === a * b) { gatePassed(); then(); askReminders(); return; }
     $('#gateMsg').textContent = 'Not quite — please try again.'; $('#gateAns').value = ''; sfx.wrong(); return true;
   });
@@ -1796,7 +1802,7 @@ function unlockScreen() {
   const buy = $('#buyBtn'), restore = $('#restoreBtn'), msg = t => { const m = $('#buyMsg'); if (m) m.textContent = t; };
   const busy = on => { buy.disabled = on; restore.disabled = on; };
   let ready = false;
-  $('#back').onclick = homeScreen;
+  $('#back').onclick = GAME.grownUpsPage ? parentScreen : homeScreen;
   const check = async () => {
     busy(true); buy.textContent = 'Checking the price…'; msg('');
     try {
@@ -1929,36 +1935,135 @@ function grownUpsTip() {
     a => { if (a !== 'prizes') return; parentOpen.add('prizes'); parentScreen();
       const f = $('[data-fold="prizes"]'); if (f) { f.open = true; f.scrollIntoView({ block: 'start' }); ringOn($('summary', f)); } });
 }
+/* The grown-ups area: one place for the whole game (24 November 2026). It used to be drawn separately inside Meadow
+   Maths and Meadow Words, each with half the settings, and moving between them loaded the other game (so Bonnie said
+   hello and the frog hopped about). Now it is its own page, grown-ups.html, with every world loaded, and its settings
+   in five sections, one on screen at a time:
+     General   sound and voice, school years, Bonnie's Walk, reminders, the full game, back-ups, feedback
+     Players   the child's name, the other players, and this week's numbers
+     Maths     Meadow Maths progress: open all levels, warm-ups, stars, reset, how each answer was reached
+     Words     the same for Meadow Words
+     Rewards   the bone balance, the real-life prizes, and the bones spent
+   Meadow.grownUps() still opens it inside whatever page calls it (the tests use that); the game's own buttons go to
+   grown-ups.html (openGrownUps). Every setting is saved exactly where it always was. */
+const GU_TABS = [
+  { id: 'general', label: 'General', title: 'General' },
+  { id: 'players', label: 'Players', title: 'Players and progress' },
+  { id: 'maths', label: 'Maths', title: 'Meadow Maths', subject: 'maths' },
+  { id: 'words', label: 'Words', title: 'Meadow Words', subject: 'english' },
+  { id: 'rewards', label: 'Rewards', title: 'Bones and prizes' },
+];
+const GU_TAB_KEY = 'meadow-grownups-tab';
+let guTab = null;
+const guTabs = () => GU_TABS.filter(t => !t.subject || subjectWorlds(t.subject).length);
+function guStartTab() {
+  const want = new URLSearchParams(location.search).get('tab');
+  let t = want; if (!t) { try { t = sessionStorage.getItem(GU_TAB_KEY); } catch (e) {} }
+  return guTabs().some(x => x.id === t) ? t : 'general';
+}
+/* The game's own Grown-ups buttons: the sum (over the screen the grown-up is on), then the grown-ups page. */
+function openGrownUps(tab, what, open) {
+  if (GAME.grownUpsPage) { if (tab) guTab = tab; if (open) parentOpen.add(open); parentGate(parentScreen, what); return; }
+  parentGate(() => {
+    hush();
+    const from = GAME.subject === 'english' ? 'words' : GAME.subject === 'maths' ? 'maths' : 'club';
+    location.href = `${GAME.assetBase || ''}grown-ups.html?from=${from}${tab ? '&tab=' + tab : ''}${open ? '&open=' + open : ''}`;
+  }, what);
+}
+/* Leaving the grown-ups area: back to where the grown-up came from. */
+function leaveParent() {
+  hush();
+  if (GAME.grownUpsPage) location.href = GAME.backHref || GAME.homeHref;
+  else if (parentFromClub) location.href = GAME.homeHref;
+  else homeScreen();
+}
+const GU_ICONS = {
+  general: '<path d="M0 -9 a9 9 0 1 1 0 18 a9 9 0 1 1 0 -18 M0 -4 a4 4 0 1 0 0 8 a4 4 0 1 0 0 -8" fill-rule="evenodd"/><path d="M-1.8 -12 h3.6 v4 h-3.6z M-1.8 8 h3.6 v4 h-3.6z M-12 -1.8 v3.6 h4 v-3.6z M8 -1.8 v3.6 h4 v-3.6z"/>',
+  players: '<circle cx="-4" cy="-4" r="4.2"/><path d="M-12 9 a8 7 0 0 1 16 0z"/><circle cx="6" cy="-2" r="3.4"/><path d="M1 9 a6.5 6 0 0 1 12 0z"/>',
+  maths: '<path d="M-9 -2.2 h18 v4.4 h-18z M-2.2 -9 h4.4 v18 h-4.4z"/>',
+  words: '<path d="M-10 -8 q5 -2 10 1 q5 -3 10 -1 v16 q-5 -2 -10 1 q-5 -3 -10 -1z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M0 -7 v15" stroke="currentColor" stroke-width="2"/>',
+  rewards: '<path d="M-10 -3 h20 v5 h-20z M-8 2 h16 v9 h-16z"/><path d="M0 -3 v14" stroke="#FFF6E2" stroke-width="2.4"/><path d="M0 -3 q-8 -9 -8 -3 q0 3 8 3 q8 0 8 -3 q0 -6 -8 3" fill="none" stroke="currentColor" stroke-width="2.2"/>',
+};
+const guIcon = id => `<svg viewBox="-13 -13 26 26" aria-hidden="true" fill="currentColor">${GU_ICONS[id]}</svg>`;
+
 function parentScreen() {
   const redraw = !!$('.parent'), scrollY = redraw ? window.scrollY : 0; // a redraw stays where the grown-up was
-  if (!redraw) parentOpen.clear();
+  if (!redraw) { parentOpen.clear(); const o = new URLSearchParams(location.search).get('open'); if (o === 'prizes') parentOpen.add(o); }
   G = null; S = load();
-  const subj = GAME.subject, sworlds = subjectWorlds(subj);
+  const tabs = guTabs();
+  if (!guTab || !tabs.some(t => t.id === guTab)) guTab = guStartTab();
   const history = S.redeemed.slice().reverse().slice(0, 20);
   const allYears = yearsWithWorlds(), chosen = S.settings.years;
   const V = window.BonnieVoice, players = playerList();
+  const anyReadAloud = subjectWorlds('maths').length > 0; // "read every question aloud" is the maths questions' option
   const fold = (id, title, count, body) => `<details data-fold="${id}" ${parentOpen.has(id) || (id === 'prizes' && !S.settings.prizesEdited) ? 'open' : ''}><summary><h3>${title}</h3>${count ? `<span class="note">${count}</span>` : ''}</summary>${body}</details>`;
-  const logs = sworlds.map(w => [w, logTable(w)]).filter(x => x[1]);
-  const others = GAME.otherGames || [];
-  show(`
-    <div class="card parent">
-      <div class="map-head"><button class="icon-btn" id="back">${parentFromClub ? '← Clubhouse' : '← Home'}</button><h2>⚙️ Grown-up Settings</h2></div>
-      <div class="group"><h3>For every game</h3><p class="note">Bones, prizes, sound and Bonnie's Walk are the same in every Meadow game${inApp() && players.length > 1 ? `. Everything here is for ${esc(nameOf())} only` : ''}.</p></div>
-      <section><h3>${inApp() ? 'Players' : 'Child'}</h3>
+  const shownNow = () => tabs.filter(t => t.subject).map(t => `${t.title}: ${shownYears(t.subject).map(y => 'Year ' + y).join(' + ')}`).join('. ');
+  const backTo = GAME.grownUpsPage ? (GAME.backLabel || 'Clubhouse') : parentFromClub ? 'Clubhouse' : 'Back';
+  const bone = boneSVG();
+
+  const general = `
+      <section><h3>Sound and voice</h3>
+        <label class="tick"><input type="checkbox" id="pSfx" ${S.sound ? 'checked' : ''}><span>Sound effects</span></label>
+        <label class="tick"><input type="checkbox" id="pVoice" ${S.voice ? 'checked' : ''}><span>Bonnie talks</span></label>
+        ${anyReadAloud ? `<label class="tick"><input type="checkbox" id="pRead" ${S.readAloud ? 'checked' : ''}><span>Read every maths question aloud</span></label>` : ''}
+        ${inApp() ? `<div class="row-btns" style="justify-content:flex-start"><button class="btn small ghost" id="testVoice" type="button">Test voice</button></div>`
+          : `<label>Reading speed <input type="range" id="pRate" min="0.6" max="1.2" step="0.05" value="${S.voiceRate}"> <span id="rateVal">${S.voiceRate}</span>
+          <button class="btn small ghost" id="testVoice" type="button">Test voice</button></label>
+        <p class="note">${V && V.pack ? `Recorded Bonnie voice: on (${Object.keys(V.pack.clips || {}).length} clips). Reading speed only changes the device voice.` : 'Recorded Bonnie voice: not loaded, so Bonnie uses the device voice.'}</p>`}</section>
+      ${allYears.length > 1 ? `<section><h3>School years</h3>
+        <p class="note">Choose which years' worlds show in every game. With none ticked, the highest year that has worlds shows (now: Year ${allYears[allYears.length - 1]}). Stars, bones, hats and prizes carry over between years.</p>
+        ${allYears.map(y => `<label class="tick"><input type="checkbox" data-year="${y}" ${chosen && chosen.includes(y) ? 'checked' : ''}><span>Year ${y}</span></label>`).join('')}
+        <p class="note" id="yearsNow">Showing now: ${esc(shownNow())}</p></section>` : ''}
+      <section><h3>Bonnie's Walk</h3>
+        <p class="note">Five quick questions from the Clubhouse, mixing English and easy maths. Nothing can be failed. Choose the mix:</p>
+        ${Object.entries(WALK_MIX_NAMES).map(([k, v]) => `<label class="tick"><input type="radio" name="walkMix" value="${k}" ${S.settings.walkMix === k ? 'checked' : ''}><span>${esc(v)}</span></label>`).join('')}
+        <p class="note">Walk streak: ${plural(walkInfo().streak, 'day')} in a row.</p>
+        <label class="tick"><input type="checkbox" id="pTeach" ${S.settings.teachBonnie ? 'checked' : ''}><span>Teach Bonnie questions</span></label>
+        <p class="note">Now and then Bonnie has a go at a maths question and ${esc(fmt('{N}'))} checks her answer: once in a walk from the second walk on, and in about half of maths levels.</p></section>
+      ${remindersHTML()}
+      ${inApp() ? `<section><h3>Full game</h3>${hasFullGame()
+        ? '<p>The full game is unlocked. Every world is open.</p>'
+        : `<p>This is the free game: Bonnie's Walk and the first level of every world.</p>
+          <div class="row-btns" style="justify-content:flex-start"><button class="btn small green" id="pFull">Unlock the full game, or restore a purchase</button></div>`}</section>` : ''}
+      <section><h3>Back up progress</h3>
+        <p class="note">Keeps a copy of everything on this device (${inApp() ? "every player's " : ''}bones, stars, hats, themes and prizes) as a file or a code, to restore on this or another device.</p>
+        <div class="row-btns" style="justify-content:flex-start"><button class="btn small green" id="backupBtn" ${window.MeadowBackup ? '' : 'disabled'}>Back up or restore</button></div></section>
+      <section><h3>Tell us what you think</h3>
+        <p class="note">Meadow Clubhouse collects nothing about how it's used, so the only way to hear what works, and what doesn't, is from you.</p>
+        <div class="row-btns" style="justify-content:flex-start">
+          <a class="btn small green" id="feedbackBtn" href="mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Meadow Clubhouse feedback')}">Send feedback</a>
+          ${inApp() && APP_STORE_ID ? `<a class="btn small ghost" id="rateBtn" href="https://apps.apple.com/app/id${APP_STORE_ID}?action=write-review">Rate the app</a>` : ''}</div>
+        <p class="note">Or email ${SUPPORT_EMAIL}.</p></section>`;
+
+  const playersPanel = `
+      <section><h3>${inApp() ? 'Who is playing' : 'Child'}</h3>
         <form class="row-btns" id="nameForm" style="justify-content:flex-start" autocomplete="off">
           <label for="pName" style="margin:0">Playing as</label>
           <input type="text" id="pName" value="${esc(S.name || '')}" maxlength="30" autocapitalize="words" autocorrect="off" spellcheck="false" aria-label="Child's name">
           <button class="btn small" type="submit">Save name</button><span class="note" id="nameOk" aria-live="polite"></span></form>
         <p class="note" id="nameSay" aria-live="polite"></p>
         ${inApp() ? `${players.map(p => `<div class="redeem"><span><b>${esc(p.name || 'New player')}</b>${p.current ? ' (playing now)' : ''}</span>
-          <span class="note">${p.bones}🦴 ${players.length > 1 ? `<button class="btn small ghost" data-rmplayer="${esc(p.id)}" data-name="${esc(p.name || 'New player')}">Remove</button>` : ''}</span></div>`).join('')}
-        <p class="note">Up to ${MAX_PLAYERS} children can each have their own name, bones, stars and Bonnie outfit. To add a player or swap, use <b>Switch player</b> on the Clubhouse page.</p>` : ''}</section>
-      ${inApp() ? `<section><h3>Full game</h3>${hasFullGame()
-        ? '<p>✓ The full game is unlocked. Every world is open.</p>'
-        : `<p>This is the free game: Bonnie's Walk and the first level of every world.</p>
-          <div class="row-btns" style="justify-content:flex-start"><button class="btn small green" id="pFull">Unlock the full game, or restore a purchase</button></div>`}</section>` : ''}
-      ${weekPanelHTML()}
-      <section><h3>Bones 🦴 <span class="chip bones" style="display:inline-flex" id="pBones">${S.bones}</span></h3>
+          <span class="note gu-n">${bone}${p.bones} ${players.length > 1 ? `<button class="btn small ghost" data-rmplayer="${esc(p.id)}" data-name="${esc(p.name || 'New player')}">Remove</button>` : ''}</span></div>`).join('')}
+        <p class="note">Up to ${MAX_PLAYERS} children can each have their own name, bones, stars and Bonnie outfit. To add a player or swap, tap the name at the top of the Clubhouse.${players.length > 1 ? ` Everything in the grown-ups area is for ${esc(nameOf())} only.` : ''}</p>` : ''}</section>
+      ${weekPanelHTML()}`;
+
+  const subjectPanel = t => {
+    const subj = t.subject, sworlds = subjectWorlds(subj), logs = sworlds.map(w => [w, logTable(w)]).filter(x => x[1]);
+    return `
+      <section><h3>Progress in ${esc(t.title)}</h3>
+        <label class="tick"><input type="checkbox" id="pUnlock-${subj}" data-unlock="${subj}" ${S.settings.unlockAll[subj] ? 'checked' : ''}><span>Open all levels in ${esc(t.title)}</span></label>
+        ${sworlds.some(w => w.warmUps) ? `<label class="tick"><input type="checkbox" id="pWarm" ${S.settings.warmUps ? 'checked' : ''}><span>Maths warm-ups: each level starts with 2 easy questions that don't count for stars</span></label>` : ''}
+        <ul class="gu-worlds">${sworlds.map(w => `<li><span>${esc(w.name)} <small>Year ${w.year}</small></span><b>${worldStars(w)} / ${w.levels.length * 3} stars</b></li>`).join('')}</ul>
+        <div class="row-btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small berry" data-reset="${subj}" id="resetProg-${subj}">Reset ${esc(t.title)} stars</button></div>
+        <p class="note">Resetting clears this game's stars only. Bones, hats, prizes and the other game are kept.</p></section>
+      <section>${fold('logs-' + subj, 'How each answer was reached', logs.length ? plural(logs.length, 'world') + ' played' : 'Nothing yet', `
+        <p class="note">Counts from the last play of each level: how far Bonnie's help went on each question. <b>Made easier</b> counts questions the game quietly simplified after two answers in a row needed a lot of help.</p>
+        ${logs.length ? logs.map(([w, tb]) => `<h4>${esc(w.name)}</h4>${tb}`).join('') : `<p class="note">Nothing yet. A world shows here once one of its levels has been finished.</p>`}`)}</section>
+      ${sworlds.filter(w => w.grownUps).map(w => `<section><h3>${esc(w.name)}</h3>${w.grownUps({ stars: L => starsOf(w, L), log: L => S.logs[keyOf(w, L)] || null })}</section>`).join('')}`;
+  };
+
+  const rewards = `
+      <section><h3 class="gu-n">Bones ${bone}<span class="chip bones" style="display:inline-flex" id="pBones">${S.bones}</span></h3>
         <div class="row-btns" style="justify-content:flex-start">
           <button class="btn small ghost" data-bone="-10">−10</button><button class="btn small ghost" data-bone="-1">−1</button>
           <button class="btn small ghost" data-bone="1">+1</button><button class="btn small ghost" data-bone="10">+10</button></div>
@@ -1967,9 +2072,6 @@ function parentScreen() {
           <button class="btn small" type="submit">Set balance</button><span class="note" id="boneOk" aria-live="polite"></span></form>
         <details class="how" data-fold="bonesHow" ${parentOpen.has('bonesHow') ? 'open' : ''}><summary>How bones are earned</summary>
           <p class="note">In each level, the first 2 plays each day pay 1 bone for each right answer. Plays after that on the same day are extra practice: no bones per answer, but 3 bonus bones for finishing. Asking Bonnie for help pays 1 bone once per play, in any play. Each new best star pays 3 bones (only stars better than the best so far). Practice is never limited, and five different levels in a day all pay normally.</p></details></section>
-      <section>${fold('spent', 'Bones spent', history.length ? plural(S.redeemed.length, 'prize') + ' claimed' : 'Nothing swapped yet',
-        history.length ? history.map(r => `<div class="redeem"><span><b>${esc(r.title)}</b></span><span class="note">${int(r.cost)}🦴 · ${esc(r.when || '')}</span></div>`).join('') : '<p class="note">Nothing swapped yet.</p>')}
-      </section>
       <section>${fold('prizes', 'Real-life prizes', plural(S.rewards.length, 'prize'), `
         ${S.settings.prizesEdited ? '' : '<p class="prize-start">These are starter prizes. Change them to suit your family.</p>'}
         <p class="note">These show in the Bone Shop. Changes save as you type. Claiming a prize needs a grown-up to hold a button for 3 seconds.</p>
@@ -1982,50 +2084,35 @@ function parentScreen() {
         <div class="row-btns" style="justify-content:flex-start;margin-top:8px">
           <button class="btn small" id="addPrize">+ Add prize</button>
           <button class="btn small ghost" id="resetPrizes">Use the starter prize list</button><span class="note" id="prizeOk" aria-live="polite"></span></div>`)}</section>
-      <section><h3>🐾 Bonnie's Walk</h3>
-        <p class="note">Five quick questions from the Clubhouse, mixing English and easy maths. Nothing can be failed. Choose the mix:</p>
-        ${Object.entries(WALK_MIX_NAMES).map(([k, v]) => `<label class="tick"><input type="radio" name="walkMix" value="${k}" ${S.settings.walkMix === k ? 'checked' : ''}><span>${esc(v)}</span></label>`).join('')}
-        <p class="note">Walk streak: ${plural(walkInfo().streak, 'day')} in a row.</p>
-        <label class="tick"><input type="checkbox" id="pTeach" ${S.settings.teachBonnie ? 'checked' : ''}><span>Teach Bonnie questions</span></label>
-        <p class="note">Now and then Bonnie has a go at a maths question and ${esc(fmt('{N}'))} checks her answer: once in a walk from the second walk on, and in about half of maths levels.</p></section>
-      <section><h3>Sound & voice</h3>
-        <label class="tick"><input type="checkbox" id="pSfx" ${S.sound ? 'checked' : ''}><span>Sound effects</span></label>
-        <label class="tick"><input type="checkbox" id="pVoice" ${S.voice ? 'checked' : ''}><span>Bonnie talks</span></label>
-        ${GAME.readAloudOption ? `<label class="tick"><input type="checkbox" id="pRead" ${S.readAloud ? 'checked' : ''}><span>Read every question aloud</span></label>` : ''}
-        ${inApp() ? `<div class="row-btns" style="justify-content:flex-start"><button class="btn small ghost" id="testVoice" type="button">Test voice</button></div>`
-          : `<label>Reading speed <input type="range" id="pRate" min="0.6" max="1.2" step="0.05" value="${S.voiceRate}"> <span id="rateVal">${S.voiceRate}</span>
-          <button class="btn small ghost" id="testVoice" type="button">Test voice</button></label>
-        <p class="note">${V && V.pack ? `Recorded Bonnie voice: on (${Object.keys(V.pack.clips || {}).length} clips). Reading speed only changes the device voice.` : 'Recorded Bonnie voice: not loaded, so Bonnie uses the device voice.'}</p>`}</section>
-      ${allYears.length > 1 ? `<section><h3>School years</h3>
-        <p class="note">Choose which years' worlds show in every game. With none ticked, the highest year that has worlds shows (now: Year ${allYears[allYears.length - 1]}). Stars, bones, hats and prizes carry over between years.</p>
-        ${allYears.map(y => `<label class="tick"><input type="checkbox" data-year="${y}" ${chosen && chosen.includes(y) ? 'checked' : ''}><span>Year ${y}</span></label>`).join('')}
-        <p class="note" id="yearsNow">Showing in ${esc(GAME.title)}: ${shownYears(subj).map(y => 'Year ' + y).join(' + ')}</p></section>` : ''}
-      ${remindersHTML()}
-      <section><h3>Back up progress</h3>
-        <p class="note">Keeps a copy of everything on this device (${inApp() ? "every player's " : ''}bones, stars, hats, themes and prizes) as a file or a code, to restore on this or another device.</p>
-        <div class="row-btns" style="justify-content:flex-start"><button class="btn small green" id="backupBtn" ${window.MeadowBackup ? '' : 'disabled'}>💾 Back up or restore</button></div></section>
-      <section><h3>Tell us what you think</h3>
-        <p class="note">Meadow Clubhouse collects nothing about how it's used, so the only way to hear what works, and what doesn't, is from you.</p>
-        <div class="row-btns" style="justify-content:flex-start">
-          <a class="btn small green" id="feedbackBtn" href="mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Meadow Clubhouse feedback')}">✉️ Send feedback</a>
-          ${inApp() && APP_STORE_ID ? `<a class="btn small ghost" id="rateBtn" href="https://apps.apple.com/app/id${APP_STORE_ID}?action=write-review">⭐ Rate the app</a>` : ''}</div>
-        <p class="note">Or email ${SUPPORT_EMAIL}.</p></section>
-      <div class="group"><h3>${esc(GAME.title)} only</h3>
-        ${others.length ? `<p class="note">Each game keeps its own stars and progress. ${others.length > 1 ? 'The other games have theirs' : esc(others[0].title) + ' has its own'} here:</p>
-          <div class="row-btns" style="justify-content:flex-start">${others.map(g => `<a class="btn small ghost" href="${esc(g.href)}#grownups">${esc(g.icon || '')} ${esc(g.title)} progress →</a>`).join('')}</div>` : ''}</div>
-      <section><h3>Progress in ${esc(GAME.title)}</h3>
-        <label class="tick"><input type="checkbox" id="pUnlock" ${S.settings.unlockAll[subj] ? 'checked' : ''}><span>Open all levels in ${esc(GAME.title)}</span></label>
-        ${sworlds.some(w => w.warmUps) ? `<label class="tick"><input type="checkbox" id="pWarm" ${S.settings.warmUps ? 'checked' : ''}><span>Maths warm-ups: each level starts with 2 easy questions that don't count for stars</span></label>` : ''}
-        ${sworlds.map(w => `<div class="note">${w.icon || ''} ${esc(w.name)} (Year ${w.year}): ⭐ ${worldStars(w)} / ${w.levels.length * 3}</div>`).join('')}
-        <div class="row-btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small berry" id="resetProg">Reset ${esc(GAME.title)} stars</button></div>
-        <p class="note">Resetting clears this game's stars only. Bones, hats, prizes and the other games are kept.</p></section>
-      <section>${fold('logs', 'How each answer was reached', logs.length ? plural(logs.length, 'world') + ' played' : 'Nothing yet', `
-        <p class="note">Counts from the last play of each level: how far Bonnie's help went on each question. <b>Made easier</b> counts questions the game quietly simplified after two answers in a row needed a lot of help.</p>
-        ${logs.length ? logs.map(([w, t]) => `<h4>${esc(w.name)}</h4>${t}`).join('') : `<p class="note">Nothing yet. A world shows here once one of its levels has been finished.</p>`}`)}</section>
-      ${sworlds.filter(w => w.grownUps).map(w => `<section><h3>${esc(w.name)}</h3>${w.grownUps({ stars: L => starsOf(w, L), log: L => S.logs[keyOf(w, L)] || null })}</section>`).join('')}
+      <section>${fold('spent', 'Bones spent', history.length ? plural(S.redeemed.length, 'prize') + ' claimed' : 'Nothing swapped yet',
+        history.length ? history.map(r => `<div class="redeem"><span><b>${esc(r.title)}</b></span><span class="note gu-n">${bone}${int(r.cost)} · ${esc(r.when || '')}</span></div>`).join('') : '<p class="note">Nothing swapped yet.</p>')}
+      </section>`;
+
+  const panel = t => t.id === 'general' ? general : t.id === 'players' ? playersPanel : t.id === 'rewards' ? rewards : subjectPanel(t);
+  show(`
+    <div class="card parent gu">
+      <div class="gu-top">
+        <button class="gu-back" id="back" aria-label="Back to the ${esc(backTo === 'Back' ? 'game' : backTo)}"><svg viewBox="-12 -12 24 24" aria-hidden="true"><path d="M5 -8 L-4 0 L5 8" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${esc(backTo)}</span></button>
+        <h2>Grown-ups</h2>
+      </div>
+      <div class="gu-tabs" role="tablist" aria-label="Grown-ups sections">${tabs.map(t => `<button type="button" role="tab" class="gu-tab" id="guTab-${t.id}" data-tab="${t.id}" aria-controls="guPanel-${t.id}" aria-selected="${t.id === guTab}" tabindex="${t.id === guTab ? 0 : -1}">${guIcon(t.id)}<span>${t.label}</span></button>`).join('')}</div>
+      ${tabs.map(t => `<div class="gu-panel" role="tabpanel" id="guPanel-${t.id}" aria-labelledby="guTab-${t.id}" ${t.id === guTab ? '' : 'hidden'}><h2 class="gu-h">${esc(t.title)}</h2>${panel(t)}</div>`).join('')}
     </div>`);
   if (redraw) window.scrollTo(0, scrollY);
   else grownUpsTip();
+  // the sections: switching is immediate (every section is already drawn), and remembered while the app is open
+  const pick = (id, focus) => {
+    guTab = id; try { sessionStorage.setItem(GU_TAB_KEY, id); } catch (e) {}
+    $$('.gu-tab').forEach(b => { const on = b.dataset.tab === id; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+    $$('.gu-panel').forEach(p => { p.hidden = p.id !== 'guPanel-' + id; });
+    window.scrollTo(0, 0);
+  };
+  $$('.gu-tab').forEach(b => b.onclick = () => { if (b.dataset.tab !== guTab) { sfx.pop(); pick(b.dataset.tab); } });
+  $('.gu-tabs').addEventListener('keydown', e => {
+    const ids = tabs.map(t => t.id), i = ids.indexOf(guTab);
+    const n = e.key === 'ArrowRight' ? ids[(i + 1) % ids.length] : e.key === 'ArrowLeft' ? ids[(i - 1 + ids.length) % ids.length] : e.key === 'Home' ? ids[0] : e.key === 'End' ? ids[ids.length - 1] : null;
+    if (n) { e.preventDefault(); pick(n, true); }
+  });
   $$('.parent details[data-fold]').forEach(d => d.addEventListener('toggle', () => { if (d.open) parentOpen.add(d.dataset.fold); else parentOpen.delete(d.dataset.fold); }));
   // Bonnie only says a name she has a recording of; for any other name she says the same lines without it.
   const nameSay = () => {
@@ -2040,11 +2127,11 @@ function parentScreen() {
     if (!v) { $('#pName').value = S.name || ''; $('#nameOk').textContent = 'A name is needed.'; return; }
     mutate(s => { s.name = v; }); parentScreen(); $('#nameOk').textContent = 'Saved ✓';
   };
-  $('#back').onclick = () => { if (parentFromClub) location.href = GAME.homeHref; else homeScreen(); };
+  $('#back').onclick = leaveParent;
   if ($('#pFull')) $('#pFull').onclick = unlockScreen;
   remindersWire();
   $$('[data-rmplayer]').forEach(b => b.onclick = () => modal(`<h2>Remove ${esc(b.dataset.name)}?</h2>
-    <p>${esc(b.dataset.name)}'s bones, stars, outfits and prizes will be deleted from this iPad. This can't be undone.</p>
+    <p>${esc(b.dataset.name)}'s bones, stars, outfits and prizes will be deleted from this device. This can't be undone.</p>
     <div class="btns"><button class="btn berry" data-a="yes">Remove</button><button class="btn ghost" data-a="no">Keep</button></div>`,
     a => { if (a === 'yes') { removePlayer(b.dataset.rmplayer); S = load(); parentScreen(); } }));
   $$('[data-bone]').forEach(b => b.onclick = () => { mutate(s => { s.bones = Math.max(0, s.bones + +b.dataset.bone); }); $('#pBones').textContent = S.bones; $('#boneSet').value = S.bones; });
@@ -2086,19 +2173,22 @@ function parentScreen() {
   $$('[data-year]').forEach(b => b.onchange = () => {
     const ys = $$('[data-year]').filter(x => x.checked).map(x => +x.dataset.year);
     mutate(s => { s.settings.years = ys.length ? ys : null; });
-    if ($('#yearsNow')) $('#yearsNow').textContent = `Showing in ${GAME.title}: ${shownYears(subj).map(y => 'Year ' + y).join(' + ')}`;
+    if ($('#yearsNow')) $('#yearsNow').textContent = `Showing now: ${shownNow()}`;
   });
-  $('#pUnlock').onchange = e => mutate(s => { s.settings.unlockAll[subj] = e.target.checked; });
+  $$('[data-unlock]').forEach(b => b.onchange = () => mutate(s => { s.settings.unlockAll[b.dataset.unlock] = b.checked; }));
   if ($('#pWarm')) $('#pWarm').onchange = e => mutate(s => { s.settings.warmUps = e.target.checked; });
   if ($('#pTeach')) $('#pTeach').onchange = e => mutate(s => { s.settings.teachBonnie = e.target.checked; });
   $('#backupBtn').onclick = () => window.MeadowBackup && window.MeadowBackup.open();
-  $('#resetProg').onclick = () => modal(`<h2>Reset ${esc(GAME.title)} stars?</h2><p>All stars in ${esc(GAME.title)} will be cleared. Bones and prizes are kept.</p>
+  $$('[data-reset]').forEach(btn => btn.onclick = () => {
+    const t = GU_TABS.find(x => x.subject === btn.dataset.reset), sworlds = subjectWorlds(t.subject);
+    modal(`<h2>Reset ${esc(t.title)} stars?</h2><p>All stars in ${esc(t.title)} will be cleared. Bones and prizes are kept.</p>
     <div class="btns"><button class="btn berry" data-a="yes">Reset</button><button class="btn ghost" data-a="no">Cancel</button></div>`, a => {
-    if (a !== 'yes') return;
-    const prefixes = sworlds.map(w => w.id + '/');
-    mutate(s => { [s.stars, s.logs].forEach(o => Object.keys(o).forEach(k => { if (prefixes.some(p => k.startsWith(p))) delete o[k]; }));
-      s.starLog = s.starLog.filter(e => !prefixes.some(p => e.key.startsWith(p))); });
-    parentScreen();
+      if (a !== 'yes') return;
+      const prefixes = sworlds.map(w => w.id + '/');
+      mutate(s => { [s.stars, s.logs].forEach(o => Object.keys(o).forEach(k => { if (prefixes.some(p => k.startsWith(p))) delete o[k]; }));
+        s.starLog = s.starLog.filter(e => !prefixes.some(p => e.key.startsWith(p))); });
+      parentScreen();
+    });
   });
 }
 
@@ -2197,6 +2287,7 @@ button{font-family:inherit;font-size:100%;color:inherit;cursor:pointer;border:no
 .hud .title{font-weight:700;font-size:1.25rem;color:var(--on-bg);display:flex;align-items:center;gap:8px;margin-right:auto;cursor:pointer;min-height:44px}
 .chip{background:var(--card);border:2px solid var(--card-edge);border-radius:999px;padding:6px 14px;font-weight:600;display:flex;align-items:center;gap:6px;box-shadow:0 3px 0 rgba(74,59,44,.12)}
 .chip.bones{font-size:1.15rem}
+.bone-i{display:inline-block;width:1.5em;height:.9em;vertical-align:-.08em;flex:none;overflow:visible}
 .chip.bones.bump{animation:bump .45s}
 .chip.streak{transition:all .25s}
 .chip.streak.hot{background:linear-gradient(180deg,#FFE7A8,#F2C14E);border-color:#D9A22F}
@@ -2421,6 +2512,36 @@ body[data-theme="pixel"] .walk-sky .h1{background:#63C74D}body[data-theme="pixel
 .parent details.how{margin-top:8px}.parent details.how summary{font-weight:600;font-size:.95rem;justify-content:flex-start}.parent details.how summary::after{margin-left:0}
 .parent input[type=text],.parent input[type=number],.parent select{font-family:inherit;font-size:1rem;padding:8px 10px;min-height:44px;border-radius:10px;border:2px solid var(--card-edge);background:#fff;color:var(--ink)}
 .parent .remind-when label{display:inline-flex;align-items:center;gap:8px;margin:0}
+/* the grown-ups area (24 November 2026): one page for the whole game, its sections behind wooden tabs, in the meadow look */
+.gu-page .hud,.gu-page .butterfly,.gu-page .frog,.gu-page .meadow{display:none!important}
+.gu-page #app{max-width:820px;padding-top:10px} /* (the page itself already starts below the status bar) */
+@media (max-width:520px){.gu-page #app{padding-left:8px;padding-right:8px}.parent.gu{padding:14px 12px 24px}}
+.parent.gu{padding:16px 18px 26px;gap:14px}
+.gu-top{display:flex;align-items:center;gap:12px;min-width:0}
+.gu-top h2{margin:0;font:700 clamp(22px,6vw,28px) Fredoka,var(--font-ui),sans-serif;color:#5C3D1E}
+.gu-back{display:inline-flex;align-items:center;gap:6px;min-height:46px;min-width:46px;padding:0 14px 0 20px;border:0;cursor:pointer;flex:none;
+  font:700 18px Fredoka,var(--font-ui),sans-serif;color:#5C3D1E;background:#EDC994;clip-path:polygon(14px 0,100% 0,100% 100%,14px 100%,0 50%);
+  box-shadow:inset 0 -4px 0 rgba(154,106,58,.55)}
+.gu-back svg{width:20px;height:20px;flex:none}
+.gu-back:focus-visible{outline:3px solid #B88A1E;outline-offset:2px}
+.gu-tabs{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px;margin:0 -4px;padding:8px 4px;background:var(--card)}
+.gu-page .gu-tabs{top:env(safe-area-inset-top)}
+.gu-tab{display:grid;justify-items:center;align-content:center;gap:2px;min-height:60px;min-width:0;padding:6px 2px;border-radius:12px;border:2px solid #E2CFA8;background:#FFF6E2;
+  color:#5C3D1E;font:700 clamp(13px,3.9vw,17px)/1.1 Fredoka,var(--font-ui),sans-serif;cursor:pointer;box-shadow:0 2px 0 #E2CFA8}
+.gu-tab svg{width:24px;height:24px;color:#9A6A3A}
+.gu-tab span{white-space:nowrap} /* a section name never breaks in the middle of a word */
+.gu-tab[aria-selected="true"]{background:#EDC994;border-color:#9A6A3A;box-shadow:inset 0 -3px 0 rgba(154,106,58,.45),0 2px 0 #9A6A3A}
+.gu-tab[aria-selected="true"] svg{color:#5C3D1E}
+.gu-tab:focus-visible{outline:3px solid #B88A1E;outline-offset:2px}
+.gu-panel{display:flex;flex-direction:column;gap:14px}
+.gu-panel[hidden]{display:none}
+.gu-h{margin:2px 0 0;font:700 22px Fredoka,var(--font-ui),sans-serif;color:#5C3D1E}
+.gu-panel>section:first-of-type{border-top:0;padding-top:0}
+.gu-n{display:inline-flex;align-items:center;gap:4px}
+.gu-worlds{list-style:none;margin:8px 0 0;padding:0}
+.gu-worlds li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.gu-worlds small{color:var(--ink-soft);margin-left:4px;white-space:nowrap}
+.gu-worlds b{white-space:nowrap}
 .prize-row{display:grid;grid-template-columns:40px 1fr 90px auto;gap:8px;align-items:center;margin:10px 0}
 .prize-row input{width:100%}
 .prize-row .pe{font-size:1.6rem;text-align:center}
@@ -2572,6 +2693,13 @@ function startGame(opts = {}) {
   if (opts.saveKey) KEY = opts.saveKey;
   S = load();
   if (GAME.needName && !S.name) { location.replace(GAME.homeHref); return; }
+  // an old link to a game's own grown-ups area (game.html#grownups): the grown-ups page, without loading the game
+  if (!GAME.grownUpsPage && !GAME.walk && location.hash === '#grownups') { location.replace(`${GAME.assetBase || ''}grown-ups.html?from=${GAME.subject === 'english' ? 'words' : 'maths'}`); return; }
+  if (GAME.grownUpsPage) { // grown-ups.html: back to where the grown-up came from (only ever one of the game's own pages)
+    const from = new URLSearchParams(location.search).get('from'), B = { club: ['index.html', 'Clubhouse'], maths: ['meadow-maths.html', 'Maths'], words: ['meadow-words.html', 'Words'] }[from] || ['index.html', 'Clubhouse'];
+    GAME.backHref = (GAME.assetBase || '') + B[0]; GAME.backLabel = B[1];
+    document.body.classList.add('gu-page');
+  }
   addStyle(CSS, 'meadow-core-css');
   if (!$('link[href*="fonts/fonts.css"]')) {
     const l = document.createElement('link'); l.rel = 'stylesheet';
@@ -2588,7 +2716,7 @@ function startGame(opts = {}) {
         <a class="icon-btn" href="${esc(GAME.homeHref)}" title="Back to the Clubhouse" aria-label="Clubhouse"><span aria-hidden="true">🏠</span><span class="lbl"> Clubhouse</span></a>
         <div class="title" id="homeLink" role="button" tabindex="0"><span aria-hidden="true">${GAME.icon}</span> <span id="appTitle"></span></div>
         <div class="chip streak" id="streakChip" title="Right answers in a row"><span aria-hidden="true">🔥</span> <span id="streakNum">0</span><span class="sr"> right in a row</span></div>
-        <div class="chip bones" id="boneChip" title="Your bones"><span aria-hidden="true">🦴</span> <span id="boneNum">0</span><span class="sr"> bones</span></div>
+        <div class="chip bones" id="boneChip" title="Your bones">${boneSVG()} <span id="boneNum">0</span><span class="sr"> bones</span></div>
         <button class="icon-btn" id="shopBtn" aria-label="Bone Shop"><span aria-hidden="true">🛒</span><span class="lbl"> Bone Shop</span></button>
       </header>
       <main id="screen"></main>
@@ -2609,6 +2737,7 @@ function startGame(opts = {}) {
   // game.html#shop opens the Bone Shop straight away (the Clubhouse links there)
   // game.html#grownups opens the grown-ups area (after the sum check): the Clubhouse links there
   if (GAME.walk) startWalk();
+  else if (GAME.grownUpsPage) parentGate(parentScreen); // nothing of the games here: no hello from Bonnie, no frog, no map
   else if (location.hash === '#shop') { shopFromClub = true; shopScreen({ welcome: true }); }
   else if (location.hash === '#grownups') { parentFromClub = true; homeScreen(); parentGate(); }
   else homeScreen();
@@ -2632,6 +2761,7 @@ window.Meadow = {
   stars: (worldId, levelId) => { if (!S) S = load(); return S.stars[worldId + '/' + levelId] || 0; },
   // screens
   home: () => homeScreen(), worldMap: id => worldScreen(id), shop: opts => shopScreen(opts || {}), grownUps: () => parentGate(),
+  openGrownUps, // the game's Grown-ups buttons: the sum, then grown-ups.html (tab: 'general', 'players', 'maths', 'words' or 'rewards')
   // the App Store app's free taster and unlock
   players: { MAX: MAX_PLAYERS, KEY: PLAYERS_KEY, on: () => inApp(), list: playerList, add: addPlayer, switchTo: switchPlayer, remove: removePlayer },
   fullGame: { FREE_LEVELS, KEY: FULL_KEY, has: hasFullGame, paid: paidLevel, unlock: unlockScreen, check: checkFullGame },
@@ -2642,7 +2772,7 @@ window.Meadow = {
     settings: reminderSettings, set: saveReminderSettings, dates: reminderDates, schedule: scheduleReminders, ask: askReminders },
   // UI kit for world files
   ui: { $, $$, esc, fmt, rand, randInt, shuffle, wait, plural, reduceMotion, say, hush, whenQuiet, sfx, tone, ac, animate, hearts, banner, confetti,
-    shakeScreen, tickle, tickleEgg, revealOnPhone, addBones, draggable, modal, bonnieSVG, bonnieHTML, hatSVG, refreshBonnies, show,
+    shakeScreen, tickle, tickleEgg, revealOnPhone, addBones, draggable, modal, bonnieSVG, bonePath, boneSVG, bonnieHTML, hatSVG, refreshBonnies, show,
     applyTheme }, // the theme and Bonnie's coat colour
   spokenLines, hostLines, numberLines,
   // the children in the questions and stories: [{ name, pronoun, their }], and one picked at random

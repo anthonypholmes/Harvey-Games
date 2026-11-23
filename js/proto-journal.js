@@ -215,6 +215,7 @@
   function open(opts = {}) {
     if (!document.getElementById('pj-css')) document.head.insertAdjacentHTML('beforeend', `<style id="pj-css">${STYLE}</style>`);
     onClose = opts.onClose || null; lastFocus = document.activeElement;
+    hush(); // whatever Bonnie was saying on the Clubhouse stops: the journal has its own words
     page = PAGES.some(p => p.id === opts.page) ? opts.page : firstPage();
     if (!root) { root = document.createElement('div'); root.className = 'pj'; root.id = 'pj'; document.body.appendChild(root); }
     root.hidden = false; root.classList.toggle('opening', !reduce());
@@ -231,10 +232,10 @@
       </div></div>
       <div class="pj-sheet" id="pjSheet" hidden></div>`;
     $('pjBack').onclick = close;
-    root.querySelectorAll('.pj-rib').forEach(b => { b.onclick = () => { if (b.dataset.page !== page) { ui.tone(520, .07, 'triangle', .07); ui.tone(700, .07, 'triangle', .06, .05); show(b.dataset.page); } }; });
+    root.querySelectorAll('.pj-rib').forEach(b => { b.onclick = () => { if (b.dataset.page !== page) { ui.tone(520, .07, 'triangle', .07); ui.tone(700, .07, 'triangle', .06, .05); show(b.dataset.page, true); } }; });
     root.querySelector('.pj-tabs').addEventListener('keydown', e => {
       const i = PAGES.findIndex(p => p.id === page), d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return;
-      e.preventDefault(); const n = PAGES[(i + d + PAGES.length) % PAGES.length].id; show(n); $('pjTab-' + n).focus();
+      e.preventDefault(); const n = PAGES[(i + d + PAGES.length) % PAGES.length].id; show(n, true); $('pjTab-' + n).focus();
     });
     root.onkeydown = e => { if (e.key === 'Escape') { e.preventDefault(); if (!$('pjSheet').hidden) shut(); else close(); } };
     show(page);
@@ -251,6 +252,7 @@
   }
   function close() {
     if (!root || root.hidden) return;
+    hush(); // the journal's words stop as it closes (nothing of it is left to say anything later)
     root.hidden = true; root.innerHTML = '';
     document.body.classList.remove('pj-open');
     const ph = document.querySelector('.ph'); if (ph) ph.inert = false;
@@ -264,7 +266,17 @@
     ['maths', 'words'].forEach(g => worlds(g).forEach(w => { const s = stateOf(w); of++; if (s.k !== 'none') n++; if (s.k === 'all') all++; }));
     return { n, all, of };
   }
-  function show(id) {
+  /* Bonnie reads a journal page out when it's news: a page the child turned to, or words she hasn't said yet since the
+     app was opened. Opening the journal again to the same page shows her words without saying them again. */
+  const SAID_KEY = 'meadow-journal-said';
+  function sayOnce(line, asked) {
+    let said = []; try { said = JSON.parse(sessionStorage.getItem(SAID_KEY) || '[]'); } catch (e) {}
+    if (!asked && said.includes(line)) return;
+    try { sessionStorage.setItem(SAID_KEY, JSON.stringify(said.filter(l => l !== line).concat(line).slice(-12))); } catch (e) {}
+    say(line);
+  }
+  const hush = () => { if (window.BonnieVoice) BonnieVoice.hush(); };
+  function show(id, asked = false) {
     page = id;
     root.querySelectorAll(".pj-rib").forEach(b => { b.setAttribute("aria-selected", String(b.dataset.page === id)); b.classList.toggle("on", b.dataset.page === id); });
     const p = PAGES.find(x => x.id === id), el = $('pjPage');
@@ -282,7 +294,7 @@
       if (!reduce()) setTimeout(() => { ui.tone(150, .12, 'triangle', .2); ui.tone(95, .14, 'sine', .18, .03); }, 450);
       const seen = seenSet(); fresh.forEach(k => seen.add(k)); keepSeen(seen); fresh = new Set();
     }
-    const line = $('pjSay').textContent; if (line && window.say) say(line);
+    const line = $('pjSay').textContent; if (line && window.say) sayOnce(line, asked);
   }
 
   function bonnieHead(line) {
@@ -329,7 +341,7 @@
     $('pjShut').focus({ preventScroll: true });
     if (window.say) say(words);
   }
-  function shut() { const sh = $('pjSheet'), id = sh.querySelector('h2') && sh.dataset.world; sh.hidden = true; sh.innerHTML = ''; const b = root.querySelector('.pj-stamp:focus') || root.querySelector('.pj-stamp'); if (b) b.focus({ preventScroll: true }); }
+  function shut() { hush(); const sh = $('pjSheet'), id = sh.querySelector('h2') && sh.dataset.world; sh.hidden = true; sh.innerHTML = ''; const b = root.querySelector('.pj-stamp:focus') || root.querySelector('.pj-stamp'); if (b) b.focus({ preventScroll: true }); }
   // the place's own level map, in the map prototype, with the same pretend child
   function placeHref(w) {
     const base = hub() ? hub().PLACES[w.subject === 'english' ? 'words' : 'maths'].href : (w.subject === 'english' ? LINKS.words : LINKS.maths);

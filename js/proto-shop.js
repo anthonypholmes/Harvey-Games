@@ -293,7 +293,7 @@
   .ps-card .ps-meter{width:84%;height:6px;margin-top:2px}
   .ps-card.prize .ps-th{width:calc(var(--th) * .72);height:calc(var(--th) * .72)}
   .ps-card.prize{border-color:#E2D3B4;box-shadow:0 2px 0 #E2D3B4}
-  .ps-head{grid-row:1/-1;align-self:stretch;width:82px;box-sizing:border-box;display:grid;place-items:center;padding:8px 6px;border-radius:12px;background:${C.woodLt};border:2px solid ${C.woodDk};box-shadow:0 3px 0 ${C.woodDk};
+  .ps-head{grid-row:1/-1;align-self:stretch;width:max-content;min-width:82px;max-width:124px;box-sizing:border-box;display:grid;place-items:center;padding:8px 6px;border-radius:12px;background:${C.woodLt};border:2px solid ${C.woodDk};box-shadow:0 3px 0 ${C.woodDk};
     font:700 16px/1.2 Fredoka,system-ui,sans-serif;color:${C.woodInk};text-align:center}
   .ps-card.ps-edit{background:#EAE3D6;border-color:#A89F8E;box-shadow:0 3px 0 #A89F8E}
   .ps-arrow{position:absolute;top:50%;z-index:2;width:52px;height:52px;margin-top:-26px;padding:0;border-radius:50%;border:2px solid ${C.woodDk};background:${C.woodLt};box-shadow:0 3px 0 ${C.woodDk};display:grid;place-items:center;cursor:pointer}

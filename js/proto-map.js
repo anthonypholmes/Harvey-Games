@@ -33,15 +33,15 @@
      hit: the whole tappable area (the picture and its sign). sign: the top middle of its name sign.
      bonnie: where she stands (her feet). bub: her speech bubble [x, y, 'above'|'below'] (y is its bottom edge for 'above', its top for 'below'). */
   const RAW_MATHS = {
-    'y2-maths-partitioning': { hit: [96, 40, 228, 342], sign: [220, 282], bonnie: [372, 300], bub: [330, 232, 'above'] },
-    'y2-maths-number-bonds': { hit: [326, 340, 234, 200], sign: [452, 432], bonnie: [440, 540], bub: [340, 542, 'below'] },
-    'y2-maths-number-lines': { hit: [126, 542, 394, 130], sign: [222, 552], bonnie: [352, 668], bub: [300, 674, 'below'] },
-    'y2-maths-arrays': { hit: [332, 760, 228, 292], sign: [440, 968], bonnie: [300, 840], bub: [130, 764, 'above'] },
-    'y2-maths-sharing': { hit: [100, 975, 228, 228], sign: [210, 1100], bonnie: [400, 1060], bub: [335, 1066, 'below'] },
-    // drawn after the trail grew (23 November 2026), so written straight in the final heights (fin)
-    'y2-maths-money': { fin: true, hit: [80, 1050, 270, 244], sign: [238, 1204], bonnie: [420, 1186], bub: [400, 1066, 'above'] },
-    'y2-maths-time': { fin: true, hit: [352, 1180, 226, 332], sign: [470, 1418], bonnie: [326, 1446], bub: [290, 1382, 'above'] },
-    'y2-maths-captains-cove': { fin: true, hit: [100, 1514, 420, 176], sign: [206, 1522], bonnie: [365, 1506], bub: [400, 1522, 'below'] },
+    // 24 November 2026: the wider, roomier Maths world (js/proto-map-art.js, MATHS_AT), written straight in its own units
+    'y2-maths-partitioning': { fin: true, hit: [416, 278, 228, 317], sign: [540, 505], bonnie: [692, 521], bub: [650, 459, 'above'] },
+    'y2-maths-number-bonds': { fin: true, hit: [966, 527, 234, 177], sign: [1092, 610], bonnie: [1080, 705], bub: [980, 706, 'below'] },
+    'y2-maths-number-lines': { fin: true, hit: [586, 761, 394, 113], sign: [682, 770], bonnie: [812, 871], bub: [760, 876, 'below'] },
+    'y2-maths-arrays': { fin: true, hit: [982, 994, 228, 259], sign: [1090, 1179], bonnie: [950, 1063], bub: [780, 998, 'above'] },
+    'y2-maths-sharing': { fin: true, hit: [420, 1190, 228, 170], sign: [530, 1291], bonnie: [720, 1264], bub: [655, 1268, 'below'] },
+    'y2-maths-money': { fin: true, hit: [402, 1412, 270, 244], sign: [560, 1566], bonnie: [742, 1548], bub: [722, 1428, 'above'] },
+    'y2-maths-time': { fin: true, hit: [976, 1560, 226, 332], sign: [1094, 1798], bonnie: [950, 1826], bub: [914, 1762, 'above'] },
+    'y2-maths-captains-cove': { fin: true, hit: [560, 1974, 420, 176], sign: [666, 1982], bonnie: [825, 1966], bub: [860, 1982, 'below'] },
   };
   // the Meadow Words route (drawn at its own height, so no moving)
   const RAW_WORDS = {
@@ -51,18 +51,21 @@
     'y2-english-stories': { hit: [366, 650, 200, 400], sign: [440, 948], signW: 150, bonnie: [300, 900], bub: [131, 912, 'below'] },
   };
   const ROUTES = {
-    maths: { subject: 'maths', title: 'Meadow Maths', raw: RAW_MATHS, F, H: A.ROUTE_H, scene: A.mathsRoute, maxH: 1700 },
-    words: { subject: 'english', title: 'Meadow Words', raw: RAW_WORDS, F: y => y, H: A.WORDS_H, scene: A.wordsRoute, maxH: 1100 },
+    // wide: a world bigger than the screen every way, whose "whole map" (fit) is just the part with the places in it
+    maths: { subject: 'maths', title: 'Meadow Maths', raw: RAW_MATHS, F, W: A.MATHS_W, H: A.ROUTE_H, fit: A.MATHS_FIT, off: A.MATHS_OFF, wide: true, scene: A.mathsRoute, maxH: 2560 },
+    words: { subject: 'english', title: 'Meadow Words', raw: RAW_WORDS, F: y => y, W: A.WORDS_W, H: A.WORDS_H, fit: A.WORDS_FIT, off: A.WORDS_OFF, wide: true, scene: A.wordsRoute, maxH: A.WORDS_H },
   };
   const R = ROUTES[window.PROTO_ROUTE] || ROUTES.maths, G = R.F;
   // Bonnie's words (js/meadow-look.js, where tools/make-voice.mjs finds them to record)
   const LL = window.MeadowLook.LINES, SAYS = id => LL.places[id] || [LL.offWeGo, LL.offWeGo];
-  const PLACES = Object.fromEntries(Object.entries(R.raw).map(([id, p]) => { const G = p.fin ? (y => y) : R.F; return [id, { ...p,
-    hit: [p.hit[0], G(p.hit[1]), p.hit[2], G(p.hit[1] + p.hit[3]) - G(p.hit[1])],
-    sign: [p.sign[0], G(p.sign[1])], bonnie: [p.bonnie[0], G(p.bonnie[1])], bub: [p.bub[0], G(p.bub[1]), p.bub[2]] }]; }));
+  // (off: where the drawing sits in a bigger picture, as the Maths world does)
+  const [OX, OY] = R.off || [0, 0];
+  const PLACES = Object.fromEntries(Object.entries(R.raw).map(([id, p]) => { const G = p.fin ? (y => y + OY) : (y => R.F(y) + OY); return [id, { ...p,
+    hit: [p.hit[0] + OX, G(p.hit[1]), p.hit[2], G(p.hit[1] + p.hit[3]) - G(p.hit[1])],
+    sign: [p.sign[0] + OX, G(p.sign[1])], bonnie: [p.bonnie[0] + OX, G(p.bonnie[1])], bub: [p.bub[0] + OX, G(p.bub[1]), p.bub[2]] }]; }));
   // A phone opens on the middle of the drawing (PHONE_W across, from PHONE_X), where every place and sign is; the map can
   // then be dragged and pinched anywhere inside the drawing (js/map-camera.js).
-  const WORLD_W = 640, WORLD_H = R.H, PHONE_X = 125, PHONE_W = 390;
+  const WORLD_W = R.W, WORLD_H = R.H, PHONE_X = 125, PHONE_W = 390;
   const short = id => id.replace(/^y2-[a-z]+-/, '');
 
   let on = false, busy = false, at = null, scene = null, view = null;
@@ -124,7 +127,12 @@
   .pm-tag.tip-ring{outline:none;background:#FBE1A0;box-shadow:inset 0 0 0 4px #F2B53A,inset 0 -4px 0 rgba(154,106,58,.55);animation:pmTip 1.4s ease-in-out infinite}
   @keyframes pmTip{50%{background:${C.woodLt}}}
   .pm-tag:focus-visible{outline:3px solid ${C.goldDk};outline-offset:2px}
-  .pm-tags{display:flex;gap:6px}
+  .pm-tags{display:flex;gap:6px;flex:none}
+  /* the bar's signs keep their size and stay on the screen; the title in the middle is the part that gives way (it can
+     wrap onto two lines). (24 November 2026: in the Bone Shop opened from the Clubhouse, "Clubhouse" plus a big bone
+     count were wider than the screen, so the count ran off the right edge.) */
+  .pm-bar>.pm-tag,.pm-bar>a,.pm-bar>button{flex:none}
+  .pm-bar>.pm-title{flex:0 1 auto;min-width:0;white-space:normal!important;overflow-wrap:normal;line-height:1.1}
   .pm-title{margin:2px 0 0;padding:6px 16px 8px;border-radius:10px;background:${C.woodLt};box-shadow:0 3px 0 ${C.woodDk};font:700 clamp(17px,5vw,22px) Fredoka,system-ui,sans-serif;color:${C.woodInk};white-space:nowrap;text-align:center}
   /* the map's own viewport: only here do a pinch and a drag move the map (everywhere else in the game is untouched) */
   .pm-view{position:absolute;inset:0;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -199,7 +207,8 @@
   function layout() {
     const W = document.documentElement.clientWidth || innerWidth, phone = W < 600;
     // vx0, vw: the part of the drawing the map opens on, filling the screen's width (a phone: the middle; bigger: all of it)
-    view = phone ? { vx0: PHONE_X, vw: PHONE_W } : { vx0: 0, vw: WORLD_W };
+    view = phone ? { vx0: PHONE_X, vw: PHONE_W } : { vx0: 0, vw: 640 };
+    if (R.wide) view.vx0 = 0; // a wide world opens on Bonnie's place, wherever it is across the drawing
     view.W = W; view.k = W / view.vw; // px per drawing unit at the opening zoom; the drawing is laid out at this size
   }
   const px = (x, y) => [x * view.k, y * view.k];
@@ -217,7 +226,9 @@
   function bubbleSVG(w, text) {
     const p = PLACES[w.id], lines = wrap(text, 17), fs = 16 / Math.min(1.2, view.k), h = lines.length * fs * 1.3 + 20, bw = 168 / Math.min(1.2, view.k);
     const [bx, byRaw, side] = p.bub, [fx, fy] = p.bonnie;
-    const x = Math.max(view.vx0 + 6, Math.min(bx, view.vx0 + view.vw - bw - 6));
+    let x;
+    if (R.wide) { const c = wideX(w), half = innerWidth / view.k / 2, pad = 8 / view.k; x = Math.max(6, Math.min(WORLD_W - bw - 6, clampTo(bx, c - half + pad, c + half - pad - bw))); }
+    else x = Math.max(view.vx0 + 6, Math.min(bx, view.vx0 + view.vw - bw - 6));
     return side === 'above' ? A.bubble(x, byRaw - h, bw, lines, fx - 10, fy - 58, fs) : A.bubble(x, byRaw, bw, lines, fx + 4, fy - 4, fs);
   }
 
@@ -230,7 +241,9 @@
   // the room the map has between the top bar and the buttons along the bottom
   function insets() {
     const bar = ui.$('.pm-bar'), low = ui.$('.pm-low'), vh = innerHeight;
-    return { top: bar ? Math.max(0, bar.getBoundingClientRect().bottom) : 0, bottom: low ? Math.max(0, vh - low.getBoundingClientRect().top) + 6 : 0 };
+    const zoom = ui.$('.pm-zoom'); // the + and − buttons, down the right: the whole map keeps clear of them too
+    return { top: bar ? Math.max(0, bar.getBoundingClientRect().bottom) : 0, bottom: low ? Math.max(0, vh - low.getBoundingClientRect().top) + 6 : 0,
+      right: zoom ? Math.max(0, innerWidth - zoom.getBoundingClientRect().left) + 6 : 0 };
   }
   // the name signs: their full size at the opening zoom and a little bigger zoomed in; zoomed out they shrink with the
   // map (down to half) and show just the name, so they never pile up ("Back to Bonnie" or a double-tap brings them back)
@@ -248,7 +261,17 @@
     const zi = ui.$('#pmIn'), zo = ui.$('#pmOut');
     if (zi) zi.setAttribute('aria-disabled', z >= c.zMax() * .99); if (zo) zo.setAttribute('aria-disabled', z <= c.zMin() * 1.01);
   }
-  function bonnieView(animate) { if (at) { const [x, y] = mid(at); cam.centreOn(view.vx0 + view.vw / 2, y, view.k, animate); } }
+  // a wide world: across, the middle of her place, Bonnie and her speech bubble together (so the bubble is never cut off by the screen's edge)
+  // (on a small screen her own sign and Bonnie come first, then the bubble; the bubble moves in beside them if it must)
+  const clampTo = (v, a, b) => a <= b ? Math.max(a, Math.min(b, v)) : (a + b) / 2;
+  function wideX(w) {
+    const p = PLACES[w.id], k = view.k, half = innerWidth / k / 2, pad = 8 / k, bw = 168 / Math.min(1.2, k), bx = Math.max(6, Math.min(p.bub[0], WORLD_W - bw - 6));
+    const g = signs.find(g => g.inner.id === 'pmSign-' + w.id), sl = g ? g.x - g.hw / k : p.sign[0], sr = g ? g.x + g.hw / k : p.sign[0];
+    const mustL = Math.min(p.bonnie[0] - 40, sl), mustR = Math.max(p.bonnie[0] + 40, sr), allL = Math.min(mustL, bx), allR = Math.max(mustR, bx + bw);
+    const c = (Math.min(allL, p.hit[0]) + Math.max(allR, p.hit[0] + p.hit[2])) / 2, lo = allR + pad - half, hi = allL - pad + half;
+    return lo <= hi ? clampTo(c, lo, hi) : clampTo((lo + hi) / 2, mustR + pad - half, mustL - pad + half);
+  }
+  function bonnieView(animate) { if (at) { const [, y] = mid(at); cam.centreOn(R.wide ? wideX(at) : view.vx0 + view.vw / 2, y, view.k, animate); } }
 
   function draw() {
     if (cam) { camMem[camKey()] = cam.state(); cam.destroy(); cam = null; }
@@ -280,7 +303,7 @@
           <button class="pm-tag" id="pmGrown" aria-label="Grown-ups"><svg viewBox="-12 -12 24 24" aria-hidden="true"><path d="M-6 -1 v-4 a6 6 0 0 1 12 0 v4" fill="none" stroke="${C.woodInk}" stroke-width="2.6"/><rect x="-9" y="-1" width="18" height="13" rx="3" fill="${C.woodInk}"/><circle cx="0" cy="5" r="2" fill="${C.woodLt}"/></svg></button>
         </div>
         <h1 class="pm-title">${R.title}</h1>
-        <button class="pm-tag" id="pmBones" aria-label="${s.bones} bones. Open the Bone Shop">${A.bone(0, 0, 1).replace('<g transform="translate(0 0) scale(1)">', '<svg viewBox="-22 -14 44 28" aria-hidden="true"><g>').replace(/<\/g>$/, '</g></svg>')}<span>${s.bones}</span></button>
+        <button class="pm-tag" id="pmBones" aria-label="${s.bones} bones. Open the Bone Shop"><svg viewBox="-22 -14 44 28" aria-hidden="true">${A.bone(0, 0, 1)}</svg><span>${s.bones}</span></button>
       </div>
       <div class="pm-view" id="pmView" role="group" aria-label="The meadow map. Pinch or use the zoom buttons to zoom; drag to look around.">
         <div class="pm-stage" id="pmStage" style="width:${(WORLD_W * view.k).toFixed(1)}px;height:${(WORLD_H * view.k).toFixed(1)}px">
@@ -306,9 +329,10 @@
     // the signs: measured once at their opening size, and kept inside the part of the drawing the map opens on (as the screen showed them before)
     compact = null;
     signs = ui.$$('.pm-at').map(el => ({ el, inner: el.firstElementChild, x: +el.dataset.x, y: +el.dataset.y, hw: el.firstElementChild.offsetWidth / 2 }));
-    signs.forEach(g => { const half = g.hw / view.k, lo = view.vx0 + 6 / view.k + half, hi = view.vx0 + view.vw - 6 / view.k - half; g.x = Math.max(lo, Math.min(hi, g.x)); });
+    if (R.wide && at) ui.$('#pmBubble').innerHTML = bubbleSVG(at, bonnieLine); // now her sign's size is known (wideX)
+    if (!R.wide) signs.forEach(g => { const half = g.hw / view.k, lo = view.vx0 + 6 / view.k + half, hi = view.vx0 + view.vw - 6 / view.k - half; g.x = Math.max(lo, Math.min(hi, g.x)); });
     cam = window.MapCamera.create({
-      viewport: ui.$('#pmView'), world: ui.$('#pmStage'), size: { w: WORLD_W, h: WORLD_H }, base: view.k,
+      viewport: ui.$('#pmView'), world: ui.$('#pmStage'), size: { w: WORLD_W, h: WORLD_H }, base: view.k, fit: R.fit,
       maxZoom: view.k * 2.4, floor: Math.min(view.k, innerWidth / WORLD_W) * .3, reduce, insets,
       onChange: placeSigns,
       onSettle: c => { camMem[camKey()] = c.state(); },
@@ -332,7 +356,7 @@
       } else b.onclick = () => choose(id, hit); // a sign is part of its place
     });
     if (bb) { bb.onclick = () => choose(at.id, bb, true); bb.addEventListener('focus', () => cam.show(bfx - 60, bfy - 90, 120, 100)); }
-    ui.$('#pmGrown').onclick = () => { leave(); M.grownUps(); };
+    ui.$('#pmGrown').onclick = () => M.openGrownUps(); // the sum over the map, then the grown-ups page
     ui.$('#pmBones').onclick = () => { leave(); M.shop({ welcome: true }); };
     if (shopTip) M.tips.at('shop', ui.$('#pmBones')); // the ring (once per player: the save remembers it)
     if (ui.$('#pmJump')) ui.$('#pmJump').onclick = openPlaces;
@@ -440,10 +464,12 @@
     ok('names are 19px or more, progress 16px or more', Math.min(...nameSizes) >= 19 && Math.min(...pgSizes) >= 16, `names ${Math.min(...nameSizes)}px, progress ${Math.min(...pgSizes)}px`);
     ok('each sign is inside its place\'s tap area', ws.every((w, i) => { const a = r(signs[i]), b = r(hits[i]); return a.left >= b.left - 24 && a.right <= b.right + 24 && a.top >= b.top - 2 && a.bottom <= b.bottom + 2; }),
       ws.map((w, i) => { const a = r(signs[i]), b = r(hits[i]); return `${short(w.id)} ${Math.round(a.left - b.left)},${Math.round(b.right - a.right)},${Math.round(a.top - b.top)},${Math.round(b.bottom - a.bottom)}`; }).join(' | '));
-    ok('signs are on the screen and do not overlap each other', signs.every(s => r(s).left >= 0 && r(s).right <= innerWidth) && !signs.some((a, i) => signs.some((b, j) => j > i && cross(r(a), r(b)))),
+    // (a wide world shows only part of itself at first: there, Bonnie's place's sign must be on the screen)
+    ok('signs are on the screen and do not overlap each other', (R.wide ? [document.getElementById('pmSign-' + at.id)] : signs).every(s => r(s).left >= 0 && r(s).right <= innerWidth) && !signs.some((a, i) => signs.some((b, j) => j > i && cross(r(a), r(b)))),
       signs.map(s => [r(s).left, r(s).right].map(Math.round).join('..')).join(' '));
     const bub = r(document.getElementById('pmBubble'));
     ok("Bonnie's bubble covers no sign", !signs.some(s => cross(r(s), bub)), signs.filter(s => cross(r(s), bub)).map(s => s.id).join(', '));
+    ok("…and is all on the screen, not cut off at its edge", bub.left >= 0 && bub.right <= innerWidth + .5, `${Math.round(bub.left)}..${Math.round(bub.right)} of ${innerWidth}`);
     { // and wherever she hops to, with her longest line there
       const bubEl = document.getElementById('pmBubble'), keep = bubEl.innerHTML, bad = [];
       ws.forEach(w => { bubEl.innerHTML = bubbleSVG(w, SAYS(w.id)[0].length > 30 ? SAYS(w.id)[0] : LL.startAt(shortName(w))); const br = r(bubEl); signs.forEach(s => { if (cross(r(s), br)) { const a = r(s); bad.push(short(w.id) + '→' + short(s.id.replace('pmSign-', '')) + ` (bubble ${[br.left, br.top, br.right, br.bottom].map(Math.round)} sign ${[a.left, a.top, a.right, a.bottom].map(Math.round)})`); } }); });
@@ -500,6 +526,7 @@
       const a = r(st), ins = insets(), inRoom = ws.every(w => { const b = r(ui.$(`.pm-hit[data-w="${w.id}"]`)); return b.left >= -1 && b.right <= innerWidth + 1 && b.top >= ins.top - 1 && b.bottom <= innerHeight - ins.bottom + 1; });
       ok('"See whole map" shows every place at once, between the top bar and the buttons', cam.isWhole() && (inRoom || cam.zoom > cam.zFit() * 1.001 || cam.zMin() > Math.min(innerWidth / WORLD_W, (innerHeight - ins.top - ins.bottom) / WORLD_H) * 1.001), `zoom ${cam.zoom.toFixed(2)}`);
       ok('…in the middle of the screen', Math.abs(a.left - (innerWidth - a.right)) < 2 || (a.left <= .5 && a.right >= innerWidth - .5), edges());
+      if (R.wide && innerWidth < innerHeight) ok('…with the meadow all the way to the screen\'s edges (no border round a smaller picture)', covers(), edges());
       ok('…where every place still takes a tap', !tappable().length, tappable().join(', '));
       ok('…the zoom-out button says it can go no further, and the button now says "Back to Bonnie"', ui.$('#pmOut').getAttribute('aria-disabled') === 'true' && ui.$('#pmWhole').textContent.trim() === 'Back to Bonnie');
       ui.$('#pmWhole').click(); await still(650);

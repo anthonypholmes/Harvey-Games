@@ -27,7 +27,9 @@
 
     const VW = () => vp.clientWidth, VH = () => vp.clientHeight;
     // smallest zoom: the whole drawing in the room between the top bar and the buttons (but never so small the signs pile up)
-    const zMin = () => { const i = insets(); return Math.max(o.floor || 0, Math.min(VW() / WW, (VH() - i.top - i.bottom) / WH)); };
+    // o.fit: the part of the drawing "the whole map" means (where the places are), if the drawing is bigger: the scenery round it fills the screen
+    const FIT = o.fit || [0, 0, WW, WH];
+    const zMin = () => { const i = insets(); return Math.max(o.floor || 0, Math.min((VW() - (i.left || 0) - (i.right || 0)) / FIT[2], (VH() - i.top - i.bottom) / FIT[3])); };
     const zMax = () => Math.max(o.maxZoom || base * 2.4, zMin() * 1.5);
     const zFit = () => Math.min(zMin(), zMax());
     function fix(nz, nx, ny) { nz = clamp(nz, zMin(), zMax()); return [nz, ...fixT(nz, nx, ny)]; }
@@ -73,12 +75,12 @@
       animate ? animateTo(...args, 320) : set(...args);
     }
     // put a drawing point in the middle of the room left between the bar and the buttons
-    function centreOn(wx, wy, nz = z, animate = true) {
-      const i = insets(), cx = VW() / 2, cy = i.top + (VH() - i.top - i.bottom) / 2;
+    function centreOn(wx, wy, nz = z, animate = true, side = false) { // side: keep clear of i.left and i.right too (the whole map)
+      const i = insets(), cx = side ? (i.left || 0) + (VW() - (i.left || 0) - (i.right || 0)) / 2 : VW() / 2, cy = i.top + (VH() - i.top - i.bottom) / 2;
       const args = [nz, cx - wx * nz, cy - wy * nz];
       animate ? animateTo(...args) : set(...args);
     }
-    function fitAll(animate = true) { const nz = zFit(); animate ? animateTo(nz, 0, 0) : set(nz, 0, 0); }
+    function fitAll(animate = true) { centreOn(FIT[0] + FIT[2] / 2, FIT[1] + FIT[3] / 2, zFit(), animate, true); }
     const isWhole = () => z <= zFit() * 1.02;
 
     /* ---------- fingers ---------- */

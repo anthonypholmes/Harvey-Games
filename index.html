@@ -176,6 +176,9 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 .player-btn.now{border-color:var(--leaf);box-shadow:0 5px 0 var(--leaf-dark)}
 .player-btn small{font-size:1rem;font-weight:600;color:var(--ink-soft);white-space:nowrap}
 .player-btn.add{justify-content:center;border-style:dashed;font-size:1.25rem}
+.player-btn .bone-i{width:1.5em;height:.9em;vertical-align:-.08em;overflow:visible}
+.ic-paw,.ic-plus{width:1.1em;height:1.1em;vertical-align:-.15em;flex:none}
+.player-btn.add{gap:8px}
 .name-msg{margin:0;min-height:1.3em;color:var(--berry);font-weight:600}
 .name-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
 .shop-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:inherit;cursor:pointer}
@@ -359,7 +362,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
     <input id="nameIn" maxlength="16" autocapitalize="words" spellcheck="false" placeholder="Type your name">
     <p class="name-msg" id="nameMsg" aria-live="polite"></p>
     <div class="name-btns">
-      <button class="play-btn" type="submit">🐾 Let’s play!</button>
+      <button class="play-btn" type="submit"><svg class="ic-paw" viewBox="-12 -12 24 24" aria-hidden="true" fill="currentColor"><ellipse cx="0" cy="5" rx="6" ry="5"/><circle cx="-7" cy="-2" r="2.6"/><circle cx="-2.6" cy="-7" r="2.6"/><circle cx="2.6" cy="-7" r="2.6"/><circle cx="7" cy="-2" r="2.6"/></svg> Let’s play!</button>
       <button class="btn" type="button" id="nameCancel" hidden>Cancel</button>
     </div>
   </form>
@@ -378,7 +381,7 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
     <button class="btn" id="soundBtn">🔊 Sound: on</button>
     <button class="btn" id="changeName">✏️ Change name</button>
     <button class="btn" id="switchPlayer" hidden>👥 Switch player</button>
-    <a class="btn" id="grownUps" href="meadow-maths.html#grownups" title="Settings, prizes and progress (with a sum to check you're a grown-up)">🔒 Grown&#8209;ups</a>
+    <a class="btn" id="grownUps" href="grown-ups.html?from=club" title="Settings, prizes and progress (with a sum to check you're a grown-up)">🔒 Grown&#8209;ups</a>
   </div>
   <p class="note">Spend your bones on gear, themes and real prizes in Bonnie's Bone Shop.</p>
 </div>
@@ -475,6 +478,7 @@ function render() {
   // no name yet (or changing it): show the name card instead of the games
   const naming = !S.hasName || editingName, picking = pickingPlayer && !naming;
   const asking = naming || picking; // a card is showing instead of the games
+  if (naming && document.getElementById('nameCard').hidden) document.getElementById('nameMsg').textContent = ''; // a fresh card: no warning left from the last time
   document.getElementById('nameCard').hidden = !naming;
   document.getElementById('playerCard').hidden = !picking;
   document.getElementById('switchPlayer').hidden = asking || !Meadow.players.on();
@@ -567,7 +571,7 @@ function openNameCard() {
 document.getElementById('nameCard').addEventListener('submit', e => {
   e.preventDefault();
   const v = document.getElementById('nameIn').value.trim().replace(/\s+/g, ' ').slice(0, 16);
-  if (!v) { document.getElementById('nameMsg').textContent = 'Type your name first! 🐾'; document.getElementById('nameIn').focus(); return; }
+  if (!v) { document.getElementById('nameMsg').textContent = 'Type your name first!'; document.getElementById('nameIn').focus(); return; }
   saveName(v); editingName = false; render(); coinUp();
   const t = fmtN(LINES.hello);
   document.getElementById('say').textContent = t; say(t);
@@ -585,8 +589,8 @@ const otherPlayers = () => Meadow.players.list().filter(p => !p.current && p.nam
 function renderPlayers() {
   const list = Meadow.players.list().filter(p => p.name);
   document.getElementById('playerList').innerHTML = list.map(p =>
-    `<button class="player-btn ${p.current ? 'now' : ''}" type="button" data-player="${esc(p.id)}"><span>${esc(p.name)}</span><small>🦴 ${p.bones}</small></button>`).join('') +
-    (list.length < Meadow.players.MAX ? '<button class="player-btn add" type="button" data-player="new">➕ New player</button>' : '');
+    `<button class="player-btn ${p.current ? 'now' : ''}" type="button" data-player="${esc(p.id)}"><span>${esc(p.name)}</span><small>${Meadow.ui.boneSVG()} ${p.bones}<span class="sr"> bones</span></small></button>`).join('') +
+    (list.length < Meadow.players.MAX ? '<button class="player-btn add" type="button" data-player="new"><svg class="ic-plus" viewBox="-12 -12 24 24" aria-hidden="true"><path d="M0 -8 V8 M-8 0 H8" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg> New player</button>' : '');
 }
 function playerPicked() {
   pickingPlayer = false; try { sessionStorage.setItem(PICKED_KEY, '1'); } catch (e) {}
@@ -609,8 +613,16 @@ if (Meadow.players.on() && S.hasName && otherPlayers().length) { try { pickingPl
 render();
 const firstLine = greet();
 if (!S.hasName) setTimeout(() => document.getElementById('nameIn').focus(), 100);
-// Browsers only allow speech after the first tap, so Bonnie says hello then (unless the tap was on Bonnie or a game).
-document.addEventListener('pointerdown', e => { if (!e.target.closest('#bonnie, a.cab, [data-shop], #soundBtn, #nameCard, #playerCard, #switchPlayer, #changeName, #grownUps')) say(document.getElementById('say').textContent); }, { once: true });
+// Browsers only allow speech after the first tap, so Bonnie says hello then: once each time the app is opened (not every
+// time the Clubhouse is come back to), and only when the tap was on the meadow itself, not on something that has its own
+// words or opens something (the journal, a game, a menu). (24 November 2026: a tap on the clubhouse door said the hello,
+// then the journal talked over it; coming back from a game said it all again.)
+const GREETED_KEY = 'meadow-club-greeted';
+document.addEventListener('pointerdown', e => {
+  if (e.target.closest('button, a, input, label, select, textarea, [role="button"], #nameCard, #playerCard, #pj')) return;
+  try { if (sessionStorage.getItem(GREETED_KEY)) return; sessionStorage.setItem(GREETED_KEY, '1'); } catch (x) {}
+  say(document.getElementById('say').textContent);
+}, { once: true });
 document.getElementById('bonnie').addEventListener('click', e => {
   const b = e.currentTarget, egg = Meadow.ui.tickleEgg(); // lots of quick tickles: the Easter egg
   const cls = egg ? 'bonnie-spin' : 'giggle'; b.classList.remove('giggle', 'bonnie-spin'); void b.offsetWidth; b.classList.add(cls);

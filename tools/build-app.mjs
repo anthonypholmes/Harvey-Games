@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const out = path.join(root, 'app-www');
-const FILES = ['index.html', 'meadow-maths.html', 'meadow-words.html', 'bonnies-walk.html',
+const FILES = ['index.html', 'meadow-maths.html', 'meadow-words.html', 'bonnies-walk.html', 'grown-ups.html',
   'bonnie-voice.js', 'meadow-backup.js', 'manifest.json', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 const FOLDERS = ['js', 'worlds', 'fonts', 'audio'];
 

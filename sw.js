@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION when adding or renaming files in CORE_ASSETS.
  */
-const CACHE_VERSION = 'meadow-club-v25';
+const CACHE_VERSION = 'meadow-club-v26';
 const FONT_CACHE = 'meadow-club-fonts-v1';
 const AUDIO_CACHE = 'meadow-club-audio-v1'; // same name in meadow-words.html
 const CORE_ASSETS = [
@@ -18,6 +18,7 @@ const CORE_ASSETS = [
   './meadow-maths.html',
   './meadow-words.html',
   './bonnies-walk.html',
+  './grown-ups.html',
   './bonnie-voice.js',
   './meadow-backup.js',
   './js/meadow-core.js',

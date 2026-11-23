@@ -26,12 +26,13 @@ const C = {
 function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
 
 class Scene {
-  constructor(w, h) { this.w = w; this.h = h; this.ground = []; this.items = []; this.top = []; this.defs = []; }
+  constructor(w, h) { this.w = w; this.h = h; this.ground = []; this.items = []; this.top = []; this.defs = []; this.bleed = 0; this.shift = null; }
   g(svg) { this.ground.push(svg); return this; }
   add(y, svg) { this.items.push({ y, svg }); return this; }
   over(svg) { this.top.push(svg); return this; }
   render() {
-    return `<defs>${this.defs.join('')}</defs>${this.ground.join('')}${this.items.sort((a, b) => a.y - b.y).map(i => i.svg).join('')}${this.top.join('')}`;
+    const all = `${this.ground.join('')}${this.items.sort((a, b) => a.y - b.y).map(i => i.svg).join('')}${this.top.join('')}`;
+    return `<defs>${this.defs.join('')}</defs>${this.shift ? `<g transform="translate(${this.shift[0]} ${this.shift[1]})">${all}</g>` : all}`;
   }
 }
 
@@ -110,8 +111,9 @@ function star(x, y, r = 8, on = true) {
   return `<polygon points="${pts.join(' ')}" fill="${on ? C.gold : '#FFF6E2'}" stroke="${on ? C.goldDk : '#CDBEA2'}" stroke-width="1.4" stroke-linejoin="round"/>`;
 }
 const stars3 = (x, y, n, r = 7) => [0, 1, 2].map(i => star(x + (i - 1) * r * 2.3, y, r, i < n)).join('');
+// the bone (the game's money): the engine's drawing (js/meadow-core.js, bonePath), placed and sized
 function bone(x, y, k = 1, fill = '#FFF6E2', stroke = '#C9A777') {
-  return `<g transform="translate(${x} ${y}) scale(${k})"><path d="M-14 -3 h28 a6 6 0 1 1 4 -6 a6 6 0 1 1 0 12 a6 6 0 1 1 -4 6 h-28 a6 6 0 1 1 -4 -6 a6 6 0 1 1 0 -12 a6 6 0 1 1 4 6 z" fill="${fill}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/></g>`;
+  return `<g transform="translate(${x} ${y}) scale(${k})">${Meadow.ui.bonePath(fill, stroke)}</g>`;
 }
 function paw(x, y, k = 1, fill = C.ink, op = 1, rot = 0) {
   return `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${k})" fill="${fill}" opacity="${op}"><ellipse cx="0" cy="4" rx="7" ry="6"/><circle cx="-7" cy="-5" r="3"/><circle cx="-2.5" cy="-9" r="3"/><circle cx="2.5" cy="-9" r="3"/><circle cx="7" cy="-5" r="3"/></g>`;
@@ -143,10 +145,11 @@ function nameBoard(s, x, y, text, nStars, opts = {}) {
 }
 
 
-function meadowFloor(s, seed, from = 0) {
+function meadowFloor(s, seed, from = 0, n = 26) {
   const r = rng(seed);
-  s.g(`<rect x="0" y="${from}" width="${s.w}" height="${s.h - from}" fill="${C.meadow}"/>`);
-  for (let i = 0; i < 26; i++) {
+  const b = s.bleed; // the grass carries on past the drawing's edges, when the picture around it is bigger
+  s.g(`<rect x="${-b}" y="${from - (from ? 0 : b)}" width="${s.w + 2 * b}" height="${s.h - from + (from ? 0 : 2 * b)}" fill="${C.meadow}"/>`);
+  for (let i = 0; i < n; i++) {
     const x = r() * s.w, y = from + r() * (s.h - from), rx = 40 + r() * 90;
     s.g(`<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${rx.toFixed(0)}" ry="${(rx * .35).toFixed(0)}" fill="${r() > .5 ? C.meadowLt : C.meadowDk}" opacity="${(.25 + r() * .2).toFixed(2)}"/>`);
   }
@@ -238,10 +241,11 @@ function pond(s, x, y) {
   ['#9ED07A'].forEach(() => [[x - 92, y - 20], [x - 84, y - 30], [x + 88, y - 34]].forEach(([rx, ry]) => s.add(ry, `<path d="M${rx} ${ry} q-2 -16 1 -24" stroke="${C.leafDk}" stroke-width="2.2" fill="none" stroke-linecap="round"/><rect x="${rx - 2}" y="${ry - 30}" width="4" height="10" rx="2" fill="${C.trunk}"/>`)));
 }
 function cove(s, x, y) {
-  s.g(`<path d="M0 ${y - 20} Q${x - 160} ${y - 70} ${x - 40} ${y - 60} Q${x + 120} ${y - 70} ${s.w} ${y - 30} V${s.h} H0Z" fill="${C.sandDk}"/>
-    <path d="M0 ${y - 12} Q${x - 160} ${y - 62} ${x - 40} ${y - 52} Q${x + 120} ${y - 62} ${s.w} ${y - 22} V${s.h} H0Z" fill="${C.sand}"/>
-    <path d="M0 ${y + 60} Q${x - 120} ${y + 20} ${x} ${y + 36} Q${x + 140} ${y + 24} ${s.w} ${y + 64} V${s.h} H0Z" fill="#4E9FC9"/>
-    <path d="M0 ${y + 56} Q${x - 120} ${y + 16} ${x} ${y + 32} Q${x + 140} ${y + 20} ${s.w} ${y + 60}" stroke="#FFFFFF" stroke-width="5" fill="none" opacity=".75" stroke-linecap="round"/>
+  const L = -s.bleed, R = s.w + s.bleed, B = s.h + s.bleed; // the beach and sea run past the edges of a bigger picture
+  s.g(`<path d="M${L} ${y - 20} Q${x - 160} ${y - 70} ${x - 40} ${y - 60} Q${x + 120} ${y - 70} ${R} ${y - 30} V${B} H${L}Z" fill="${C.sandDk}"/>
+    <path d="M${L} ${y - 12} Q${x - 160} ${y - 62} ${x - 40} ${y - 52} Q${x + 120} ${y - 62} ${R} ${y - 22} V${B} H${L}Z" fill="${C.sand}"/>
+    <path d="M${L} ${y + 60} Q${x - 120} ${y + 20} ${x} ${y + 36} Q${x + 140} ${y + 24} ${R} ${y + 64} V${B} H${L}Z" fill="#4E9FC9"/>
+    <path d="M${L} ${y + 56} Q${x - 120} ${y + 16} ${x} ${y + 32} Q${x + 140} ${y + 20} ${R} ${y + 60}" stroke="#FFFFFF" stroke-width="5" fill="none" opacity=".75" stroke-linecap="round"/>
     <path d="M${x - 100} ${y + 80} q14 -5 28 0 M${x + 60} ${y + 92} q14 -5 28 0" stroke="#BFE3F5" stroke-width="3" fill="none" stroke-linecap="round"/>
     ${[[x - 120, y - 20], [x - 60, y - 34], [x + 40, y - 30], [x + 130, y - 10], [x - 10, y]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="2.4" fill="#fff" opacity=".6"/>`).join('')}`);
   // the raft with Captain Croak
@@ -270,12 +274,12 @@ function stall(s, x, y, col, goods, price) { // x,y = middle of the counter's fo
   g += `<rect x="${x + 6}" y="${y - 18}" width="24" height="15" rx="2" fill="#3E5A48" stroke="${C.woodDk}" stroke-width="1.4"/><text x="${x + 18}" y="${y - 6.5}" text-anchor="middle" font-family="Andika" font-size="10" fill="#fff">${price}</text>`;
   s.add(y, g);
 }
-function market(s, x, y) { // x,y = middle of the quay's front edge
+function market(s, x, y, water = true) { // x,y = middle of the quay's front edge; water: draw its own bit of harbour (the Maths map draws a bigger one)
   const wx = x - 112;
   // the harbour water on the left, behind a stone wall, and the paved quay
-  s.g(`<path d="M-10 ${y - 160} H${wx - 20} Q${wx} ${y - 160} ${wx} ${y - 140} V${y + 50} Q${wx} ${y + 80} ${wx - 30} ${y + 80} H-10 Z" fill="${C.waterDk}"/>
+  s.g(`${water ? `<path d="M-10 ${y - 160} H${wx - 20} Q${wx} ${y - 160} ${wx} ${y - 140} V${y + 50} Q${wx} ${y + 80} ${wx - 30} ${y + 80} H-10 Z" fill="${C.waterDk}"/>
     <path d="M-10 ${y - 154} H${wx - 24} Q${wx - 6} ${y - 154} ${wx - 6} ${y - 136} V${y + 46} Q${wx - 6} ${y + 74} ${wx - 32} ${y + 74} H-10 Z" fill="${C.water}"/>
-    <path d="M${wx - 70} ${y - 90} q12 -5 24 0 M${wx - 50} ${y + 10} q12 -5 24 0 M${wx - 90} ${y + 50} q10 -4 20 0" stroke="${C.waterLt}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M${wx - 70} ${y - 90} q12 -5 24 0 M${wx - 50} ${y + 10} q12 -5 24 0 M${wx - 90} ${y + 50} q10 -4 20 0" stroke="${C.waterLt}" stroke-width="2.4" fill="none" stroke-linecap="round"/>` : ''}
     <path d="M${wx} ${y - 114} H${x + 140} Q${x + 158} ${y - 114} ${x + 158} ${y - 96} V${y + 6} Q${x + 158} ${y + 24} ${x + 140} ${y + 24} H${wx} Z" fill="${C.stoneDk}"/>
     <path d="M${wx} ${y - 118} H${x + 138} Q${x + 154} ${y - 118} ${x + 154} ${y - 102} V${y + 2} Q${x + 154} ${y + 18} ${x + 138} ${y + 18} H${wx} Z" fill="${C.stone}"/>
     ${[-90, -60, -30, 0].map(d => `<path d="M${wx + 4} ${y + d} H${x + 150}" stroke="${C.stoneLt}" stroke-width="2" opacity=".8"/>`).join('')}
@@ -322,41 +326,65 @@ function clockTower(s, x, y) { // x,y = middle of the tower's foot
 }
 
 /* ---------------- the Maths route ---------------- */
-/* Refinement (22 November 2026): the trail is shorter. F() moves every height in the original drawing (1500 tall) to the
-   shorter one (1280 tall), section by section, so each place keeps its shape and the river and path still join them up.
-   23 November 2026: a gap opens between Sharing Pond and the cove (original 1215 to 1240) for Harbour Market and the
-   Clock Tower, which are drawn straight in the new heights (final units). The trail is now 1700 tall. */
-const ROUTE_H = 1700;
+/* 24 November 2026: the Maths world is wider and roomier, made for the pannable, zoomable map (js/map-camera.js).
+   The eight places zig-zag down the middle of the drawing with more room between them, and the scenery carries on
+   to every edge: border woods on both sides, the river coming in from the hills on the right, the harbour opening
+   out to the sea down the left, and the sea along the bottom. So zoomed right out, the screen shows the meadow all
+   the way round, not a strip of drawing with green beside it. MATHS_FIT is the part with the places in it: the map's
+   "See whole map" fits that, and the scenery around it fills the rest of the screen. */
+const MATHS_OFF = [60, 110]; // the drawing (1560 × 2410) sits this far in, in a picture of MATHS_W × ROUTE_H whose edges the grass, beach and sea run to
+const MATHS_W = 1680, ROUTE_H = 2560;
+const MATHS_FIT = [330 + 60, 270 + 110, 900, 1880]; // x, y, w, h (in the whole picture): every place, its sign and its tap area
+const MATHS_AT = { park: [540, 430], burrow: [1080, 600], stones: [790, 840], orchard: [1090, 1080], pond: [530, 1250], market: [560, 1560], clock: [1080, 1800], cove: [790, 2060] };
 const Y_STOPS = [[-100, -95], [0, 0], [200, 190], [420, 390], [632, 575], [860, 770], [1040, 935], [1215, 1054], [1240, 1491], [1400, 1600], [1500, 1700], [1600, 1800]];
-function F(y) {
+function F(y) { // (the old, narrow trail's heights; kept for anything still written in them)
   for (let i = 1; i < Y_STOPS.length; i++) { const [a0, b0] = Y_STOPS[i - 1], [a1, b1] = Y_STOPS[i]; if (y <= a1 || i === Y_STOPS.length - 1) return b0 + (y - a0) * (b1 - b0) / (a1 - a0); }
 }
-const mapD = d => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (m, x, y) => `${x} ${Math.round(F(+y))}`);
 function mathsRoute() {
-  const s = new Scene(640, ROUTE_H);
-  meadowFloor(s, 7);
-  // the waterway: comes in top right, crosses the trail, fills the pond, runs to the cove
-  river(s, mapD('M700 470 C600 520 560 560 470 590 S300 640 220 650 S80 700 96 800 S190 920 200 980'), 34);
-  river(s, 'M176 972 C150 1000 120 1020 70 1060', 26); // the pond runs out into the harbour
-  path(s, mapD('M320 -20 C320 40 300 70 280 110 S330 250 380 300 S470 380 420 450 S300 540 330 640 S470 720 470 800 S440 900 400 980 S330 1080 350 1140') +
-    ' S470 1060 448 1140 S390 1250 340 1300 S290 1380 330 1440 S390 1490 360 1540', 30);
-  park(s, 220, F(200));
-  burrow(s, 440, F(420));
-  riverStones(s, 330, F(632));
-  orchard(s, 440, F(860));
-  pond(s, 210, F(1040));
-  market(s, 238, 1198);
-  clockTower(s, 456, 1420);
-  cove(s, 330, F(1400));
-  // border woods and hedges (frame the phone view, fill the iPad edges)
-  const r = rng(99);
-  [[40, 120], [90, 70], [600, 90], [560, 180], [610, 300], [30, 330], [70, 420], [600, 640], [560, 720], [20, 560], [610, 980], [580, 1100], [610, 1200], [26, 860]].forEach(([tx, ty], i) => tree(s, tx, F(ty), .9 + r() * .4, i % 3 === 0 ? 'pine' : (i % 5 === 1 ? 'blossom' : 'round'), i * 7));
-  [[150, 330, 1], [520, 260, .9], [270, 470, .9], [560, 520, 1], [250, 760, .8], [130, 900, .9], [520, 1010, 1], [250, 1180, .9], [470, 1170, .8]].forEach(([bx, by, k], i) => bush(s, bx, F(by), k, undefined, i % 3 ? null : C.berry));
-  [[612, 1150, 'round'], [600, 1290, 'pine'], [40, 1330, 'round'], [80, 1440, 'pine'], [616, 1460, 'blossom'], [210, 1390, 'round']].forEach(([tx, ty, kind], i) => tree(s, tx, ty, .9 + r() * .3, kind, 400 + i * 7));
-  [[150, 1300, .9], [540, 1220, .8], [250, 1470, .8]].forEach(([bx, by, k], i) => bush(s, bx, by, k, undefined, i % 2 ? C.berry : null));
-  rock(s, 540, F(600), .8); rock(s, 200, F(560), .7); rock(s, 300, F(960), .7);
-  scatter(s, 5, 120, [0, 0, 640, F(1320)], [[300, F(600), 80, 60], [0, 1030, 410, 230], [350, 1180, 210, 260]]);
-  butterfly(s, 260, F(340), '#F7D24A'); butterfly(s, 500, F(760), '#F07CA8'); butterfly(s, 120, F(980), '#B58BE0');
+  const s = new Scene(1560, 2410), P = MATHS_AT;
+  s.bleed = 130; s.shift = MATHS_OFF;
+  meadowFloor(s, 7, 0, 50);
+  // the beach and the sea along the bottom, then the harbour: an inlet of the sea up the left side, to the market's quay
+  cove(s, ...P.cove);
+  s.g(`<path d="M-100 1356 Q180 1350 360 1384 Q446 1400 448 1470 V1640 Q446 1730 340 1778 Q230 1830 196 1960 Q176 2060 150 2200 V2500 H-100 Z" fill="${C.waterDk}"/>
+    <path d="M-100 1364 Q178 1358 356 1392 Q440 1408 442 1472 V1640 Q438 1724 334 1770 Q222 1822 188 1960 Q168 2060 142 2200 V2500 H-100 Z" fill="${C.water}"/>
+    <path d="M60 1450 q14 -5 28 0 M200 1520 q14 -5 28 0 M110 1640 q12 -5 24 0 M300 1700 q12 -5 24 0 M70 1820 q14 -5 28 0 M120 1990 q12 -5 24 0" stroke="${C.waterLt}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`);
+  // the river: from the hills on the right, under the stepping stones, into the pond; the pond runs out into the harbour
+  river(s, 'M1720 680 C1500 690 1440 700 1300 780 1150 800 S900 832 790 846 S560 900 470 990 S420 1130 500 1200', 34);
+  river(s, 'M444 1268 C400 1300 340 1330 300 1384', 26);
+  // the trail, from the Clubhouse at the top to the beach, passing each place in turn
+  path(s, 'M780 -20 C780 120 640 180 610 300 S690 420 720 480 S920 560 930 640 S780 760 790 846 S960 960 960 1060 S760 1180 690 1260 S790 1420 790 1520 S920 1680 920 1780 S800 1920 800 2010', 30);
+  park(s, ...P.park);
+  burrow(s, ...P.burrow);
+  riverStones(s, ...P.stones);
+  orchard(s, ...P.orchard);
+  pond(s, ...P.pond);
+  market(s, ...P.market, false);
+  clockTower(s, ...P.clock);
+  // a little boat out in the harbour, and buoys
+  s.add(1700, `<g transform="translate(184 1690)"><path d="M-26 0 H26 L18 12 H-18 Z" fill="#2F7FA8" stroke="#24617F" stroke-width="1.6" stroke-linejoin="round"/><rect x="-1.5" y="-38" width="3" height="38" fill="${C.woodDk}"/><path d="M2 -36 L22 -6 H2 Z" fill="${C.paper}" stroke="${C.stoneDk}" stroke-width="1.4"/></g>`);
+  [[96, 1560], [330, 1880]].forEach(([bx, by]) => s.add(by, `<circle cx="${bx}" cy="${by}" r="7" fill="${C.berry}" stroke="#A93E4F" stroke-width="1.6"/><path d="M${bx - 7} ${by} h14" stroke="#fff" stroke-width="2.4"/>`));
+  // woods all round the edge, and trees and bushes in among the places (never on a place, the trail or the water)
+  const r = rng(99), kinds = ['round', 'pine', 'round', 'blossom', 'pine', 'round'];
+  const trees = [
+    // across the top, either side of the trail coming in
+    [60, 60], [170, 120], [300, 70], [420, 150], [560, 90], [660, 190], [930, 110], [1040, 60], [1160, 150], [1290, 90], [1420, 160], [1520, 70], [250, 230], [1300, 260],
+    [-40, -80], [130, -70], [380, -90], [560, -70], [860, -80], [1220, -70], [1460, -90], [1610, -60], [20, -20], [240, -10], [470, 10], [640, -30], [920, 0], [1100, -20], [1380, 0], [1560, 10], [-10, 180], [1570, 230], [-10, 640], [1570, 820], [1580, 1440], [1570, 1880],
+    // the left side, down to the harbour
+    [70, 300], [190, 380], [60, 520], [250, 600], [120, 700], [340, 760], [60, 880], [220, 960], [90, 1100], [300, 1120], [150, 1260],
+    // the right side, down to the beach
+    [1460, 300], [1330, 400], [1500, 520], [1280, 560], [1420, 640], [1500, 900], [1340, 980], [1460, 1110], [1280, 1230], [1500, 1300], [1360, 1420], [1480, 1560], [1300, 1640], [1440, 1760], [1340, 1880], [1500, 1960],
+    // in among the places
+    [880, 330], [1230, 420], [700, 640], [930, 1000], [380, 1460], [700, 1700], [1230, 1640], [900, 1240]];
+  trees.forEach(([tx, ty], i) => tree(s, tx, ty, .85 + r() * .4, kinds[i % kinds.length], 500 + i * 7));
+  [[420, 560], [860, 420], [1240, 760], [600, 1040], [1200, 1180], [880, 1380], [420, 1890], [1210, 1920], [990, 1960], [180, 840], [1380, 760], [1180, 300]].forEach(([bx, by], i) => bush(s, bx, by, .8 + r() * .3, undefined, i % 3 ? null : C.berry));
+  [[960, 520], [380, 960], [1230, 1520], [660, 1880], [1390, 1180], [140, 1200]].forEach(([x, y], i) => rock(s, x, y, .7 + (i % 3) * .15));
+  // a vegetable patch and a scarecrow on the right, by the burrow's hill
+  s.g(`<g>${[0, 1, 2, 3].map(i => `<rect x="1310" y="${1040 + i * 16}" width="130" height="9" rx="4.5" fill="${C.earth}" opacity=".8"/>`).join('')}</g>`);
+  s.add(1098, `${shadow(1470, 1098, 16, 3)}<rect x="1468" y="1040" width="4" height="58" fill="${C.woodDk}"/><rect x="1448" y="1056" width="44" height="4" fill="${C.woodDk}"/><circle cx="1470" cy="1032" r="10" fill="${C.sand}"/><path d="M1456 1026 h28 l-4 -10 h-20 z" fill="${C.berry}"/><path d="M1456 1060 h28 l-4 24 h-20 z" fill="#2F7FA8"/>`);
+  scatter(s, 5, 280, [-50, -100, 1610, 1990], [
+    [400, 290, 280, 220], [960, 520, 240, 160], [640, 780, 300, 120], [970, 980, 250, 220], [420, 1180, 230, 140], [-10, 1350, 470, 700], [440, 1420, 320, 200], [970, 1540, 230, 300], [1300, 1030, 150, 80]]);
+  butterfly(s, 640, 360, '#F7D24A'); butterfly(s, 960, 760, '#F07CA8'); butterfly(s, 380, 1060, '#B58BE0'); butterfly(s, 1250, 1500, '#F7D24A');
   return s;
 }
 
@@ -366,7 +394,12 @@ function mathsRoute() {
    sounds), Tricky Word Trail (signposts of tricky words, and a footbridge over the brook), Sentence Meadow (bunting
    that makes a sentence, from a capital to a full stop) and Bonnie's Story Nook (a hollow oak with a reading bench).
    The trail comes down from the Clubhouse's Words gate, so it starts in the forest the gate looks into. */
-const WORDS_H = 1060;
+/* The Words world, like the Maths one: its drawing (640 × 1060, the places just where they were) sits WORDS_OFF in, in a
+   bigger picture whose grass, brook, trail and woods run to every edge, so "See whole map" shows meadow all the way
+   round. WORDS_FIT is the part with the places, signs and tap areas in it. */
+const WORDS_OFF = [180, 240];
+const WORDS_W = 640 + 2 * 180, WORDS_H = 1060 + 2 * 240;
+const WORDS_FIT = [110 + 180, 20 + 240, 470, 1010];
 const letterBadge = (x, y, t, ring = C.leafDk, ink = C.leafDeep, r = 11) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${C.paper}" stroke="${ring}" stroke-width="1.6"/><text x="${x}" y="${y + 4}" text-anchor="middle" font-family="Andika" font-size="${t.length > 2 ? 9.5 : 12}" fill="${ink}">${t}</text>`;
 function forest(s, x, y) { // x,y = middle of the glade
   s.g(`<path d="M${x - 118} ${y + 20} Q${x - 110} ${y - 72} ${x} ${y - 80} Q${x + 110} ${y - 74} ${x + 120} ${y + 18} Q${x + 104} ${y + 74} ${x} ${y + 76} Q${x - 106} ${y + 74} ${x - 118} ${y + 20}Z" fill="#7DB862" opacity=".45"/>`);
@@ -438,20 +471,29 @@ function storyNook(s, x, y) {
   flowers(s, x - 70, y + 50, 5, 101, 20);
 }
 function wordsRoute() {
-  const s = new Scene(640, WORDS_H);
+  const s = new Scene(640, 1060);
+  s.bleed = 240; s.shift = WORDS_OFF;
   meadowFloor(s, 17);
   // the brook: comes in from the right, runs under the footbridge on the Tricky Word Trail and leaves to the left
-  river(s, 'M700 380 C600 400 520 470 420 486 S300 500 230 510 S90 560 -20 600', 26);
-  path(s, 'M320 -20 C320 50 300 90 320 140 S420 220 400 260 S320 330 310 400 S330 480 340 540 S420 640 400 700 S310 780 300 860 S340 980 330 1080', 30);
+  river(s, 'M860 330 C760 350 700 370 600 400 C540 430 500 474 420 486 S300 500 230 510 S90 560 -20 600 S-150 650 -230 640', 26);
+  path(s, 'M300 -260 C310 -150 330 -80 320 -20 C320 50 300 90 320 140 S420 220 400 260 S320 330 310 400 S330 480 340 540 S420 640 400 700 S310 780 300 860 S340 980 330 1080 S300 1220 320 1320', 30);
   forest(s, 262, 150);
   trickyTrail(s, 408, 432);
   sentenceMeadow(s, 252, 690);
   storyNook(s, 428, 900);
   const r = rng(77);
   [[40, 80, 'pine'], [600, 60, 'round'], [580, 170, 'pine'], [30, 300, 'round'], [610, 330, 'blossom'], [40, 470, 'pine'], [600, 600, 'round'], [30, 820, 'blossom'], [600, 790, 'pine'], [60, 1000, 'round'], [610, 1020, 'round'], [180, 940, 'pine']].forEach(([tx, ty, kind], i) => tree(s, tx, ty, .9 + r() * .35, kind, 200 + i * 7));
+  // the woods round the outside, out to the picture's edges
+  const kinds = ['pine', 'round', 'pine', 'blossom'];
+  [[-150, -170], [-30, -120], [110, -190], [200, -90], [420, -170], [520, -100], [650, -180], [770, -120],
+    [-140, 40], [-60, 160], [-150, 300], [-80, 430], [-150, 720], [-70, 860], [-150, 1000], [-60, 1120],
+    [720, 30], [780, 170], [700, 280], [770, 520], [700, 660], [780, 800], [710, 940], [780, 1080],
+    [-140, 1260], [-10, 1230], [120, 1290], [210, 1180], [450, 1250], [560, 1180], [670, 1270], [790, 1230]]
+    .forEach(([tx, ty], i) => tree(s, tx, ty, .9 + r() * .4, kinds[i % 4], 400 + i * 5));
+  [[-90, 560, .9], [730, 400, .9], [80, 1180, .8], [740, -40, .8]].forEach(([bx, by, k], i) => bush(s, bx, by, k, undefined, i % 2 ? C.berry : null));
   [[150, 330, 1], [520, 300, .9], [470, 590, .9], [120, 560, .8], [250, 1010, .9]].forEach(([bx, by, k], i) => bush(s, bx, by, k, undefined, i % 2 ? null : C.berry));
   rock(s, 560, 250, .8); rock(s, 110, 900, .7);
-  scatter(s, 9, 80, [0, 0, 640, WORDS_H], [[130, 60, 270, 200], [300, 340, 230, 200], [120, 600, 270, 160], [340, 700, 240, 260]]);
+  scatter(s, 9, 130, [-170, -230, 810, 1290], [[130, 60, 270, 200], [300, 340, 230, 200], [120, 600, 270, 160], [340, 700, 240, 260]]);
   butterfly(s, 330, 200, '#F7D24A'); butterfly(s, 160, 620, '#F07CA8'); butterfly(s, 540, 760, '#B58BE0');
   return s;
 }
@@ -462,7 +504,7 @@ const TINTS = { night: ['#141A3A', .42], space: ['#0B0F2A', .48], christmas: ['#
   volcano: ['#3A1408', .34], sea: ['#3FA7C9', .14] };
 const tint = (theme, w, h) => { const t = TINTS[theme]; return t ? `<rect class="tint" width="${w}" height="${h}" fill="${t[0]}" opacity="${t[1]}" pointer-events="none"/>` : ''; };
 
-window.ProtoArt = { C, mathsRoute, F, ROUTE_H, wordsRoute, WORDS_H, tint, TINTS, bonnie, bubble, star, bone, paw, shadow,
+window.ProtoArt = { C, mathsRoute, F, ROUTE_H, MATHS_W, MATHS_FIT, MATHS_OFF, wordsRoute, WORDS_W, WORDS_H, WORDS_FIT, WORDS_OFF, tint, TINTS, bonnie, bubble, star, bone, paw, shadow,
   // the drawing kit, shared with the Clubhouse meadow (js/proto-hub-art.js)
   Scene, rng, tree, bush, tuft, flowers, rock, fence, path, cloud, butterfly, meadowFloor, scatter, river, signpost, letterBadge,
   // each place on its own, for the top of its level map (js/proto-level.js)

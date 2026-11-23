@@ -266,7 +266,7 @@
       b.onclick = () => choose(rows[i], b);
     });
     ui.$('#plBack').onclick = () => { const back = ui.$('#back'); leave(); if (back) back.click(); else M.home(); };
-    ui.$('#plGrown').onclick = () => { leave(); M.grownUps(); };
+    ui.$('#plGrown').onclick = () => M.openGrownUps(); // the sum over the level map, then the grown-ups page
     ui.$('#plBones').onclick = () => { leave(); M.shop({ welcome: true }); };
     // Bonnie's first-time help (js/meadow-core.js): once there are bones, the ring goes on the bones tag and she says so (once per player)
     const shopTip = !!(M.tips && M.tips.due('shop') && M.tips.at('shop', ui.$('#plBones')));

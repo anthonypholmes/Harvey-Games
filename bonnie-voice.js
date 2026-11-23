@@ -210,6 +210,9 @@
 
   /* ---------- speaking ---------- */
   function cut() { // stop whatever is playing (waiters stay for the next line)
+    // and forget a line kept for the first tap: it belonged to whatever was on screen then (24 November 2026: a line kept
+    // from a screen that had already closed could start on the next tap, over the screen that replaced it)
+    pending = null;
     token++; clearTimeout(safety); speaking = false;
     nodes.forEach(n => { try { n.stop(); } catch (e) {} }); nodes = [];
     if (hasSpeech()) speechSynthesis.cancel();
