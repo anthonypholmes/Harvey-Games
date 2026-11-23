@@ -266,13 +266,16 @@
     ui.$('#plBack').onclick = () => { const back = ui.$('#back'); leave(); if (back) back.click(); else M.home(); };
     ui.$('#plGrown').onclick = () => { leave(); M.grownUps(); };
     ui.$('#plBones').onclick = () => { leave(); M.shop({ welcome: true }); };
+    // Bonnie's first-time help (js/meadow-core.js): once there are bones, the ring goes on the bones tag and she says so (once per player)
+    const shopTip = !!(M.tips && M.tips.due('shop') && M.tips.at('shop', ui.$('#plBones')));
     // scroll only when the next level isn't already on the first screen (so its name sign stays in view when it can)
     const nextY = cur >= 0 ? px(0, by)[1] + ui.$('.pl-stage').getBoundingClientRect().top + scrollY : 0;
     const target = cur >= 0 && nextY + 90 * view.k > innerHeight - 16 ? Math.max(0, nextY - innerHeight * .55) : 0;
     if (returning || reduce()) window.scrollTo({ top: target, behavior: 'auto' });
     else { window.scrollTo({ top: 0, behavior: 'auto' }); if (target > 0) setTimeout(() => { if (on) window.scrollTo({ top: target, behavior: Q.get('leveltest') || Q.get('level') ? 'auto' : 'smooth' }); }, 350); } // (headless test and screenshot browsers don't glide)
     if (from !== cur) setTimeout(() => { const bon = ui.$('#plBonnie'); if (!on || !bon) return; bon.classList.add('hop'); bon.style.transform = `translate(${bonnieX(cur)}px,${by + 18}px)`; setTimeout(() => bon.classList.remove('hop'), 800); }, 500);
-    if (cur >= 0) {
+    if (shopTip) setTimeout(() => { if (on && !busy) ui.say(M.LINES.tipShop); }, 400);
+    else if (cur >= 0) {
       if (!Q.get('leveltest')) setTimeout(() => { if (on && !busy) ui.say(rows[cur].played ? `Shall we play ${rows[cur].L.name} again?` : `Level ${cur + 1} next! Tap my stone.`); }, 400);
     }
   }

@@ -119,6 +119,9 @@
   .pm-tag{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:48px;min-height:46px;padding:0 10px 0 20px;border:0;font:700 19px Fredoka,system-ui,sans-serif;color:${C.woodInk};text-decoration:none;cursor:pointer;
     background:${C.woodLt};clip-path:polygon(14px 0,100% 0,100% 100%,14px 100%,0 50%);box-shadow:inset 0 -4px 0 rgba(154,106,58,.55);filter:drop-shadow(0 2px 0 ${C.woodDk})}
   .pm-tag svg{width:26px;height:26px;flex:none}
+  /* Bonnie's first-time help on a tag (the Bone Shop): the signpost shape would cut off the game's ring, so the tag itself glows gold */
+  .pm-tag.tip-ring{outline:none;background:#FBE1A0;box-shadow:inset 0 0 0 4px #F2B53A,inset 0 -4px 0 rgba(154,106,58,.55);animation:pmTip 1.4s ease-in-out infinite}
+  @keyframes pmTip{50%{background:${C.woodLt}}}
   .pm-tag:focus-visible{outline:3px solid ${C.goldDk};outline-offset:2px}
   .pm-tags{display:flex;gap:6px}
   .pm-title{margin:2px 0 0;padding:6px 16px 8px;border-radius:10px;background:${C.woodLt};box-shadow:0 3px 0 ${C.woodDk};font:700 clamp(17px,5vw,22px) Fredoka,system-ui,sans-serif;color:${C.woodInk};white-space:nowrap;text-align:center}
@@ -154,7 +157,7 @@
   @keyframes pmWig{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
   #pmBubble{transition:opacity .25s}
   .pm-bub text{font-size:15px}
-  @media (prefers-reduced-motion:reduce){#pmBonnie,#pmBubble,.pm-sign,.pm-halo{transition:none}#pmBonnie>g,#pmBonnie .eyes,#pmBonnie .tail{animation:none!important}.pm-sign.pressed{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.pm-tag.tip-ring{animation:none}#pmBonnie,#pmBubble,.pm-sign,.pm-halo{transition:none}#pmBonnie>g,#pmBonnie .eyes,#pmBonnie .tail{animation:none!important}.pm-sign.pressed{transform:translateX(-50%)}}
 
   /* "Places": a quick list of every world */
   .pm-jump{position:fixed;z-index:7;right:calc(12px + env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:8px;min-height:52px;padding:0 18px 0 14px;border:2px solid ${C.woodDk};border-radius:14px;
@@ -211,7 +214,9 @@
     const ws = placed(), sug = suggestion(ws), s = save(), theme = document.body.dataset.theme || 'day';
     at = sug || ws[0];
     const vb = `${view.x0} 0 ${view.w} ${WORLD_H}`;
-    const bonnieLine = sug ? (info(sug).played ? PLACES[sug.id].ask : `Woof! Let's start at ${shortName(sug)}!`) : 'You have every star! Pick anywhere you like.';
+    // Bonnie's first-time help (js/meadow-core.js): once there are bones, she points out the Bone Shop (the ring goes on the bones tag below)
+    const shopTip = !!(M.tips && M.tips.due('shop'));
+    const bonnieLine = shopTip ? ui.fmt(M.LINES.tipShop) : sug ? (info(sug).played ? PLACES[sug.id].ask : `Woof! Let's start at ${shortName(sug)}!`) : 'You have every star! Pick anywhere you like.';
     const [bfx, bfy] = at ? PLACES[at.id].bonnie : [320, 300];
     const hits = ws.map((w, i) => {
       const [x, y, ww, hh] = PLACES[w.id].hit, [l, t] = px(Math.max(x, view.x0), y), r = px(Math.min(x + ww, view.x0 + view.w), y + hh);
@@ -262,6 +267,7 @@
     if (bb) bb.onclick = () => choose(at.id, bb, true);
     ui.$('#pmGrown').onclick = () => { leave(); M.grownUps(); };
     ui.$('#pmBones').onclick = () => { leave(); M.shop({ welcome: true }); };
+    if (shopTip) M.tips.at('shop', ui.$('#pmBones')); // the ring (once per player: the save remembers it)
     if (ui.$('#pmJump')) ui.$('#pmJump').onclick = openPlaces;
     // bring Bonnie's place into view (she may be far down the route)
     const target = px(bfx, bfy)[1] - innerHeight * .55;
@@ -405,6 +411,21 @@
     ok('the level map has a top bar (the engine\'s, or the drawn level map\'s own)', getComputedStyle(ui.$('.hud')).display !== 'none' || !!ui.$('#plBack'));
     if (back) back.click(); await wait(300);
     ok('"Meadow" goes back to the meadow', !!ui.$('.pm'));
+    // Bonnie's first-time help for the Bone Shop (the old top-bar button is hidden here): on the map and on a level map
+    {
+      const tips0 = { ...(M.save.get().tips || {}) }, clear = () => M.save.mutate(s => { const t = { ...s.tips }; delete t.shop; s.tips = t; });
+      const ringOn = id => { const el = ui.$('#' + id); return !!el && el.classList.contains('tip-ring') && getComputedStyle(el).boxShadow.includes('242, 181, 58'); }; // the gold edge, visible inside the signpost shape
+      clear(); const due = M.tips.due('shop'); draw(); await wait(50);
+      if (due) {
+        ok('the Bone Shop tip: the map\'s bones tag glows gold and Bonnie says so, once (the save remembers it)', ringOn('pmBones') && ui.$('#pmBubble').textContent.replace(/\s/g, '') === ui.fmt(M.LINES.tipShop).replace(/\s/g, '') && M.save.get().tips.shop === true, ui.$('#pmBubble').textContent);
+        draw(); await wait(50);
+        ok('…and not again on the next visit', !ui.$('.tip-ring') && ui.$('#pmBubble').textContent.replace(/\s/g, '') !== ui.fmt(M.LINES.tipShop).replace(/\s/g, ''));
+        clear(); M.worldMap(ws[0].id); await wait(150);
+        ok('…or on a level map, if that comes first', ringOn('plBones') && M.save.get().tips.shop === true);
+        M.home(); await wait(150);
+      } else ok('no Bone Shop tip for a child it isn\'t for (no bones yet, or something bought)', !ui.$('.tip-ring'), JSON.stringify(M.save.get().tips));
+      M.save.mutate(s => { s.tips = tips0; }); draw(); await wait(50);
+    }
     const pre = document.createElement('pre'); pre.id = 'selftest'; pre.textContent = JSON.stringify({ size: [innerWidth, innerHeight], passed: out.filter(x => x.pass).length, of: out.length, results: out }, null, 1);
     document.body.appendChild(pre);
   }

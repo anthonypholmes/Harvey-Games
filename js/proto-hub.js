@@ -392,6 +392,10 @@
     const pgOK = CONFIG.GAMES.every((g, i) => { const p = progress(g); return !p || ([...progEl(i).querySelectorAll('span')].map(s => s.textContent).join(' ') === p.lines.join(' ') && $(i ? 'phWords' : 'phMaths').getAttribute('aria-label').includes(p.say)); });
     ok("each game's stars hang from its gate, and its VoiceOver name says them", pgOK, CONFIG.GAMES.map((g, i) => progEl(i) && progEl(i).textContent.trim()).join(' | '));
     ok("each game's stars sit inside its gate's tap area", ['maths', 'words'].every(id => { const a = r($('phProg-' + id)), b = r($(id === 'maths' ? 'phMaths' : 'phWords')); return a.left >= b.left - 30 && a.right <= b.right + 30 && a.top >= b.top && a.bottom <= b.bottom; }));
+    // Bonnie's first-time help: index.html rings its own (hidden) Walk or Bone Shop button; the meadow shows it on the drawing
+    { const pairs = [['walkBtn', 'phWalk'], ['shopBig', 'phShop']], shown = pairs.filter(([o]) => $(o).classList.contains('tip-ring'));
+      ok('Bonnie\'s first-time help rings the Walk arch or the shop stall, as the game asks', pairs.every(([o, n]) => $(o).classList.contains('tip-ring') === $(n).classList.contains('tip-ring')) && shown.every(([, n]) => getComputedStyle($(n)).outlineStyle === 'solid'),
+        shown.length ? shown.map(([, n]) => n).join(', ') + ': ' + $('say').textContent : 'no tip due for this child'); }
     ok("Bonnie's bubble says her words", $('phSays').textContent === $('say').textContent && $('say').textContent.length > 3);
     ok("Bonnie's words sit beside her, pointing at her", talk === 'near', `${talk}: "${$('say').textContent}"`);
     const keep = main.map(el => [el.id, r(el)]).concat([['the name', r($('phName'))], ['Bonnie', r($('phBonnieBtn'))]], [...document.querySelectorAll('.ph-label, .ph-prog, .ph-tag')].map(el => [el.id || el.textContent.trim(), r(el)]));
