@@ -23,7 +23,10 @@
     + 'html.in-app{touch-action:manipulation;overscroll-behavior:none}html.in-app body{overscroll-behavior:none;-webkit-touch-callout:none}'
     + 'html.in-app body{min-height:calc(100vh - env(safe-area-inset-top))}'
     + 'html.in-app #app,html.in-app .wrap{padding-bottom:calc(20px + env(safe-area-inset-bottom))}'
-    + 'html.in-app #app{min-height:calc(100vh - env(safe-area-inset-top))}';
+    + 'html.in-app #app{min-height:calc(100vh - env(safe-area-inset-top))}'
+    // The meadow maps, level maps and Bone Shop make room for the status bar in their own top bar, so here the page
+    // itself doesn't (otherwise the gap is doubled, and the shop, one screen tall, scrolls by that much).
+    + 'html.in-app:has(> body.pm-on),html.in-app:has(> body.pl-on),html.in-app:has(> body.ps-on){padding-top:0}';
   (document.head || document.documentElement).appendChild(css);
   // No pinch zoom either (a web view obeys this, unlike Safari).
   const noZoom = () => { const m = document.querySelector('meta[name="viewport"]'); if (m && !/user-scalable/.test(m.content)) m.content += ', maximum-scale=1, user-scalable=no'; };

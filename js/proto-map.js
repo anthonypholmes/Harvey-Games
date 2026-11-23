@@ -60,6 +60,8 @@
   const PLACES = Object.fromEntries(Object.entries(R.raw).map(([id, p]) => { const G = p.fin ? (y => y) : R.F; return [id, { ...p,
     hit: [p.hit[0], G(p.hit[1]), p.hit[2], G(p.hit[1] + p.hit[3]) - G(p.hit[1])],
     sign: [p.sign[0], G(p.sign[1])], bonnie: [p.bonnie[0], G(p.bonnie[1])], bub: [p.bub[0], G(p.bub[1]), p.bub[2]] }]; }));
+  // A phone opens on the middle of the drawing (PHONE_W across, from PHONE_X), where every place and sign is; the map can
+  // then be dragged and pinched anywhere inside the drawing (js/map-camera.js).
   const WORLD_W = 640, WORLD_H = R.H, PHONE_X = 125, PHONE_W = 390;
   const short = id => id.replace(/^y2-[a-z]+-/, '');
 
@@ -108,8 +110,12 @@
   .pm-on .hud,.pm-on .butterfly,.pm-on .frog,.pm-on .meadow{display:none!important}
   .pm-on #app{max-width:none;padding:0;min-height:0}
   .pm-on{background:${C.meadow}!important}
-  .pm{position:relative;margin:0 auto}
-  .pm-bar{position:sticky;top:0;z-index:6;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 10px 0;pointer-events:none}
+  /* the map fills the screen and stays put: it moves inside itself, never the page (nothing below it to scroll to) */
+  html:has(> body.pm-on){background:${C.meadow};overflow:hidden;overscroll-behavior:none}
+  .pm-on{overflow:hidden}
+  .pm{position:fixed;inset:0;overflow:hidden;background:${C.meadow}}
+  .pm-bar{position:absolute;left:0;right:0;top:0;z-index:6;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+    padding:calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 0 calc(10px + env(safe-area-inset-left));pointer-events:none}
   .pm-bar>*{pointer-events:auto}
   .pm-tag{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:48px;min-height:46px;padding:0 10px 0 20px;border:0;font:700 19px Fredoka,system-ui,sans-serif;color:${C.woodInk};text-decoration:none;cursor:pointer;
     background:${C.woodLt};clip-path:polygon(14px 0,100% 0,100% 100%,14px 100%,0 50%);box-shadow:inset 0 -4px 0 rgba(154,106,58,.55);filter:drop-shadow(0 2px 0 ${C.woodDk})}
@@ -120,15 +126,22 @@
   .pm-tag:focus-visible{outline:3px solid ${C.goldDk};outline-offset:2px}
   .pm-tags{display:flex;gap:6px}
   .pm-title{margin:2px 0 0;padding:6px 16px 8px;border-radius:10px;background:${C.woodLt};box-shadow:0 3px 0 ${C.woodDk};font:700 clamp(17px,5vw,22px) Fredoka,system-ui,sans-serif;color:${C.woodInk};white-space:nowrap;text-align:center}
-  .pm-stage{position:relative;margin-top:-16px;overflow:hidden}
+  /* the map's own viewport: only here do a pinch and a drag move the map (everywhere else in the game is untouched) */
+  .pm-view{position:absolute;inset:0;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .pm-stage{position:absolute;left:0;top:0;transform-origin:0 0}
+  .cam-moving .pm-stage,.cam-moving .pm-at{will-change:transform}
+  .pm-stage,.pm-at{transition:none!important} /* the camera moves these itself, every frame (the game's Reduce Motion rule would otherwise give them a transition) */
+  .pm-signs{position:absolute;inset:0;z-index:4;pointer-events:none}
+  .pm-at{position:absolute;left:0;top:0;transform-origin:0 0}
+  .pm-signs.compact .pm-sign .pg{display:none}
   @media (max-width:400px){.pm-bar{gap:4px;padding-left:6px;padding-right:6px}.pm-tags{gap:4px}.pm-title{font-size:16px;padding:6px 10px 8px}.pm-tag{font-size:17px}}
   .pm-stage>svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
-  .pm-hit{position:absolute;z-index:3;border:0;margin:0;padding:0;background:transparent;border-radius:28px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  .pm-hit{position:absolute;z-index:3;border:0;margin:0;padding:0;background:transparent;border-radius:28px;cursor:pointer;-webkit-tap-highlight-color:transparent}
   .pm-hit:focus-visible{outline:4px solid ${C.goldDk};outline-offset:-4px}
   .pm-hit.bonnie-hit{border-radius:50%;z-index:5}
 
   /* each place's name sign: a wooden board on a post, its name big, its progress underneath */
-  .pm-sign{position:absolute;z-index:4;transform:translateX(-50%);pointer-events:none;display:grid;justify-items:center;gap:4px;width:max-content;max-width:calc(200px * var(--k,1));
+  .pm-sign{position:absolute;left:0;top:0;transform:translateX(-50%);pointer-events:auto;cursor:pointer;display:grid;justify-items:center;gap:4px;width:max-content;max-width:calc(200px * var(--k,1));
     padding:6px 12px 7px;border-radius:10px;background:${C.woodLt};border:2px solid ${C.woodDk};box-shadow:0 4px 0 ${C.woodDk};color:${C.woodInk};text-align:center;transition:transform .12s ease-out}
   .pm-sign::after{content:"";position:absolute;left:50%;top:calc(100% + 4px);width:7px;height:calc(14px * var(--k,1));margin-left:-3.5px;background:${C.woodDk};border-radius:0 0 3px 3px;z-index:-1}
   .pm-sign b{font:700 max(19px,calc(19px * var(--k,1)))/1.08 Fredoka,system-ui,sans-serif}
@@ -155,11 +168,20 @@
   @media (prefers-reduced-motion:reduce){.pm-tag.tip-ring{animation:none}#pmBonnie,#pmBubble,.pm-sign,.pm-halo{transition:none}#pmBonnie>g,#pmBonnie .eyes,#pmBonnie .tail{animation:none!important}.pm-sign.pressed{transform:translateX(-50%)}}
 
   /* "Places": a quick list of every world */
-  .pm-jump{position:fixed;z-index:7;right:calc(12px + env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:8px;min-height:52px;padding:0 18px 0 14px;border:2px solid ${C.woodDk};border-radius:14px;
-    background:${C.woodLt};box-shadow:0 4px 0 ${C.woodDk};font:700 18px Fredoka,system-ui,sans-serif;color:${C.woodInk};cursor:pointer}
-  .pm-jump svg{width:26px;height:26px}
-  .pm-jump:active{transform:translateY(3px);box-shadow:0 1px 0 ${C.woodDk}}
-  .pm-jump:focus-visible{outline:3px solid ${C.goldDk};outline-offset:2px}
+  /* along the bottom: See whole map (left) and Places (right); the zoom buttons above Places */
+  .pm-low{position:absolute;z-index:7;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;pointer-events:none;
+    padding:0 calc(12px + env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
+  .pm-low>*{pointer-events:auto}
+  .pm-ctl{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 18px 0 14px;border:2px solid ${C.woodDk};border-radius:14px;
+    background:${C.woodLt};box-shadow:0 4px 0 ${C.woodDk};font:700 18px Fredoka,system-ui,sans-serif;color:${C.woodInk};cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+  .pm-ctl svg{width:26px;height:26px;flex:none}
+  .pm-jump{margin-left:auto}
+  .pm-ctl:active{transform:translateY(3px);box-shadow:0 1px 0 ${C.woodDk}}
+  .pm-ctl:focus-visible{outline:3px solid ${C.goldDk};outline-offset:2px}
+  .pm-zoom{position:absolute;z-index:7;right:calc(12px + env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));display:grid;gap:10px}
+  .pm-zb{width:52px;padding:0}
+  .pm-zb[aria-disabled="true"]{background:#E9DFCB;border-color:#B9A98E;box-shadow:0 2px 0 #B9A98E}.pm-zb[aria-disabled="true"] svg{opacity:.4}
+  @media (max-width:400px){.pm-ctl{font-size:17px;padding:0 14px 0 10px;gap:6px}}
   .pm-sheet-bg{position:fixed;inset:0;z-index:20;background:rgba(43,38,34,.45);display:flex;align-items:flex-end;justify-content:center}
   .pm-sheet{width:min(520px,100%);max-height:85vh;overflow:auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom));border-radius:20px 20px 0 0;background:${C.paper};border-top:4px solid ${C.woodDk}}
   @media (min-width:600px){.pm-sheet-bg{align-items:center}.pm-sheet{border-radius:20px;border:4px solid ${C.woodDk}}}
@@ -172,22 +194,20 @@
   .pm-sheet li .pg svg{width:20px;height:20px}
   .pm-sheet .close{margin-top:12px;width:100%;min-height:50px;border:2px solid ${C.woodDk};border-radius:12px;background:#fff;font:700 18px Fredoka,system-ui,sans-serif;color:${C.woodInk};cursor:pointer}
   .pm-sheet button:focus-visible{outline:3px solid ${C.goldDk};outline-offset:2px}
-  .pm-more{padding:16px 16px 90px;display:grid;gap:10px}
-  .pm-more button{min-height:56px;border:0;border-radius:12px;background:${C.woodLt};box-shadow:0 3px 0 ${C.woodDk};font:600 18px Fredoka,system-ui,sans-serif;color:${C.woodInk};cursor:pointer}
-  .pm-end{height:76px}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}`;
 
   function layout() {
-    const W = Math.min(document.documentElement.clientWidth || innerWidth, 900);
-    view = W < 600 ? { x0: PHONE_X, w: PHONE_W } : { x0: 0, w: WORLD_W };
-    view.W = W; view.k = W / view.w; view.H = Math.round(WORLD_H * view.k);
+    const W = document.documentElement.clientWidth || innerWidth, phone = W < 600;
+    // vx0, vw: the part of the drawing the map opens on, filling the screen's width (a phone: the middle; bigger: all of it)
+    view = phone ? { vx0: PHONE_X, vw: PHONE_W } : { vx0: 0, vw: WORLD_W };
+    view.W = W; view.k = W / view.vw; // px per drawing unit at the opening zoom; the drawing is laid out at this size
   }
-  const px = (x, y) => [(x - view.x0) * view.k, y * view.k];
+  const px = (x, y) => [x * view.k, y * view.k];
 
   function signHTML(w) {
-    const [x, y] = PLACES[w.id].sign, [l, t] = px(x, y), p = progress(w), sw = PLACES[w.id].signW; // signW: a narrower sign, so a long name wraps
-    return `<div class="pm-sign" id="pmSign-${w.id}" style="left:${l.toFixed(1)}px;top:${t.toFixed(1)}px${sw ? `;max-width:calc(${sw}px * var(--k,1))` : ''}" aria-hidden="true">
-      <b>${ui.esc(w.name)}</b><span class="pg ${p.main.cls}">${icons[p.main.icon]}${ui.esc(p.main.text)}${p.f.taster ? `<span class="lk">${icons.lock}</span>` : ''}</span></div>`;
+    const [x, y] = PLACES[w.id].sign, p = progress(w), sw = PLACES[w.id].signW; // signW: a narrower sign, so a long name wraps
+    return `<div class="pm-at" data-x="${x}" data-y="${y}"><div class="pm-sign" id="pmSign-${w.id}" data-w="${ui.esc(w.id)}"${sw ? ` style="max-width:calc(${sw}px * var(--k,1))"` : ''} aria-hidden="true">
+      <b>${ui.esc(w.name)}</b><span class="pg ${p.main.cls}">${icons[p.main.icon]}${ui.esc(p.main.text)}${p.f.taster ? `<span class="lk">${icons.lock}</span>` : ''}</span></div></div>`;
   }
   function haloSVG(w) {
     const [x, y, ww, hh] = PLACES[w.id].hit;
@@ -197,32 +217,63 @@
   function bubbleSVG(w, text) {
     const p = PLACES[w.id], lines = wrap(text, 17), fs = 16 / Math.min(1.2, view.k), h = lines.length * fs * 1.3 + 20, bw = 168 / Math.min(1.2, view.k);
     const [bx, byRaw, side] = p.bub, [fx, fy] = p.bonnie;
-    const x = Math.max(view.x0 + 6, Math.min(bx, view.x0 + view.w - bw - 6));
+    const x = Math.max(view.vx0 + 6, Math.min(bx, view.vx0 + view.vw - bw - 6));
     return side === 'above' ? A.bubble(x, byRaw - h, bw, lines, fx - 10, fy - 58, fs) : A.bubble(x, byRaw, bw, lines, fx + 4, fy - 4, fs);
   }
 
+  /* ---------- the camera: where the map is looking (js/map-camera.js) ---------- */
+  // kept while the page is open, for each player and route: back from a level (or the shop, or a turn of the iPad), the map is where it was
+  const camMem = {};
+  const camKey = () => { const pl = M.players && M.players.on() && (M.players.list().find(p => p.current) || {}).id; return R.subject + '/' + (pl || 'p1'); };
+  const mid = w => { const [x, y, ww, hh] = PLACES[w.id].hit; return [x + ww / 2, y + hh / 2]; };
+  let cam = null, signs = [], compact = null;
+  // the room the map has between the top bar and the buttons along the bottom
+  function insets() {
+    const bar = ui.$('.pm-bar'), low = ui.$('.pm-low'), vh = innerHeight;
+    return { top: bar ? Math.max(0, bar.getBoundingClientRect().bottom) : 0, bottom: low ? Math.max(0, vh - low.getBoundingClientRect().top) + 6 : 0 };
+  }
+  // the name signs: their full size at the opening zoom and a little bigger zoomed in; zoomed out they shrink with the
+  // map (down to half) and show just the name, so they never pile up ("Back to Bonnie" or a double-tap brings them back)
+  function placeSigns(c) {
+    const z = c.zoom, s = Math.max(.5, Math.min(1.25, z / view.k)), small = z < view.k * .8;
+    if (small !== compact) { compact = small; ui.$('#pmSigns').classList.toggle('compact', small); signs.forEach(g => { g.hw = g.inner.offsetWidth / 2; }); }
+    const left = c.x, right = c.x + WORLD_W * z;
+    signs.forEach(g => {
+      let [sx, sy] = c.toScreen(g.x, g.y);
+      sx = Math.max(left + g.hw * s + 4, Math.min(right - g.hw * s - 4, sx));
+      g.el.style.transform = `translate3d(${sx.toFixed(1)}px,${sy.toFixed(1)}px,0) scale(${s.toFixed(3)})`;
+    });
+    const whole = ui.$('#pmWhole');
+    if (whole) { const back = c.isWhole(); if (whole.dataset.back !== String(back)) { whole.dataset.back = back; whole.querySelector('span').textContent = back ? 'Back to Bonnie' : 'See whole map'; } }
+    const zi = ui.$('#pmIn'), zo = ui.$('#pmOut');
+    if (zi) zi.setAttribute('aria-disabled', z >= c.zMax() * .99); if (zo) zo.setAttribute('aria-disabled', z <= c.zMin() * 1.01);
+  }
+  function bonnieView(animate) { if (at) { const [x, y] = mid(at); cam.centreOn(view.vx0 + view.vw / 2, y, view.k, animate); } }
+
   function draw() {
+    if (cam) { camMem[camKey()] = cam.state(); cam.destroy(); cam = null; }
     on = true; busy = false;
     document.body.classList.add('pm-on');
     layout();
     if (!scene) scene = R.scene().render();
     const ws = placed(), sug = suggestion(ws), s = save(), theme = document.body.dataset.theme || 'day';
     at = sug || ws[0];
-    const vb = `${view.x0} 0 ${view.w} ${WORLD_H}`;
+    const vb = `0 0 ${WORLD_W} ${WORLD_H}`;
     // Bonnie's first-time help (js/meadow-core.js): once there are bones, she points out the Bone Shop (the ring goes on the bones tag below)
     const shopTip = !!(M.tips && M.tips.due('shop'));
     const bonnieLine = shopTip ? ui.fmt(M.LINES.tipShop) : sug ? (info(sug).played ? SAYS(sug.id)[0] : LL.startAt(shortName(sug))) : LL.allStars;
     const [bfx, bfy] = at ? PLACES[at.id].bonnie : [320, 300];
     const hits = ws.map((w, i) => {
-      const [x, y, ww, hh] = PLACES[w.id].hit, [l, t] = px(Math.max(x, view.x0), y), r = px(Math.min(x + ww, view.x0 + view.w), y + hh);
-      const p = progress(w), width = Math.max(44, r[0] - l), height = Math.max(44, r[1] - t);
+      const [x, y, ww, hh] = PLACES[w.id].hit, [l, t] = px(x, y), [r, b] = px(x + ww, y + hh);
+      const p = progress(w), width = Math.max(44, r - l), height = Math.max(44, b - t);
       const label = `World ${i + 1}: ${w.name}. ${w.tag || ''}. ${p.say}${p.f.taster ? ' Level 1 is free to play.' : ''}`;
       return `<button class="pm-hit" data-w="${ui.esc(w.id)}" style="left:${l.toFixed(1)}px;top:${t.toFixed(1)}px;width:${width.toFixed(1)}px;height:${height.toFixed(1)}px" aria-label="${ui.esc(label.replace(/([.?!])\./g, '$1'))}"></button>`;
     }).join('');
     const [bl, bt] = px(bfx - 40, bfy - 78);
     const carry = ['demo', 'theme'].filter(k => Q.get(k)).map(k => `${k}=${encodeURIComponent(Q.get(k))}`).join('&');
     const club = (window.MeadowLook ? window.MeadowLook.pages : { club: 'prototype-clubhouse.html', maths: 'prototype-maths-map.html', words: 'prototype-words-map.html', walk: 'prototype-walk.html' }).club, home = club + (carry && /^prototype-/.test(club) ? '?' + carry : '');
-    ui.show(`<div class="pm" style="width:${view.W}px;--k:${Math.min(1.25, view.k).toFixed(3)}">
+    const ic = (vb, d) => `<svg viewBox="${vb}" aria-hidden="true">${d}</svg>`;
+    ui.show(`<div class="pm" style="--k:${Math.min(1.25, view.k).toFixed(3)}">
       <div class="pm-bar">
         <div class="pm-tags">
           <a class="pm-tag" href="${home}" aria-label="Back to the Clubhouse"><svg viewBox="-14 -14 28 28" aria-hidden="true"><path d="M-12 0 L0 -11 L12 0" fill="${C.berry}" stroke="#A93E4F" stroke-width="2" stroke-linejoin="round"/><rect x="-9" y="-1" width="18" height="13" rx="1.5" fill="${C.wood}" stroke="${C.woodDk}" stroke-width="1.6"/><rect x="-2.5" y="4" width="5" height="8" fill="${C.woodDk}"/></svg></a>
@@ -231,44 +282,65 @@
         <h1 class="pm-title">${R.title}</h1>
         <button class="pm-tag" id="pmBones" aria-label="${s.bones} bones. Open the Bone Shop">${A.bone(0, 0, 1).replace('<g transform="translate(0 0) scale(1)">', '<svg viewBox="-22 -14 44 28" aria-hidden="true"><g>').replace(/<\/g>$/, '</g></svg>')}<span>${s.bones}</span></button>
       </div>
-      ${returning() ? `<button class="pm-jump" id="pmJump" aria-haspopup="dialog">${icons.places}Places</button>` : ''}
-      <div class="pm-stage" style="height:${view.H}px">
-        <svg viewBox="${vb}" preserveAspectRatio="xMidYMin meet" aria-hidden="true">${scene}${A.tint(theme, WORLD_W, WORLD_H)}${ws.map(haloSVG).join('')}</svg>
-        <svg viewBox="${vb}" preserveAspectRatio="xMidYMin meet" aria-hidden="true" id="pmLive">
-          ${at ? `<g id="pmBonnie" style="transform:translate(${bfx}px,${bfy}px)"><g>${A.bonnie(0, 0, .58)}</g></g><g id="pmBubble" class="pm-bub">${bubbleSVG(at, bonnieLine)}</g>` : ''}
-        </svg>
-        ${ws.map(signHTML).join('')}
-        <h2 class="sr">The meadow. Tap a place to play there.</h2>
-        ${at ? `<button class="pm-hit bonnie-hit" id="pmBonnieBtn" style="left:${bl.toFixed(1)}px;top:${bt.toFixed(1)}px;width:${(80 * view.k).toFixed(1)}px;height:${(80 * view.k).toFixed(1)}px" aria-label="Bonnie says: ${ui.esc(bonnieLine)} Tap to go to ${ui.esc(at.name)}."></button>` : ''}
-        ${hits}
+      <div class="pm-view" id="pmView" role="group" aria-label="The meadow map. Pinch or use the zoom buttons to zoom; drag to look around.">
+        <div class="pm-stage" id="pmStage" style="width:${(WORLD_W * view.k).toFixed(1)}px;height:${(WORLD_H * view.k).toFixed(1)}px">
+          <svg viewBox="${vb}" aria-hidden="true">${scene}${A.tint(theme, WORLD_W, WORLD_H)}${ws.map(haloSVG).join('')}</svg>
+          <svg viewBox="${vb}" aria-hidden="true" id="pmLive">
+            ${at ? `<g id="pmBonnie" style="transform:translate(${bfx}px,${bfy}px)"><g>${A.bonnie(0, 0, .58)}</g></g><g id="pmBubble" class="pm-bub">${bubbleSVG(at, bonnieLine)}</g>` : ''}
+          </svg>
+          <h2 class="sr">The meadow. Tap a place to play there.</h2>
+          ${at ? `<button class="pm-hit bonnie-hit" id="pmBonnieBtn" style="left:${bl.toFixed(1)}px;top:${bt.toFixed(1)}px;width:${(80 * view.k).toFixed(1)}px;height:${(80 * view.k).toFixed(1)}px" aria-label="Bonnie says: ${ui.esc(bonnieLine)} Tap to go to ${ui.esc(at.name)}."></button>` : ''}
+          ${hits}
+        </div>
+        <div class="pm-signs" id="pmSigns">${ws.map(signHTML).join('')}</div>
       </div>
-      ${unplaced().length ? `<div class="pm-more"><h2 style="font:700 20px Fredoka;margin:0;color:${C.ink}">More worlds</h2>${unplaced().map(w => `<button data-w="${ui.esc(w.id)}" class="pm-hit-more">${ui.esc(w.name)} · ${info(w).earned}/${info(w).max}</button>`).join('')}</div>` : '<div class="pm-end"></div>'}
+      <div class="pm-low">
+        <button class="pm-ctl pm-whole" id="pmWhole">${ic('-12 -12 24 24', `<path d="M-9 -8 l6 -2 l6 2 l6 -2 v16 l-6 2 l-6 -2 l-6 2 z" fill="${C.paper}" stroke="${C.woodInk}" stroke-width="2" stroke-linejoin="round"/><path d="M-3 -10 v16 M3 -8 v16" stroke="${C.woodInk}" stroke-width="1.6"/>`)}<span>See whole map</span></button>
+        ${returning() || unplaced().length ? `<button class="pm-ctl pm-jump" id="pmJump" aria-haspopup="dialog">${icons.places}Places</button>` : ''}
+      </div>
+      <div class="pm-zoom" role="group" aria-label="Zoom">
+        <button class="pm-ctl pm-zb" id="pmIn" aria-label="Zoom in">${ic('-12 -12 24 24', `<path d="M-7 0 H7 M0 -7 V7" stroke="${C.woodInk}" stroke-width="3.4" stroke-linecap="round"/>`)}</button>
+        <button class="pm-ctl pm-zb" id="pmOut" aria-label="Zoom out">${ic('-12 -12 24 24', `<path d="M-7 0 H7" stroke="${C.woodInk}" stroke-width="3.4" stroke-linecap="round"/>`)}</button>
+      </div>
     </div>`);
-    // keep every sign on the screen (a phone shows only the middle of the drawing)
-    ui.$$('.pm-sign').forEach(el => { const r = el.getBoundingClientRect(), lo = 6, hi = view.W - 6;
-      if (r.right > hi) el.style.left = (parseFloat(el.style.left) - (r.right - hi)) + 'px'; else if (r.left < lo) el.style.left = (parseFloat(el.style.left) + lo - r.left) + 'px'; });
+    // the signs: measured once at their opening size, and kept inside the part of the drawing the map opens on (as the screen showed them before)
+    compact = null;
+    signs = ui.$$('.pm-at').map(el => ({ el, inner: el.firstElementChild, x: +el.dataset.x, y: +el.dataset.y, hw: el.firstElementChild.offsetWidth / 2 }));
+    signs.forEach(g => { const half = g.hw / view.k, lo = view.vx0 + 6 / view.k + half, hi = view.vx0 + view.vw - 6 / view.k - half; g.x = Math.max(lo, Math.min(hi, g.x)); });
+    cam = window.MapCamera.create({
+      viewport: ui.$('#pmView'), world: ui.$('#pmStage'), size: { w: WORLD_W, h: WORLD_H }, base: view.k,
+      maxZoom: view.k * 2.4, floor: Math.min(view.k, innerWidth / WORLD_W) * .3, reduce, insets,
+      onChange: placeSigns,
+      onSettle: c => { camMem[camKey()] = c.state(); },
+      // a finger moving the map lets go of any place it pressed
+      onGesture: () => { ui.$$('.pm-sign.pressed').forEach(s => s.classList.remove('pressed')); ui.$$('.pm-hit[data-w]:not(.chosen)').forEach(b => lightUp(b.dataset.w, false)); },
+      isTarget: el => !!(el && el.closest && el.closest('[data-w], button, a')),
+    });
+    const mem = camMem[camKey()];
+    if (mem) cam.restore(mem); else bonnieView(false);
     // the Bonnie button sits at her feet and moves with her: it's placed first among the places for VoiceOver
     const bb = document.getElementById('pmBonnieBtn'); if (bb) bb.parentNode.insertBefore(bb, bb.parentNode.querySelector('.pm-hit:not(.bonnie-hit)'));
-    ui.$$('.pm-hit[data-w]').forEach(b => {
-      const id = b.dataset.w;
-      const lit = v => { const sg = document.getElementById('pmSign-' + id), h = document.getElementById('pmHalo-' + id); if (sg) sg.classList.toggle('lit', v); if (h) h.classList.toggle('lit', v); };
-      b.addEventListener('pointerdown', () => { if (busy) return; lit(true); const sg = document.getElementById('pmSign-' + id); if (sg) sg.classList.add('pressed'); ui.tone && ui.tone(620, .06, 'sine', .07); });
-      const up = () => { const sg = document.getElementById('pmSign-' + id); if (sg) sg.classList.remove('pressed'); if (!b.classList.contains('chosen')) lit(b.matches(':focus-visible')); };
+    ui.$$('.pm-hit[data-w], .pm-sign[data-w]').forEach(b => {
+      const id = b.dataset.w, hit = b.matches('.pm-hit') ? b : ui.$(`.pm-hit[data-w="${id}"]`);
+      b.addEventListener('pointerdown', () => { if (busy) return; lightUp(id, true); const sg = document.getElementById('pmSign-' + id); if (sg) sg.classList.add('pressed'); ui.tone && ui.tone(620, .06, 'sine', .07); });
+      const up = () => { const sg = document.getElementById('pmSign-' + id); if (sg) sg.classList.remove('pressed'); if (!hit.classList.contains('chosen')) lightUp(id, hit.matches(':focus-visible')); };
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, up));
-      b.addEventListener('focus', () => lit(b.matches(':focus-visible'))); b.addEventListener('blur', () => { if (!b.classList.contains('chosen')) lit(false); });
-      b.onclick = () => choose(id, b);
+      if (b === hit) {
+        b.addEventListener('focus', () => { lightUp(id, b.matches(':focus-visible')); const [x, y, ww, hh] = PLACES[id].hit; cam.show(x, y, ww, hh); });
+        b.addEventListener('blur', () => { if (!b.classList.contains('chosen')) lightUp(id, false); });
+        b.onclick = () => choose(id, b);
+      } else b.onclick = () => choose(id, hit); // a sign is part of its place
     });
-    ui.$$('.pm-hit-more').forEach(b => b.onclick = () => choose(b.dataset.w, b));
-    if (bb) bb.onclick = () => choose(at.id, bb, true);
+    if (bb) { bb.onclick = () => choose(at.id, bb, true); bb.addEventListener('focus', () => cam.show(bfx - 60, bfy - 90, 120, 100)); }
     ui.$('#pmGrown').onclick = () => { leave(); M.grownUps(); };
     ui.$('#pmBones').onclick = () => { leave(); M.shop({ welcome: true }); };
     if (shopTip) M.tips.at('shop', ui.$('#pmBones')); // the ring (once per player: the save remembers it)
     if (ui.$('#pmJump')) ui.$('#pmJump').onclick = openPlaces;
-    // bring Bonnie's place into view (she may be far down the route)
-    const target = px(bfx, bfy)[1] - innerHeight * .55;
-    if (target > 0) window.scrollTo({ top: target, behavior: reduce() ? 'auto' : 'smooth' });
+    ui.$('#pmWhole').onclick = () => { if (cam.isWhole()) bonnieView(true); else cam.fitAll(true); };
+    ui.$('#pmIn').onclick = () => cam.zoomBy(1.6); ui.$('#pmOut').onclick = () => cam.zoomBy(1 / 1.6);
     setTimeout(() => { if (on && !busy) ui.say(bonnieLine); }, 350);
   }
+  function lightUp(id, v) { const sg = document.getElementById('pmSign-' + id), h = document.getElementById('pmHalo-' + id); if (sg) sg.classList.toggle('lit', v); if (h) h.classList.toggle('lit', v); }
   const shortName = w => w.name.replace(/^The /, 'the ');
 
   /* "Places": every world in a list, for a child who knows where they're going. Choosing one goes there the same
@@ -285,8 +357,8 @@
       if (e.target === bg || e.target.closest('[data-close]')) return close();
       const b = e.target.closest('[data-w]'); if (!b) return;
       bg.remove();
-      const hit = ui.$(`.pm-hit[data-w="${b.dataset.w}"]`);
-      if (hit) { hit.scrollIntoView({ block: 'center', behavior: reduce() ? 'auto' : 'smooth' }); setTimeout(() => choose(b.dataset.w, hit), reduce() ? 0 : 350); }
+      const hit = ui.$(`.pm-hit[data-w="${b.dataset.w}"]`), w = M.world(b.dataset.w);
+      if (hit && cam) { const [x, y] = mid(w); cam.centreOn(x, y, Math.max(cam.zoom, view.k)); setTimeout(() => choose(b.dataset.w, hit), reduce() ? 0 : 450); }
       else choose(b.dataset.w, b);
     });
     bg.addEventListener('keydown', e => {
@@ -322,7 +394,7 @@
     setTimeout(() => { bub.innerHTML = bubbleSVG(w, line); bub.style.opacity = '1'; at = w; ui.say(line); }, 760);
     setTimeout(open, 1350);
   }
-  function leave() { on = false; busy = false; document.body.classList.remove('pm-on'); const sh = document.querySelector('.pm-sheet-bg'); if (sh) sh.remove(); }
+  function leave() { on = false; busy = false; if (cam) { camMem[camKey()] = cam.state(); cam.destroy(); cam = null; } document.body.classList.remove('pm-on'); const sh = document.querySelector('.pm-sheet-bg'); if (sh) sh.remove(); }
 
   /* ---------- fitting into the engine without changing it ---------- */
   function install() {
@@ -352,7 +424,7 @@
     // ws: the worlds drawn on the map (a new world with no drawing yet waits under "More worlds")
     const all = M.visibleWorlds(R.subject), ws = placed(), hits = ui.$$('.pm-hit[data-w]');
     ok('the meadow is showing', !!ui.$('.pm'));
-    ok(`every ${R.title} world has a place`, hits.length + ui.$$('.pm-hit-more').length === all.length, `${hits.length} places and ${ui.$$('.pm-hit-more').length} more for ${all.length} worlds`);
+    ok(`every ${R.title} world has a place (or is in "Places")`, hits.length + unplaced().length === all.length && (!unplaced().length || !!ui.$('#pmJump')), `${hits.length} places and ${unplaced().length} more for ${all.length} worlds`);
     const small = hits.concat(ui.$$('.pm-tag'), ui.$$('.pm-jump')).filter(b => r(b).width < 44 || r(b).height < 44);
     ok('every tap target is at least 44 × 44', !small.length, small.map(b => b.getAttribute('aria-label')).join(', '));
     ok('each place is a generous target (at least 120 × 100)', hits.every(b => r(b).width >= 120 && r(b).height >= 100), hits.map(b => `${r(b).width.toFixed(0)}×${r(b).height.toFixed(0)}`).join(', '));
@@ -368,7 +440,8 @@
     ok('names are 19px or more, progress 16px or more', Math.min(...nameSizes) >= 19 && Math.min(...pgSizes) >= 16, `names ${Math.min(...nameSizes)}px, progress ${Math.min(...pgSizes)}px`);
     ok('each sign is inside its place\'s tap area', ws.every((w, i) => { const a = r(signs[i]), b = r(hits[i]); return a.left >= b.left - 24 && a.right <= b.right + 24 && a.top >= b.top - 2 && a.bottom <= b.bottom + 2; }),
       ws.map((w, i) => { const a = r(signs[i]), b = r(hits[i]); return `${short(w.id)} ${Math.round(a.left - b.left)},${Math.round(b.right - a.right)},${Math.round(a.top - b.top)},${Math.round(b.bottom - a.bottom)}`; }).join(' | '));
-    ok('signs are on the screen and do not overlap each other', signs.every(s => r(s).left >= 0 && r(s).right <= innerWidth) && !signs.some((a, i) => signs.some((b, j) => j > i && cross(r(a), r(b)))));
+    ok('signs are on the screen and do not overlap each other', signs.every(s => r(s).left >= 0 && r(s).right <= innerWidth) && !signs.some((a, i) => signs.some((b, j) => j > i && cross(r(a), r(b)))),
+      signs.map(s => [r(s).left, r(s).right].map(Math.round).join('..')).join(' '));
     const bub = r(document.getElementById('pmBubble'));
     ok("Bonnie's bubble covers no sign", !signs.some(s => cross(r(s), bub)), signs.filter(s => cross(r(s), bub)).map(s => s.id).join(', '));
     { // and wherever she hops to, with her longest line there
@@ -386,8 +459,67 @@
     hits[0].dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); await wait(30);
     const sg0 = signs[0];
     ok('pressing a place lights its sign and ring', sg0.classList.contains('lit') && sg0.classList.contains('pressed') && document.getElementById('pmHalo-' + ws[0].id).classList.contains('lit'));
-    hits[0].dispatchEvent(new PointerEvent('pointerleave', { bubbles: true })); await wait(30);
+    hits[0].dispatchEvent(new PointerEvent('pointerleave', { bubbles: true })); dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); await wait(30);
     ok('…and letting go puts it back', !sg0.classList.contains('pressed') && !sg0.classList.contains('lit'));
+    // the camera (js/map-camera.js): pinch, drag, double-tap, the zoom buttons and "See whole map"
+    {
+      const vp = ui.$('#pmView'), st = ui.$('#pmStage'), still = ms => wait(reduce() ? 30 : ms);
+      const covers = () => { const a = r(st); return a.left <= .5 && a.top <= .5 && a.right >= innerWidth - .5 && a.bottom >= innerHeight - .5; };
+      const edges = () => { const a = r(st); return [a.left, a.top, innerWidth - a.right, innerHeight - a.bottom].map(Math.round).join(','); };
+      const ev = (type, id, x, y, target = window) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: id, clientX: x, clientY: y, pointerType: 'touch', isPrimary: id === 1, button: 0 }));
+      const drag = async (dx, dy, from) => { const v = r(from || vp), x = v.left + v.width / 2, y = v.top + Math.min(v.height / 2, innerHeight / 2);
+        ev('pointerdown', 1, x, y, from || vp); for (let i = 1; i <= 6; i++) ev('pointermove', 1, x + dx * i / 6, y + dy * i / 6); ev('pointerup', 1, x + dx, y + dy); await wait(40); };
+      const atPoint = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest('[data-w], .bonnie-hit'); };
+      // each place still takes a tap at its middle (its own button or its sign, never another place's)
+      const tappable = () => ws.filter(w => { const b = r(ui.$(`.pm-hit[data-w="${w.id}"]`)), x = b.left + b.width / 2, y = b.top + b.height / 2;
+        if (y < 0 || y > innerHeight || x < 0 || x > innerWidth) return false; /* off the screen: nothing to tap */ const el = atPoint(x, y); return !el || (el.dataset.w && el.dataset.w !== w.id); }).map(w => short(w.id));
+      bonnieView(false); await wait(30);
+      ok('the page never scrolls: the map moves inside its own viewport, the only place a pinch zooms', document.documentElement.scrollHeight <= innerHeight + 1 && getComputedStyle(vp).touchAction === 'none' && getComputedStyle(document.body).touchAction !== 'none', `${document.documentElement.scrollHeight} for ${innerHeight}`);
+      ok('at the opening zoom the drawing fills the screen, with no blank edges', covers(), edges());
+      ok('it opens on Bonnie\'s place, which is on the screen', (() => { const b = r(ui.$('#pmBonnieBtn') || ui.$('.pm-hit')); return b.top >= 0 && b.bottom <= innerHeight; })());
+      const bad = []; for (const [dx, dy] of [[4000, 0], [-4000, 0], [0, 4000], [0, -4000], [3000, 3000], [-3000, -3000]]) { await drag(dx, dy); if (!covers()) bad.push(`${dx},${dy}: ${edges()}`); }
+      ok('dragging as far as possible every way stops at the drawing\'s edges (no blank space)', !bad.length, bad.join(' | '));
+      bonnieView(false); await wait(30);
+      const z0 = cam.zoom, mx = innerWidth / 2, my = innerHeight / 2;
+      ev('pointerdown', 1, mx - 30, my, vp); ev('pointerdown', 2, mx + 30, my, vp);
+      for (let i = 1; i <= 5; i++) { ev('pointermove', 1, mx - 30 - 20 * i, my); ev('pointermove', 2, mx + 30 + 20 * i, my); }
+      ev('pointerup', 1, mx - 130, my); ev('pointerup', 2, mx + 130, my); await still(650);
+      ok('pinching apart zooms in, and the drawing still fills the screen', cam.zoom > z0 * 1.5 && covers(), `${z0.toFixed(2)} to ${cam.zoom.toFixed(2)}`);
+      ok('…and every place on the screen takes a tap at its middle', !tappable().length, tappable().join(', '));
+      ev('pointerdown', 1, mx - 150, my, vp); ev('pointerdown', 2, mx + 150, my, vp);
+      for (let i = 1; i <= 5; i++) { ev('pointermove', 1, mx - 150 + 29 * i, my); ev('pointermove', 2, mx + 150 - 29 * i, my); }
+      ev('pointerup', 1, mx - 5, my); ev('pointerup', 2, mx + 5, my); await still(650);
+      ok('pinching together zooms out, no further than the whole map', Math.abs(cam.zoom - cam.zMin()) < .01, `${cam.zoom.toFixed(3)} (smallest ${cam.zMin().toFixed(3)})`);
+      bonnieView(false); await wait(30);
+      // a drag that starts on a place moves the map and doesn't open the place
+      const h0 = ws.map(w => ui.$(`.pm-hit[data-w="${w.id}"]`)).find(b => r(b).top > innerHeight * .3 && r(b).top < innerHeight * .7) || ui.$('.pm-hit[data-w]');
+      const y0 = cam.y, dy0 = cam.y + WORLD_H * cam.zoom - innerHeight > 100 ? -90 : 90; await drag(0, dy0, h0); h0.click(); await wait(60);
+      ok('a drag that starts on a place moves the map, and never opens the place', Math.abs(cam.y - y0) > 40 && !busy && !!ui.$('.pm'), `moved ${Math.round(cam.y - y0)}px`);
+      // "See whole map", then "Back to Bonnie"
+      ui.$('#pmWhole').click(); await still(800);
+      const a = r(st), ins = insets(), inRoom = ws.every(w => { const b = r(ui.$(`.pm-hit[data-w="${w.id}"]`)); return b.left >= -1 && b.right <= innerWidth + 1 && b.top >= ins.top - 1 && b.bottom <= innerHeight - ins.bottom + 1; });
+      ok('"See whole map" shows every place at once, between the top bar and the buttons', cam.isWhole() && (inRoom || cam.zoom > cam.zFit() * 1.001 || cam.zMin() > Math.min(innerWidth / WORLD_W, (innerHeight - ins.top - ins.bottom) / WORLD_H) * 1.001), `zoom ${cam.zoom.toFixed(2)}`);
+      ok('…in the middle of the screen', Math.abs(a.left - (innerWidth - a.right)) < 2 || (a.left <= .5 && a.right >= innerWidth - .5), edges());
+      ok('…where every place still takes a tap', !tappable().length, tappable().join(', '));
+      ok('…the zoom-out button says it can go no further, and the button now says "Back to Bonnie"', ui.$('#pmOut').getAttribute('aria-disabled') === 'true' && ui.$('#pmWhole').textContent.trim() === 'Back to Bonnie');
+      ui.$('#pmWhole').click(); await still(650);
+      ok('"Back to Bonnie" goes back to the opening zoom, on her place', Math.abs(cam.zoom - view.k) < .01 && covers());
+      ui.$('#pmIn').click(); await still(750); const zi = cam.zoom; ui.$('#pmOut').click(); await still(750);
+      ok('the + and − buttons zoom in and out (for a child who can\'t pinch)', zi > view.k * 1.3 && Math.abs(cam.zoom - view.k) < .02, `${view.k.toFixed(2)} → ${zi.toFixed(2)} → ${cam.zoom.toFixed(2)}`);
+      // a double-tap on the meadow itself (not a place) zooms in there
+      let spot = null; for (let y = innerHeight * .3; y < innerHeight * .8 && !spot; y += 23) for (let x = 20; x < innerWidth - 20 && !spot; x += 23) { const el = document.elementFromPoint(x, y); if (el && st.contains(el) && !el.closest('[data-w], button')) spot = [x, y, el]; }
+      if (spot) { const zb = cam.zoom; for (let i = 0; i < 2; i++) { ev('pointerdown', 1, spot[0], spot[1], spot[2]); ev('pointerup', 1, spot[0], spot[1], spot[2]); await wait(60); } await still(750);
+        ok('a double-tap on the meadow zooms in there', cam.zoom > zb * 1.5, `${zb.toFixed(2)} → ${cam.zoom.toFixed(2)}`); }
+      // VoiceOver (or a keyboard) moving to a place off the screen brings it into view
+      bonnieView(false); await wait(30);
+      const far = ws.map(w => ui.$(`.pm-hit[data-w="${w.id}"]`)).sort((p, q) => Math.abs(r(q).top - innerHeight / 2) - Math.abs(r(p).top - innerHeight / 2))[0]; far.focus(); await still(800);
+      ok('moving to a place with VoiceOver or a keyboard brings it into view', r(far).top < innerHeight && r(far).bottom > 0, `top ${Math.round(r(far).top)}`);
+      far.blur();
+      // drawn again (a turn of the iPad, back from a level or the shop): the map is where it was
+      const before = cam.state(); draw(); await wait(30); const after = cam.state();
+      ok('drawn again, the map stays where it was', Math.abs(before.cx - after.cx) < 2 && Math.abs(before.cy - after.cy) < 2 && Math.abs(before.zr - after.zr) < .01);
+      bonnieView(false); await wait(30);
+    }
     // Places
     const jump = ui.$('#pmJump');
     ok('"Places" shows for a returning player, not a new one', !!jump === returning(), returning() ? 'returning' : 'new player');
@@ -402,6 +534,7 @@
     const second = ui.$$('.pm-hit[data-w]')[1]; second.click(); await wait(1700);
     const back = ui.$('#back');
     ok('a place opens the real level map', !!back && !!ui.$('.stone'), back ? back.textContent : 'no map');
+    ok('…where the map\'s pinch and drag are gone (the page scrolls and taps as usual)', !ui.$('#pmView') && getComputedStyle(document.documentElement).overflowY !== 'hidden' && getComputedStyle(document.body).overflowY !== 'hidden');
     const w2 = M.world(second.dataset.w), stones = ui.$$('.stone');
     ok('the level map keeps the engine\'s unlocking', stones.every((st, l) => { const paid = M.fullGame.paid(w2, l), un = !paid && M.levelUnlocked(w2, l); return st.classList.contains('locked') === (!paid && !un) && st.classList.contains('paid') === paid; }));
     ok('the level map has a top bar (the engine\'s, or the drawn level map\'s own)', getComputedStyle(ui.$('.hud')).display !== 'none' || !!ui.$('#plBack'));

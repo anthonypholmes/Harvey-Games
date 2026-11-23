@@ -27,7 +27,7 @@ const hourChoices = h => pick3(h, [h - 1 || 12, nextHour(h), nextHour(nextHour(h
 function readQ({ t, kind, wrong, clue, steps, count }) {
   const { labels, ans, cfmt } = timeChoice(t, wrong);
   return gq({ t: kind, kind: 'choice', prompt: pick(['What time is it?', 'What’s the time?']), answer: [ans], choices: [0, 1, 2], cfmt, key: kind + t,
-    vis: { type: 'clock', t, count: !!count }, clue,
+    vis: { type: 'clock', t, count: !!count, key: !count }, clue, // the hands' key on the first two levels (not with Count in 5s)
     steps: q => [...steps(q), { say: 'So the time is…', choices: labels, answer: labels[ans], final: true, words: true }] });
 }
 

@@ -190,8 +190,10 @@
   const STYLE = `
   .ps-on #screen>.card.shop,.ps-on .hud,.ps-on .butterfly,.ps-on .frog,.ps-on .meadow{display:none!important}
   .ps-on #app{max-width:none;padding:0;min-height:0}
-  .ps-on{background:#F6E7C8!important;overflow-x:hidden}
-  .ps{position:relative;display:flex;flex-direction:column;margin:0 auto;overflow:hidden}
+  .ps-on{background:#F6E7C8!important;overflow:hidden}
+  /* the dressing room is one fixed screen, inside the safe areas: the page under it never scrolls */
+  html:has(> body.ps-on){background:#F6E7C8;overflow:hidden;overscroll-behavior:none}
+  .ps{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
   .ps .pm-bar{position:absolute;left:0;right:0;top:0}
   .ps-room{position:relative;flex:1 1 auto;min-height:230px;overflow:hidden}
   .ps-wall{position:absolute;left:0;right:0;top:0}
@@ -209,7 +211,8 @@
   @keyframes psHop{30%{transform:translateY(-16px)}60%{transform:translateY(0)}80%{transform:translateY(-5px)}}
   .ps-bon .eyes{transform-box:fill-box;transform-origin:50% 50%;animation:blink 5s infinite}
   .ps-bon .tail{transform-box:fill-box;transform-origin:0% 100%;animation:wag 1.4s ease-in-out infinite}
-  .ps-try{position:absolute;z-index:3;display:inline-flex;align-items:center;gap:5px;padding:4px 12px 5px;border-radius:999px;font:700 16px/1.1 Fredoka,system-ui,sans-serif;white-space:nowrap}
+  .ps-try{position:absolute;z-index:3;max-width:calc(100% - 16px);box-sizing:border-box;display:inline-flex;align-items:center;gap:5px;padding:4px 12px 5px;border-radius:999px;font:700 16px/1.1 Fredoka,system-ui,sans-serif;white-space:nowrap}
+  .ps-try[hidden]{display:none}
   .ps-try svg{width:16px;height:16px;flex:none}
   .ps-try.k-buy,.ps-try.k-short{background:rgba(255,251,241,.95);color:${C.woodInk};border:2.5px dashed ${C.goldDk}}
   .ps-try.k-owned{background:${OWN};color:#fff;border:2.5px solid ${OWN_DK};box-shadow:0 3px 0 ${OWN_DK}}
@@ -376,7 +379,7 @@
     const engSay = engShop().querySelector('#shopSay');
     if (said === null) said = engSay ? engSay.textContent : '';
     const el = document.createElement('div');
-    el.className = 'ps'; el.style.width = z.W + 'px'; el.style.height = z.H + 'px';
+    el.className = 'ps';
     const gs = groups(tab);
     const rail = gs.map(g => `${gs.length > 1 || tab === 'prizes' ? `<div class="ps-head" aria-hidden="true">${ui.esc(g.head)}</div>` : ''}${g.list.map(cardHTML).join('')}`).join('')
       + (tab === 'prizes' ? `<button class="ps-card ps-edit" id="psEdit" aria-label="Grown-ups: change these prizes"><span class="ps-th" aria-hidden="true">${lockIcon}</span><b aria-hidden="true">Grown-ups: change these prizes</b><span></span></button>` : '');
@@ -424,6 +427,8 @@
   // the room, Bonnie and her words, fitted to the space above the rail
   function paint() {
     const room = ui.$('#psRoom'); if (!room) return;
+    // the words are measured to place them: if the fonts are still loading, measure again once they're in
+    if (document.fonts && document.fonts.status !== 'loaded' && !paint.later) { paint.later = true; document.fonts.ready.then(() => { paint.later = false; if (on) paint(); }); }
     const W = room.clientWidth, H = room.clientHeight, S = save(), it = chosen();
     const theme = it && it.kind === 'theme' ? it.id : (S.theme || 'day');
     const barB = ui.$('.ps .pm-bar').getBoundingClientRect().bottom - room.getBoundingClientRect().top;

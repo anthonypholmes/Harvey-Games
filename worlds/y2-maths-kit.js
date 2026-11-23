@@ -144,7 +144,7 @@ const say = text => U.say(spoken(String(text).replace(/<[^>]+>/g, '').replace(/�
 /* =========================================================
    THE QUESTION SCREEN
    ========================================================= */
-const PRAISE = ['Brilliant, {N}!', 'Spot on!', 'You got it!', 'Super splitting!', 'Nailed it, {N}!', 'Amazing!', 'Top marks!', 'Well done, {N}!'];
+const PRAISE = ['Brilliant, {N}!', 'Spot on!', 'You got it!', 'Nailed it, {N}!', 'Amazing!', 'Top marks!', 'Well done, {N}!'];
 const TEAM = ['You did it!', 'Great teamwork!', 'Brilliant, {N}!', 'You worked it out!'];
 const NUDGE = ['Ooh, nearly!', 'Good try!', 'Let’s look together!'];
 const SCOUT_LEADS = ['Bonnie sniffed out a clue!', 'Bonnie’s tail got in the way!', 'Woof! Bonnie’s nose found something!', 'Bonnie dug up a clue!'];
@@ -519,15 +519,21 @@ const metalWord = p => ({ copper: 'copper', silver: 'silver', gold: 'gold', two:
 const polyPts = (n, r, c = 50) => Array.from({ length: n }, (_, i) => { const a = (i / n) * 2 * Math.PI - Math.PI / 2; return `${(c + r * Math.cos(a)).toFixed(1)},${(c + r * Math.sin(a)).toFixed(1)}`; }).join(' ');
 const coinShape = (sides, r, attrs) => sides ? `<polygon points="${polyPts(sides, r)}" stroke-linejoin="round" ${attrs}/>` : `<circle cx="50" cy="50" r="${r}" ${attrs}/>`;
 const COIN_PAW = '<g opacity=".45"><ellipse cx="50" cy="25" rx="4.2" ry="3.4"/><circle cx="44.2" cy="19.6" r="1.9"/><circle cx="48.2" cy="16.8" r="1.9"/><circle cx="51.8" cy="16.8" r="1.9"/><circle cx="55.8" cy="19.6" r="1.9"/></g>';
+// the bigger coin of each look-alike pair (1p and 2p, 5p and 10p, 20p and 50p) has a dotted edge, so they never look the same
+const BEADED = { 2: true, 10: true, 50: true };
+const beads = (sides, ink) => { const n = sides ? sides * 4 : 28; return Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * 2 * Math.PI - Math.PI / 2, r = sides ? 41.5 * Math.cos(Math.PI / sides) / Math.cos(((a + Math.PI / 2) % (2 * Math.PI / sides)) - Math.PI / sides) : 42.5;
+  return `<circle cx="${(50 + r * Math.cos(a)).toFixed(1)}" cy="${(50 + r * Math.sin(a)).toFixed(1)}" r="2.1" fill="${ink}" opacity=".55"/>`; }).join(''); };
 function coinSVG(p) {
   if (p >= 500) return noteSVG(p);
-  const [metal, mm, sides] = COIN_LOOK[p], d = Math.round(46 + (mm - 18) * 1.2);
+  // sizes follow the real coins, stretched so a child can see which is bigger (the 50p is clearly bigger than the 20p)
+  const [metal, mm, sides] = COIN_LOOK[p], d = Math.round(42 + (mm - 18) * 2);
   const [fill, dark, shine, text] = METAL[metal === 'two' ? 'gold' : metal], label = money(p);
   const inner = metal === 'two' ? `<circle cx="50" cy="50" r="31" fill="${METAL.silver[0]}" stroke="${METAL.silver[1]}" stroke-width="2.5"/>` : '';
   const ink = metal === 'two' ? METAL.silver[3] : text;
   return `<svg class="coin" viewBox="0 0 100 100" style="--d:${d}" aria-hidden="true">
     ${coinShape(sides, 47, `fill="${fill}" stroke="${dark}" stroke-width="4"`)}
-    ${coinShape(sides, 39, `fill="none" stroke="${shine}" stroke-width="3"`)}${inner}
+    ${coinShape(sides, 39, `fill="none" stroke="${shine}" stroke-width="3"`)}${inner}${BEADED[p] ? beads(sides, dark) : ''}
     <g fill="${ink}">${COIN_PAW}</g>
     <text x="50" y="${label.length > 2 ? 64 : 66}" text-anchor="middle" font-size="${label.length > 2 ? 40 : 46}" fill="${ink}">${label}</text></svg>`;
 }
@@ -642,7 +648,8 @@ const spoken = t => String(t)
 /* ---------- time: the clock face and Set the Clock (The Clock Tower) ----------
    A time is minutes after 12 o'clock (0 to 719: 195 is 3:15). Times are written and said in words, the way
    Year 2 learns them ("quarter past 3", "20 to 9"); digital times are Year 3, so they never appear.
-     vis { type: 'clock', t, count, full, small }   a big clock face (small: smaller on a short phone); count: a "Count in 5s" button that lights the numbers
+     vis { type: 'clock', t, count, full, small, key }   a big clock face (small: smaller on a short phone; key: "Long hand: minutes,
+        Short hand: hour" under it, and Bonnie says so); count: a "Count in 5s" button that lights the numbers
         round from the 12 to the long hand (or back to the 12, for a "to" time) and says them; full: all the way round
      vis { type: 'clock', t, target, set: true }   (kind 'clock', a Check button) +5 and −5 minute buttons move the
         long hand, and the short hand follows it, as on a real clock
@@ -695,6 +702,7 @@ function clockVis(v) {
   return `<div class="gv-clock${v.small ? ' is-small' : ''}" data-t="clock">${clockFace(v)}</div>
     ${v.set ? `<div class="gv-tools clk-set"><button class="mbtn" type="button" data-g="clk-minus" data-t="clk-minus" aria-label="Take the long hand back 5 minutes">−5 minutes</button><button class="mbtn" type="button" data-g="clk-plus" data-t="clk-plus" aria-label="Move the long hand on 5 minutes">+5 minutes</button></div>
       <span class="sr" role="status">The clock shows ${timeWords(v.t)}</span>` : ''}
+    ${v.key ? `<div class="clk-key"><span><svg viewBox="0 0 30 10" aria-hidden="true"><path d="M2 5 L6 2 L28 5 L6 8 Z" fill="#D2453B" stroke="#8E2019" stroke-width="1"/></svg>Long hand: minutes</span><span><svg viewBox="0 0 30 10" aria-hidden="true"><path d="M2 5 L6 1.5 L18 5 L6 8.5 Z" fill="#1C4893" stroke="#0F2A5A" stroke-width="1"/></svg>Short hand: hour</span></div>` : ''}
     ${v.count ? `<div class="gv-tools clk-count"><button class="mbtn small" type="button" data-g="clk-count" data-t="clk-count">Count in 5s</button></div>` : ''}`;
 }
 // move the hands without drawing the clock again, so they sweep round (or jump, with Reduce Motion)
@@ -956,7 +964,7 @@ const repeatQuest = q => !(S.ctx.first ?? S.ctx.index === 0) && questFor(q) === 
 function renderGame() {
   const q = S.q, quest = questFor(q);
   if (q.teach) S.teachAsk = fresh(TEACH.ask);
-  const hello = q.teach ? `<span><span class="big">I think it’s ${q.teach.said}!</span>${esc(U.fmt(S.teachAsk))}</span>` : S.ctx.warm ? 'Warm-up time! These ones are easy.' : (S.ctx.first ?? S.ctx.index === 0) ? (q.claim ? 'Let’s test the Captain’s conjecture!' : `Woof! Let’s go, ${esc(NAME())}!`)
+  const hello = q.teach ? `<span><span class="big">I think it’s ${q.teach.said}!</span>${esc(U.fmt(S.teachAsk))}</span>` : S.ctx.warm ? 'Warm-up time! These ones are easy.' : q.vis && q.vis.key ? 'The long hand shows the minutes. The short hand shows the hour.' : (S.ctx.first ?? S.ctx.index === 0) ? (q.claim ? 'Let’s test the Captain’s conjecture!' : `Woof! Let’s go, ${esc(NAME())}!`)
     : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'verdict' ? 'Is the Captain right?' : q.kind === 'chests' ? 'Which chest does it go in?' : q.kind === 'tester' ? 'Tap a number to test it!' : q.kind === 'steps' ? 'Which step is wrong?' : q.kind === 'build' ? 'Tap + to build it.' : q.kind === 'purse' ? 'Tap the coins to fill my purse!' : q.kind === 'clock' ? 'Move the long hand with the buttons!' : 'Tap the numbers to fill the box.';
   S.ctx.area.innerHTML = `<div class="mm" id="mm">
     <div class="play">
@@ -1758,6 +1766,9 @@ const CSS = String.raw`
 .mm .clk-cnt text { font-family: var(--f-display); font-weight: 700; font-size: 18px; fill: var(--ink); }
 .mm .clock.counting { width: 264px; height: 264px; }
 .mm .clk-hand { transform-box: view-box; transform-origin: 100px 100px; transition: transform .35s cubic-bezier(.3, 1.3, .5, 1); }
+.mm .clk-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; margin-top: 6px; font-family: var(--f-read); font-weight: 700; font-size: 16px; color: var(--ink); }
+.mm .clk-key span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.mm .clk-key svg { width: 30px; height: 10px; }
 .mm .clk-hour path { fill: #1C4893; stroke: #0F2A5A; stroke-width: 1.5; stroke-linejoin: round; }
 .mm .clk-min path { fill: #D2453B; stroke: #8E2019; stroke-width: 1.2; stroke-linejoin: round; }
 .mm .clk-pin { fill: var(--sun); stroke: var(--ink); stroke-width: 2; }
@@ -1793,10 +1804,11 @@ const CSS = String.raw`
   .mm .clk-set .mbtn { flex: 1 1 0; min-width: 0; max-width: 150px; padding: 6px 8px; }
   .mm .gvis > .clk-count .mbtn { width: 78px; min-height: 52px; padding: 4px 6px; font-size: 16px; line-height: 1.1; white-space: normal; }
 }
-/* a clock with buttons and answers under it (small: true) is smaller on a short phone (iPhone SE), so the answers fit */
+/* on a short phone (iPhone SE) a clock with something under it (set buttons, the hands' key) is smaller, so the
+   answers fit on the screen */
 @media (max-width: 560px) and (max-height: 700px) {
-  .mm .gv-clock.is-small .clock { width: 156px; height: 156px; }
-  .mm .gv-clock.is-small .clk-num text { font-size: 25px; }
+  .mm .gv-clock.is-small .clock, .mm .gvis:has(.clk-key, .clk-set) .clock { width: 156px; height: 156px; }
+  .mm .gv-clock.is-small .clk-num text, .mm .gvis:has(.clk-key, .clk-set) .clk-num text { font-size: 25px; }
 }
 @media (min-width: 561px) { .mm .gv-tray, .mm .gv-purse-in, .mm .gv-made .gv-coins { --k: 1.25; } .mm .gv-purse { width: min(100%, 470px); } .mm .gv-ware-pic svg { width: 80px; height: 80px; } .mm .gv-board { font-size: 24px; } .mm .gv-wares { gap: 14px 40px; padding: 14px 16px 16px; } }
 @media (max-width: 560px) {
