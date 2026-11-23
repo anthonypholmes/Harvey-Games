@@ -65,7 +65,7 @@ If "Meadow Clubhouse" is taken, use `Meadow Clubhouse: KS1 Learning`.
 Now on iPhone too! Year 2 maths and English with Bonnie the dog. Try the first level of every world for free. No adverts, no subscription, and it works offline.
 ```
 
-**Description (4,000)** *1.1: three lines added under MADE FOR FAMILIES (iPhone and iPad, the weekly reminder, VoiceOver), and one under FREE TO TRY.*
+**Description (4,000)** *1.1: three lines added under MADE FOR FAMILIES (iPhone and iPad, the weekly reminder, VoiceOver), and one under FREE TO TRY. Harbour Market and the Clock Tower added under MEADOW MATHS (8 worlds, 52 levels; 72 in all).*
 
 ```
 Homework without the tears. Meadow Clubhouse turns Year 2 (KS1) maths and English into a game your child will ask to play, with Bonnie the chocolate-brown dog cheering them on every step of the way.
@@ -78,12 +78,14 @@ Bonnie never tells a child they're wrong and leaves it there. She wags, she gigg
 WHY PARENTS LOVE IT
 You'll hear "just one more level" about maths. You'll see what they practised this week without having to ask. And you'll never see an advert, a subscription or a pop-up asking your child to buy something.
 
-MEADOW MATHS: 6 worlds, 38 levels
+MEADOW MATHS: 8 worlds, 52 levels
 • The Partitioning Park: tens and ones, hundreds, splitting numbers different ways
 • Number Bonds Burrow: bonds to 10 and 20, adding and taking away, fact families
 • The Stepping Stone River: number lines, midpoints, jumping in steps
 • The Array Orchard: groups, arrays and the 2, 5 and 10 times tables
 • The Sharing Pond: sharing, grouping, halves, quarters and thirds
+• Harbour Market: coins and notes, shopping and giving change
+• The Clock Tower: telling the time to 5 minutes, and how long things take
 • Captain's Cove: is Captain Croak right? True or false, spot the mistake, prove it
 
 MEADOW WORDS: 4 worlds, 20 levels
@@ -117,15 +119,15 @@ SAFE AND SIMPLE
 • The purchase button is behind a check for grown-ups
 
 FREE TO TRY
-Bonnie's Walk and the first level of every world are free, so your child can find the world they love. One purchase then unlocks all 58 levels for good, on your iPhone and iPad, and works with Family Sharing.
+Bonnie's Walk and the first level of every world are free, so your child can find the world they love. One purchase then unlocks all 72 levels for good, on your iPhone and iPad, and works with Family Sharing.
 
 Come and meet Bonnie. She's been waiting by the gate.
 ```
 
-**Keywords (100, commas, no spaces).** Words already in the name and subtitle are left out, because Apple counts those anyway.
+**Keywords (100, commas, no spaces).** *1.1: "money" added (exactly 100).* Words already in the name and subtitle are left out, because Apple counts those anyway.
 
 ```
-phonics,spelling,times tables,number bonds,sats,primary,age 6,age 7,homework,reading,fractions
+phonics,spelling,times tables,number bonds,sats,primary,age 6,age 7,homework,reading,fractions,money
 ```
 
 | Field | Value |
@@ -191,7 +193,7 @@ Six pictures are ready in `docs/screenshots/`, at the iPad 13-inch size Apple as
 |---|---|
 | `1-clubhouse.png` | Year 2 maths and English, with Bonnie the dog cheering them on |
 | `2-help.png` | Help that teaches: Bonnie gives a clue, then shows how |
-| `3-maths-worlds.png` | 6 maths worlds, 38 levels |
+| `3-maths-worlds.png` | 8 maths worlds, 52 levels |
 | `4-words.png` | Phonics, spelling and stories: 4 English worlds, 20 levels |
 | `5-bone-shop.png` | Earn bones, unlock gear: helmets, jetpacks, themes and real prizes (changed 18 November 2026; it was "Earn bones for hats and prizes") |
 | `6-walk.png` | A walk with Bonnie every day |

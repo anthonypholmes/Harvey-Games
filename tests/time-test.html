@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Clock Tower Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px 16px; color: #3E2F27; background: #FDFBF7; }
+  h1 { font-size: 1.4rem; margin: 0 0 6px; }
+  p { margin: 0 0 16px; color: #7A6A5E; }
+  #result { font-size: 1.3rem; font-weight: 700; padding: 12px 16px; border-radius: 14px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  table { border-collapse: collapse; margin-top: 16px; font-size: .95rem; }
+  td, th { text-align: left; padding: 4px 10px; border-bottom: 1px solid #EADFCB; }
+  pre { white-space: pre-wrap; font-size: .85rem; background: #fff; border-radius: 10px; padding: 10px; }
+</style>
+</head>
+<body>
+<h1>The Clock Tower: question check</h1>
+<p>Makes every kind of question hundreds of times, in normal and easy mode, and checks the times, the words, where the hands point, Set the Clock and Bonnie's step cards. It only makes questions: it never plays them, and it doesn't touch the save.</p>
+<div id="result">Checking…</div>
+<table id="table"></table>
+<pre id="errs" hidden></pre>
+
+<script src="../js/meadow-core.js"></script>
+<script src="../worlds/y2-maths-kit.js"></script>
+<script src="../worlds/y2-maths-time.js"></script>
+<script>
+(() => {
+  const storageBefore = JSON.stringify(Object.entries(localStorage).sort());
+  const M = window.MeadowMaths, w = Meadow.world('y2-maths-time'), errs = [], seen = {}, made = {};
+  const IDS = ['oclock-half', 'quarters', 'five-minutes', 'set-clock', 'minutes-hours', 'how-long', 'later'];
+  const READING = ['oclock-half', 'quarters', 'five-minutes'];
+  const mod = t => ((t % 720) + 720) % 720;
+  const bad = (L, q, m) => { if (errs.length < 60) errs.push(`${L.id}${q.eased ? ' (easy)' : ''} ${q.type}  "${q.prompt}": ${m}`); };
+  // the time some words mean, worked out separately from the game's own timeWords
+  function parse(s) {
+    let m;
+    if ((m = s.match(/^(\d+) o’clock$/))) return mod(+m[1] * 60);
+    if ((m = s.match(/^half past (\d+)$/))) return mod(+m[1] * 60 + 30);
+    if ((m = s.match(/^quarter past (\d+)$/))) return mod(+m[1] * 60 + 15);
+    if ((m = s.match(/^quarter to (\d+)$/))) return mod(+m[1] * 60 - 15);
+    if ((m = s.match(/^(\d+) past (\d+)$/))) return +m[1] < 30 && +m[1] % 5 === 0 ? mod(+m[2] * 60 + +m[1]) : NaN;
+    if ((m = s.match(/^(\d+) to (\d+)$/))) return +m[1] < 30 && +m[1] % 5 === 0 ? mod(+m[2] * 60 - +m[1]) : NaN;
+    return NaN;
+  }
+  const walkable = q => (q.kind === 'boxes' && !q.inter) || q.kind === 'choice';
+
+  // the words for every five minutes of the day, and back again
+  for (let t = 0; t < 720; t += 5) {
+    const s = M.timeWords(t);
+    if (parse(s) !== t) errs.push(`${t} minutes is written "${s}"`);
+    if (/\d:\d/.test(s)) errs.push(`a digital time: ${s}`);
+    if (M.timeWords(t + 720) !== s || M.timeWords(t - 720) !== s) errs.push(`${t}: the words change after 12 hours`);
+    // the hands: the long hand at minutes × 6°, the short hand at the hour × 30° plus half a degree a minute
+    const a = M.clockAngles(t), h = Math.floor(t / 60), m = t % 60;
+    if (a.minute !== m * 6) errs.push(`${s}: the long hand is at ${a.minute}°`);
+    if (Math.abs(a.hour - (h * 30 + m / 2)) > 1e-9) errs.push(`${s}: the short hand is at ${a.hour}°`);
+  }
+  if (M.clockAngles(7 * 60 + 30).hour !== 225) errs.push('at half past 7 the short hand is not half way between 7 and 8');
+  if (M.timeWords(0) !== '12 o’clock' || M.timeWords(11 * 60 + 45) !== 'quarter to 12' || M.timeWords(12 * 60 - 5) !== '5 to 12') errs.push('the hours round 12 are wrong');
+  if (!/half way between the 7 and the 8/.test(M.handsSay(450)) || /half past|7 o’clock/.test(M.handsSay(450))) errs.push('VoiceOver’s clock description: ' + M.handsSay(450));
+
+  if (!w) errs.push('The world did not load.');
+  else if (w.levels.map(L => L.id).join() !== IDS.join()) errs.push('Level ids have changed: ' + w.levels.map(L => L.id).join(', '));
+
+  for (const L of (w ? w.levels : [])) for (const eased of [false, true]) for (let rep = 0; rep < 300; rep++) for (let index = 0; index < L.seq.length; index++) {
+    const q = L.make({ eased, index, type: L.seq[index] });
+    const key = L.id + (eased ? ' easy' : '');
+    made[key] = (made[key] || 0) + 1; (seen[key] = seen[key] || new Set()).add(q.type.replace(/^g-/, ''));
+    const qt = q.type.replace(/^g-/, ''); // the kind of question, as the world file names it
+    const v = q.vis;
+    if (!q.gclue || !q.gclue.say) bad(L, q, 'no clue');
+    if (q.inter === 'clock') { if (walkable(q)) bad(L, q, 'a clock to play with would go on the Walk'); }
+    else if (!walkable(q)) bad(L, q, 'can’t go on Bonnie’s Walk');
+    if (L.id === 'set-clock' && q.inter !== 'clock') bad(L, q, 'Set the Clock isn’t marked as a picture to play with');
+
+    if (q.kind === 'choice' && READING.includes(L.id)) {
+      const right = q.cfmt(q.answer[0]), labels = q.choices.map(q.cfmt), m = v.t % 60;
+      if (right !== M.timeWords(v.t) || parse(right) !== mod(v.t)) bad(L, q, `the clock shows ${M.timeWords(v.t)}, the answer is ${right}`);
+      // the wrong buttons are the slips children make ("4 past 2" for 20 past 2, "35 to 6"), but never the right time said another way
+      if (labels.some(l => /^([3-5]\d) past/.test(l) && mod(+l.split(' ')[2] * 60 + +l.split(' ')[0]) === mod(v.t))) bad(L, q, 'a wrong button is the right time said the long way: ' + labels.join(' / '));
+      if (new Set(labels).size !== 3) bad(L, q, 'two buttons say the same: ' + labels.join(' / '));
+      if (labels.filter(l => parse(l) === mod(v.t)).length !== 1) bad(L, q, 'a wrong button is the right time: ' + labels.join(' / '));
+      if (L.id !== 'five-minutes' && labels.some(l => Number.isNaN(parse(l)))) bad(L, q, 'a button is not a real time: ' + labels.join(' / '));
+      if (v.t % 5) bad(L, q, 'not a five-minute time');
+      if (L.id === 'oclock-half' && ![0, 30].includes(m)) bad(L, q, 'not o’clock or half past');
+      if (L.id === 'quarters' && ![15, 45].includes(m)) bad(L, q, 'not a quarter');
+      if (L.id === 'five-minutes' && [0, 15, 30, 45].includes(m)) bad(L, q, 'not a five-minute step');
+      if (eased && L.id === 'oclock-half' && m) bad(L, q, 'easy should be o’clock');
+      if (eased && L.id === 'quarters' && m !== 15) bad(L, q, 'easy should be quarter past');
+      if (eased && L.id === 'five-minutes' && m > 30) bad(L, q, 'easy should be a “past” time');
+      if (L.id === 'five-minutes' && !v.count) bad(L, q, 'no Count in 5s button');
+    }
+    if (q.kind === 'clock') {
+      const m = v.target % 60;
+      if (q.prompt !== `Show ${M.timeWords(v.target)}.`) bad(L, q, 'the prompt and the time differ');
+      if (eased && ![0, 15, 30, 45].includes(m)) bad(L, q, 'easy should be o’clock, half past or a quarter');
+      if (M.clockOk(v)) bad(L, q, 'the clock starts at the answer');
+      if (Math.abs(v.t - v.target) > 45 || v.t % 5) bad(L, q, `starts too far away (${M.timeWords(v.t)})`);
+      // only the right time counts: not the same minutes an hour out, but yes the same time 12 hours on
+      const keep = v.t;
+      v.t = v.target + 60; if (M.clockOk(v)) bad(L, q, 'an hour out is accepted');
+      v.t = v.target + 720; if (!M.clockOk(v)) bad(L, q, '12 hours on is not accepted');
+      v.t = keep;
+      // follow the glowing buttons: it gets there the short way
+      let n = 0; while (!M.clockOk(v) && n < 20) { const d = M.clockDir(v); v.t += d === 'clk-plus' ? 5 : d === 'clk-minus' ? -5 : 0; n++; }
+      if (!M.clockOk(v) || n > 9) bad(L, q, `the glow takes ${n} taps`);
+      if (M.clockDir(v) !== 'key-check') bad(L, q, 'the glow does not move to Check');
+      v.t = keep;
+    }
+
+    // Level 5: the facts
+    const FACTS = { hour: 60, half: 30, quarter: 15, day: 24, two: 120 };
+    if (L.id === 'minutes-hours') { if (q.answer[0] !== FACTS[qt]) bad(L, q, `should be ${FACTS[qt]}`); if (eased && !['hour', 'half'].includes(qt)) bad(L, q, 'too hard for the easy version'); }
+    // Level 6: how long between the two clocks, and which is longer
+    if (qt === 'minutes' || qt === 'hours') {
+      const [s, e] = v.list, d = e - s;
+      if (q.answer[0] !== (qt === 'hours' ? d / 60 : d)) bad(L, q, `the clocks are ${d} minutes apart`);
+      if (v.labels.join() !== 'Start,End') bad(L, q, 'the clocks are not labelled Start and End');
+      if (eased && ![30, 60].includes(d)) bad(L, q, 'easy should be whole and half hours');
+      if (d <= 0 || d > 180) bad(L, q, 'out of range');
+    }
+    if (qt === 'longer') {
+      const mins = l => ({ '1 hour': 60, 'half an hour': 30, 'a quarter of an hour': 15, '2 hours': 120 })[l] ?? +l.match(/^(\d+) minutes$/)[1];
+      const [a, b] = q.choices.map(i => mins(q.cfmt(i))), short = /shorter/.test(q.prompt), want = (short ? a < b : a > b) ? 0 : 1;
+      if (a === b) bad(L, q, 'the two are the same length');
+      if (q.answer[0] !== want) bad(L, q, 'the wrong one is marked right');
+    }
+    // Level 7: later and earlier, and Bonnie's day in order
+    if (qt === 'later' || qt === 'earlier') {
+      const m = q.prompt.match(/(an hour|(\d+) minutes)/), d = m[2] ? +m[2] : 60, dir = qt === 'later' ? 1 : -1;
+      if (v.target !== v.t + dir * d) bad(L, q, 'the clock’s target is not the answer');
+      if (q.cfmt(q.answer[0]) !== M.timeWords(v.target)) bad(L, q, `the answer should be ${M.timeWords(v.target)}`);
+      if (!q.prompt.startsWith(`It’s ${M.timeWords(v.t)}.`)) bad(L, q, 'the prompt and the clock differ');
+      const labels = q.choices.map(q.cfmt);
+      if (new Set(labels).size !== 3 || labels.filter(l => parse(l) === mod(v.target)).length !== 1) bad(L, q, 'buttons: ' + labels.join(' / '));
+      if (eased && (qt !== 'later' || d !== 60)) bad(L, q, 'easy should be an hour later');
+    }
+    if (/^order/.test(qt)) {
+      const keys = q.choices.map(i => M.DAY_ORDER.find(k => q.cfmt(i).includes(`<b>${M.dayName(k)}</b>`)));
+      const idx = keys.map(k => M.DAY_ORDER.indexOf(k)), right = keys[q.answer[0]];
+      const m = q.prompt.match(/after (.+)\?$/);
+      const want = qt === 'orderfirst' ? keys[idx.indexOf(Math.min(...idx))] : qt === 'orderlast' ? keys[idx.indexOf(Math.max(...idx))]
+        : M.DAY_ORDER[M.DAY_ORDER.findIndex(k => M.dayName(k) === m[1]) + 1];
+      if (right !== want || new Set(keys).size !== 3) bad(L, q, `answer ${right}, should be ${want}`);
+    }
+
+    const steps = q.gsteps();
+    if (!steps.length) { bad(L, q, 'no step card'); continue; }
+    steps.forEach((st, i) => {
+      if (st.action) return;
+      const ch = st.choices.map(String);
+      if (!ch.includes(String(st.answer))) bad(L, q, `step ${i + 1}: the right answer is not one of the buttons`);
+      if (new Set(ch).size !== ch.length || ch.length < 2) bad(L, q, `step ${i + 1}: buttons ${ch.join(', ')}`);
+      if (ch.some(c => /^-|^0$/.test(c))) bad(L, q, `step ${i + 1}: a button that's 0 or less`);
+    });
+    // the step card's facts match the clock
+    const handStep = steps.find(st => /Where (is|does) the long hand/.test(st.say));
+    const tt = !v ? null : q.kind === 'clock' ? v.target : v.t;
+    if (handStep && handStep.answer !== `at the ${M.minuteNum(tt)}`) bad(L, q, `the long hand step says ${handStep.answer}`);
+    const last = steps[steps.length - 1];
+    if (q.kind === 'choice') { if (!last.final || last.answer !== q.cfmt(q.answer[0])) bad(L, q, 'the last step does not give the answer'); }
+    else if (q.kind === 'clock') { if (!last.action) bad(L, q, 'Set the Clock’s step card does not end by moving the hand'); }
+    else if (!last.fill || String(last.answer) !== String(q.answer[0])) bad(L, q, 'the last step does not give the answer');
+  }
+  const lines = [...w.lines({}), ...w.numberLines()];
+  lines.filter(l => /\d:\d\d/.test(l)).slice(0, 5).forEach(l => errs.push('a digital time in a line: ' + l));
+  if (JSON.stringify(Object.entries(localStorage).sort()) !== storageBefore) errs.push('The check changed something in storage!');
+
+  const total = Object.values(made).reduce((a, b) => a + b, 0), res = document.getElementById('result');
+  res.className = errs.length ? 'fail' : 'pass';
+  res.textContent = errs.length ? `✗ ${errs.length} problem${errs.length > 1 ? 's' : ''} found (in ${total} questions)` : `✓ All ${total} questions passed`;
+  document.getElementById('table').innerHTML = '<tr><th>Level</th><th>Questions</th><th>Kinds</th></tr>' +
+    Object.keys(made).map(k => `<tr><td>${k}</td><td>${made[k]}</td><td>${[...seen[k]].join(', ')}</td></tr>`).join('');
+  if (errs.length) { const p = document.getElementById('errs'); p.hidden = false; p.textContent = errs.join('\n'); }
+  window.TEST_RESULT = { passed: !errs.length, total, errs };
+})();
+</script>
+</body>
+</html>

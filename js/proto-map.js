@@ -38,7 +38,10 @@
     'y2-maths-number-lines': { hit: [126, 542, 394, 130], sign: [222, 552], bonnie: [352, 668], bub: [300, 674, 'below'] },
     'y2-maths-arrays': { hit: [332, 760, 228, 292], sign: [440, 968], bonnie: [300, 840], bub: [130, 764, 'above'] },
     'y2-maths-sharing': { hit: [100, 975, 228, 228], sign: [210, 1100], bonnie: [400, 1060], bub: [335, 1066, 'below'] },
-    'y2-maths-captains-cove': { hit: [100, 1250, 420, 240], sign: [206, 1268], bonnie: [365, 1262], bub: [330, 1170, 'above'] },
+    // drawn after the trail grew (23 November 2026), so written straight in the final heights (fin)
+    'y2-maths-money': { fin: true, hit: [80, 1050, 270, 244], sign: [238, 1204], bonnie: [420, 1186], bub: [400, 1066, 'above'] },
+    'y2-maths-time': { fin: true, hit: [352, 1180, 226, 332], sign: [470, 1418], bonnie: [326, 1446], bub: [290, 1382, 'above'] },
+    'y2-maths-captains-cove': { fin: true, hit: [100, 1514, 420, 176], sign: [206, 1522], bonnie: [365, 1506], bub: [400, 1522, 'below'] },
   };
   // the Meadow Words route (drawn at its own height, so no moving)
   const RAW_WORDS = {
@@ -48,15 +51,15 @@
     'y2-english-stories': { hit: [366, 650, 200, 400], sign: [440, 948], signW: 150, bonnie: [300, 900], bub: [131, 912, 'below'] },
   };
   const ROUTES = {
-    maths: { subject: 'maths', title: 'Meadow Maths', raw: RAW_MATHS, F, H: A.ROUTE_H, scene: A.mathsRoute, maxH: 1280 },
+    maths: { subject: 'maths', title: 'Meadow Maths', raw: RAW_MATHS, F, H: A.ROUTE_H, scene: A.mathsRoute, maxH: 1700 },
     words: { subject: 'english', title: 'Meadow Words', raw: RAW_WORDS, F: y => y, H: A.WORDS_H, scene: A.wordsRoute, maxH: 1100 },
   };
   const R = ROUTES[window.PROTO_ROUTE] || ROUTES.maths, G = R.F;
   // Bonnie's words (js/meadow-look.js, where tools/make-voice.mjs finds them to record)
   const LL = window.MeadowLook.LINES, SAYS = id => LL.places[id] || [LL.offWeGo, LL.offWeGo];
-  const PLACES = Object.fromEntries(Object.entries(R.raw).map(([id, p]) => [id, { ...p,
+  const PLACES = Object.fromEntries(Object.entries(R.raw).map(([id, p]) => { const G = p.fin ? (y => y) : R.F; return [id, { ...p,
     hit: [p.hit[0], G(p.hit[1]), p.hit[2], G(p.hit[1] + p.hit[3]) - G(p.hit[1])],
-    sign: [p.sign[0], G(p.sign[1])], bonnie: [p.bonnie[0], G(p.bonnie[1])], bub: [p.bub[0], G(p.bub[1]), p.bub[2]] }]));
+    sign: [p.sign[0], G(p.sign[1])], bonnie: [p.bonnie[0], G(p.bonnie[1])], bub: [p.bub[0], G(p.bub[1]), p.bub[2]] }]; }));
   const WORLD_W = 640, WORLD_H = R.H, PHONE_X = 125, PHONE_W = 390;
   const short = id => id.replace(/^y2-[a-z]+-/, '');
 
@@ -346,9 +349,10 @@
     const t0 = performance.now(); draw(); const drawMs = performance.now() - t0;
     const r = el => el.getBoundingClientRect();
     const cross = (a, b) => a.left < b.right - 2 && b.left < a.right - 2 && a.top < b.bottom - 2 && b.top < a.bottom - 2;
-    const ws = M.visibleWorlds(R.subject), hits = ui.$$('.pm-hit[data-w]');
+    // ws: the worlds drawn on the map (a new world with no drawing yet waits under "More worlds")
+    const all = M.visibleWorlds(R.subject), ws = placed(), hits = ui.$$('.pm-hit[data-w]');
     ok('the meadow is showing', !!ui.$('.pm'));
-    ok(`every ${R.title} world has a place`, hits.length + ui.$$('.pm-hit-more').length === ws.length, `${hits.length} places for ${ws.length} worlds`);
+    ok(`every ${R.title} world has a place`, hits.length + ui.$$('.pm-hit-more').length === all.length, `${hits.length} places and ${ui.$$('.pm-hit-more').length} more for ${all.length} worlds`);
     const small = hits.concat(ui.$$('.pm-tag'), ui.$$('.pm-jump')).filter(b => r(b).width < 44 || r(b).height < 44);
     ok('every tap target is at least 44 × 44', !small.length, small.map(b => b.getAttribute('aria-label')).join(', '));
     ok('each place is a generous target (at least 120 × 100)', hits.every(b => r(b).width >= 120 && r(b).height >= 100), hits.map(b => `${r(b).width.toFixed(0)}×${r(b).height.toFixed(0)}`).join(', '));
@@ -390,7 +394,7 @@
     if (jump) {
       jump.click(); await wait(80);
       const sheet = ui.$('.pm-sheet');
-      ok('"Places" lists every world, with its progress, and starts on Bonnie\'s', !!sheet && sheet.querySelectorAll('[data-w]').length === ws.length && document.activeElement && document.activeElement.closest('.pm-sheet') && sheet.contains(document.activeElement));
+      ok('"Places" lists every world, with its progress, and starts on Bonnie\'s', !!sheet && sheet.querySelectorAll('[data-w]').length === all.length && document.activeElement && document.activeElement.closest('.pm-sheet') && sheet.contains(document.activeElement));
       sheet.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); await wait(50);
       ok('Escape closes it and goes back to the Places button', !ui.$('.pm-sheet') && document.activeElement === ui.$('#pmJump'));
     }

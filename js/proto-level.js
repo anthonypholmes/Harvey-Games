@@ -37,6 +37,8 @@
     'y2-maths-number-lines': { head: s => { A.river(s, 'M-20 178 C140 150 260 196 380 170 S560 150 680 176', 34); P.riverStones(s, 320, 170); }, ground: 'river', trees: 'round' },
     'y2-maths-arrays': { head: s => P.orchard(s, 320, 112), ground: 'path', trees: 'apple' },
     'y2-maths-sharing': { head: s => P.pond(s, 320, 132), ground: 'river', trees: 'round' },
+    'y2-maths-money': { head: s => P.market(s, 330, 166), ground: 'path', trees: 'round' },
+    'y2-maths-time': { head: s => { const t = new A.Scene(W, HEAD_H); P.clockTower(t, 0, 0); s.add(140, `<g transform="translate(320 140) scale(.6)">${t.render()}</g>`); }, ground: 'path', trees: 'round' }, // the tower, smaller, so it fits above its sign
     'y2-maths-captains-cove': { head: s => P.cove(s, 320, 122), ground: 'sea', trees: null },
     'y2-english-phonics': { head: s => P.forest(s, 320, 150), ground: 'path', trees: 'pine' },
     'y2-english-tricky-words': { head: s => { A.river(s, 'M-20 150 C120 168 200 178 250 174 S520 150 680 162', 24); P.trickyTrail(s, 330, 112); }, ground: 'path', trees: 'round' },

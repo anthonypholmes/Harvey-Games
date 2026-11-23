@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Harbour Market Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px 16px; color: #3E2F27; background: #FDFBF7; }
+  h1 { font-size: 1.4rem; margin: 0 0 6px; }
+  p { margin: 0 0 16px; color: #7A6A5E; }
+  #result { font-size: 1.3rem; font-weight: 700; padding: 12px 16px; border-radius: 14px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  table { border-collapse: collapse; margin-top: 16px; font-size: .95rem; }
+  td, th { text-align: left; padding: 4px 10px; border-bottom: 1px solid #EADFCB; }
+  pre { white-space: pre-wrap; font-size: .85rem; background: #fff; border-radius: 10px; padding: 10px; }
+</style>
+</head>
+<body>
+<h1>Harbour Market: question check</h1>
+<p>Makes every kind of question hundreds of times, in normal and easy mode, and checks the coins, the totals, Bonnie's purse, her step cards and the amounts. It only makes questions: it never plays them, and it doesn't touch the save.</p>
+<div id="result">Checking…</div>
+<table id="table"></table>
+<pre id="errs" hidden></pre>
+
+<script src="../js/meadow-core.js"></script>
+<script src="../worlds/y2-maths-kit.js"></script>
+<script src="../worlds/y2-maths-money.js"></script>
+<script>
+(() => {
+  const storageBefore = JSON.stringify(Object.entries(localStorage).sort());
+  const M = window.MeadowMaths, w = Meadow.world('y2-maths-money'), errs = [], seen = {}, made = {};
+  const IDS = ['coins', 'count-coins', 'make-it', 'other-ways', 'pounds', 'shopping', 'change'];
+  const COINS = [1, 2, 5, 10, 20, 50, 100, 200], EASY = [1, 2, 5, 10];
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  const bad = (L, q, m) => { if (errs.length < 60) errs.push(`${L.id}${q.eased ? ' (easy)' : ''} ${q.type}  "${q.prompt}"  answer ${q.answer}: ${m}`); };
+  // the true fewest coins for an amount (worked out the slow way, to check the quick way)
+  const fewest = (t, set) => { const f = [0]; for (let a = 1; a <= t; a++) f[a] = Math.min(...set.filter(c => c <= a).map(c => f[a - c] + 1)); return f[t]; };
+  const walkable = q => (q.kind === 'boxes' && !q.inter) || q.kind === 'choice';
+
+  // money words, written and said
+  [['35p', '35 pence'], ['1p', '1 penny'], ['£1', '1 pound'], ['£5', '5 pounds'], ['£2.50', '2 pounds 50'], ['Which is the £2 coin?', 'Which is the 2 pound coin?'], ['The £5 note is blue-green.', 'The 5 pound note is blue-green.'], ['£1.05', '1 pound 5'], ['Put 20p in the purse.', 'Put 20 pence in the purse.']]
+    .forEach(([a, b]) => { if (M.spoken(a) !== b) errs.push(`"${a}" is said "${M.spoken(a)}", not "${b}"`); if (M.money(0) === '') errs.push('money(0)'); });
+  [[35, '35p'], [100, '£1'], [250, '£2.50'], [1000, '£10'], [105, '£1.05']].forEach(([p, s]) => { if (M.money(p) !== s) errs.push(`${p} is written ${M.money(p)}, not ${s}`); });
+  if (M.spoken('Count in 5s! What is 12 + 4?') !== 'Count in 5s! What is 12 + 4?') errs.push('spoken() changes lines with no money in them');
+
+  if (!w) errs.push('The world did not load.');
+  else if (w.levels.map(L => L.id).join() !== IDS.join()) errs.push('Level ids have changed: ' + w.levels.map(L => L.id).join(', '));
+
+  for (const L of (w ? w.levels : [])) for (const eased of [false, true]) for (let rep = 0; rep < 300; rep++) for (let index = 0; index < L.seq.length; index++) {
+    const q = L.make({ eased, index, type: L.seq[index] });
+    const key = L.id + (eased ? ' easy' : '');
+    made[key] = (made[key] || 0) + 1; (seen[key] = seen[key] || new Set()).add(q.type.replace(/^g-/, ''));
+    const qt = q.type.replace(/^g-/, ''); // the kind of question, as the world file names it
+    const v = q.vis, ans = q.answer[0];
+    if (!q.gclue || !q.gclue.say) bad(L, q, 'no clue');
+    if (/\{N\}/.test(q.prompt)) bad(L, q, 'the player’s name is in a question');
+    if (L.id === 'coins' || L.id === 'count-coins') { if (!walkable(q)) bad(L, q, 'can’t go on Bonnie’s Walk'); }
+    else if (walkable(q) && q.kind !== 'boxes') bad(L, q, 'a purse question would go on the Walk');
+
+    // is the answer right?
+    if (qt === 'value') {
+      const p = v.list[0];
+      if (q.cfmt(ans) !== M.money(p)) bad(L, q, `the coin is ${M.money(p)}, the answer says ${q.cfmt(ans)}`);
+      if (eased && !EASY.includes(p)) bad(L, q, 'not an easy coin');
+    }
+    if (qt === 'which' || qt === 'most') {
+      const vals = q.choices.map(i => +q.cfmt(i).match(/<span class="sr">(?:£(\d+)|(\d+)p) (?:coin|note)/).slice(1).map((x, j) => x && (j === 0 ? x * 100 : +x)).find(Boolean));
+      const m = q.prompt.match(/the (?:£(\d+)|(\d+)p) coin/), want = qt === 'most' ? Math.max(...vals) : m && (m[1] ? m[1] * 100 : +m[2]);
+      if (vals[ans] !== want) bad(L, q, `picked ${vals[ans]} not ${want}`);
+      if (new Set(vals).size !== 3) bad(L, q, 'two buttons show the same coin');
+      if (eased && vals.some(x => !EASY.includes(x))) bad(L, q, 'not an easy coin');
+    }
+    if (qt === 'sign') {
+      const m = q.prompt.match(/write (\d+) (pence|penny|pounds|pound)/), right = /pound/.test(m[2]) ? '£' + m[1] : m[1] + 'p';
+      if (q.cfmt(ans) !== right) bad(L, q, `answer ${q.cfmt(ans)} not ${right}`);
+    }
+    if (qt === 'same' || qt === 'mixed') {
+      if (ans !== sum(v.list)) bad(L, q, `the coins make ${sum(v.list)}`);
+      if (ans > 50) bad(L, q, 'more than 50p');
+      if (eased && (qt !== 'same' || ans > 40)) bad(L, q, 'too hard for the easy version');
+      if (qt === 'same' && new Set(v.list).size !== 1) bad(L, q, 'not all the same coin');
+      if (!M.teach.teachable(q)) bad(L, q, 'can’t be a Teach Bonnie question');
+    }
+    if (q.kind === 'purse') {
+      if (ans !== v.target) bad(L, q, 'answer and target differ');
+      if (eased && (v.target > 20 || v.tray.some(c => c > 10))) bad(L, q, 'too hard for the easy version');
+      if (v.target > 100 || v.target < 3) bad(L, q, 'amount out of range');
+      if (v.ban && sum(v.ban) !== v.target) bad(L, q, `Bonnie’s way makes ${sum(v.ban)}`);
+      if (v.ban && v.ban.some(c => !v.tray.includes(c))) bad(L, q, 'Bonnie used a coin that isn’t in the tray');
+      const plan = M.coinPlan(v.target, v.tray, v.ban);
+      if (!plan || sum(plan) !== v.target || (v.ban && M.sameCoins(plan, v.ban))) bad(L, q, 'no good way to make it');
+      // the step card, played: every "put it in" step done by putting its coin in; the purse must then be right
+      const steps = q.gsteps(); v.in = [];
+      steps.forEach((st, i) => {
+        if (st.action) { if (!st.action()) v.in.push(+st.point.replace('coin-', '')); if (!st.action()) bad(L, q, `step ${i + 1} can’t be finished`); return; }
+        if (!st.choices.map(String).includes(String(st.answer))) bad(L, q, `step ${i + 1}: the right answer is not one of the buttons`);
+        if (new Set(st.choices.map(String)).size !== st.choices.length || st.choices.length < 2) bad(L, q, `step ${i + 1}: buttons ${st.choices.join(', ')}`);
+      });
+      if (!M.purseOk(v)) bad(L, q, `after the steps the purse has ${v.in.join('+')}`);
+      v.in = [];
+      continue;
+    }
+    // Level 5: pounds and pence
+    if (qt === 'p100' && ans !== 100) bad(L, q, 'a pound is 100 pence');
+    if (qt === 'p200' && ans !== 200) bad(L, q, 'two pounds are 200 pence');
+    if (qt === 'coins100') { const c = +q.prompt.match(/many (\d+)p coins/)[1]; if (ans * c !== 100) bad(L, q, `${ans} coins of ${c}p is not £1`); if (eased && c !== 10) bad(L, q, 'too hard for the easy version'); }
+    if (qt === 'notes') {
+      if (ans * 100 !== sum(v.list)) bad(L, q, `the money makes ${sum(v.list)}p`);
+      if (ans > 10) bad(L, q, 'more than £10');
+      if (v.list.some(p => p < 100)) bad(L, q, 'pence in a pounds question');
+    }
+    if (qt === 'pandp') {
+      const P = sum(v.list.filter(p => p >= 100)), p = sum(v.list.filter(p => p < 100));
+      if (eased) bad(L, q, 'pounds and pence together in the easy version');
+      if (q.answer[0] * 100 !== P || q.answer[1] !== p) bad(L, q, `it is £${P / 100} and ${p}p`);
+      if (P + p > 1000 || p >= 100) bad(L, q, 'out of range');
+    }
+    // Level 6: shopping at the stall
+    if (qt === 'two' || qt === 'more') {
+      const [a, b] = v.items.map(x => x.price), want = qt === 'two' ? a + b : b - a;
+      if (ans !== want) bad(L, q, `the prices make ${want}`);
+      if (qt === 'two' && ans > (eased ? 20 : 100)) bad(L, q, 'total out of range');
+      if (qt === 'more' && (b <= a || b > (eased ? 20 : 100))) bad(L, q, 'prices out of range');
+      if (!v.items.every(x => M.WARES[x.k])) bad(L, q, 'a thing with no drawing');
+      if (new Set(v.items.map(x => x.k)).size !== 2) bad(L, q, 'the same thing twice');
+    }
+    // Level 7: change, never below nothing
+    if (qt === 'change') {
+      const price = v.items[0].price;
+      if (ans !== v.paid - price) bad(L, q, `the change is ${v.paid - price}`);
+      if (ans < 1 || price < 1) bad(L, q, 'no change, or a free thing');
+      if (![10, 20, 50, 100].includes(v.paid) || (eased && v.paid > 20)) bad(L, q, `paid with ${v.paid}`);
+      if (!q.prompt.includes(M.money(price)) || !q.prompt.includes(M.money(v.paid))) bad(L, q, 'the prompt and the picture differ');
+    }
+    if (qt === 'fewest') {
+      if (ans !== fewest(v.target || +q.prompt.match(/make (?:£(\d+)|(\d+)p)/).slice(1).map((x, j) => x && (j === 0 ? x * 100 : +x)).find(Boolean), [1, 2, 5, 10, 20, 50, 100])) bad(L, q, 'not the fewest');
+      const T = +q.prompt.match(/make (?:£(\d+)|(\d+)p)/).slice(1).map((x, j) => x && (j === 0 ? x * 100 : +x)).find(Boolean);
+      if (eased && T > 20) bad(L, q, 'too hard for the easy version');
+    }
+
+    // the step card
+    const steps = q.gsteps();
+    if (!steps.length) { bad(L, q, 'no step card'); continue; }
+    steps.forEach((st, i) => {
+      if (st.action) return;
+      const ch = st.choices.map(String);
+      if (!ch.includes(String(st.answer))) bad(L, q, `step ${i + 1}: the right answer is not one of the buttons`);
+      if (new Set(ch).size !== ch.length || ch.length < 2) bad(L, q, `step ${i + 1}: buttons ${ch.join(', ')}`);
+      if (ch.some(c => /^-|^0p$|^0$/.test(c))) bad(L, q, `step ${i + 1}: a button that's 0 or less`);
+    });
+    const last = steps[steps.length - 1];
+    if (q.kind === 'choice') { if (!last.final || last.answer !== q.cfmt(ans)) bad(L, q, 'the last step does not give the answer'); }
+    else if (!last.fill || String(last.answer) !== String(q.answer[last.fill.box])) bad(L, q, 'the last step does not give the answer');
+    if (q.kind === 'boxes' && steps.filter(st => st.fill).length !== q.answer.length) bad(L, q, 'not every box is filled by the step card');
+  }
+  // every help line can be said in Bonnie's voice: no "35p" left for the number clips to trip over
+  const lines = [...w.lines({}), ...w.numberLines()];
+  lines.filter(l => /\d+p\b|£\d/.test(l)).slice(0, 5).forEach(l => errs.push('a line with money not in words: ' + l));
+  if (JSON.stringify(Object.entries(localStorage).sort()) !== storageBefore) errs.push('The check changed something in storage!');
+
+  const total = Object.values(made).reduce((a, b) => a + b, 0), res = document.getElementById('result');
+  res.className = errs.length ? 'fail' : 'pass';
+  res.textContent = errs.length ? `✗ ${errs.length} problem${errs.length > 1 ? 's' : ''} found (in ${total} questions)` : `✓ All ${total} questions passed`;
+  document.getElementById('table').innerHTML = '<tr><th>Level</th><th>Questions</th><th>Kinds</th></tr>' +
+    Object.keys(made).map(k => `<tr><td>${k}</td><td>${made[k]}</td><td>${[...seen[k]].join(', ')}</td></tr>`).join('');
+  if (errs.length) { const p = document.getElementById('errs'); p.hidden = false; p.textContent = errs.join('\n'); }
+  window.TEST_RESULT = { passed: !errs.length, total, errs };
+})();
+</script>
+</body>
+</html>

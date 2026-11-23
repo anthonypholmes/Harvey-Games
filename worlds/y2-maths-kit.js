@@ -139,7 +139,7 @@ const sfx = {
   soft: () => tone([440, 392], .1, 'sine', .06),
   woof: () => U.sfx.woof(),
 };
-const say = text => U.say(String(text).replace(/<[^>]+>/g, '').replace(/−/g, 'minus'));
+const say = text => U.say(spoken(String(text).replace(/<[^>]+>/g, '').replace(/−/g, 'minus')));
 
 /* =========================================================
    THE QUESTION SCREEN
@@ -260,14 +260,15 @@ const HELP_FIXED = ['Tap the glowing buttons.', 'Drag Bonnie into the green glow
 const helpLines = (worldId, per) => helpSentences(worldId, per).filter(s => !/\d/.test(s));
 /* The sentences with numbers in them. They are not recorded whole: the recorder cuts them at each number and records
    the words in between once ("What goes with", "to make"), and Bonnie's voice joins those up with number clips. */
-const numberLines = (worldId, per) => [...helpSentences(worldId, per).filter(s => /\d/.test(s)), 'Bonnie thinks it’s 5. Is she right?', 'Those do make 5!'];
+// "N pounds" and "N pence" also get a "1 pound" copy, so the singular ending is recorded even if £1 never came up in the samples
+const numberLines = (worldId, per) => [...new Set(helpSentences(worldId, per).filter(s => /\d/.test(s)).flatMap(s => [s, s.replace(/\b\d+ (?:pounds|pence)\b(?! \d)/g, '1 pound')])), 'Bonnie thinks it’s 5. Is she right?', 'Those do make 5!'];
 const HELP_SEEN = {};
 function helpSentences(worldId, per = 60) {
   if (HELP_SEEN[worldId + '/' + per]) return HELP_SEEN[worldId + '/' + per];
   const out = new Set(), keep = S, random = Math.random;
   let seed = 0x9E3779B9;
   Math.random = () => { seed = (seed + 0x6D2B79F5) >>> 0; let x = seed; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
-  const add = s => { if (typeof s === 'string' && s.trim()) out.add(s); };
+  const add = s => { if (typeof s === 'string' && s.trim()) out.add(spoken(s)); };
   try {
     for (const L of RAW[worldId] || []) for (const type of L.seq ? [...new Set(L.seq)] : [undefined]) for (const eased of [false, true]) for (let k = 0; k < per; k++) {
       try {
@@ -350,6 +351,8 @@ function finishSteps() {
   if (q.kind === 'build' && buildTotal() === q.n) return win();
   if (q.kind === 'line' && inTarget()) return win();
   if (q.kind === 'grid' && gridOk(q.vis)) return win();
+  if (q.kind === 'purse' && purseOk(q.vis)) return win();
+  if (q.kind === 'clock' && clockOk(q.vis)) return win();
   if (q.kind === 'steps' && S.wstage === 1 && !unsolvedBoxes().length) return win();
   // a verdict: the step card worked out the first answer, so fill it in and ask for the reason
   if (q.kind === 'verdict' && S.vstage === 0) {
@@ -408,6 +411,8 @@ function applyGuide() {
   if (q.inter === 'break' && q.broke < q.k) return spot('rod');
   if (q.kind === 'line') return spot(inTarget() ? 'key-check' : 'pawn');
   if (q.kind === 'grid') return spot(gridOk(q.vis) ? 'key-check' : `cell-${q.vis.tr}-${q.vis.tc}`);
+  if (q.kind === 'purse') return spot(purseGuide(q.vis));
+  if (q.kind === 'clock') return spot(clockDir(q.vis));
   if (q.kind === 'choice' || q.kind === 'chests') return spot(`choice-${q.answer[0]}`);
   if (q.kind === 'verdict') return spot(S.vstage === 0 ? `vpick-${q.verdict.right[0]}` : `vreason-${reasonsNow().answer}`);
   if (teaching()) return spot(`teach-${q.teach.right ? 1 : 0}`);
@@ -494,6 +499,239 @@ function afterMove() {
   setTimeout(() => { if (S && S.q === q0 && S.tier === 2 && !S.locked && st.action()) { S.step++; advanceSteps(); } }, 450);
 }
 
+/* ---------- money: coins, notes, Bonnie's purse and the market's price boards (Harbour Market) ----------
+   Our own drawings, never copies of the real designs: each coin is told apart the way children learn them, by
+   its metal, its size and its shape, with the value written large. Amounts are in pence (35 = 35p, 250 = £2.50).
+     vis { type: 'coins', list: [values], count }   coins (and £5 and £10 notes) in a row; count: tap each one to
+        count it aloud (5, 10, 15…), and the running total pops up over it
+     vis { type: 'purse', target, tray, in: [], ban, made }   (kind 'purse', a Check button) tap a coin in the tray to
+        put it in Bonnie's purse, tap one in the purse to take it out; ban: a way that doesn't count ("a different
+        way"), made: Bonnie's own way, shown above the purse
+     vis { type: 'stall', items: [{ k, price }], paid }   things for sale, each with its price on a little chalkboard
+        (paid: the coin or note handed over, for giving change) */
+const COINS = [1, 2, 5, 10, 20, 50, 100, 200], NOTES = [500, 1000];
+const money = p => p < 100 ? `${p}p` : p % 100 ? `£${Math.floor(p / 100)}.${String(p % 100).padStart(2, '0')}` : `£${p / 100}`;
+const moneyName = p => `${money(p)} ${p >= 500 ? 'note' : 'coin'}`;
+// metal, size (as the real coins, in mm, so the small ones look small) and straight sides (0: round)
+const COIN_LOOK = { 1: ['copper', 20.3, 0], 2: ['copper', 25.9, 0], 5: ['silver', 18, 0], 10: ['silver', 24.5, 0], 20: ['silver', 21.4, 7], 50: ['silver', 27.3, 7], 100: ['gold', 23.4, 12], 200: ['two', 28.4, 0] };
+const METAL = { copper: ['#DE925A', '#8E4C22', '#F4C39B', '#5E2A0C'], silver: ['#DFE5EC', '#6F7B88', '#FFFFFF', '#3A4450'], gold: ['#F2CB55', '#94690C', '#FCEBA8', '#5A3D00'] };
+const metalWord = p => ({ copper: 'copper', silver: 'silver', gold: 'gold', two: 'gold and silver' })[COIN_LOOK[p][0]];
+const polyPts = (n, r, c = 50) => Array.from({ length: n }, (_, i) => { const a = (i / n) * 2 * Math.PI - Math.PI / 2; return `${(c + r * Math.cos(a)).toFixed(1)},${(c + r * Math.sin(a)).toFixed(1)}`; }).join(' ');
+const coinShape = (sides, r, attrs) => sides ? `<polygon points="${polyPts(sides, r)}" stroke-linejoin="round" ${attrs}/>` : `<circle cx="50" cy="50" r="${r}" ${attrs}/>`;
+const COIN_PAW = '<g opacity=".45"><ellipse cx="50" cy="25" rx="4.2" ry="3.4"/><circle cx="44.2" cy="19.6" r="1.9"/><circle cx="48.2" cy="16.8" r="1.9"/><circle cx="51.8" cy="16.8" r="1.9"/><circle cx="55.8" cy="19.6" r="1.9"/></g>';
+function coinSVG(p) {
+  if (p >= 500) return noteSVG(p);
+  const [metal, mm, sides] = COIN_LOOK[p], d = Math.round(46 + (mm - 18) * 1.2);
+  const [fill, dark, shine, text] = METAL[metal === 'two' ? 'gold' : metal], label = money(p);
+  const inner = metal === 'two' ? `<circle cx="50" cy="50" r="31" fill="${METAL.silver[0]}" stroke="${METAL.silver[1]}" stroke-width="2.5"/>` : '';
+  const ink = metal === 'two' ? METAL.silver[3] : text;
+  return `<svg class="coin" viewBox="0 0 100 100" style="--d:${d}" aria-hidden="true">
+    ${coinShape(sides, 47, `fill="${fill}" stroke="${dark}" stroke-width="4"`)}
+    ${coinShape(sides, 39, `fill="none" stroke="${shine}" stroke-width="3"`)}${inner}
+    <g fill="${ink}">${COIN_PAW}</g>
+    <text x="50" y="${label.length > 2 ? 64 : 66}" text-anchor="middle" font-size="${label.length > 2 ? 40 : 46}" fill="${ink}">${label}</text></svg>`;
+}
+// the notes: simple rectangles in their colours (£5 blue-green, £10 orange-brown), a wavy harbour border and a window
+function noteSVG(p) {
+  const [fill, dark, pale] = p === 500 ? ['#7CC4BE', '#2D6E69', '#D3EEEA'] : ['#EBA46B', '#8A4A1F', '#F9DDC4'];
+  return `<svg class="note" viewBox="0 0 160 84" aria-hidden="true">
+    <rect x="2" y="2" width="156" height="80" rx="8" fill="${fill}" stroke="${dark}" stroke-width="3"/>
+    <rect x="9" y="9" width="142" height="66" rx="5" fill="${pale}" stroke="${dark}" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <circle cx="120" cy="42" r="21" fill="#fff" stroke="${dark}" stroke-width="2"/>
+    <path d="M102 47c6-5 9 5 15 0s9 5 15 0 6 2 6 2" fill="none" stroke="${dark}" stroke-width="2.5" stroke-linecap="round"/>
+    <g fill="${dark}">${COIN_PAW.replace('opacity=".45"', 'opacity=".6" transform="translate(70 12)"')}</g>
+    <text x="54" y="56" text-anchor="middle" font-size="40" fill="${dark}">${money(p)}</text></svg>`;
+}
+// the things on the market stalls (24 × 24 drawings), with their names
+const WARES = {
+  apple: ['an apple', APPLE],
+  pear: ['a pear', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5c0-1.4.6-2.4 1.6-3" stroke="#6b4f3a" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M12 5c-2.2 0-3 1.8-3.2 4-.2 2.1-3.3 3.6-3.3 7.2C5.5 19.6 8.4 22 12 22s6.5-2.4 6.5-5.8c0-3.6-3.1-5.1-3.3-7.2C15 6.8 14.2 5 12 5z" fill="#B6CF4A" stroke="#6D7E1E" stroke-width="1.3"/><ellipse cx="9.5" cy="15" rx="1.3" ry="2.4" fill="#fff" opacity=".45"/></svg>'],
+  lolly: ['a lolly', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13v10" stroke="#C9A27A" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8.5" r="7" fill="#F28CB0" stroke="#A23B66" stroke-width="1.3"/><path d="M12 8.5m-4.4 0a4.4 4.4 0 1 0 8.8 0a2.6 2.6 0 1 0-5.2 0" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>'],
+  ball: ['a ball', '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="#5BA4E0" stroke="#215C93" stroke-width="1.3"/><path d="M3 10.5c5 2.5 13 2.5 18 0M5 18c4-3 10-3 14 0" fill="none" stroke="#FFD34D" stroke-width="2.2"/></svg>'],
+  kite: ['a kite', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l7 7-7 10-7-10z" fill="#F2A13B" stroke="#99581A" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 1.5v17M5 8.5h14" stroke="#99581A" stroke-width="1"/><path d="M12 18.5c-1 2 1 2.5 0 4.5" stroke="#C0392B" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>'],
+  comic: ['a comic', '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="1.5" fill="#FFF3C4" stroke="#7A5A1F" stroke-width="1.3"/><rect x="6.5" y="5" width="11" height="6" rx="1" fill="#F07B5C"/><path d="M6.5 14h11M6.5 17h7" stroke="#7A5A1F" stroke-width="1.4" stroke-linecap="round"/></svg>'],
+  shell: ['a shell', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5L3 9.5C5 5 9 3.5 12 3.5S19 5 21 9.5z" fill="#F7C9B4" stroke="#A9573A" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 20.5V4M12 20.5L7.5 5.2M12 20.5l4.5-15.3M12 20.5L4.8 7.6M12 20.5l7.2-12.9" stroke="#A9573A" stroke-width="1"/></svg>'],
+  bun: ['a bun', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15c0-5 4-8.5 9-8.5s9 3.5 9 8.5z" fill="#E6A85C" stroke="#8A5523" stroke-width="1.3"/><path d="M3.5 15.5h17v2.5c0 1.4-1.1 2.5-2.5 2.5H6c-1.4 0-2.5-1.1-2.5-2.5z" fill="#F7E1B5" stroke="#8A5523" stroke-width="1.3"/><circle cx="12" cy="6.3" r="1.8" fill="#D33B3B"/><path d="M6 11.5c3-1.2 9-1.2 12 0" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'],
+};
+const wareName = k => (WARES[k] || ['a thing'])[0];
+const wareSVG = k => (WARES[k] || ['', ''])[1];
+const purseTotal = v => sum(v.in);
+const sameCoins = (a, b) => !!a && !!b && a.length === b.length && [...a].sort((x, y) => x - y).join() === [...b].sort((x, y) => x - y).join();
+const purseOk = v => purseTotal(v) === v.target && !(v.ban && sameCoins(v.in, v.ban));
+// the fewest coins from the tray (biggest first); with ban, a way that isn't that one
+function greedyCoins(t, tray) { const out = []; for (const c of [...tray].sort((a, b) => b - a)) while (t >= c) { out.push(c); t -= c; } return t ? null : out; }
+function coinPlan(t, tray, ban) {
+  const g = greedyCoins(t, tray);
+  if (!ban || !sameCoins(g, ban)) return g;
+  for (const skip of [...new Set(g)]) { const alt = greedyCoins(t, tray.filter(c => c !== skip)); if (alt && !sameCoins(alt, ban)) return alt; }
+  return g;
+}
+// three coins to pick from: the right one, and the coins either side of it in the tray
+function coinChoices(c, tray) {
+  const t = [...tray].sort((a, b) => a - b), i = t.indexOf(c), side = [t[i + 1], t[i - 1], t[i + 2], t[i - 2]].filter(x => x != null);
+  return shuffle([c, ...side.slice(0, 2)]).map(money);
+}
+/* The step card for the purse: the biggest coin that fits, put it in, how much more, and so on. (The purse is
+   emptied first, so the steps start from nothing.) */
+function purseSteps(q) {
+  const v = q.vis, plan = coinPlan(v.target, v.tray, v.ban) || [], out = [];
+  v.in = []; if (S && S.q === q && root()) redrawG();
+  let need = v.target;
+  plan.forEach((c, i) => {
+    const greedy = c === [...v.tray].sort((a, b) => b - a).find(x => x <= need);
+    const has = () => { const left = v.in.slice(); return plan.slice(0, i + 1).every(x => { const j = left.indexOf(x); if (j < 0) return false; left.splice(j, 1); return true; }); };
+    if (i > 0) out.push({ say: 'How much more do we need?', choices: pick3(need, [need - 1, need + 1, need + 5, need + 10, c].filter(x => x > 0)).map(money), answer: money(need), words: true });
+    if (greedy && !(i > 0 && need === c)) out.push({ say: `Which coin is closest to ${money(need)} without going over?`, point: 'tray', choices: coinChoices(c, v.tray), answer: money(c), words: true });
+    out.push({ say: greedy || i ? `Put a ${money(c)} coin in the purse.` : `Let’s use a ${money(c)} coin this time. Put one in the purse.`, point: `coin-${c}`, action: has, wait: 'Put it in the purse up there!' });
+    need -= c;
+  });
+  return out;
+}
+// tier 3: the next coin to put in (or one to take out)
+function purseGuide(v) {
+  if (purseOk(v)) return 'key-check';
+  const left = (coinPlan(v.target, v.tray, v.ban) || []).slice();
+  const extra = v.in.findIndex(c => { const j = left.indexOf(c); if (j < 0) return true; left.splice(j, 1); return false; });
+  if (extra >= 0) return `out-${extra}`;
+  return left.length ? `coin-${left[0]}` : 'key-check';
+}
+const coinSpan = (p, extra = '') => `<span class="gv-coin${extra}" role="img" aria-label="${moneyName(p)}">${coinSVG(p)}</span>`;
+function moneyVis(v) {
+  if (v.type === 'coins') {
+    const counted = v.counted || [];
+    const items = v.list.map((p, i) => {
+      const at = counted.indexOf(i), run = sum(counted.slice(0, at + 1).map(j => v.list[j])), badge = at >= 0 ? `<b class="gv-count">${v.list.some(x => x >= 100) ? money(run) : run}</b>` : '';
+      return v.count ? `<button class="gv-coin${at >= 0 ? ' counted' : ''}${p >= 500 ? ' is-note' : ''}" type="button" data-g-coin="${i}" data-t="coin-at-${i}" aria-label="${moneyName(p)}${at >= 0 ? ', counted' : ''}">${coinSVG(p)}${badge}</button>`
+        : coinSpan(p, p >= 500 ? ' is-note' : '');
+    }).join('');
+    return `<div class="gv-coins" data-t="coins">${items}</div>`;
+  }
+  if (v.type === 'purse') {
+    const t = purseTotal(v);
+    const inPurse = v.in.length ? v.in.map((p, i) => `<button class="gv-coin" type="button" data-g-out="${i}" data-t="out-${i}" aria-label="Take out the ${moneyName(p)}">${coinSVG(p)}</button>`).join('')
+      : '<span class="gv-purse-empty">Tap a coin to put it in</span>';
+    return `${v.made ? `<div class="gv-made"><span>Bonnie’s way</span><div class="gv-coins small">${v.made.map(p => coinSpan(p)).join('')}</div></div>` : ''}
+      <div class="gv-purse" data-t="purse"><div class="gv-clasp" aria-hidden="true"><i></i><i></i></div>
+        <div class="gv-purse-in">${inPurse}</div>
+        <div class="gv-purse-total" role="status">In the purse: <b>${t ? money(t) : 'nothing yet'}</b></div></div>
+      <div class="gv-tray" data-t="tray">${v.tray.map(p => `<button class="gv-coin" type="button" data-g-add="${p}" data-t="coin-${p}" aria-label="Put in a ${moneyName(p)}">${coinSVG(p)}</button>`).join('')}</div>`;
+  }
+  if (v.type === 'stall') {
+    return `<div class="gv-stall" data-t="stall"><div class="gv-awning" aria-hidden="true"></div><div class="gv-wares">${v.items.map((it, i) => `<div class="gv-ware" data-t="ware-${i}" role="img" aria-label="${wareName(it.k)}, ${money(it.price)}">
+      <span class="gv-ware-pic">${wareSVG(it.k)}</span><span class="gv-board">${money(it.price)}</span></div>`).join('')}${v.paid ? `<div class="gv-paid" data-t="paid"><span>Paid with</span>${coinSpan(v.paid, v.paid >= 500 ? ' is-note' : '')}</div>` : ''}</div></div>`;
+  }
+  return '';
+}
+// tapping coins to count them: each tap adds that coin and says the running total
+function countCoin(i) {
+  const v = S.q.vis; v.counted = v.counted || [];
+  if (v.counted.length === v.list.length) v.counted = [];
+  if (v.counted.includes(i)) { sfx.soft(); return; }
+  v.counted.push(i);
+  const total = sum(v.counted.map(j => v.list[j]));
+  tone([520 + v.counted.length * 50], .07, 'triangle', .08);
+  say(v.list.some(p => p >= 100) ? money(total) : String(total));
+}
+// "35p" is said "35 pence", "£2.50" "2 pounds 50", so Bonnie's number clips can say them
+const spoken = t => String(t)
+  .replace(/£(\d+)\.(\d\d)\b/g, (_, a, b) => `${a} ${a === '1' ? 'pound' : 'pounds'} ${+b}`)
+  .replace(/£(\d+)\b(?= (?:coin|note))/g, '$1 pound') // a £2 coin is a "2 pound coin"
+  .replace(/£(\d+)\b/g, (_, a) => `${a} ${a === '1' ? 'pound' : 'pounds'}`)
+  .replace(/\b(\d+)p\b/g, (_, a) => `${a} ${a === '1' ? 'penny' : 'pence'}`);
+
+/* ---------- time: the clock face and Set the Clock (The Clock Tower) ----------
+   A time is minutes after 12 o'clock (0 to 719: 195 is 3:15). Times are written and said in words, the way
+   Year 2 learns them ("quarter past 3", "20 to 9"); digital times are Year 3, so they never appear.
+     vis { type: 'clock', t, count, full }   a big clock face; count: a "Count in 5s" button that lights the numbers
+        round from the 12 to the long hand (or back to the 12, for a "to" time) and says them; full: all the way round
+     vis { type: 'clock', t, target, set: true }   (kind 'clock', a Check button) +5 and −5 minute buttons move the
+        long hand, and the short hand follows it, as on a real clock
+     vis { type: 'clocks', list: [t, t] }   two clocks side by side (they stack on a narrow phone) */
+const hourOf = t => { const h = Math.floor((((t % 720) + 720) % 720) / 60); return h || 12; };
+const nextHour = h => (h % 12) + 1;
+function timeWords(t) {
+  const m = (((t % 60) + 60) % 60), h = hourOf(t);
+  if (m === 0) return `${h} o’clock`;
+  if (m === 15) return `quarter past ${h}`;
+  if (m === 30) return `half past ${h}`;
+  if (m === 45) return `quarter to ${nextHour(h)}`;
+  return m < 30 ? `${m} past ${h}` : `${60 - m} to ${nextHour(h)}`;
+}
+// where the hands point (degrees clockwise from the 12): the short hand moves on half a degree a minute
+const clockAngles = t => ({ hour: (t * 0.5) % 360, minute: (t * 6) % 360 });
+// the number the long hand points at (12 for o'clock)
+const minuteNum = t => ((((t % 60) + 60) % 60) / 5) || 12;
+// for VoiceOver: where the hands are, without saying the answer
+function handsSay(t) {
+  const m = (((t % 60) + 60) % 60), h = hourOf(t);
+  const short = m === 0 ? `points to the ${h}` : m === 30 ? `is half way between the ${h} and the ${nextHour(h)}` : m < 30 ? `has just gone past the ${h}` : `is nearly at the ${nextHour(h)}`;
+  return `A clock. The long hand points to the ${minuteNum(t)}. The short hand ${short}.`;
+}
+function clockFace(v, i = '') {
+  const a = { hour: v.t * 0.5, minute: v.t * 6 }, lit = v.lit || []; // not wrapped at 360°, so a hand passing 12 keeps turning the same way
+  let ticks = '', nums = '';
+  for (let k = 0; k < 60; k++) {
+    const big = k % 5 === 0, an = k * 6 * Math.PI / 180, r1 = big ? 80 : 84, r2 = 89;
+    ticks += `<line x1="${(100 + r1 * Math.sin(an)).toFixed(1)}" y1="${(100 - r1 * Math.cos(an)).toFixed(1)}" x2="${(100 + r2 * Math.sin(an)).toFixed(1)}" y2="${(100 - r2 * Math.cos(an)).toFixed(1)}" stroke-width="${big ? 3 : 1.4}"/>`;
+  }
+  for (let n = 1; n <= 12; n++) {
+    const an = n * 30 * Math.PI / 180, x = 100 + 66 * Math.sin(an), y = 100 - 66 * Math.cos(an), L = lit.find(l => l.n === n);
+    nums += `<g class="clk-num${L ? ' lit' : ''}" data-t="clk-n${n}${i}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="13"/><text x="${x.toFixed(1)}" y="${(y + 7.5).toFixed(1)}" text-anchor="middle">${n}</text>`
+      // the minutes counted so far go outside the rim, as on a classroom clock, so they aren't read as hours
+      + (L ? `<g class="clk-cnt"><circle cx="${(100 + 111 * Math.sin(an)).toFixed(1)}" cy="${(100 - 111 * Math.cos(an)).toFixed(1)}" r="14"/><text x="${(100 + 111 * Math.sin(an)).toFixed(1)}" y="${(100 - 111 * Math.cos(an) + 6.5).toFixed(1)}" text-anchor="middle">${L.c}</text></g>` : '') + '</g>';
+  }
+  return `<svg class="clock${v.count ? ' counting' : ''}" viewBox="${v.count ? '-26 -26 252 252' : '0 0 200 200'}" role="img" aria-label="${handsSay(v.t)}">
+    <circle cx="100" cy="100" r="97" class="clk-rim"/><circle cx="100" cy="100" r="91" class="clk-face"/>
+    <g class="clk-ticks">${ticks}</g>${nums}
+    <g class="clk-hand clk-hour" style="transform:rotate(${a.hour}deg)"><path d="M100 108 L95.5 100 L100 50 L104.5 100 Z"/></g>
+    <g class="clk-hand clk-min" style="transform:rotate(${a.minute}deg)"><path d="M100 112 L97.6 100 L100 22 L102.4 100 Z"/></g>
+    <circle cx="100" cy="100" r="6.5" class="clk-pin"/></svg>`;
+}
+const clockOk = v => (((v.t - v.target) % 720) + 720) % 720 === 0;
+// tier 3 and the step card: which button moves the long hand the short way round to the time
+const clockDir = v => { const d = ((((v.target - v.t) % 720) + 720) % 720); return d === 0 ? 'key-check' : d <= 360 ? 'clk-plus' : 'clk-minus'; };
+function clockVis(v) {
+  if (v.type === 'clocks') return `<div class="gv-clocks">${v.list.map((t, i) => `<div class="gv-clock">${v.labels ? `<span class="gv-clock-cap">${v.labels[i]}</span>` : ''}${clockFace({ t }, '-' + i)}</div>`).join('')}</div>`;
+  return `<div class="gv-clock" data-t="clock">${clockFace(v)}</div>
+    ${v.set ? `<div class="gv-tools clk-set"><button class="mbtn" type="button" data-g="clk-minus" data-t="clk-minus" aria-label="Take the long hand back 5 minutes">−5 minutes</button><button class="mbtn" type="button" data-g="clk-plus" data-t="clk-plus" aria-label="Move the long hand on 5 minutes">+5 minutes</button></div>
+      <span class="sr" role="status">The clock shows ${timeWords(v.t)}</span>` : ''}
+    ${v.count ? `<div class="gv-tools clk-count"><button class="mbtn small" type="button" data-g="clk-count" data-t="clk-count">Count in 5s</button></div>` : ''}`;
+}
+// move the hands without drawing the clock again, so they sweep round (or jump, with Reduce Motion)
+function paintClock() {
+  const v = S.q.vis, a = { hour: v.t * 0.5, minute: v.t * 6 }, svg = inMM('.gv-clock .clock'); if (!svg) return redrawG();
+  const still = reduced();
+  [['.clk-hour', a.hour], ['.clk-min', a.minute]].forEach(([sel, deg]) => { const h = svg.querySelector(sel); h.style.transition = still ? 'none' : ''; h.style.transform = `rotate(${deg}deg)`; });
+  svg.setAttribute('aria-label', handsSay(v.t));
+  const st = inMM('.gv-clock ~ .sr[role="status"]') || inMM('.sr[role="status"]'); if (st) st.textContent = `The clock shows ${timeWords(v.t)}`;
+}
+let countTimers = [];
+// count round the clock in 5s: from the 12 to the long hand for a "past" time, back from the 12 for a "to" time
+function countRound() {
+  const q = S.q, v = q.vis, m = (((v.t % 60) + 60) % 60);
+  countTimers.forEach(clearTimeout); countTimers = [];
+  const back = m > 30 && !v.full, steps = v.full ? 12 : back ? (60 - m) / 5 : m / 5; // full: all the way round (an hour)
+  const seq = Array.from({ length: steps }, (_, k) => ({ n: back ? 11 - k || 12 : k + 1, c: (k + 1) * 5 }));
+  if (!seq.length) { sfx.soft(); return; }
+  v.lit = []; redrawG();
+  say(seq.map(x => x.c).join(', ') + '!');
+  const show = k => { if (!S || S.q !== q || !root()) return; v.lit = seq.slice(0, k + 1); redrawG(); tone([520 + k * 50], .07, 'triangle', .08);
+    if (k === seq.length - 1) { v.counted = true; afterMove(); } };
+  if (reduced()) { show(seq.length - 1); return; }
+  seq.forEach((_, k) => countTimers.push(setTimeout(() => show(k), 250 + k * 600)));
+}
+
+/* Bonnie's day, in order: little cards for "what comes first?" (dayCard(k) on an answer button) */
+const DAY = {
+  breakfast: ['breakfast', '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="38" cy="10" r="6" fill="#FFD34D" stroke="#C98A12" stroke-width="1.5"/><path d="M6 26h36l-4 12H10z" fill="#E25D5D" stroke="#8E2A2A" stroke-width="2" stroke-linejoin="round"/><path d="M14 26c0-5 4-6 6-4 2-4 7-4 9 0 3-2 6 0 6 4" fill="#C9944F" stroke="#7A5530" stroke-width="1.6"/><path d="M8 32h32" stroke="#fff" stroke-width="2" opacity=".6"/></svg>'],
+  walk: ['her walk', '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M4 40c10-6 30-6 40 0" stroke="#66AE62" stroke-width="3" fill="none" stroke-linecap="round"/><g fill="#7A5530"><ellipse cx="14" cy="30" rx="3" ry="2.4"/><circle cx="11" cy="26.5" r="1.3"/><circle cx="13.6" cy="25.2" r="1.3"/><circle cx="16.4" cy="25.2" r="1.3"/><circle cx="19" cy="26.5" r="1.3"/><ellipse cx="30" cy="20" rx="3" ry="2.4"/><circle cx="27" cy="16.5" r="1.3"/><circle cx="29.6" cy="15.2" r="1.3"/><circle cx="32.4" cy="15.2" r="1.3"/><circle cx="35" cy="16.5" r="1.3"/></g><path d="M36 6c4 2 6 6 4 10" stroke="#C0392B" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>'],
+  bath: ['bath time', '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="16" cy="12" r="4" fill="#fff" stroke="#5B88B5" stroke-width="1.5"/><circle cx="26" cy="8" r="3" fill="#fff" stroke="#5B88B5" stroke-width="1.5"/><circle cx="33" cy="14" r="3.5" fill="#fff" stroke="#5B88B5" stroke-width="1.5"/><path d="M5 24h38v4c0 7-5 11-11 11H16C10 39 5 35 5 28z" fill="#A9CBEA" stroke="#2F5F8F" stroke-width="2" stroke-linejoin="round"/><path d="M12 39l-2 5M36 39l2 5" stroke="#2F5F8F" stroke-width="2.5" stroke-linecap="round"/></svg>'],
+  bed: ['bedtime', '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M34 4a9 9 0 1 0 9 12 7 7 0 0 1-9-12z" fill="#FFE7A3" stroke="#C98A12" stroke-width="1.5"/><rect x="4" y="26" width="40" height="10" rx="2" fill="#8B6FD0" stroke="#4E3A8A" stroke-width="2"/><rect x="7" y="21" width="12" height="7" rx="3" fill="#fff" stroke="#4E3A8A" stroke-width="1.6"/><path d="M6 36v6M42 36v6" stroke="#4E3A8A" stroke-width="3" stroke-linecap="round"/></svg>'],
+};
+const DAY_ORDER = ['breakfast', 'walk', 'bath', 'bed'];
+const dayName = k => DAY[k][0];
+const dayCard = k => `<span class="day-card">${DAY[k][1]}<b>${DAY[k][0]}</b></span>`;
+
 /* ---------- picture questions: drawing and playing ---------- */
 function gvisInner(q) {
   const v = q.vis, it = itemSVG(v.item);
@@ -550,6 +788,8 @@ function gvisInner(q) {
     }
     case 'shape': return `<div class="gv-shape">${shapeSVG(v.shape, v.shade)}</div>`;
     case 'shapes': return `<div class="gv-row gv-shapes">${v.list.map(k => shapeSVG(k, 0)).join('')}</div>`;
+    case 'coins': case 'purse': case 'stall': return moneyVis(v);
+    case 'clock': case 'clocks': return clockVis(v);
   }
   return '';
 }
@@ -578,6 +818,18 @@ function gAction(b) {
     tone([520, 660, 780], .07, 'triangle', .08);
     setTimeout(() => { if (S && S.q === q && root()) { v.turned = !v.turned; redrawG(); afterMove(); } }, 560);
     return;
+  }
+  if (b.dataset.g === 'clk-plus' || b.dataset.g === 'clk-minus') {
+    v.t += b.dataset.g === 'clk-plus' ? 5 : -5; tone([b.dataset.g === 'clk-plus' ? 760 : 560], .05, 'triangle', .07);
+    paintClock(); if (S.tier === 3) applyGuide(); return afterMove();
+  }
+  if (b.dataset.g === 'clk-count') return countRound();
+  if (b.dataset.gCoin !== undefined) { countCoin(+b.dataset.gCoin); redrawG(); return afterMove(); }
+  if (b.dataset.gAdd !== undefined || b.dataset.gOut !== undefined) {
+    if (b.dataset.gOut !== undefined) { v.in.splice(+b.dataset.gOut, 1); sfx.tap(); }
+    else if (v.in.length >= 12) { sfx.soft(); feedback('info', '<span>The purse is full! Tap a coin in the purse to take it out.</span>'); }
+    else { v.in.push(+b.dataset.gAdd); tone([600 + v.in.length * 40, 900], .05, 'triangle', .08); }
+    redrawG(); return afterMove();
   }
   if (b.dataset.gHole !== undefined) {
     const i = +b.dataset.gHole, h = v.holes[i];
@@ -705,7 +957,7 @@ function renderGame() {
   const q = S.q, quest = questFor(q);
   if (q.teach) S.teachAsk = fresh(TEACH.ask);
   const hello = q.teach ? `<span><span class="big">I think it’s ${q.teach.said}!</span>${esc(U.fmt(S.teachAsk))}</span>` : S.ctx.warm ? 'Warm-up time! These ones are easy.' : (S.ctx.first ?? S.ctx.index === 0) ? (q.claim ? 'Let’s test the Captain’s conjecture!' : `Woof! Let’s go, ${esc(NAME())}!`)
-    : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'verdict' ? 'Is the Captain right?' : q.kind === 'chests' ? 'Which chest does it go in?' : q.kind === 'tester' ? 'Tap a number to test it!' : q.kind === 'steps' ? 'Which step is wrong?' : q.kind === 'build' ? 'Tap + to build it.' : 'Tap the numbers to fill the box.';
+    : q.kind === 'line' ? 'Drag me along the line!' : q.kind === 'grid' ? 'Tap a square to grow the orchard!' : q.kind === 'choice' ? 'Tap the answer.' : q.kind === 'verdict' ? 'Is the Captain right?' : q.kind === 'chests' ? 'Which chest does it go in?' : q.kind === 'tester' ? 'Tap a number to test it!' : q.kind === 'steps' ? 'Which step is wrong?' : q.kind === 'build' ? 'Tap + to build it.' : q.kind === 'purse' ? 'Tap the coins to fill my purse!' : q.kind === 'clock' ? 'Move the long hand with the buttons!' : 'Tap the numbers to fill the box.';
   S.ctx.area.innerHTML = `<div class="mm" id="mm">
     <div class="play">
       <div class="mcard stage">
@@ -866,6 +1118,17 @@ function onCheck() {
     res.forEach((ok, i) => { if (ok && !S.solved.has(i)) { S.solved.add(i); newly++; } if (!ok) S.values[i] = ''; });
     S.active = unsolvedBoxes()[0]; paintBoxes();
     return raise('wrong', newly ? 'That one’s right!' : null);
+  }
+  if (q.kind === 'clock') {
+    if (clockOk(q.vis)) return win();
+    return raise('wrong', `That’s ${timeWords(q.vis.t)}.`);
+  }
+  if (q.kind === 'purse') {
+    const v = q.vis, t = purseTotal(v);
+    if (!v.in.length) { feedback('info', '<span>Tap the coins to put them in the purse.</span>'); return; }
+    if (v.ban && sameCoins(v.in, v.ban)) { feedback('info', '<span>That’s Bonnie’s way! Can you find a different way?</span>'); return; }
+    if (t === v.target) return win();
+    return raise('wrong', `That’s ${money(t)}. ${t > v.target ? 'Too much!' : 'Not enough yet!'}`);
   }
   if (q.kind === 'build') {
     const total = buildTotal();
@@ -1114,7 +1377,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (b.id === 'mmSay') return say(readOut(S.q));
-  if (b.dataset.g || b.dataset.gBowl !== undefined || b.dataset.gHole !== undefined) return gAction(b);
+  if (b.dataset.g || ['gBowl', 'gHole', 'gCoin', 'gAdd', 'gOut'].some(k => b.dataset[k] !== undefined)) return gAction(b);
   if (b.id === 'mmAsk') { if (live()) { if (teaching()) toPad(); raise('ask'); } return; }
   if (b.dataset.teach !== undefined) return teachPick(+b.dataset.teach, b);
   if (b.dataset.chip !== undefined) return chooseStep(+b.dataset.chip, b);
@@ -1329,6 +1592,7 @@ const CSS = String.raw`
 .mm .choices { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mm .choice { min-height: 84px; font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--card); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink); }
 .mm .choices.wordy .choice { font-size: 24px; white-space: nowrap; }
+.mm .choices.wordy .choice { white-space: normal; line-height: 1.15; padding-left: 8px; padding-right: 8px; } /* a long answer ("quarter past 12") wraps, never spills out */
 .mm .choice:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
 .mm .choice.faded, .mm .mchip.faded { opacity: .35; box-shadow: none; transform: translateY(3px); }
 .mm .choice.right { background: var(--good-bg); border-color: var(--good); color: var(--good); }
@@ -1444,6 +1708,91 @@ const CSS = String.raw`
 .mm .mini .gv-box { width: 92px; min-height: 60px; padding: 8px; }
 .mm .mini .gv-bowl { padding-top: 10px; }
 .mm .mini.gv-array, .mm .mini .gv-array { --cell: 30px; }
+/* money (Harbour Market): coins keep their real sizes against each other; the smallest label is still 16px */
+.mm .coin { width: calc(var(--d) * var(--k, 1) * 1px); height: calc(var(--d) * var(--k, 1) * 1px); display: block; overflow: visible; }
+.mm .gv-coins { --k: 1.15; }
+.mm .gv-coins:has(> :only-child) { --k: 1.8; }
+.mm .gv-coins:has(> :only-child) .note { width: 180px; }
+.mm .choice { --k: 1.3; }
+.mm .mchip { --k: 1; }
+.mm .gv-made .gv-coins, .mm .gv-tray, .mm .gv-purse-in { --k: 1; }
+.mm .coin text, .mm .note text { font-family: var(--f-display); font-weight: 700; }
+.mm .note { width: 120px; height: auto; display: block; }
+.mm .gv-coins { display: flex; flex-wrap: wrap; gap: 10px 12px; justify-content: center; align-items: center; }
+.mm .gv-coin { position: relative; display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0; background: none; border: 0; border-radius: 50%; font: inherit; color: inherit; }
+.mm .gv-coin.is-note { border-radius: 10px; }
+.mm button.gv-coin { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mm button.gv-coin:active { transform: scale(.94); }
+.mm .gv-coin .coin, .mm .gv-coin .note { filter: drop-shadow(0 3px 0 rgba(27, 36, 64, .22)); }
+.mm .gv-coin.counted::before { content: ""; position: absolute; inset: -4px; border-radius: inherit; border: 3px solid var(--good); }
+.mm .gv-count { position: absolute; right: -10px; top: -10px; min-width: 30px; padding: 0 6px; border-radius: 999px; background: var(--sun); border: 2px solid var(--ink); font-family: var(--f-display); font-weight: 700; font-size: 18px; line-height: 1.35; text-align: center; z-index: 1; }
+.mm .gv-purse { position: relative; width: min(100%, 380px); box-sizing: border-box; margin-top: 8px; padding: 20px 12px 10px; border-radius: 24px 24px 48px 48px; background: linear-gradient(#F5B3C7, #E2819F); border: 2px solid #9C3D5E; box-shadow: inset 0 0 0 5px rgba(255, 255, 255, .25); display: grid; gap: 6px; justify-items: center; }
+.mm .gv-clasp { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; }
+.mm .gv-clasp i { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #FCEBA8, #D4A520); border: 2px solid #94690C; }
+.mm .gv-purse-in { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 6px; min-height: 66px; width: 100%; box-sizing: border-box; padding: 6px; border-radius: 16px; background: rgba(255, 255, 255, .6); border: 2px dashed #9C3D5E; }
+.mm .gv-purse-empty { font-family: var(--f-read); font-weight: 700; font-size: 16px; color: #6E2A43; }
+.mm .gv-purse-total { font-family: var(--f-display); font-weight: 600; font-size: 20px; color: #4A1A2C; }
+.mm .gv-tray { position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 8px; padding: 8px 10px; border-radius: 16px; background: #FFF6E2; border: 2px solid #D9B77A; }
+.mm .gv-made { display: flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 6px 10px; padding: 6px 12px; border-radius: 14px; background: #fff; border: 2px dashed var(--edge); }
+.mm .gv-made > span { font-family: var(--f-read); font-weight: 700; font-size: 16px; }
+.mm .gv-made .gv-coins { gap: 6px; }
+.mm .gv-stall { position: relative; width: min(100%, 420px); box-sizing: border-box; border-radius: 14px; background: #FFF8EA; border: 2px solid #B98A4E; overflow: hidden; }
+.mm .gv-awning { height: 20px; background: repeating-linear-gradient(90deg, #E25D5D 0 22px, #fff 22px 44px); border-bottom: 2px solid #B98A4E; }
+.mm .gv-wares { display: flex; justify-content: center; gap: 10px 22px; padding: 10px 12px 12px; flex-wrap: wrap; }
+.mm .gv-ware { display: grid; justify-items: center; gap: 4px; }
+.mm .gv-ware-pic svg { width: 56px; height: 56px; display: block; }
+.mm .gv-board { min-width: 56px; padding: 1px 10px; border-radius: 6px; background: #2F3B35; border: 3px solid #A7774A; color: #fff; font-family: var(--f-display); font-weight: 600; font-size: 20px; text-align: center; }
+.mm .choice .coin, .mm .mchip .coin { margin: 0 auto; }
+.mm .choice .note { width: 110px; margin: 0 auto; }
+.mm .mchip .note { width: 90px; }
+/* time (The Clock Tower): a big stone-rimmed clock, numbers 22px or more on the smallest phone */
+.mm .gv-clock { position: relative; display: grid; justify-items: center; gap: 4px; }
+.mm .clock { width: 236px; height: 236px; display: block; overflow: visible; }
+.mm .clk-rim { fill: #B9A88E; stroke: #6E5B43; stroke-width: 3; }
+.mm .clk-face { fill: #FFFCF3; stroke: #8C7A60; stroke-width: 2; }
+.mm .clk-ticks line { stroke: #4A4030; stroke-linecap: round; }
+.mm .clk-num circle { fill: transparent; }
+.mm .clk-num text { font-family: var(--f-display); font-weight: 700; font-size: 21px; fill: var(--ink); }
+.mm .clk-num.lit circle { fill: var(--sun); stroke: var(--ink); stroke-width: 2; }
+.mm .clk-cnt circle { fill: var(--sun); stroke: var(--ink); stroke-width: 2; }
+.mm .clk-cnt text { font-family: var(--f-display); font-weight: 700; font-size: 18px; fill: var(--ink); }
+.mm .clock.counting { width: 264px; height: 264px; }
+.mm .clk-hand { transform-box: view-box; transform-origin: 100px 100px; transition: transform .35s cubic-bezier(.3, 1.3, .5, 1); }
+.mm .clk-hour path { fill: #1C4893; stroke: #0F2A5A; stroke-width: 1.5; stroke-linejoin: round; }
+.mm .clk-min path { fill: #D2453B; stroke: #8E2019; stroke-width: 1.2; stroke-linejoin: round; }
+.mm .clk-pin { fill: var(--sun); stroke: var(--ink); stroke-width: 2; }
+.mm .clk-set .mbtn { min-width: 132px; min-height: 52px; font-size: 20px; }
+.mm .gv-clocks { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px; }
+.mm .gv-clocks .clock { width: 190px; height: 190px; }
+.mm .gv-clock-cap { font-family: var(--f-read); font-weight: 700; font-size: 17px; }
+.mm .gv-paid { display: flex; align-items: center; gap: 8px; padding: 0 8px; }
+.mm .gv-paid > span { font-family: var(--f-read); font-weight: 700; font-size: 16px; }
+.mm .gv-wares:has(> .gv-paid) { align-items: center; }
+.mm .day-card { display: grid; justify-items: center; gap: 2px; }
+.mm .day-card svg { width: 52px; height: 52px; display: block; }
+.mm .day-card b { font-size: 18px; }
+@media (prefers-reduced-motion: reduce) { .mm .clk-hand { transition: none; } }
+@media (min-width: 561px) { .mm .clock { width: 270px; height: 270px; } .mm .clock.counting { width: 300px; height: 300px; } }
+@media (max-width: 560px) {
+  /* the clock and the three answers on one small-phone screen: "Count in 5s" sits in the picture's corner */
+  .mm .clock { width: 212px; height: 212px; }
+  .mm .clock.counting { width: 232px; height: 232px; }
+  .mm .gvis:has(> .gv-clock) { position: relative; }
+  .mm .gvis > .clk-count { position: absolute; right: 6px; bottom: 6px; }
+  /* two clocks side by side on a small phone, with bigger numbers so they still read at 16px */
+  .mm .gvis:has(> .gv-clocks) { padding-left: 4px; padding-right: 4px; }
+  .mm .gv-clocks { flex-wrap: nowrap; gap: 6px; }
+  .mm .gv-clocks .clock { width: 140px; height: 140px; }
+  .mm .gv-clocks .clk-num text { font-size: 24px; }
+  .mm .day-card svg { width: 40px; height: 40px; }
+  /* three times (or day cards) to pick from sit in one row, so the clock and every answer fit on one screen */
+  .mm .play:has(.gv-clock) .choices:has(> .choice:nth-child(3)), .mm .choices:has(.day-card) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .mm .play:has(.gv-clock) .choices .choice, .mm .choices:has(.day-card) .choice { min-height: 64px; padding: 4px; font-size: 18px; }
+  .mm .clk-set { flex-wrap: nowrap; width: 100%; gap: 8px; }
+  .mm .clk-set .mbtn { flex: 1 1 0; min-width: 0; max-width: 150px; padding: 6px 8px; }
+  .mm .gvis > .clk-count .mbtn { width: 78px; min-height: 52px; padding: 4px 6px; font-size: 16px; line-height: 1.1; white-space: normal; }
+}
+@media (min-width: 561px) { .mm .gv-tray, .mm .gv-purse-in, .mm .gv-made .gv-coins { --k: 1.25; } .mm .gv-purse { width: min(100%, 470px); } .mm .gv-ware-pic svg { width: 80px; height: 80px; } .mm .gv-board { font-size: 24px; } .mm .gv-wares { gap: 14px 40px; padding: 14px 16px 16px; } }
 @media (max-width: 560px) {
   .mm .gvis { --cell: 26px; }
   /* an array up to 10 wide must fit the width of a small phone */
@@ -1690,6 +2039,14 @@ const CSS = String.raw`
   .mm .stage:has(> .claim):has(> .visual:not([hidden])) > .eq { order: 2; font-size: 32px; gap: 8px; }
   .mm .stage:has(> .claim) .gv-bowl { width: 112px; min-height: 64px; padding-top: 10px; padding-bottom: 14px; }
   .mm .stage:has(> .claim) .gv-plate, .mm .stage:has(> .claim) .gv-lily { width: 112px; height: 112px; }
+  /* Harbour Market: the six coins of the tray in one row (each still a 44-point tap, every label still 16px) */
+  .mm .gvis:has(> .gv-purse) { padding: 8px 4px; gap: 8px; }
+  .mm .gv-tray, .mm .gv-purse-in, .mm .gv-made .gv-coins { --k: .8; gap: 4px; }
+  .mm .gv-tray { padding: 4px; }
+  .mm .gv-purse { padding: 16px 8px 6px; gap: 4px; margin-top: 6px; }
+  .mm .gv-purse-in { min-height: 52px; padding: 3px; }
+  .mm .gv-purse-total { font-size: 18px; }
+  .mm .gv-made { padding: 4px 8px; gap: 4px 8px; }
 }
 `;
 if (!document.getElementById('meadow-maths-kit')) {
@@ -1700,6 +2057,11 @@ window.MeadowMaths = {
   world, addLevels, SHAPES, rand, pick, shuffle, NAME, WHO, PL, len, pow, countsOf, partsOf, joinAnd, placeList, nameCount, colorNum, near, makesChoices,
   rd, fmtN, range, pick3, JUMPS, jumpOpts, gq, fillStep, shareDone, gridOk, shapeSVG, frac, sum, PRAISE, TIER_NAMES,
   burrow, burrowCount, burrowFull, burrowPlaced,
+  // money (Harbour Market)
+  // time (The Clock Tower)
+  DAY, DAY_ORDER, dayName, dayCard,
+  timeWords, clockAngles, minuteNum, hourOf, nextHour, handsSay, clockOk, clockDir,
+  COINS, NOTES, money, moneyName, metalWord, coinSVG, WARES, wareName, purseTotal, purseOk, sameCoins, greedyCoins, coinPlan, coinChoices, purseSteps, spoken,
   teach: { slips: teachSlips, teachable, LINES: TEACH_LINES }, // Teach Bonnie (for the tests)
   numberLines,
   helpLines, // every clue and step-card line a world can say (for the voice recorder)

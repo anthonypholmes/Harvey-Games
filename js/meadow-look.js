@@ -33,6 +33,8 @@
       'y2-maths-number-lines': ['Shall we hop across the river today?', 'Hop, hop, to the river!'],
       'y2-maths-arrays': ['Shall we pick apples in the orchard?', 'Off to the orchard!'],
       'y2-maths-sharing': ['Shall we share things out at the pond?', 'Down to the pond!'],
+      'y2-maths-money': ['Shall we count some coins at the market?', 'Off to the market!'],
+      'y2-maths-time': ['Shall we read the big clock?', 'Tick tock, to the tower!'],
       'y2-maths-captains-cove': ['Captain Croak has an idea. Shall we check it?', 'Ahoy! To the Cove!'],
       'y2-english-phonics': ['Shall we find some sounds in the forest?', 'Into the forest!'],
       'y2-english-tricky-words': ['Shall we read the tricky signposts?', 'Off along the trail!'],

@@ -20,13 +20,15 @@ To add another game, add an entry to the `GAMES` list in the `CONFIG` block at t
 
 A Year 2 (Key Stage 1) maths game for iPad, built for Harvey with help from Bonnie, the family's brown cockapoo.
 
-Six worlds:
+Eight worlds:
 
 - **The Partitioning Park:** splitting numbers into tens and ones (for example 47 = 40 + 7), with base-ten blocks and counters.
 - **Number Bonds Burrow:** adding and taking away: number bonds to 10 and 20, tens facts to 100, 2-digit sums, three numbers and fact families.
 - **The Stepping Stone River:** number lines from 0 to 100. Harvey drags Bonnie along the line to find numbers.
 - **The Array Orchard:** equal groups, rows of apples and the 2, 5 and 10 times tables.
 - **The Sharing Pond:** sharing fairly, grouping, halves, thirds and quarters.
+- **Harbour Market:** coins and notes, making amounts, pounds and pence, shopping and giving change.
+- **The Clock Tower:** telling the time to 5 minutes, setting a clock, minutes and hours, how long and what time later.
 - **Captain's Cove:** reasoning. Captain Croak, a pirate frog, makes conjectures (ideas that might be true). Harvey tests them, busts them or proves them.
 
 The player's name (entered on the Clubhouse page) is used in the game's title, throughout Bonnie's dialogue and in the story questions.
@@ -115,6 +117,38 @@ Word problems with the player's name and Bonnie come up in every level. The worl
 | 5 | Inverse Check | Using a times fact to solve a sharing fact, and back again |
 
 There are two more lily pads: **6 Thirds Island** (a third of an amount, which shape is cut into thirds, what fraction is shaded) and **7 Three Quarters** (three quarters of an amount and of a shape, and two quarters are the same as a half). They come from `worlds/y2-maths-sharing-fractions.js`.
+
+### Harbour Market (7 stalls)
+
+Coins and notes are our own drawings (never copies of real coin designs), in the right colours, sizes and shapes. Money is always in p and £, never bones, and word problems use the story characters, never the player's name.
+
+| | Stall | What it practises |
+|---|---|---|
+| 1 | Coin Spotting | Every coin and note, which is worth most, and the p and £ signs |
+| 2 | Counting Coins | How much money is there? Biggest coin first, then count on |
+| 3 | Make the Amount | Tap coins into Bonnie's purse to make a price |
+| 4 | Another Way | The same amount with different coins, and the fewest coins |
+| 5 | Pounds and Pence | £1 is 100p; counting pounds, notes, and pounds and pence together |
+| 6 | Market Shopping | Add two prices from a stall; how much more is one than the other? |
+| 7 | Giving Change | Count on from the price to the coin that was paid |
+
+The world is in `worlds/y2-maths-money.js`; the coins, notes, purse and market stall are in the kit (`vis: { type: 'coins' | 'purse' | 'stall' }`). `tests/money-test.html` checks every kind of question.
+
+### The Clock Tower (7 levels)
+
+Times are always in words ("quarter past 3"), never digital. The clock's hands move with −5 and +5 buttons, and a "Count in 5s" button lights the numbers round the face.
+
+| | Level | What it practises |
+|---|---|---|
+| 1 | O'Clock and Half Past | The long hand at 12 or at 6 |
+| 2 | Quarter Past and To | The long hand at 3 or at 9 |
+| 3 | Five-Minute Steps | Count round the clock in 5s ("20 past 2", "25 to 7") |
+| 4 | Set the Clock | Move the hands to show a time |
+| 5 | Minutes and Hours | 60 minutes in an hour, 24 hours in a day, half and quarter hours |
+| 6 | How Long? | The time between two clocks, and which takes longer |
+| 7 | Before and After | What time it will be later or was earlier, and Bonnie's day in order |
+
+The world is in `worlds/y2-maths-time.js`; the clock is in the kit (`vis: { type: 'clock' | 'clocks' }`). `tests/time-test.html` checks every kind of question. On the meadow map, the tower's clock shows the real time when the map opens.
 
 ### Captain's Cove (6 levels)
 
@@ -313,7 +347,7 @@ This means:
 - **Clubhouse:** reads and writes only `meadow-save-v1` (name, Clubhouse sound), and shows each game's new stars this week and the walk streak. It loads every world file so it can count them, so a new world file is added there too.
 - **Bonnie's dress-up:** the Bone Shop's first tab has three slots, so Bonnie can wear a hat, something on her face and something round her neck at once (`hat`, `face`, `neck` in the save). Items are listed in `HATS` in the engine, each with its `slot`, and drawn in `hatSVG`, `faceSVG` and `neckSVG`.
 - **The old beta folder** has gone. Its old offline copy is cleared by the live `sw.js`.
-- **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world. `tests/captains-cove-test.html` does the same for Captain's Cove: every claim's truth, every chest, every test that busts a claim, exactly one wrong step in the Captain's working, proofs that add up and don't give the answer away, and every right odd-one-out answer and reason.
+- **Checking a world's questions:** open `tests/number-bonds-test.html`. It makes every kind of Number Bonds Burrow question thousands of times, in normal and easy mode, and checks that the sums are right, that Bonnie's step card ends on the answer, and that easy mode stays easy. It only makes questions, so it never touches the save. Run it after changing the world. `tests/captains-cove-test.html` does the same for Captain's Cove: every claim's truth, every chest, every test that busts a claim, exactly one wrong step in the Captain's working, proofs that add up and don't give the answer away, and every right odd-one-out answer and reason. `tests/money-test.html` and `tests/time-test.html` do the same for Harbour Market and the Clock Tower: every price, total and change, every coin plan, every clock reading in words, and that each step card ends on the answer.
 - **Checking the "This week" panel:** open `tests/week-test.html`. It checks:
   - level starts are saved with the date and how, old saves load fine, and broken entries are dropped
   - walks never count as opening a level, and starts older than 90 days are cleared
