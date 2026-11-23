@@ -213,7 +213,7 @@ const L7 = { name: 'Before and After', blurb: 'Later, earlier, and Bonnie’s da
     const { labels, ans, cfmt } = timeChoice(target, [timeWords(target + 60), timeWords(target - 60), timeWords(t - dir * d), timeWords(target + 15 * dir)]);
     const q = gq({ t: dir > 0 ? 'later' : 'earlier', kind: 'choice', prompt: dir > 0 ? `It’s ${timeWords(t)}. What time will it be in ${dw}?` : `It’s ${timeWords(t)}. What time was it ${dw} ago?`,
       answer: [ans], choices: [0, 1, 2], cfmt, key: `lat${t}${dir * d}`,
-      vis: { type: 'clock', t, target, set: true },
+      vis: { type: 'clock', t, target, set: true, small: true },
       clue: { say: `${d === 60 ? 'An hour' : `${d} minutes`} moves the long hand ${d === 60 ? 'all the way' : d === 30 ? 'half way' : 'a quarter of the way'} round. Try it with the buttons!`, point: dir > 0 ? 'clk-plus' : 'clk-minus' },
       steps: q => [{ say: `Move the long hand ${dir > 0 ? 'on' : 'back'} ${dw}.`, get point() { return M.clockDir(q.vis); }, action: () => M.clockOk(q.vis), wait: 'Move it up there!' },
         { say: 'What time does the clock say now?', choices: labels, answer: labels[ans], final: true, words: true }] });

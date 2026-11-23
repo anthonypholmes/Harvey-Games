@@ -642,7 +642,7 @@ const spoken = t => String(t)
 /* ---------- time: the clock face and Set the Clock (The Clock Tower) ----------
    A time is minutes after 12 o'clock (0 to 719: 195 is 3:15). Times are written and said in words, the way
    Year 2 learns them ("quarter past 3", "20 to 9"); digital times are Year 3, so they never appear.
-     vis { type: 'clock', t, count, full }   a big clock face; count: a "Count in 5s" button that lights the numbers
+     vis { type: 'clock', t, count, full, small }   a big clock face (small: smaller on a short phone); count: a "Count in 5s" button that lights the numbers
         round from the 12 to the long hand (or back to the 12, for a "to" time) and says them; full: all the way round
      vis { type: 'clock', t, target, set: true }   (kind 'clock', a Check button) +5 and −5 minute buttons move the
         long hand, and the short hand follows it, as on a real clock
@@ -692,7 +692,7 @@ const clockOk = v => (((v.t - v.target) % 720) + 720) % 720 === 0;
 const clockDir = v => { const d = ((((v.target - v.t) % 720) + 720) % 720); return d === 0 ? 'key-check' : d <= 360 ? 'clk-plus' : 'clk-minus'; };
 function clockVis(v) {
   if (v.type === 'clocks') return `<div class="gv-clocks">${v.list.map((t, i) => `<div class="gv-clock">${v.labels ? `<span class="gv-clock-cap">${v.labels[i]}</span>` : ''}${clockFace({ t }, '-' + i)}</div>`).join('')}</div>`;
-  return `<div class="gv-clock" data-t="clock">${clockFace(v)}</div>
+  return `<div class="gv-clock${v.small ? ' is-small' : ''}" data-t="clock">${clockFace(v)}</div>
     ${v.set ? `<div class="gv-tools clk-set"><button class="mbtn" type="button" data-g="clk-minus" data-t="clk-minus" aria-label="Take the long hand back 5 minutes">−5 minutes</button><button class="mbtn" type="button" data-g="clk-plus" data-t="clk-plus" aria-label="Move the long hand on 5 minutes">+5 minutes</button></div>
       <span class="sr" role="status">The clock shows ${timeWords(v.t)}</span>` : ''}
     ${v.count ? `<div class="gv-tools clk-count"><button class="mbtn small" type="button" data-g="clk-count" data-t="clk-count">Count in 5s</button></div>` : ''}`;
@@ -1784,6 +1784,7 @@ const CSS = String.raw`
   .mm .gv-clocks { flex-wrap: nowrap; gap: 6px; }
   .mm .gv-clocks .clock { width: 140px; height: 140px; }
   .mm .gv-clocks .clk-num text { font-size: 24px; }
+
   .mm .day-card svg { width: 40px; height: 40px; }
   /* three times (or day cards) to pick from sit in one row, so the clock and every answer fit on one screen */
   .mm .play:has(.gv-clock) .choices:has(> .choice:nth-child(3)), .mm .choices:has(.day-card) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -1791,6 +1792,11 @@ const CSS = String.raw`
   .mm .clk-set { flex-wrap: nowrap; width: 100%; gap: 8px; }
   .mm .clk-set .mbtn { flex: 1 1 0; min-width: 0; max-width: 150px; padding: 6px 8px; }
   .mm .gvis > .clk-count .mbtn { width: 78px; min-height: 52px; padding: 4px 6px; font-size: 16px; line-height: 1.1; white-space: normal; }
+}
+/* a clock with buttons and answers under it (small: true) is smaller on a short phone (iPhone SE), so the answers fit */
+@media (max-width: 560px) and (max-height: 700px) {
+  .mm .gv-clock.is-small .clock { width: 156px; height: 156px; }
+  .mm .gv-clock.is-small .clk-num text { font-size: 25px; }
 }
 @media (min-width: 561px) { .mm .gv-tray, .mm .gv-purse-in, .mm .gv-made .gv-coins { --k: 1.25; } .mm .gv-purse { width: min(100%, 470px); } .mm .gv-ware-pic svg { width: 80px; height: 80px; } .mm .gv-board { font-size: 24px; } .mm .gv-wares { gap: 14px 40px; padding: 14px 16px 16px; } }
 @media (max-width: 560px) {
