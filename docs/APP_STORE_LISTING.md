@@ -19,6 +19,7 @@ Text in `code` is for pasting exactly. Character limits are Apple's.
 ```
 Meadow Clubhouse now plays on iPhone as well as iPad!
 
+• 13 new English levels: commas, apostrophes, the four kinds of sentence, joining words, word endings, suffixes, fact files and reading for evidence
 • Every game reshaped for a phone held upright, with Bonnie's own number keys so the keyboard never gets in the way
 • Bonnie shows new players where to start, how to ask her for help, and where to spend their bones
 • A gentle weekly reminder for grown-ups, made on the device only. Change the day and time, or turn it off, in the Grown-ups area
@@ -65,7 +66,7 @@ If "Meadow Clubhouse" is taken, use `Meadow Clubhouse: KS1 Learning`.
 Now on iPhone too! Year 2 maths and English with Bonnie the dog. Try the first level of every world for free. No adverts, no subscription, and it works offline.
 ```
 
-**Description (4,000)** *1.1: three lines added under MADE FOR FAMILIES (iPhone and iPad, the weekly reminder, VoiceOver), and one under FREE TO TRY. Harbour Market and the Clock Tower added under MEADOW MATHS (8 worlds, 52 levels; 72 in all).*
+**Description (4,000)** *1.1: three lines added under MADE FOR FAMILIES (iPhone and iPad, the weekly reminder, VoiceOver), and one under FREE TO TRY. Harbour Market and the Clock Tower added under MEADOW MATHS (8 worlds, 52 levels; 72 in all). *24 November 2026: Meadow Words grew to 33 levels (85 in all), and a line was added to What's New.*
 
 ```
 Homework without the tears. Meadow Clubhouse turns Year 2 (KS1) maths and English into a game your child will ask to play, with Bonnie the chocolate-brown dog cheering them on every step of the way.
@@ -88,11 +89,11 @@ MEADOW MATHS: 8 worlds, 52 levels
 • The Clock Tower: telling the time to 5 minutes, and how long things take
 • Captain's Cove: is Captain Croak right? True or false, spot the mistake, prove it
 
-MEADOW WORDS: 4 worlds, 20 levels
-• Phonics Forest: split digraphs and tricky sounds
+MEADOW WORDS: 4 worlds, 33 levels
+• Phonics Forest: split digraphs, tricky sounds, word endings and suffixes
 • Tricky Word Trail: the Year 2 common exception words
-• Sentence Meadow: capital letters, full stops, question marks and word order
-• Bonnie's Story Nook: short stories, rhymes and reading questions
+• Sentence Meadow: capital letters, full stops, commas, apostrophes, the four kinds of sentence and joining words
+• Bonnie's Story Nook: short stories, fact files, rhymes and reading questions, finding the evidence in the text
 
 BONNIE'S WALK
 Five quick questions a day, mixing maths and English. Nothing can be failed, so even a reluctant learner can finish with a smile. It's the gentlest daily habit you'll ever start.
@@ -119,7 +120,7 @@ SAFE AND SIMPLE
 • The purchase button is behind a check for grown-ups
 
 FREE TO TRY
-Bonnie's Walk and the first level of every world are free, so your child can find the world they love. One purchase then unlocks all 72 levels for good, on your iPhone and iPad, and works with Family Sharing.
+Bonnie's Walk and the first level of every world are free, so your child can find the world they love. One purchase then unlocks all 85 levels for good, on your iPhone and iPad, and works with Family Sharing.
 
 Come and meet Bonnie. She's been waiting by the gate.
 ```
@@ -194,7 +195,7 @@ Six pictures are ready in `docs/screenshots/`, at the iPad 13-inch size Apple as
 | `1-clubhouse.png` | Year 2 maths and English, with Bonnie the dog cheering them on |
 | `2-help.png` | Help that teaches: Bonnie gives a clue, then shows how |
 | `3-maths-worlds.png` | 8 maths worlds, 52 levels |
-| `4-words.png` | Phonics, spelling and stories: 4 English worlds, 20 levels |
+| `4-words.png` | Phonics, spelling and stories: 4 English worlds, 33 levels |
 | `5-bone-shop.png` | Earn bones, unlock gear: helmets, jetpacks, themes and real prizes (changed 18 November 2026; it was "Earn bones for hats and prizes") |
 | `6-walk.png` | A walk with Bonnie every day |
 
