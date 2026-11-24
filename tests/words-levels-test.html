@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Meadow Words New Levels Test</title>
+<link href="../fonts/fonts.css" rel="stylesheet">
+<style>
+  #report { position: relative; z-index: 50; max-width: 900px; margin: 16px auto 140px; padding: 16px; font-family: system-ui, sans-serif; background: #FDFBF7; border: 2px solid #EADFCB; border-radius: 18px; color: #3E2F27; }
+  #report h1 { font-size: 1.3rem; margin: 0 0 6px; }
+  #report p { margin: 0 0 12px; color: #7A6A5E; }
+  #result { font-size: 1.25rem; font-weight: 700; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; }
+  #result.pass { background: #E4F2E7; color: #3F8B5C; }
+  #result.fail { background: #FBE3E3; color: #A93E4F; }
+  #report li { margin: 4px 0; }
+  #report li.bad { color: #A93E4F; font-weight: 700; }
+</style>
+</head>
+<body>
+<script src="../bonnie-voice.js"></script>
+<script src="../js/meadow-core.js"></script>
+<script src="../worlds/y2-english-phonics.js"></script>
+<script src="../worlds/y2-english-tricky-words.js"></script>
+<script src="../worlds/y2-english-sentences.js"></script>
+<script src="../worlds/y2-english-stories.js"></script>
+<script>
+/* Meadow Words, new levels (24 November 2026). Uses its own save (meadow-save-words-levels-test), so a real
+   player's save is never touched. It:
+   - loads a save made before the new levels (stars on the old level ids) and checks nothing was lost
+   - checks the new levels come after the old ones, unlock from the level before, and count in the world's stars
+   - plays every new level to the end as a child would (tapping the real buttons), and checks the stars and bones
+   - walks Bonnie's whole hint ladder on every kind of question, then finishes the question
+   - checks what VoiceOver hears for the new buttons
+   ?world=stories (or sentences, phonics) checks one world; ?slow=1 waits as a child would between questions. */
+(async () => {
+  const TEST_KEY = 'meadow-save-words-levels-test';
+  const Q = new URLSearchParams(location.search), ONLY = Q.get('world');
+  const results = [], check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail: String(detail) });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const closeModals = () => $$('.modal-bg').forEach(m => m.remove());
+  const errors = []; window.addEventListener('error', e => errors.push(e.message));
+
+  /* ---------- a save from before the new levels ---------- */
+  const OLD = {
+    'y2-english-stories': ['rhyme-time', 'who', 'where-and-what', 'mixed-questions', 'longer-stories'],
+    'y2-english-sentences': ['capital-letters', 'full-stop-or-question', 'exclamation', 'word-order', 'super-sentences'],
+    'y2-english-phonics': ['a-e', 'i-e-o-e', 'u-e-e-e', 'ai-ay', 'ee-ea-igh-ie'],
+  };
+  const oldStars = {};
+  Object.entries(OLD).forEach(([w, ids]) => ids.forEach((id, i) => { if (i < 4) oldStars[`${w}/${id}`] = 3 - (i % 3); }));
+  localStorage.removeItem(TEST_KEY);
+  Meadow.startGame({ subject: 'english', title: 'Words Test', icon: 'T', homeHref: '../index.html', assetBase: '../', needName: false, saveKey: TEST_KEY });
+  await wait(50); closeModals();
+  // the player as they were before this update: stars on the old level ids only, and 40 bones
+  Meadow.save.mutate(s => { s.name = 'Sam'; s.bones = 40; s.stars = { ...oldStars }; s.voice = false; s.sound = false; s.settings.warmUps = false; s.tips = { walk: true, ask: true, shop: true }; });
+  Meadow.save.load(); // read it back from storage, as the updated game does when it opens
+  const S = () => Meadow.save.get() || Meadow.save.load();
+  check('An old save loads with every star on the old levels', Object.entries(oldStars).every(([k, v]) => S().stars[k] === v), JSON.stringify(S().stars));
+  check('...and its bones', S().bones === 40, S().bones);
+
+  const worlds = { stories: 'y2-english-stories', sentences: 'y2-english-sentences', phonics: 'y2-english-phonics' };
+  for (const [short, wid] of Object.entries(worlds)) {
+    if (ONLY && ONLY !== short) continue;
+    const w = Meadow.world(wid), ids = w.levels.map(L => L.id), nOld = OLD[wid].length;
+    check(`${short}: the old levels keep their ids and places`, OLD[wid].every((id, i) => ids[i] === id), ids.join(', '));
+    check(`${short}: new levels come after them`, ids.length > nOld, ids.slice(nOld).join(', '));
+    // level 5 had no stars in the old save, so level 6 is locked; it opens once level 5 has a star
+    check(`${short}: the first new level is locked until the level before has a star`, !Meadow.levelUnlocked(w, nOld));
+    Meadow.save.mutate(s => { s.stars[`${wid}/${OLD[wid][nOld - 1]}`] = 1; });
+    check(`${short}: ...and opens when it has one`, Meadow.levelUnlocked(w, nOld) && !Meadow.levelUnlocked(w, nOld + 1));
+  }
+
+  /* ---------- play the new levels ---------- */
+  // see the question being played (a world's play() gets it)
+  let item = null;
+  Object.values(worlds).forEach(id => Meadow.world(id).levels.forEach(L => { if (L.play) { const p = L.play; L.play = (q, ctx) => { item = q; return p(q, ctx); }; } }));
+  const click = el => { if (!el) throw new Error('nothing to tap'); el.click(); };
+  const nextQ = async () => { const i = (Meadow.round() || {}).index; for (let t = 0; t < 80; t++) { await wait(25); if (!Meadow.round() || $('.modal-bg') || Meadow.round().index !== i) return; } Meadow.next(); await wait(30); };
+
+  /* How a child answers each kind of question, with the real buttons. */
+  const SOLVE = {
+    'y2-english-stories': async it => {
+      if (it.kind === 'ev') {
+        click($$('#opts .opt').find(b => b.dataset.o === it.answer)); await wait(20);
+        click($$('#story .nk-s')[it.ev[0]]);
+      } else {
+        const right = it.kind === 'order' ? it.events : it.file.parts.map(p => p.h);
+        for (let k = 0; k < right.length; k++) {
+          const sl = it.kind === 'order' ? $$('#seq .nk-place')[k] : $$('#story .nk-hslot')[k];
+          if (sl.classList.contains('locked')) continue;
+          click(sl); await wait(5); click($$('#nkBank .nk-card').find(c => c.textContent === right[k])); await wait(5);
+        }
+        click($('#checkBtn'));
+      }
+    },
+  };
+  const ladder = async () => { for (let t = 0; t < 4; t++) { click($('#askBtn')); await wait(30); } };
+  const kindOf = it => it.kind || it.mode || 'build';
+
+  for (const [short, wid] of Object.entries(worlds)) {
+    if (ONLY && ONLY !== short) continue;
+    const w = Meadow.world(wid), solve = SOLVE[wid]; if (!solve) continue;
+    for (let li = OLD[wid].length; li < w.levels.length; li++) {
+      const L = w.levels[li], key = `${wid}/${L.id}`;
+      // every question in the bank, not just the 6 a run picks: play the level as many times as it takes
+      const seen = new Set(), kindsHelped = new Set();
+      for (let run = 0; run < 12 && seen.size < L.items.length; run++) {
+        closeModals(); const bones0 = S().bones, errs0 = errors.length;
+        Meadow.startLevel(wid, L.id); await wait(30);
+        let helpedHere = 0, mistakesHere = 0;
+        for (let q = 0; q < 12 && $('#area') && !$('.modal-bg'); q++) {
+          const it = item; seen.add(L.items.indexOf(it));
+          // once per kind of question: walk all four of Bonnie's hints first (the last one shows the answer)
+          if (!kindsHelped.has(kindOf(it))) { kindsHelped.add(kindOf(it)); await ladder(); helpedHere++; }
+          try { await solve(it, L); } catch (e) { check(`${short} / ${L.name}: a question could be answered`, false, e.message + ' ' + JSON.stringify(it).slice(0, 160)); break; }
+          await wait(20);
+          if (Meadow.round() && Meadow.round().busy === false && !$('.modal-bg')) { check(`${short} / ${L.name}: the right answer was accepted`, false, JSON.stringify(it).slice(0, 200)); break; }
+          await nextQ();
+        }
+        await wait(50);
+        const done = /Level complete/.test(($('.modal-bg') || {}).textContent || '');
+        if (run === 0) {
+          check(`${short} / ${L.name}: played to the end`, done);
+          const stars = S().stars[key];
+          check(`${short} / ${L.name}: stars saved for the new id (helped ${helpedHere} time(s): ${helpedHere ? '2' : '3'} stars)`, stars === (helpedHere > 1 ? 1 : helpedHere ? 2 : 3), `${key}: ${stars}`);
+          check(`${short} / ${L.name}: bones were paid`, S().bones > bones0, `${bones0} -> ${S().bones}`);
+        }
+        if (errors.length > errs0) check(`${short} / ${L.name}: no errors on the page`, false, errors.slice(errs0).join(' | '));
+      }
+      check(`${short} / ${L.name}: every question in the bank was played and answered (${seen.size}/${L.items.length})`, seen.size === L.items.length);
+    }
+    // the old levels' stars are still there after playing the new ones
+    check(`${short}: the old levels' stars are unchanged`, Object.entries(oldStars).filter(([k]) => k.startsWith(wid)).every(([k, v]) => S().stars[k] === v));
+    const ws = w.levels.reduce((n, L) => n + (S().stars[`${wid}/${L.id}`] || 0), 0);
+    check(`${short}: the world's star count (journal, map) includes the new levels`, ws > Object.entries(oldStars).filter(([k]) => k.startsWith(wid)).reduce((n, [, v]) => n + v, 0), ws);
+  }
+
+  /* ---------- what VoiceOver hears ---------- */
+  if (!ONLY || ONLY === 'stories') {
+    closeModals(); Meadow.startLevel('y2-english-stories', 'reading-between-the-lines'); await wait(30);
+    check('stories: the answers are buttons', $$('#opts .opt').every(b => b.tagName === 'BUTTON'));
+    click($$('#opts .opt').find(b => b.dataset.o === item.answer)); await wait(20);
+    const ss = $$('#story .nk-s');
+    check('stories: in the evidence part each sentence is a button with its words as its name', ss.every((s, i) => s.getAttribute('role') === 'button' && s.tabIndex === 0 && s.getAttribute('aria-label') === `Sentence ${i + 1}: ${(item.text || []).concat(item.file ? item.file.parts.flatMap(p => p.s) : [])[i]}`), ss.map(s => s.getAttribute('aria-label')).join(' | '));
+    check('stories: the chosen answer says it was right (not by colour alone)', /correct/.test($('#opts .opt.right').getAttribute('aria-label')));
+    check('stories: focus moves to the story for the evidence part', document.activeElement === ss[0]);
+    closeModals(); Meadow.startLevel('y2-english-stories', 'story-detective'); await wait(30);
+    for (let t = 0; t < 12 && item.kind !== 'order'; t++) { Meadow.startLevel('y2-english-stories', 'story-detective'); await wait(20); }
+    check('stories: each place in the order says its number and what is in it', $$('#seq .nk-place').every((b, k) => b.tagName === 'BUTTON' && b.getAttribute('aria-label').startsWith(['1st', '2nd', '3rd', '4th'][k] + ': empty')));
+    // a wrong order: the right places stay (with a tick), the wrong ones go back
+    const cards = $$('#nkBank .nk-card').map(c => c.textContent), wrongOrder = [...item.events].reverse();
+    for (const x of wrongOrder) { click($$('#nkBank .nk-card').find(c => c.textContent === x)); await wait(5); }
+    click($('#checkBtn')); await wait(30);
+    check('stories: a wrong order is marked with ✗ on the wrong places (not by colour alone)', $$('#seq .nk-place.bad').length > 0 && getComputedStyle($('#seq .nk-place.bad .nk-num'), '::after').content.includes('✗'));
+    await wait(950);
+    check('stories: ...and those cards go back to choose again', $$('#nkBank .nk-card').length === $$('#seq .nk-place:not(.locked)').length, cards.length);
+  }
+
+  closeModals();
+  const failed = results.filter(r => !r.ok);
+  document.body.insertAdjacentHTML('afterbegin', `<div id="report"><h1>Meadow Words new levels test</h1><p>Plays every new level with the real buttons, on its own save.</p>
+    <div id="result" class="${failed.length ? 'fail' : 'pass'}">${failed.length ? `${failed.length} of ${results.length} checks failed` : `All ${results.length} checks passed`}</div>
+    <ol>${results.map(r => `<li class="${r.ok ? '' : 'bad'}">${r.ok ? '✓' : '✗'} ${r.name}${r.detail && !r.ok ? ` — <code>${r.detail.replace(/</g, '&lt;')}</code>` : ''}</li>`).join('')}</ol></div>`);
+  window.TEST_RESULT = { passed: results.length - failed.length, failed: failed.length, failures: failed };
+  localStorage.removeItem(TEST_KEY);
+})();
+</script>
+</body>
+</html>
