@@ -342,6 +342,10 @@ const M2_CSS = `
 .m2-joined .blank{display:inline-block;min-width:86px;border-bottom:4px dashed var(--accent);text-align:center;color:var(--leaf-dark)}
 .m2-why{margin-top:14px;padding:12px 16px;border-radius:16px;background:#EAF5E1;border:2px solid var(--leaf);font-family:var(--font-read);font-size:1.15rem;line-height:1.45}
 .m2-why::before{content:"💡 "}
+/* Four Kinds of Sentences: a gap between the sentence and its end mark, and room under the end-mark badges for their names */
+#m2Slot{margin-left:10px;flex:none}
+.m2-choices + .badges{margin-top:14px;padding-bottom:26px}
+.m2-choices + .badges .badge small{font-size:.85rem;bottom:-24px}
 @media (max-width:560px){
   .m2-line{font-size:1.3rem;padding:10px;row-gap:8px}
   .m2-gap{width:26px;height:40px}

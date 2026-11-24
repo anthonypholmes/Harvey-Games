@@ -406,6 +406,7 @@ const SP_CSS = `
 .sp-why{margin-top:14px;padding:12px 16px;border-radius:16px;background:#EAF5E1;border:2px solid var(--leaf);font-family:var(--font-read);font-size:1.15rem;line-height:1.45}
 .sp-why::before{content:"💡 "}
 .slot{position:relative}
+.gap.filled{min-width:0;padding:0 4px;border-bottom-style:solid}
 .slot.bad::after{content:"✗";position:absolute;top:-10px;right:-8px;font:700 1.1rem var(--font-ui);color:var(--berry)}
 @media (max-width:520px){
   /* phones: the pattern card and the word tighten up, so the choices fit an iPhone SE without scrolling */
@@ -482,7 +483,7 @@ function playSpell(item, ctx) {
     const put = id => {
       if (Meadow.isBusy()) return;
       filled = id; sfx.snap(); draw();
-      if (id === right) { const sl = slotOf(); sl.classList.add('locked'); sl.setAttribute('aria-label', `${item.opts[0].split('').join(' ')}, right`); $('#spBody .gap').textContent = item.word; done($('#row'), fillWhy(item)); return; }
+      if (id === right) { const sl = slotOf(); sl.classList.add('locked'); sl.setAttribute('aria-label', `${item.opts[0].split('').join(' ')}, right`); $('#spBody .gap').textContent = item.word; $('#spBody .gap').classList.add('filled'); done($('#row'), fillWhy(item)); return; }
       slotOf().classList.add('bad');
       Meadow.wrong(SP_SAY.fillWrong);
       later(() => { if (Meadow.isBusy() || !$('#row')) return; filled = null; removed.add(id); draw(); }, 900);
@@ -539,7 +540,7 @@ function playSpell(item, ctx) {
       <div class="sp-row" role="group" aria-label="The root word, ${esc(item.root)}, plus an ending">${item.root.split('').map(c => `<span class="sp-l">${c}</span>`).join('')}<span class="sp-plus" aria-hidden="true">+</span><span class="sp-l suf" id="spSuf">?</span></div>
       <p class="mode-tip lead" id="spP">${esc(prompt)}</p>
       <div class="sp-choices" id="spChoices">${shuffle([item.answer, ...item.wrong]).map(x => `<button class="sp-choice" data-v="${x}">${esc(item.root)} + ${esc(x)}</button>`).join('')}</div>`;
-    const finish = () => { $('#spGap').textContent = word; done($('#spGap'), suffixWhy(item)); };
+    const finish = () => { $('#spGap').textContent = word; $('#spGap').classList.add('filled'); done($('#spGap'), suffixWhy(item)); };
     const startSpell = () => {
       part = 2; $('#spP').textContent = SP_SAY.spellPrompt;
       const opts = shuffle([['y', word], ['n', item.root + item.answer]]);

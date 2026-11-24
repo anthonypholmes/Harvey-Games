@@ -437,22 +437,24 @@
     if (sg) { sg.classList.remove('pressed'); sg.classList.add('lit'); } if (h) h.classList.add('lit');
     const bon = document.getElementById('pmBonnie'), bub = document.getElementById('pmBubble'), p = PLACES[id];
     const line = p ? SAYS(id)[1] || LL.offWeGo : LL.offWeGo;
-    const open = () => { leave(); M.worldMap(id); };
+    let gone = false;
+    const open = () => { if (gone) return; gone = true; leave(); M.worldMap(id); };
+    // the level map hushes Bonnie, so go once she has finished her line (and never wait more than a few seconds)
+    const goAfter = ms => { setTimeout(() => (ui.whenQuiet || (f => f()))(open), ms); setTimeout(open, ms + 5000); };
     if (!bon || !p) { setTimeout(open, 250); return; }
     if (viaBonnie || at && at.id === id || reduce()) {
       // she's already there (or no movement wanted): a wiggle, her words, then go
       if (!reduce()) { bon.classList.remove('wiggle'); void bon.getBoundingClientRect(); bon.classList.add('wiggle'); }
       if (reduce() && at && at.id !== id) bon.style.transform = `translate(${p.bonnie[0]}px,${p.bonnie[1]}px)`;
       bub.innerHTML = bubbleSVG(w, line); at = w; ui.say(line);
-      setTimeout(open, reduce() ? 450 : 800);
+      goAfter(reduce() ? 450 : 800);
       return;
     }
     // she trots over with two little hops, then says where you're going
     bub.style.opacity = '0';
     bon.classList.add('hop');
     bon.style.transform = `translate(${p.bonnie[0]}px,${p.bonnie[1]}px)`;
-    setTimeout(() => { bub.innerHTML = bubbleSVG(w, line); bub.style.opacity = '1'; at = w; ui.say(line); }, 760);
-    setTimeout(open, 1350);
+    setTimeout(() => { bub.innerHTML = bubbleSVG(w, line); bub.style.opacity = '1'; at = w; ui.say(line); goAfter(590); }, 760);
   }
   function leave() { on = false; busy = false; if (cam) { camMem[camKey()] = cam.state(); cam.destroy(); cam = null; } document.body.classList.remove('pm-on'); const sh = document.querySelector('.pm-sheet-bg'); if (sh) sh.remove(); }
 

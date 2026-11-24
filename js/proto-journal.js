@@ -84,12 +84,14 @@
   function stampSVG(w, k) {
     const none = k === 'none', ink = none ? '#A8977C' : inkOf(w), id = 'pjArc' + (++uid);
     const rot = none ? 0 : (hash(w.id) % 11) - 5, name = w.name.replace(/[’']/g, '’').toUpperCase();
-    const fs = 18, est = name.length * fs * .66, fit = est > 206 ? ` textLength="206" lengthAdjust="spacingAndGlyphs"` : '';
+    // the name runs round 240 degrees of the stamp; long names get a smaller font so they fit. (Safari ignores textLength
+    // on a textPath, so squeezing the letters cut the ends off long names on the iPad, 24 November 2026.)
+    const fs = Math.min(18, Math.floor((228 / name.length - .5) / .7 * 10) / 10), fit = '';
     const inner = (INNER[short(w.id)] || starInk)(ink);
     return `<svg viewBox="0 0 160 160" aria-hidden="true" class="pj-svg"><g transform="rotate(${rot} 80 80)"${none ? '' : ' opacity=".94"'}>
       ${none ? `<circle cx="80" cy="80" r="74" fill="none" stroke="${ink}" stroke-width="2.5" stroke-dasharray="6 7"/><circle cx="80" cy="80" r="44" fill="none" stroke="${ink}" stroke-width="2" stroke-dasharray="3 6"/>`
              : `<circle cx="80" cy="80" r="74" fill="none" stroke="${ink}" stroke-width="5" stroke-dasharray="180 3 40 2 90 4"/><circle cx="80" cy="80" r="44" fill="none" stroke="${ink}" stroke-width="2.5"/>`}
-      <defs><path id="${id}" d="M24.5 104 A57 57 0 1 1 135.5 104"/></defs>
+      <defs><path id="${id}" d="M30.6 108.5 A57 57 0 1 1 129.4 108.5"/></defs>
       <text class="pj-arc" font-family="Fredoka" font-weight="700" font-size="${fs}" letter-spacing=".5" fill="${ink}"${none ? ' opacity=".8"' : ''}><textPath href="#${id}" startOffset="50%" text-anchor="middle"${fit}>${esc(name)}</textPath></text>
       <g transform="translate(80 82) scale(.8)"${none ? ' opacity=".32"' : ''}>${inner}</g>
       ${none ? '' : `<path d="M44 128 q36 14 72 0" stroke="${ink}" stroke-width="2" fill="none" stroke-dasharray="2 5" stroke-linecap="round"/>`}

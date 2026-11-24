@@ -526,6 +526,14 @@
       else { if (ui.sfx && ui.sfx.pop) ui.sfx.pop(); draw(); }
     });
     const rail = ui.$('#psRail');
+    /* Two rows of cards (a tall iPad): every card and section sign gets its own column and row. Left to automatic
+       placement, Safari put cards on top of the section signs (24 November 2026). */
+    const rows = +rail.style.getPropertyValue('--rows') || 1;
+    if (rows > 1) { let col = 1, row = 0;
+      [...rail.children].forEach(c => {
+        if (c.classList.contains('ps-head')) { if (row) { col++; row = 0; } c.style.gridColumn = String(col); c.style.gridRow = '1 / ' + (rows + 1); col++; return; }
+        c.style.gridColumn = String(col); c.style.gridRow = String(row + 1); row++; if (row === rows) { row = 0; col++; }
+      }); }
     rail.addEventListener('scroll', () => { railX[tab] = rail.scrollLeft; arrows(); ui.$$('.ps-card.pressed').forEach(c => c.classList.remove('pressed')); }, { passive: true });
     // a page, in whole columns of cards, less one, so the last column seen stays in view and the cards land where they snap
     const step = () => {
