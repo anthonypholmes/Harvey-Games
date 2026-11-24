@@ -78,3 +78,56 @@ Every line in the new levels is fixed text, listed by the world's `lines()`, so 
 - The new lines are not recorded yet (see Audio).
 - On the iPhone SE and iPhone 17 the fact files and ordering questions scroll (see Tests).
 - Real-device VoiceOver and touch testing still has to be done on a phone and an iPad; the automated checks drive Chrome.
+
+---
+
+## Priority 2: Sentence Meadow
+
+### Levels and ids
+
+| # | Level | Id | Questions | Kinds of question |
+|---|---|---|---|---|
+| 1–5 | Capital Letters · Full Stop or Question? · Exclamation! · Word Order · Super Sentences | `capital-letters` `full-stop-or-question` `exclamation` `word-order` `super-sentences` | unchanged | unchanged |
+| 6 | Comma Caterpillar | `comma-caterpillar` | 9 | tap the spaces between words to put commas in a list (3- and 4-item lists, nouns, adjectives, verbs, two-word items, a sentence with *Tom and Leo* that is not part of the list) |
+| 7 | Apostrophe Adventures | `apostrophe-adventures` | 20 | build a contraction by tapping the letters left out (8); tap the word that needs an ownership apostrophe, next to a plural that doesn't (6); "why does this word have an apostrophe?" (6) |
+| 8 | Four Kinds of Sentences | `four-kinds-of-sentences` | 12 | choose statement, question, command or exclamation from the words alone, then its end mark |
+| 9 | Joining Sentences | `joining-sentences` | 10 | choose *and, but, or, when, if, that* or *because* to join two ideas; a wrong choice is read back in the sentence |
+
+### Curriculum map
+
+| Objective (Year 2) | Where | Page |
+|---|---|---|
+| Commas to separate items in a list | L6 | 32, 76 |
+| Apostrophes to mark where letters are missing (contracted forms) | L7 contractions; "why?" questions | 29, 32, 57, 76 |
+| Possessive apostrophe, singular nouns (*the girl's book*) | L7 ownership; "why?" questions | 29, 57, 76 |
+| How the grammatical patterns in a sentence indicate its function as a statement, question, exclamation or command | L8 | 32, 75 |
+| Capital letters, full stops, question marks and exclamation marks to demarcate sentences | L8 end marks (and levels 1–5) | 76 |
+| Subordination (*when, if, that, because*) and co-ordination (*or, and, but*) | L9 | 32, 75 |
+| Terminology: statement, question, exclamation, command, apostrophe, comma | L8 choices, Bonnie's hints | 76 |
+
+### Design decisions
+
+- **Punctuation is a button only where it is being chosen**: the comma spaces in L6 and the end marks in the second part of L8. In L6, L7 and L9 the end mark is plain text. The earlier fix (no tappable end mark in Capital Letters) is unchanged and checked by the test.
+- **No comma before *and*** in a list (the usual Year 2 teaching). A comma there gets its own explanation: *the word and joins the last two things in the list.* The wording avoids saying a comma there is never allowed.
+- **Contractions vs. ownership** are taught apart and then compared: L7 mixes building contractions, finding the owner's word next to a plain plural (*cats*, *pockets*, *boots*), and "why does it have an apostrophe?". *It's* is only ever *it is*. There are no plural owners (*girls'*) and no owners ending in *s*, since those are not Year 2.
+- **Exclamations are the Year 2 grammatical form** (*What a …!*, *How …!*), not any loud sentence. *How tall that tree is* (exclamation) and *How tall is that tree* (question) are both in the bank, so the words decide. Statements are calm, so a full stop is clearly right.
+- **Commands accept . or !** (both are correct). Questions take only ?, statements only ., exclamations only !.
+- **Joining words: one clearly right choice.** Each sentence was read with all seven joining words. The two wrong choices offered make no sense or are not grammatical there; words that could also be right are not offered (listed in the audit). *And* is never a wrong choice.
+- **Bonnie explains with the child's sentence**, e.g. *"Bonnie was wet because she had jumped into the pond. Because tells us the reason Bonnie was wet."*, and a wrong joining word is read back: *"Hmm, listen: Bonnie was wet but she had jumped into the pond. Does that make sense?"*
+
+**Hints:** 1 hear it again; 2 the rule in child-friendly words; 3 narrow it down (one comma placed and stray ones removed; one left-out letter crossed out; non-owner words made pale; one wrong choice or end mark taken away); 4 Bonnie shows it all, and the child still taps Check or the shining answer.
+
+### Tests
+
+`node tools/run-test.mjs "tests/words-levels-test.html?world=sentences"`: **34 of 34 passed** (24 November 2026). Besides the save, unlock, star, bone and every-question checks above, it checks the VoiceOver names of the comma spaces ("Space after ball, no comma" / "Comma after ball"), the letter toggles (`aria-pressed`) and the end marks ("full stop", "question mark", "exclamation mark"); that a comma before *and* gets its explanation; that commands accept both . and !; that a wrong joining word is read back; and that Capital Letters still has no tappable end mark.
+
+Phone fit: everything fits the iPhone SE width; comma spaces are 26 × 40 points on a phone with a tap area that reaches past the edges (as with the existing Aa buttons). Pictures: `sentences-*` in [docs/review/words-expansion/](review/words-expansion/index.html).
+
+### Audio
+
+**279 new clips** for Sentence Meadow (618 for the expansion so far, about 25,500 characters), to record with `npm run voice`.
+
+### Limitations
+
+- The new lines are not recorded yet.
+- Joining Sentences offers three choices, not all seven at once: with seven, several would often make sense, and a defensible answer would be marked wrong.

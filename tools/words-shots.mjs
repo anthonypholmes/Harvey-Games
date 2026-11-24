@@ -37,9 +37,16 @@ const SHOTS = [
   ['stories', 'L8-headings', ['se', 'ipad'], `pick('y2-english-stories', 'fact-files', it => it.kind === 'match' && it.extra.length); $all('#nkBank .nk-card')[0].click();`],
   ['stories', 'L9-order', ['se', '17', 'ipad'], `const it = pick('y2-english-stories', 'story-detective', it => it.kind === 'order' && it.events.length === 4 && /card/.test(it.why)); $all('#nkBank .nk-card').find(c => c.textContent === it.events[0]).click();`],
   ['stories', 'L9-order-wrong', ['se'], `const it = pick('y2-english-stories', 'story-detective', it => it.kind === 'order' && /card/.test(it.why)); [it.events[0], it.events[2], it.events[1], it.events[3]].forEach(x => $all('#nkBank .nk-card').find(c => c.textContent === x).click()); $1('#checkBtn').click();`],
+  ['sentences', 'L6-commas', ['se', '17', 'ipad'], `pick('y2-english-sentences', 'comma-caterpillar', it => /Tom and Leo/.test(it.s)); $all('#m2Line .m2-gap').filter(g => /after (bread|milk)/.test(g.getAttribute('aria-label'))).forEach(g => g.click()); $1('#checkBtn').click();`],
+  ['sentences', 'L6-commas-solved', ['se'], `pick('y2-english-sentences', 'comma-caterpillar', it => /Gran grows/.test(it.s)); $all('#m2Line .m2-gap').filter(g => /after (carrots|beans)/.test(g.getAttribute('aria-label'))).forEach(g => g.click()); $1('#checkBtn').click();`],
+  ['sentences', 'L7-contraction', ['se', '17', 'ipad'], `pick('y2-english-sentences', 'apostrophe-adventures', it => it.full === 'can[no]t'); $all('#m2Letters .m2-letter').slice(3, 5).forEach(b => b.click());`],
+  ['sentences', 'L7-ownership', ['se', 'ipad'], `pick('y2-english-sentences', 'apostrophe-adventures', it => it.kind === 'owner' && /cats/.test(it.s)); $all('#m2Line .m2-tap').find(b => b.textContent === 'cats').click();`],
+  ['sentences', 'L7-why-apostrophe', ['se'], `pick('y2-english-sentences', 'apostrophe-adventures', it => it.kind === 'whyapos' && /raining/.test(it.s))`],
+  ['sentences', 'L8-four-kinds', ['se', '17', 'ipad'], `pick('y2-english-sentences', 'four-kinds-of-sentences', it => /How tall that/.test(it.s))`],
+  ['sentences', 'L8-end-mark', ['se', 'ipad'], `pick('y2-english-sentences', 'four-kinds-of-sentences', it => /Put your coat/.test(it.s)); $1('#m2Choices .m2-choice[data-v="command"]').click();`],
+  ['sentences', 'L9-joining', ['se', '17', 'ipad'], `pick('y2-english-sentences', 'joining-sentences', it => /wet/.test(it.s)); $1('#m2Choices .m2-choice[data-v="but"]').click();`],
+  ['sentences', 'L9-joining-solved', ['se'], `pick('y2-english-sentences', 'joining-sentences', it => /biscuit/.test(it.s)); $1('#m2Choices .m2-choice[data-v="if"]').click();`],
 ];
-const extra = path.join(ROOT, 'tools', 'words-shots-more.json'); // more moments, added by later steps of the work
-if (fs.existsSync(extra)) SHOTS.push(...JSON.parse(fs.readFileSync(extra, 'utf8')));
 
 const server = await serve(PORT);
 const chrome = await startChrome(DEBUG_PORT);

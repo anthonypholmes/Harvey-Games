@@ -95,6 +95,21 @@
         click($('#checkBtn'));
       }
     },
+    'y2-english-sentences': async it => {
+      if (it.kind === 'comma') {
+        const ws = it.s.replace(/[.!?]$/, '').split(' '), want = new Set(ws.map((x, i) => /,$/.test(x) ? i : -1).filter(i => i >= 0));
+        for (const g of $$('#m2Line .m2-gap')) { const i = +g.dataset.i, cur = $(`#m2Line .m2-gap[data-i="${i}"]`); if (want.has(i) !== cur.classList.contains('on')) click(cur); }
+        click($('#checkBtn'));
+      } else if (it.kind === 'contract') {
+        let out = false; const want = [];
+        for (const ch of it.full) { if (ch === '[') { out = true; continue; } if (ch === ']') { out = false; continue; } want.push(out && ch !== ' '); }
+        want.forEach((w, i) => { const b = $(`#m2Letters .m2-letter[data-i="${i}"]`); if (b && w !== b.classList.contains('out')) click(b); });
+        click($('#checkBtn'));
+      } else if (it.kind === 'owner') click($$('#m2Line .m2-tap').find(b => b.textContent === it.word));
+      else if (it.kind === 'whyapos') click($(`#m2Choices .m2-choice[data-v="${it.miss ? 'missing' : 'belongs'}"]`));
+      else if (it.kind === 'join') click($(`#m2Choices .m2-choice[data-v="${it.answer}"]`));
+      else if (it.kind === 'kind4') { const c = $(`#m2Choices .m2-choice[data-v="${it.k}"]`); if (!c.disabled) click(c); await wait(10); click($(`#badges .badge[data-b="${it.marks[0]}"]`)); }
+    },
   };
   const ladder = async () => { for (let t = 0; t < 4; t++) { click($('#askBtn')); await wait(30); } };
   const kindOf = it => it.kind || it.mode || 'build';
@@ -156,6 +171,33 @@
     check('stories: a wrong order is marked with ✗ on the wrong places (not by colour alone)', $$('#seq .nk-place.bad').length > 0 && getComputedStyle($('#seq .nk-place.bad .nk-num'), '::after').content.includes('✗'));
     await wait(950);
     check('stories: ...and those cards go back to choose again', $$('#nkBank .nk-card').length === $$('#seq .nk-place:not(.locked)').length, cards.length);
+  }
+
+  if (!ONLY || ONLY === 'sentences') {
+    const W = 'y2-english-sentences', until = async (lid, ok) => { for (let t = 0; t < 60; t++) { closeModals(); Meadow.startLevel(W, lid); await wait(10); if (ok(item)) return item; } throw new Error('no such question'); };
+    await until('comma-caterpillar', () => true);
+    const gaps = $$('#m2Line .m2-gap');
+    check('sentences: each comma space is a button that says where it is', gaps.every(g => g.tagName === 'BUTTON' && /^Space after \S+, no comma$/.test(g.getAttribute('aria-label'))), gaps.map(g => g.getAttribute('aria-label')).join(' | '));
+    click(gaps[0]); await wait(5);
+    check('sentences: ...and says "Comma after" once a comma is in', /^Comma after /.test($('#m2Line .m2-gap').getAttribute('aria-label')));
+    check('sentences: in Comma Caterpillar the full stop is not a button', !$('#m2Line .m2-end').closest('button') && !$('#badges .badge'));
+    await until('comma-caterpillar', it => /Tom and Leo/.test(it.s));
+    $$('#m2Line .m2-gap').forEach(g => { if (/after (bread|milk)/.test(g.getAttribute('aria-label'))) click(g); }); await wait(5);
+    click($('#checkBtn')); await wait(10);
+    check('sentences: a comma before "and" is explained', /joins the last two things/.test($('#bubble').textContent), $('#bubble').textContent);
+    await until('apostrophe-adventures', it => it.kind === 'contract');
+    check('sentences: each letter to leave out is a toggle button for VoiceOver', $$('#m2Letters .m2-letter').every(b => b.getAttribute('aria-pressed') === 'false'));
+    await until('four-kinds-of-sentences', it => it.k === 'command');
+    click($('#m2Choices .m2-choice[data-v="command"]')); await wait(5);
+    check('sentences: the end marks are buttons with spoken names, only in the end-mark part', $$('#badges .badge').map(b => b.getAttribute('aria-label')).join() === 'full stop,question mark,exclamation mark');
+    click($('#badges .badge[data-b="!"]')); await wait(10);
+    check('sentences: a command may end with ! (both . and ! are accepted)', Meadow.round().busy);
+    await until('four-kinds-of-sentences', it => it.k === 'command'); click($('#m2Choices .m2-choice[data-v="command"]')); await wait(5); click($('#badges .badge[data-b="."]')); await wait(10);
+    check('sentences: ...and with .', Meadow.round().busy);
+    await until('joining-sentences', it => /wet/.test(it.s)); click($('#m2Choices .m2-choice[data-v="but"]')); await wait(10);
+    check('sentences: a wrong joining word is read back in the sentence', /Bonnie was wet but she had jumped into the pond\. Does that make sense\?/.test($('#bubble').textContent), $('#bubble').textContent);
+    closeModals(); Meadow.startLevel(W, 'capital-letters'); await wait(10);
+    check('sentences: Capital Letters still shows its end mark as plain text, with no end-mark badges', $('#pslot.p-end') && !$$('#badges .badge').length);
   }
 
   closeModals();

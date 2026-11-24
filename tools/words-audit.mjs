@@ -105,7 +105,72 @@ function stories() {
   });
 }
 
-const checks = { stories };
+
+/* ---------- Sentence Meadow ---------- */
+const CONTRACTIONS = { 'do not': "don't", cannot: "can't", 'it is': "it's", 'I am': "I'm", 'did not': "didn't", 'I will': "I'll", 'could not': "couldn't", 'we are': "we're",
+  'has not': "hasn't", 'they are': "they're", 'she is': "she's", 'he is': "he's", 'you are': "you're", 'I have': "I've", 'let us': "let's" };
+const CONJ = ['and', 'but', 'or', 'when', 'if', 'that', 'because'];
+const Q_START = /^(where|what|when|who|why|which|how|can|could|do|does|did|is|are|was|were|will|would|should|have|has)\b/i;
+const IMPERATIVE = /^(put|wash|shut|close|open|sit|stand|come|go|stop|look|listen|take|give|bring|tidy|eat|drink|be|don't|please)\b/i;
+function sentences() {
+  const w = checkIds('y2-english-sentences');
+  md.push(`## Sentence Meadow\n`, `Levels: ${w.levels.map((L, i) => `${i + 1}. ${L.name} (\`${L.id}\`)`).join(' · ')}\n`);
+  w.levels.slice(5).forEach(L => {
+    md.push(`### ${L.name} (\`${L.id}\`) — ${L.items.length} questions\n`);
+    if (!L.tip) bad(L.id, 'no tip for Bonnie\'s second hint');
+    L.items.forEach((it, n) => {
+      const where = `sentences/${L.id} #${n + 1}`;
+      if (it.kind === 'comma') {
+        const ws = it.s.replace(/[.!?]$/, '').split(' ');
+        const commas = ws.map((x, i) => /,$/.test(x) ? i : -1).filter(i => i >= 0);
+        if (!commas.length) bad(where, 'no commas to put in');
+        commas.forEach(i => { if (/^and$/i.test(ws[i + 1])) bad(where, `a comma before "and" (${it.s})`); });
+        const last = commas[commas.length - 1], andAt = ws.findIndex((x, i) => i > last && x === 'and');
+        if (andAt < last + 2 || andAt > last + 3) bad(where, `after the last comma there should be one list item (a word or two), then "and" (${it.s})`);
+        if (/,(?! )|  /.test(it.s)) bad(where, 'odd spacing');
+        md.push(`${n + 1}. *commas* — ${it.s}  (${commas.length} comma${commas.length > 1 ? 's' : ''}; ${ws.length - 1} spaces to choose from)`);
+      } else if (it.kind === 'contract') {
+        const words = it.full.replace(/[[\]]/g, '');
+        const letters = []; let out = false; for (const ch of it.full) { if (ch === '[') { out = true; continue; } if (ch === ']') { out = false; continue; } letters.push({ ch, out: out && ch !== ' ', space: ch === ' ' }); }
+        let s = '', run = false; letters.forEach(l => { if (l.space) return; if (l.out) { if (!run) s += "'"; run = true; } else { s += l.ch; run = false; } });
+        if (CONTRACTIONS[words] !== s) bad(where, `${words} makes "${s}", but it should be "${CONTRACTIONS[words] || '?'}"`);
+        md.push(`${n + 1}. *contraction* — ${words} → **${s}** (leave out: ${letters.filter(l => l.out).map(l => l.ch).join(', ')})`);
+      } else if (it.kind === 'owner') {
+        const ws = it.s.replace(/[.!?]$/, '').split(' ');
+        if (ws.filter(x => x === it.word).length !== 1) bad(where, `"${it.word}" should be in the sentence once`);
+        if (it.fixed !== it.word.slice(0, -1) + "'s") bad(where, `${it.word} → ${it.fixed}: singular possession should be the name + 's`);
+        it.plurals.forEach(p => { if (!ws.some(x => x.toLowerCase() === p)) bad(where, `the plural "${p}" is not in the sentence`); });
+        ws.forEach(x => { if (/'/.test(x)) bad(where, `another word already has an apostrophe: ${x}`); });
+        if (/s$/.test(it.word.slice(0, -1))) note(where, 'the owner ends in s: check this is Year 2 singular possession');
+        md.push(`${n + 1}. *ownership* — ${it.s} → **${it.fixed}** · plural, no apostrophe: ${it.plurals.join(', ')}\n   - **Bonnie:** ${it.why}`);
+      } else if (it.kind === 'whyapos') {
+        if (!it.s.includes(it.word) || !/'/.test(it.word)) bad(where, 'the word with the apostrophe is not in the sentence');
+        if (it.miss && CONTRACTIONS[it.miss] !== it.word.toLowerCase().replace(/^i'/, "I'")) bad(where, `${it.word} is not short for ${it.miss}`);
+        if (!it.miss && !/'s$/.test(it.word)) bad(where, 'a belonging apostrophe should be \'s');
+        if (/^it's$/i.test(it.word) && !it.miss) bad(where, "it's never shows belonging");
+        md.push(`${n + 1}. *why the apostrophe?* — ${it.s} (**${it.word}**) → ${it.miss ? `letters missing (${it.miss})` : 'belonging'}`);
+      } else if (it.kind === 'kind4') {
+        const s = it.s;
+        const looks = /^(what a|what an|how)\b/i.test(s) && !Q_START.test(s.replace(/^how\s+\w+\s+/i, '')) && it.k === 'exclamation' ? 'exclamation'
+          : /^how\s+\w+\s+(is|are|was|were|do|does|did|can)\b/i.test(s) || (Q_START.test(s) && !/^(what a|how\s+\w+\s+(that|the|this|bonnie|it))\b/i.test(s)) ? 'question'
+          : IMPERATIVE.test(s) ? 'command' : /^(what a|what an|how)\b/i.test(s) ? 'exclamation' : 'statement';
+        if (looks !== it.k) bad(where, `"${s}" looks like a ${looks}, but is marked ${it.k}`);
+        if (/[.!?]$/.test(s)) bad(where, 'the sentence should have no end mark (the child chooses it)');
+        md.push(`${n + 1}. *four kinds* — ${s} → **${it.k}**, ends with ${it.marks.join(' or ')}\n   - **Bonnie:** ${it.why}`);
+      } else if (it.kind === 'join') {
+        if (![it.answer, ...it.wrong].every(c => CONJ.includes(c))) bad(where, 'a choice is not a Year 2 joining word');
+        if (it.wrong.includes(it.answer) || !uniq(it.wrong)) bad(where, 'the choices repeat');
+        if (it.s.split('___').length !== 2) bad(where, 'the sentence needs one ___');
+        if (it.ideas.length !== 2) bad(where, 'two ideas to join');
+        md.push(`${n + 1}. *joining* — ${it.ideas.join(' / ')} → ${it.s.replace('___', `**${it.answer}**`)} · *not:* ${it.wrong.join(', ')}\n   - **Bonnie:** ${it.why}`);
+      } else bad(where, `unknown kind ${it.kind}`);
+    });
+    md.push('');
+  });
+  md.push(`**Joining words, checked by hand.** Each sentence was read with all seven Year 2 joining words. The two wrong choices offered are ones that don't make sense (or aren't grammatical) there; *and* is never offered as a wrong choice, because it usually still makes sense. Choices left out on purpose because they could also be right: *Bonnie was wet ___ she had jumped in the pond* (not offered: *and*, *when*); *I wanted to play outside ___ it was raining* (not offered: *because*, *and*: someone may want to play in the rain); *Leo put on his coat ___ it was cold* (not offered: *when*, *and*); *Bonnie barks ___ the postman comes* (not offered: *if*, *because*, *and*); *You can have a biscuit ___ you eat your lunch* (not offered: *when*, *because*); *Ben fell over ___ he was running* (not offered: *because*, *and*); *I like cats ___ I don't like spiders* (not offered: *and*); *Priya fed the hens ___ Leo collected the eggs* (not offered: *but*, *when*, *because*).\n`);
+}
+
+const checks = { stories, sentences };
 for (const fn of Object.values(checks)) fn();
 
 // every line Bonnie says must be in the list of lines to record (spot-check: the world lists must not throw)

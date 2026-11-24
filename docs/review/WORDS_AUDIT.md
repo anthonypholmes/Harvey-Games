@@ -176,3 +176,100 @@ Levels: 1. Rhyme Time (`rhyme-time`) · 2. Who? (`who`) · 3. Where & What? (`wh
 
 *8 different passages.*
 
+## Sentence Meadow
+
+Levels: 1. Capital Letters (`capital-letters`) · 2. Full Stop or Question? (`full-stop-or-question`) · 3. Exclamation! (`exclamation`) · 4. Word Order (`word-order`) · 5. Super Sentences (`super-sentences`) · 6. Comma Caterpillar (`comma-caterpillar`) · 7. Apostrophe Adventures (`apostrophe-adventures`) · 8. Four Kinds of Sentences (`four-kinds-of-sentences`) · 9. Joining Sentences (`joining-sentences`)
+
+### Comma Caterpillar (`comma-caterpillar`) — 9 questions
+
+1. *commas* — Bonnie packed a ball, a lead and a bone.  (1 comma; 8 spaces to choose from)
+2. *commas* — We saw cows, sheep, pigs and hens at the farm.  (2 commas; 9 spaces to choose from)
+3. *commas* — Mia likes apples, pears and grapes.  (1 comma; 5 spaces to choose from)
+4. *commas* — Tom and Leo bought bread, milk and eggs.  (1 comma; 7 spaces to choose from)
+5. *commas* — The flag was red, white and blue.  (1 comma; 6 spaces to choose from)
+6. *commas* — My bag has a pencil, a ruler and a rubber in it.  (1 comma; 11 spaces to choose from)
+7. *commas* — Ava can hop, skip and jump.  (1 comma; 5 spaces to choose from)
+8. *commas* — Gran grows carrots, beans, peas and potatoes.  (2 commas; 6 spaces to choose from)
+9. *commas* — Bonnie ran, jumped and splashed in the puddles.  (1 comma; 7 spaces to choose from)
+
+### Apostrophe Adventures (`apostrophe-adventures`) — 20 questions
+
+1. *contraction* — do not → **don't** (leave out: o)
+2. *contraction* — cannot → **can't** (leave out: n, o)
+3. *contraction* — it is → **it's** (leave out: i)
+4. *contraction* — I am → **I'm** (leave out: a)
+5. *contraction* — did not → **didn't** (leave out: o)
+6. *contraction* — I will → **I'll** (leave out: w, i)
+7. *contraction* — could not → **couldn't** (leave out: o)
+8. *contraction* — we are → **we're** (leave out: a)
+9. *ownership* — Two cats sat on Bonnies bed. → **Bonnie's** · plural, no apostrophe: cats
+   - **Bonnie:** The bed belongs to Bonnie, so it is Bonnie's bed. Cats just means more than one cat.
+10. *ownership* — Toms coat has three pockets. → **Tom's** · plural, no apostrophe: pockets
+   - **Bonnie:** The coat belongs to Tom, so it is Tom's coat. Pockets just means more than one pocket.
+11. *ownership* — Mias kite flew over the hills. → **Mia's** · plural, no apostrophe: hills
+   - **Bonnie:** The kite belongs to Mia, so it is Mia's kite. Hills just means more than one hill.
+12. *ownership* — The mans hat had two feathers. → **man's** · plural, no apostrophe: feathers
+   - **Bonnie:** The hat belongs to the man, so it is the man's hat. Feathers just means more than one feather.
+13. *ownership* — Leos sister has red boots. → **Leo's** · plural, no apostrophe: boots
+   - **Bonnie:** The sister is Leo's sister, so it is Leo's. Boots just means more than one boot.
+14. *ownership* — The childs shoes were by the door. → **child's** · plural, no apostrophe: shoes
+   - **Bonnie:** The shoes belong to the child, so they are the child's shoes. Shoes just means more than one shoe.
+15. *why the apostrophe?* — It's raining today. (**It's**) → letters missing (it is)
+16. *why the apostrophe?* — Sarah's bike is blue. (**Sarah's**) → belonging
+17. *why the apostrophe?* — We can't find the ball. (**can't**) → letters missing (cannot)
+18. *why the apostrophe?* — Ben's dog is called Rex. (**Ben's**) → belonging
+19. *why the apostrophe?* — I'm going to the park. (**I'm**) → letters missing (I am)
+20. *why the apostrophe?* — The man's van is white. (**man's**) → belonging
+
+### Four Kinds of Sentences (`four-kinds-of-sentences`) — 12 questions
+
+1. *four kinds* — The bus stops outside the school → **statement**, ends with .
+   - **Bonnie:** It tells us something about the bus, so it is a statement. A statement ends with a full stop.
+2. *four kinds* — Bonnie has a red collar → **statement**, ends with .
+   - **Bonnie:** It tells us something about Bonnie, so it is a statement. A statement ends with a full stop.
+3. *four kinds* — Frogs can swim → **statement**, ends with .
+   - **Bonnie:** It tells us something about frogs, so it is a statement. A statement ends with a full stop.
+4. *four kinds* — Where is my hat → **question**, ends with ?
+   - **Bonnie:** It asks something and starts with where, so it is a question. A question ends with a question mark.
+5. *four kinds* — Can you see the moon → **question**, ends with ?
+   - **Bonnie:** It asks something, so it is a question. A question ends with a question mark.
+6. *four kinds* — How tall is that tree → **question**, ends with ?
+   - **Bonnie:** It asks how tall the tree is, so it is a question. A question ends with a question mark.
+7. *four kinds* — Put your coat on → **command**, ends with . or !
+   - **Bonnie:** It tells someone to do something, so it is a command. A command can end with a full stop or an exclamation mark.
+8. *four kinds* — Wash your hands before lunch → **command**, ends with . or !
+   - **Bonnie:** It tells someone to do something, so it is a command. A command can end with a full stop or an exclamation mark.
+9. *four kinds* — Shut the gate, please → **command**, ends with . or !
+   - **Bonnie:** It tells someone to do something, so it is a command. A command can end with a full stop or an exclamation mark.
+10. *four kinds* — What a lovely day it is → **exclamation**, ends with !
+   - **Bonnie:** It starts with What a and shows a strong feeling, so it is an exclamation. An exclamation ends with an exclamation mark.
+11. *four kinds* — How tall that tree is → **exclamation**, ends with !
+   - **Bonnie:** It starts with How and shows surprise, so it is an exclamation. An exclamation ends with an exclamation mark.
+12. *four kinds* — What a big dog that is → **exclamation**, ends with !
+   - **Bonnie:** It starts with What a and shows surprise, so it is an exclamation. An exclamation ends with an exclamation mark.
+
+### Joining Sentences (`joining-sentences`) — 10 questions
+
+1. *joining* — Bonnie was wet. / She had jumped into the pond. → Bonnie was wet **because** she had jumped into the pond. · *not:* but, or
+   - **Bonnie:** Because tells us the reason Bonnie was wet.
+2. *joining* — I wanted to play outside. / It was raining. → I wanted to play outside **but** it was raining. · *not:* or, that
+   - **Bonnie:** But shows something different: I wanted to play, but the rain stopped me.
+3. *joining* — We could go to the park. / We could go swimming. → We could go to the park **or** we could go swimming. · *not:* because, when
+   - **Bonnie:** Or gives us a choice: the park, or swimming.
+4. *joining* — Leo put on his coat. / It was cold outside. → Leo put on his coat **because** it was cold outside. · *not:* but, or
+   - **Bonnie:** Because tells us the reason Leo put on his coat.
+5. *joining* — Bonnie barks. / The postman comes. → Bonnie barks **when** the postman comes. · *not:* but, or
+   - **Bonnie:** When tells us the time Bonnie barks: when the postman comes.
+6. *joining* — You can have a biscuit. / You must eat your lunch first. → You can have a biscuit **if** you eat your lunch. · *not:* but, or
+   - **Bonnie:** If tells us what has to happen first: eat your lunch, then you can have a biscuit.
+7. *joining* — Dad said something. / We could have pizza. → Dad said **that** we could have pizza. · *not:* or, but
+   - **Bonnie:** That tells us what Dad said.
+8. *joining* — Ben fell over. / He was running. → Ben fell over **when** he was running. · *not:* or, but
+   - **Bonnie:** When tells us the time Ben fell over: while he was running.
+9. *joining* — I like cats. / I don't like spiders. → I like cats **but** I don't like spiders. · *not:* because, if
+   - **Bonnie:** But shows something different: I like cats, but not spiders.
+10. *joining* — Priya fed the hens. / Leo collected the eggs. → Priya fed the hens **and** Leo collected the eggs. · *not:* if, that
+   - **Bonnie:** And adds more: Priya fed the hens, and Leo collected the eggs too.
+
+**Joining words, checked by hand.** Each sentence was read with all seven Year 2 joining words. The two wrong choices offered are ones that don't make sense (or aren't grammatical) there; *and* is never offered as a wrong choice, because it usually still makes sense. Choices left out on purpose because they could also be right: *Bonnie was wet ___ she had jumped in the pond* (not offered: *and*, *when*); *I wanted to play outside ___ it was raining* (not offered: *because*, *and*: someone may want to play in the rain); *Leo put on his coat ___ it was cold* (not offered: *when*, *and*); *Bonnie barks ___ the postman comes* (not offered: *if*, *because*, *and*); *You can have a biscuit ___ you eat your lunch* (not offered: *when*, *because*); *Ben fell over ___ he was running* (not offered: *because*, *and*); *I like cats ___ I don't like spiders* (not offered: *and*); *Priya fed the hens ___ Leo collected the eggs* (not offered: *but*, *when*, *because*).
+
