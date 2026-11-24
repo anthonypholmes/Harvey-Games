@@ -110,6 +110,12 @@
       else if (it.kind === 'join') click($(`#m2Choices .m2-choice[data-v="${it.answer}"]`));
       else if (it.kind === 'kind4') { const c = $(`#m2Choices .m2-choice[data-v="${it.k}"]`); if (!c.disabled) click(c); await wait(10); click($(`#badges .badge[data-b="${it.marks[0]}"]`)); }
     },
+    'y2-english-phonics': async it => {
+      if (it.kind === 'fill') { click($$('#bank .tile').find(t => t.textContent === it.opts[0])); return; }
+      click($(`#spChoices .sp-choice[data-v="${it.kind === 'change' ? it.rule : it.answer}"]`));
+      await wait(800); // a second part (why? or which spelling?) comes in after a moment
+      const y = $('#spChoices .sp-choice[data-v="y"]'); if (y && !y.disabled) click(y);
+    },
   };
   const ladder = async () => { for (let t = 0; t < 4; t++) { click($('#askBtn')); await wait(30); } };
   const kindOf = it => it.kind || it.mode || 'build';
@@ -121,7 +127,7 @@
       const L = w.levels[li], key = `${wid}/${L.id}`;
       // every question in the bank, not just the 6 a run picks: play the level as many times as it takes
       const seen = new Set(), kindsHelped = new Set();
-      for (let run = 0; run < 12 && seen.size < L.items.length; run++) {
+      for (let run = 0; run < 30 && seen.size < L.items.length; run++) {
         closeModals(); const bones0 = S().bones, errs0 = errors.length;
         Meadow.startLevel(wid, L.id); await wait(30);
         let helpedHere = 0, mistakesHere = 0;
@@ -198,6 +204,45 @@
     check('sentences: a wrong joining word is read back in the sentence', /Bonnie was wet but she had jumped into the pond\. Does that make sense\?/.test($('#bubble').textContent), $('#bubble').textContent);
     closeModals(); Meadow.startLevel(W, 'capital-letters'); await wait(10);
     check('sentences: Capital Letters still shows its end mark as plain text, with no end-mark badges', $('#pslot.p-end') && !$$('#badges .badge').length);
+  }
+
+  if (!ONLY || ONLY === 'phonics') {
+    const W = 'y2-english-phonics', until = async (lid, ok) => { for (let t = 0; t < 80; t++) { closeModals(); Meadow.startLevel(W, lid); await wait(10); if (ok(item)) return item; } throw new Error('no such question'); };
+    let it = await until('tricky-consonants', it => it.g === 'kn');
+    check('phonics: the first time a pattern comes up, Bonnie teaches it on a card', $('#spTeach') && /silent k or g/.test($('#spTeach').textContent));
+    check('phonics: the letter tiles are buttons that VoiceOver spells out', $$('#bank .tile').every(t => t.getAttribute('role') === 'button' && /^[a-z]( [a-z])*$/.test(t.getAttribute('aria-label'))), $$('#bank .tile').map(t => t.getAttribute('aria-label')).join(' | '));
+    check('phonics: the gap is a button, and the given letters are read as letters', $('#row .slot[data-i]').getAttribute('role') === 'button' && $$('#row .slot.given').every(g => g.getAttribute('aria-label')));
+    check('phonics: no sound dots or Blend button in the spelling levels (no consonant sounds said on their own)', !$('.sb') && !$('#blend'));
+    click($$('#bank .tile').find(t => t.textContent !== it.opts[0])); await wait(20);
+    check('phonics: a wrong tile is marked with a cross, not just red', $('#row .slot.bad'));
+    check('phonics: ...and Bonnie says it can make the same sound but is not how we spell this word', /how we spell this word/.test($('#bubble').textContent), $('#bubble').textContent);
+    await wait(1000);
+    check('phonics: ...then that tile is taken away', $$('#bank .tile').length === it.opts.length - 1 && !$('#row .slot.bad'));
+    click($$('#bank .tile').find(t => t.textContent === it.opts[0])); await wait(30);
+    const spelt = `${it.word[0].toUpperCase() + it.word.slice(1)} is spelt ${it.word.split('').join(', ')}.`;
+    check('phonics: the right tile: Bonnie says the word, spells it and says why', $('.sp-why').textContent.trim().startsWith(spelt), $('.sp-why').textContent);
+    await nextQ();
+    if (item && item.g === 'kn') check('phonics: the second time a pattern comes up, there is a Spelling tip button instead of the card', !$('#spTeach') && $('#tipBtn'));
+    it = await until('changing-words', it => it.rule === 'e');
+    click($('#spChoices .sp-choice[data-v="double"]')); await wait(10);
+    check('phonics: a wrong change is crossed out and cannot be tapped again', $('#spChoices .sp-choice[data-v="double"]').disabled && /not right/.test($('#spChoices .sp-choice[data-v="double"]').getAttribute('aria-label')));
+    click($('#spChoices .sp-choice[data-v="e"]')); await wait(20);
+    check('phonics: dropping the e shows the e crossed out, and VoiceOver hears "e, dropped"', $('#spRow .sp-l.gone') && $('#spRow .sp-l.gone').getAttribute('aria-label') === 'e, dropped');
+    check('phonics: ...and the new word', $('#spWord').textContent === it.root.slice(0, -1) + it.suf);
+    it = await until('changing-words', it => it.root === 'hop');
+    click($('#spChoices .sp-choice[data-v="double"]')); await wait(800);
+    check('phonics: some questions then ask why', $('#askP') && /Why\?/.test($('#askP').textContent) && $$('#spChoices .sp-choice').length === 2);
+    click($('#spChoices .sp-choice[data-v="y"]')); await wait(20);
+    check('phonics: ...and the reason says the word', /hopping/.test($('.sp-why').textContent), $('.sp-why').textContent);
+    it = await until('suffix-builders', it => it.root === 'happy');
+    click($(`#spChoices .sp-choice[data-v="${it.answer}"]`)); await wait(800);
+    check('phonics: happy + ness then asks which spelling is right', $$('#spChoices .sp-choice').map(b => b.textContent).sort().join() === 'happiness,happyness');
+    click($('#spChoices .sp-choice[data-v="n"]')); await wait(10);
+    check('phonics: ...happyness is wrong', /Does the y change/.test($('#bubble').textContent));
+    click($('#spChoices .sp-choice[data-v="y"]')); await wait(20);
+    check('phonics: ...happiness is right, and fills the sentence', $('#spGap').textContent === 'happiness');
+    closeModals(); Meadow.startLevel(W, 'a-e'); await wait(20);
+    check('phonics: the first five levels still build words with sound dots and Blend', $('.sb') && $('#blend') && !$('#spTeach'));
   }
 
   closeModals();

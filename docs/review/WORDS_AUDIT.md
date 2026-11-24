@@ -273,3 +273,190 @@ Levels: 1. Capital Letters (`capital-letters`) · 2. Full Stop or Question? (`fu
 
 **Joining words, checked by hand.** Each sentence was read with all seven Year 2 joining words. The two wrong choices offered are ones that don't make sense (or aren't grammatical) there; *and* is never offered as a wrong choice, because it usually still makes sense. Choices left out on purpose because they could also be right: *Bonnie was wet ___ she had jumped in the pond* (not offered: *and*, *when*); *I wanted to play outside ___ it was raining* (not offered: *because*, *and*: someone may want to play in the rain); *Leo put on his coat ___ it was cold* (not offered: *when*, *and*); *Bonnie barks ___ the postman comes* (not offered: *if*, *because*, *and*); *You can have a biscuit ___ you eat your lunch* (not offered: *when*, *because*); *Ben fell over ___ he was running* (not offered: *because*, *and*); *I like cats ___ I don't like spiders* (not offered: *and*); *Priya fed the hens ___ Leo collected the eggs* (not offered: *but*, *when*, *because*).
 
+## Phonics Forest
+
+Levels: 1. a-e  (cake, snake) (`a-e`) · 2. i-e & o-e  (kite, bone) (`i-e-o-e`) · 3. u-e & e-e  (cube, these) (`u-e-e-e`) · 4. ai / ay  (rain, day) (`ai-ay`) · 5. ee ea igh ie  (tree, leaf) (`ee-ea-igh-ie`) · 6. Tricky Consonants  (badge, knee) (`tricky-consonants`) · 7. Word Endings  (apple, camel) (`word-endings`) · 8. Changing Words  (hop, hopping) (`changing-words`) · 9. Suffix Builders  (kind, kindness) (`suffix-builders`) · 10. Same Sound, Different Spelling  (cry, key) (`same-sound-different-spelling`)
+
+**The spelling rule code** (drop the e, double, y to i, just add) was checked against 46 hand-typed answers, including awkward cases that are not in the bank (copying, merriment, shyness, seeing, boxing).
+
+**The patterns Bonnie teaches** (the card shown the first time a pattern comes up in a run, and her second hint):
+
+- **dge and ge:** At the end of a word, the sound at the end of badge is usually spelt d, g, e straight after a short vowel sound, like badge, edge and bridge. After other sounds it is usually spelt g, e, like huge, page and large.
+- **Soft c:** The letter c often makes the sound at the start of sun when it comes before e, i or y, like ice, city and fancy.
+- **kn and gn:** Some words start with a silent k or g before the n, like knee, knock and gnat. Hundreds of years ago, people said the k and the g out loud!
+- **wr:** Some words start with a silent w before the r, like write, wrong and wrap.
+- **le, el, al and il:** Lots of words end in l, e, like apple, table and little. That is the most common way. Some end in e, l, like camel and towel. Some end in a, l, like animal and metal. Just a few end in i, l, like pencil and fossil.
+- **tion:** The sound at the end of station is often spelt t, i, o, n, like station, lotion and potion. It sounds like shun, but we spell it t, i, o, n.
+- **y at the end:** At the end of a word, the sound at the end of cry is often spelt with the letter y, like fly, dry and July.
+- **ey at the end:** Some words end in e, y, making the sound at the end of key, like donkey, monkey and chimney.
+- **a before l:** Before l or double l, the sound in ball is usually spelt with the letter a, like all, walk and talk.
+- **o in mother:** In some words, the sound in the middle of mother is spelt with the letter o, like brother, nothing and Monday.
+- **or after w:** After w, the sound in word is often spelt o, r, like work, worm and world.
+- **ar after w:** After w, the sound in warm is often spelt a, r, like war and warm.
+- **a after w:** After w, the sound in hot is often spelt with the letter a, like want, watch and wander.
+- **Adding an ending:** When we add an ending that starts with a vowel, like ing, ed, er, est, or the ending y, the root word can change. We drop an e at the end. We double one last consonant after a short vowel sound. We change a y to i after a consonant, but not before ing. Often, we just add it!
+- **Suffixes:** Ful means full of. Less means without. Ness and ment make naming words, like kindness. Ly tells us how something is done, like quickly. Usually we just add them, but a y after a consonant changes to i, like happiness.
+
+### Tricky Consonants  (badge, knee) (`tricky-consonants`) — 14 questions
+
+1. *dge and ge* — Mia wears a shiny **badge** on her coat. · tiles: **dge**, ge · wrong tiles make: bage
+   - **Bonnie:** Badge is spelt b, a, d, g, e. It comes straight after a short vowel sound, so it is spelt d, g, e.
+2. *dge and ge* — We walked over the **bridge** to the other side of the river. · tiles: **dge**, ge · wrong tiles make: brige
+   - **Bonnie:** Bridge is spelt b, r, i, d, g, e. It comes straight after a short vowel sound, so it is spelt d, g, e.
+3. *dge and ge* — Bonnie hid behind the **hedge** in the garden. · tiles: **dge**, ge · wrong tiles make: hege
+   - **Bonnie:** Hedge is spelt h, e, d, g, e. It comes straight after a short vowel sound, so it is spelt d, g, e.
+4. *dge and ge* — An elephant is **huge**! · tiles: **ge**, dge · wrong tiles make: hudge
+   - **Bonnie:** Huge is spelt h, u, g, e. It comes after a long vowel sound, so it is spelt g, e.
+5. *dge and ge* — Turn the **page** of your book. · tiles: **ge**, dge · wrong tiles make: padge
+   - **Bonnie:** Page is spelt p, a, g, e. It comes after a long vowel sound, so it is spelt g, e.
+6. *Soft c* — London is a very big **city**. · tiles: **c**, s · wrong tiles make: sity
+   - **Bonnie:** City is spelt c, i, t, y. The c comes before e, i or y, so it makes the sound at the start of sun.
+7. *Soft c* — The pond was covered in **ice**. · tiles: **c**, s · wrong tiles make: ise
+   - **Bonnie:** Ice is spelt i, c, e. The c comes before e, i or y, so it makes the sound at the start of sun.
+8. *Soft c* — Bonnie licked my **face**! · tiles: **c**, s · wrong tiles make: fase
+   - **Bonnie:** Face is spelt f, a, c, e. The c comes before e, i or y, so it makes the sound at the start of sun.
+9. *kn and gn* — I fell over and hurt my **knee**. · tiles: **kn**, n · wrong tiles make: nee
+   - **Bonnie:** Knee is spelt k, n, e, e. The k is silent.
+10. *kn and gn* — There was a loud **knock** at the door. · tiles: **kn**, n · wrong tiles make: nock
+   - **Bonnie:** Knock is spelt k, n, o, c, k. The k is silent.
+11. *kn and gn* — A tiny **gnat** buzzed past my ear. · tiles: **gn**, n · wrong tiles make: nat
+   - **Bonnie:** Gnat is spelt g, n, a, t. The g is silent.
+12. *wr* — Watch the worm **wriggle** in the mud. · tiles: **wr**, r · wrong tiles make: riggle
+   - **Bonnie:** Wriggle is spelt w, r, i, g, g, l, e. The w is silent.
+13. *wr* — Oops! That answer is **wrong**. · tiles: **wr**, r · wrong tiles make: rong
+   - **Bonnie:** Wrong is spelt w, r, o, n, g. The w is silent.
+14. *wr* — Grandad wears his watch on his **wrist**. · tiles: **wr**, r · wrong tiles make: rist
+   - **Bonnie:** Wrist is spelt w, r, i, s, t. The w is silent.
+
+### Word Endings  (apple, camel) (`word-endings`) — 14 questions
+
+1. *le, el, al and il* — I had a crunchy **apple** for my snack. · tiles: **le**, el, il · wrong tiles make: appel, appil
+   - **Bonnie:** Apple is spelt a, p, p, l, e. L, e is the most common way to spell this ending.
+2. *le, el, al and il* — The baby drank milk from a **bottle**. · tiles: **le**, el, al · wrong tiles make: bottel, bottal
+   - **Bonnie:** Bottle is spelt b, o, t, t, l, e. L, e is the most common way to spell this ending.
+3. *le, el, al and il* — A **little** mouse ran under the door. · tiles: **le**, el, al · wrong tiles make: littel, littal
+   - **Bonnie:** Little is spelt l, i, t, t, l, e. L, e is the most common way to spell this ending.
+4. *le, el, al and il* — A **camel** has a hump on its back. · tiles: **el**, le, al · wrong tiles make: camle, camal
+   - **Bonnie:** Camel is spelt c, a, m, e, l. E, l often comes after m, n, r, s, v or w.
+5. *le, el, al and il* — The train went into a dark **tunnel**. · tiles: **el**, le, al · wrong tiles make: tunnle, tunnal
+   - **Bonnie:** Tunnel is spelt t, u, n, n, e, l. E, l often comes after m, n, r, s, v or w.
+6. *le, el, al and il* — Dry your hands on the **towel**. · tiles: **el**, le, al · wrong tiles make: towle, towal
+   - **Bonnie:** Towel is spelt t, o, w, e, l. E, l often comes after m, n, r, s, v or w.
+7. *le, el, al and il* — A dog is an **animal**. · tiles: **al**, le, el · wrong tiles make: animle, animel
+   - **Bonnie:** Animal is spelt a, n, i, m, a, l. Some words, like this one, end in a, l.
+8. *le, el, al and il* — The gate is made of **metal**. · tiles: **al**, le, el · wrong tiles make: metle, metel
+   - **Bonnie:** Metal is spelt m, e, t, a, l. Some words, like this one, end in a, l.
+9. *le, el, al and il* — Push the **pedal** to make the bike go. · tiles: **al**, le, el · wrong tiles make: pedle, pedel
+   - **Bonnie:** Pedal is spelt p, e, d, a, l. Some words, like this one, end in a, l.
+10. *le, el, al and il* — Write your name with a **pencil**. · tiles: **il**, le, el · wrong tiles make: pencle, pencel
+   - **Bonnie:** Pencil is spelt p, e, n, c, i, l. Only a few words end in i, l, and this is one of them.
+11. *le, el, al and il* — We found a **fossil** in the rock. · tiles: **il**, le, el · wrong tiles make: fossle, fossel
+   - **Bonnie:** Fossil is spelt f, o, s, s, i, l. Only a few words end in i, l, and this is one of them.
+12. *tion* — The train stopped at the **station**. · tiles: **tion**, shun · wrong tiles make: stashun
+   - **Bonnie:** Station is spelt s, t, a, t, i, o, n. The shun sound at the end is often spelt t, i, o, n.
+13. *tion* — Mum put sun **lotion** on my arms. · tiles: **tion**, shun · wrong tiles make: loshun
+   - **Bonnie:** Lotion is spelt l, o, t, i, o, n. The shun sound at the end is often spelt t, i, o, n.
+14. *tion* — The wizard stirred a magic **potion**. · tiles: **tion**, shun · wrong tiles make: poshun
+   - **Bonnie:** Potion is spelt p, o, t, i, o, n. The shun sound at the end is often spelt t, i, o, n.
+
+### Changing Words  (hop, hopping) (`changing-words`) — 19 questions
+
+1. *changing words* — hike + ing → **hiking** (drop the e)
+   - **Bonnie:** Hike ends in e. We drop the e before adding ing, so it becomes hiking.
+2. *changing words* — smile + ing → **smiling** (drop the e)
+   - **Bonnie:** Smile ends in e. We drop the e before adding ing, so it becomes smiling.
+3. *changing words* — bake + ed → **baked** (drop the e)
+   - **Bonnie:** Bake ends in e. We drop the e before adding ed, so it becomes baked.
+4. *changing words* — nice + er → **nicer** (drop the e)
+   - **Bonnie:** Nice ends in e. We drop the e before adding er, so it becomes nicer.
+5. *changing words* — shine + y → **shiny** (drop the e)
+   - **Bonnie:** Shine ends in e. We drop the e before adding y, so it becomes shiny.
+6. *changing words* — hop + ing → **hopping** (double) · why? **To keep the o sound short** / not: Because hop is a short word
+   - **Bonnie:** Hop has a short vowel sound and ends in one consonant, p. We double it to keep the vowel short: hopping.
+7. *changing words* — run + er → **runner** (double)
+   - **Bonnie:** Run has a short vowel sound and ends in one consonant, n. We double it to keep the vowel short: runner.
+8. *changing words* — sad + est → **saddest** (double)
+   - **Bonnie:** Sad has a short vowel sound and ends in one consonant, d. We double it to keep the vowel short: saddest.
+9. *changing words* — drop + ed → **dropped** (double)
+   - **Bonnie:** Drop has a short vowel sound and ends in one consonant, p. We double it to keep the vowel short: dropped.
+10. *changing words* — swim + ing → **swimming** (double) · why? **To keep the i sound short** / not: Because swim ends in m
+   - **Bonnie:** Swim has a short vowel sound and ends in one consonant, m. We double it to keep the vowel short: swimming.
+11. *changing words* — happy + er → **happier** (y to i)
+   - **Bonnie:** Happy ends in a consonant and then y. We change the y to i before er: happier.
+12. *changing words* — copy + ed → **copied** (y to i)
+   - **Bonnie:** Copy ends in a consonant and then y. We change the y to i before ed: copied.
+13. *changing words* — funny + est → **funniest** (y to i)
+   - **Bonnie:** Funny ends in a consonant and then y. We change the y to i before est: funniest.
+14. *changing words* — cry + ed → **cried** (y to i) · why? **There is a consonant, r, before the y** / not: Because cry is a sad word
+   - **Bonnie:** Cry ends in a consonant and then y. We change the y to i before ed: cried.
+15. *changing words* — jump + ing → **jumping** (just add)
+   - **Bonnie:** Jump ends in two consonants, m and p, so we just add ing: jumping.
+16. *changing words* — play + ed → **played** (just add)
+   - **Bonnie:** Play has a vowel, a, before the y, so the y stays: played.
+17. *changing words* — cold + er → **colder** (just add)
+   - **Bonnie:** Cold ends in two consonants, l and d, so we just add er: colder.
+18. *changing words* — mix + ing → **mixing** (just add) · why? **We never double x** / not: Because mix has a short vowel
+   - **Bonnie:** We never double the letter x, so we just add ing: mixing.
+19. *changing words* — cry + ing → **crying** (just add) · why? **So the word doesn't have two i's together** / not: Because cry ends in r
+   - **Bonnie:** We keep the y before ing, or the word would have two i's together: crying.
+
+### Suffix Builders  (kind, kindness) (`suffix-builders`) — 11 questions
+
+1. *suffix* — Be **careful** with the eggs, or they will break! · not: careless, careness
+   - **Bonnie:** Be careful with the eggs, or they will break! We just add ful to care: careful.
+2. *suffix* — This pen is **useless**. It will not write at all! · not: useful, usement
+   - **Bonnie:** This pen is useless. It will not write at all! We just add less to use: useless.
+3. *suffix* — Thank you for your **kindness**. · not: kindful, kindly
+   - **Bonnie:** Thank you for your kindness. We just add ness to kind: kindness.
+4. *suffix* — Bonnie looked at the rain **sadly**. · not: sadness, sadful
+   - **Bonnie:** Bonnie looked at the rain sadly. We just add ly to sad: sadly.
+5. *suffix* — Reading gives me lots of **enjoyment**. · not: enjoyful, enjoyly
+   - **Bonnie:** Reading gives me lots of enjoyment. We just add ment to enjoy: enjoyment.
+6. *suffix* — The kitten is very **playful**. · not: playless, playment
+   - **Bonnie:** The kitten is very playful. We just add ful to play: playful.
+7. *suffix* — Bonnie ran **quickly** to the gate. · not: quickness, quickful
+   - **Bonnie:** Bonnie ran quickly to the gate. We just add ly to quick: quickly.
+8. *suffix* — I am very **thankful** for your help. · not: thankless, thankness
+   - **Bonnie:** I am very thankful for your help. We just add ful to thank: thankful.
+9. *suffix* — Taking the plaster off didn't hurt at all. It was **painless**. · not: painful, painment
+   - **Bonnie:** Taking the plaster off didn't hurt at all. It was painless. We just add less to pain: painless.
+10. *suffix* — Her face was full of **happiness**. · not: happiful, happily
+   - **Bonnie:** Her face was full of happiness. Happy ends in a consonant and then y, so the y changes to i: happiness.
+11. *suffix* — I did the puzzle **easily**. · not: easiness, easiful
+   - **Bonnie:** I did the puzzle easily. Easy ends in a consonant and then y, so the y changes to i: easily.
+
+### Same Sound, Different Spelling  (cry, key) (`same-sound-different-spelling`) — 15 questions
+
+1. *y at the end* — The baby began to **cry**. · tiles: **y**, igh, ie · wrong tiles make: crigh, crie
+   - **Bonnie:** Cry is spelt c, r, y. At the end of a word, this sound is often spelt with the letter y.
+2. *y at the end* — A **fly** buzzed round the kitchen. · tiles: **y**, igh, ie · wrong tiles make: fligh, flie
+   - **Bonnie:** Fly is spelt f, l, y. At the end of a word, this sound is often spelt with the letter y.
+3. *y at the end* — My birthday is in **July**. · tiles: **y**, igh, ie · wrong tiles make: Juligh, Julie
+   - **Bonnie:** July is spelt j, u, l, y. At the end of a word, this sound is often spelt with the letter y.
+4. *ey at the end* — Open the door with the **key**. · tiles: **ey**, ee, y · wrong tiles make: kee, ky
+   - **Bonnie:** Key is spelt k, e, y. It is one of the words that end in e, y.
+5. *ey at the end* — The **donkey** said hee-haw! · tiles: **ey**, ee, y · wrong tiles make: donkee, donky
+   - **Bonnie:** Donkey is spelt d, o, n, k, e, y. It is one of the words that end in e, y.
+6. *ey at the end* — A **monkey** swung through the trees. · tiles: **ey**, ee, y · wrong tiles make: monkee, monky
+   - **Bonnie:** Monkey is spelt m, o, n, k, e, y. It is one of the words that end in e, y.
+7. *a before l* — Let's go for a **walk** in the park. · tiles: **a**, or · wrong tiles make: worlk
+   - **Bonnie:** Walk is spelt w, a, l, k. Before l, this sound is usually spelt with the letter a.
+8. *a before l* — Kick the **ball** into the goal! · tiles: **a**, or · wrong tiles make: borll
+   - **Bonnie:** Ball is spelt b, a, l, l. Before l, this sound is usually spelt with the letter a.
+9. *a before l* — Some parrots can **talk**! · tiles: **a**, or · wrong tiles make: torlk
+   - **Bonnie:** Talk is spelt t, a, l, k. Before l, this sound is usually spelt with the letter a.
+10. *o in mother* — My little **brother** is two years old. · tiles: **o**, u · wrong tiles make: bruther
+   - **Bonnie:** Brother is spelt b, r, o, t, h, e, r. In this word, the sound is spelt with the letter o, like in mother.
+11. *o in mother* — School starts again on **Monday**. · tiles: **o**, u · wrong tiles make: Munday
+   - **Bonnie:** Monday is spelt m, o, n, d, a, y. In this word, the sound is spelt with the letter o, like in mother.
+12. *or after w* — A **worm** wriggled in the mud. · tiles: **or**, ur, er · wrong tiles make: wurm, werm
+   - **Bonnie:** Worm is spelt w, o, r, m. After w, this sound is often spelt o, r.
+13. *or after w* — Dad goes to **work** on the bus. · tiles: **or**, ur, er · wrong tiles make: wurk, werk
+   - **Bonnie:** Work is spelt w, o, r, k. After w, this sound is often spelt o, r.
+14. *ar after w* — The fire kept us **warm**. · tiles: **ar**, aw · wrong tiles make: wawm
+   - **Bonnie:** Warm is spelt w, a, r, m. After w, this sound is often spelt a, r.
+15. *a after w* — Grandad has a gold **watch**. · tiles: **a**, o · wrong tiles make: wotch
+   - **Bonnie:** Watch is spelt w, a, t, c, h. After w, this sound is often spelt with the letter a.
+
+**Suffix sentences, checked by hand.** Each sentence was read with all three choices. The wrong ones either aren't words (*kindful*, *enjoyly*, *playment*) or say the opposite of the sentence (*Be careless with the eggs, or they will break!*, *This pen is useful. It will not write at all!*, *It didn't hurt at all. It was painful.*), so only one choice makes sense.
+

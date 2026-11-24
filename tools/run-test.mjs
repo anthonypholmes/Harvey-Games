@@ -24,8 +24,8 @@ try {
   await cdp.send('Page.navigate', { url: `http://127.0.0.1:${PORT}/${page}` });
   const t0 = Date.now();
   let res = null;
-  while (!res && Date.now() - t0 < 10 * 60 * 1000) { await sleep(1000); res = await evaluate('window.TEST_RESULT || null'); }
-  if (!res) { console.log('The page did not finish in 10 minutes.'); console.log(await evaluate("(document.body.innerText||'').slice(0, 2000)")); }
+  while (!res && Date.now() - t0 < 30 * 60 * 1000) { await sleep(1000); res = await evaluate('window.TEST_RESULT || null'); }
+  if (!res) { console.log('The page did not finish in 30 minutes.'); console.log(await evaluate("(document.body.innerText||'').slice(0, 2000)")); }
   else {
     console.log((await evaluate("document.querySelector('#report') ? document.querySelector('#report').innerText : ''")) || '');
     console.log(`\n${res.passed} passed, ${res.failed} failed (${Math.round((Date.now() - t0) / 1000)}s)`);

@@ -22,7 +22,7 @@ const HELPERS = `
 window.__item = null;
 window.pick = (wid, lid, ok) => { const L = Meadow.world(wid).levels.find(L => L.id === lid);
   if (!L.__wrapped) { const p = L.play; L.play = (q, c) => { window.__item = q; return p(q, c); }; L.__wrapped = true; }
-  for (let t = 0; t < 80; t++) { Meadow.startLevel(wid, lid); if (!ok || ok(window.__item)) return window.__item; } throw new Error('no question like that in ' + lid); };
+  for (let t = 0; t < 300; t++) { Meadow.startLevel(wid, lid); if (!ok || ok(window.__item)) return window.__item; } throw new Error('no question like that in ' + lid); };
 window.$1 = s => document.querySelector(s); window.$all = s => [...document.querySelectorAll(s)];
 window.ask = n => { for (let i = 0; i < n; i++) $1('#askBtn').click(); };
 `;
@@ -46,6 +46,16 @@ const SHOTS = [
   ['sentences', 'L8-end-mark', ['se', 'ipad'], `pick('y2-english-sentences', 'four-kinds-of-sentences', it => /Put your coat/.test(it.s)); $1('#m2Choices .m2-choice[data-v="command"]').click();`],
   ['sentences', 'L9-joining', ['se', '17', 'ipad'], `pick('y2-english-sentences', 'joining-sentences', it => /wet/.test(it.s)); $1('#m2Choices .m2-choice[data-v="but"]').click();`],
   ['sentences', 'L9-joining-solved', ['se'], `pick('y2-english-sentences', 'joining-sentences', it => /biscuit/.test(it.s)); $1('#m2Choices .m2-choice[data-v="if"]').click();`],
+  ['phonics', 'L6-teach-card', ['se', '17', 'ipad'], `pick('y2-english-phonics', 'tricky-consonants', it => it.word === 'badge')`],
+  ['phonics', 'L6-wrong-tile', ['se'], `pick('y2-english-phonics', 'tricky-consonants', it => it.word === 'huge'); $all('#bank .tile').find(t => t.textContent === 'dge').click();`],
+  ['phonics', 'L6-solved', ['se', 'ipad'], `pick('y2-english-phonics', 'tricky-consonants', it => it.word === 'knock'); $all('#bank .tile').find(t => t.textContent === 'kn').click();`],
+  ['phonics', 'L7-endings', ['se', '17', 'ipad'], `pick('y2-english-phonics', 'word-endings', it => it.word === 'camel')`],
+  ['phonics', 'L7-hint3', ['se'], `pick('y2-english-phonics', 'word-endings', it => it.word === 'station'); ask(3);`],
+  ['phonics', 'L8-change', ['se', '17', 'ipad'], `pick('y2-english-phonics', 'changing-words', it => it.root === 'hike')`],
+  ['phonics', 'L8-change-solved', ['se', 'ipad'], `pick('y2-english-phonics', 'changing-words', it => it.root === 'hop'); $1('#spChoices .sp-choice[data-v="double"]').click();`],
+  ['phonics', 'L9-suffix', ['se', '17', 'ipad'], `pick('y2-english-phonics', 'suffix-builders', it => it.root === 'care')`],
+  ['phonics', 'L9-y-to-i', ['se'], `pick('y2-english-phonics', 'suffix-builders', it => it.root === 'happy'); $1('#spChoices .sp-choice[data-v="ness"]').click();`],
+  ['phonics', 'L10-same-sound', ['se', '17', 'ipad'], `pick('y2-english-phonics', 'same-sound-different-spelling', it => it.word === 'donkey')`],
 ];
 
 const server = await serve(PORT);

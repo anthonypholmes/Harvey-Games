@@ -9,7 +9,8 @@ Page numbers are the printed pages of *The national curriculum in England: key s
 | What | Command |
 |---|---|
 | Content audit (every question, answer, distractor, evidence sentence, hint target) | `node tools/words-audit.mjs` (`--write` makes [docs/review/WORDS_AUDIT.md](review/WORDS_AUDIT.md)) |
-| Play every new level with the real buttons, an old save, hints, VoiceOver names | `node tools/run-test.mjs tests/words-levels-test.html` |
+| Play every new level with the real buttons, an old save, hints, VoiceOver names | `node tools/run-test.mjs "tests/words-levels-test.html?world=stories"` (or `sentences`, `phonics`; about 5 to 8 minutes each. All three in one run takes over 30 minutes) |
+| Player, stars, bones and the full game survive moving between pages; the free first level is unchanged | `node tools/cross-page-check.mjs` |
 | Pictures at key moments (iPhone SE, iPhone 17, iPad landscape) | `node tools/words-shots.mjs`, then open [docs/review/words-expansion/index.html](review/words-expansion/index.html) |
 | Phone fit of every level | `node tools/level-check.mjs --only english --size se,17,ipad` |
 | Bonnie's lines still to record | `npm run voice:check` |
@@ -131,3 +132,127 @@ Phone fit: everything fits the iPhone SE width; comma spaces are 26 × 40 points
 
 - The new lines are not recorded yet.
 - Joining Sentences offers three choices, not all seven at once: with seven, several would often make sense, and a defensible answer would be marked wrong.
+
+## Priority 3: Phonics Forest
+
+### Levels and ids
+
+| # | Level | Id | Questions | Kinds of question |
+|---|---|---|---|---|
+| 1–5 | a-e · i-e, o-e · u-e, e-e · ai, ay · ee, ea, igh, ie | `a-e` `i-e-o-e` `u-e-e-e` `ai-ay` `ee-ea-igh-ie` | unchanged | unchanged (build the word from letter tiles, sound dots, Blend) |
+| 6 | Tricky Consonants (badge, knee) | `tricky-consonants` | 14 | fill the gap with the right spelling: *dge* or *ge*, soft *c* or *s*, *kn*/*gn* or *n*, *wr* or *r* |
+| 7 | Word Endings (apple, camel) | `word-endings` | 14 | *-le*, *-el*, *-al*, *-il* (11), and *-tion* (3) |
+| 8 | Changing Words (hop, hopping) | `changing-words` | 19 | root + *-ing*, *-ed*, *-er*, *-est*, *-y*: choose *drop the e*, *double the last letter*, *change y to i* or *just add it*; the word is then built in front of the child; 5 questions then ask *why?* |
+| 9 | Suffix Builders (kind, kindness) | `suffix-builders` | 11 | choose *-ment*, *-ness*, *-ful*, *-less* or *-ly* to make a sentence make sense; for *happy* and *easy*, then choose *happiness* or *happyness* |
+| 10 | Same Sound, Different Spelling (cry, key) | `same-sound-different-spelling` | 15 | *-y* (cry), *-ey* (key), *a* before *l* (walk), *o* (brother), *or* after *w* (worm), *ar* after *w* (warm), *a* after *w* (watch) |
+
+### Curriculum map
+
+| Objective (Year 2) | Where | Page |
+|---|---|---|
+| Learning new ways of spelling phonemes for which one or more spellings are already known | L6, L7, L10 | 29 |
+| Add suffixes to spell longer words, including *-ment, -ness, -ful, -less, -ly* | L9 | 30, 57 |
+| Apply spelling rules and guidance, as listed in English Appendix 1 | L6–L10 | 30 |
+| Read words containing common suffixes | L8, L9 | 27 |
+| /dʒ/ spelt *-dge* and *-ge* at the end of words | L6 | 55 |
+| /s/ spelt *c* before *e, i, y* | L6 | 55 |
+| /n/ spelt *kn* and (less often) *gn* | L6 | 55 |
+| /r/ spelt *wr* | L6 | 55 |
+| /l/ or /əl/ spelt *-le*, *-el*, *-al*, *-il* | L7 | 55–56 |
+| Words ending in *-tion* | L7 | 57 |
+| /aɪ/ spelt *-y* at the end of words | L10 | 56 |
+| Adding *-ing, -ed, -er, -est, -y* to words ending in *-e* with a consonant before it | L8 | 56 |
+| Adding *-ing, -ed, -er, -est, -y* to words of one syllable ending in a single consonant letter after a single vowel letter | L8 | 56 |
+| Adding *-ed, -ing, -er, -est* to a root word ending in *-y* with a consonant before it | L8, L9 (happiness, easily) | 56–57 |
+| /ɔː/ spelt *a* before *l* and *ll* | L10 | 56 |
+| /ʌ/ spelt *o* | L10 | 56 |
+| /iː/ spelt *-ey* | L10 | 57 |
+| /ɒ/ spelt *a* after *w* | L10 | 57 |
+| /ɜː/ spelt *or* after *w*; /ɔː/ spelt *ar* after *w* | L10 | 57 |
+
+Not covered here: /ʒ/ spelt *s* (television, treasure), adding *-es* to nouns and verbs ending in *-y*, homophones, contractions (in Sentence Meadow L7) and common exception words (in Tricky Words).
+
+### Design decisions
+
+- **Spelling, not blending.** These levels never say a consonant sound on its own (see *The sound audit* below). Bonnie says whole words, which her voice says well; names letters when she spells something out (*"Knock is spelt k, n, o, c, k. The k is silent."*); and describes a sound by a word that has it (*"the sound at the end of badge"*). There are no sound dots or Blend button in levels 6–10; levels 1–5 keep theirs.
+- **Teach, then practise.** The first time a pattern comes up in a run, a card above the question teaches it (and Bonnie says it). After that, a *Spelling tip* button brings the card back. Bonnie's second hint always shows the card.
+- **"Often", "usually", not "always".** The teaching follows Appendix 1's wording. The audit flags any reason that says *always* or *never*. The one *never* is Appendix 1's own: *x* is never doubled.
+- **A wrong tile is not a wrong sound.** Every wrong tile makes the same sound in another word, so Bonnie says *"That can make the same sound, but it isn't how we spell this word."* The tile is crossed (✗) and then taken away. No wrong tile makes a real word: the audit checks against a list of words a child might confuse, after *worm* and *rite* were avoided. *warm* is offered with *ar* and *aw*, not *or*. *wriggle* replaced *write*.
+- **Changing words shows the change.** After the right choice, the word is built: a dropped *e* is crossed out, a doubled letter or the *i* from *y* is highlighted with a dashed outline (not by colour alone), and the ending is in green tiles. VoiceOver hears *"e, dropped"*, *"p, doubled"*, *"i, was y"*.
+- **Defensible answers.** In Suffix Builders, each sentence was read with all three choices. The wrong ones are either not words or say the opposite of the sentence. *cry + ing* and *play + ed* (just add it) and *mix + ing* (x is never doubled) are in the bank on purpose, so the rules aren't applied blindly.
+- **The rule is code, checked by hand.** The game works out every changed word with the Appendix 1 rules. The audit compares the code with 46 answers typed out by hand, including awkward cases that are not in the bank (*copying, merriment, shyness, seeing, boxing*).
+
+**Hints** (the brief's four tiers): 1, hear the whole word in its sentence; 2, the pattern card; 3, narrow it down: one wrong tile or choice taken away, with a comparison (*"It's like apple and table."*); 4, Bonnie shows the answer (it glows) and the child puts it in or taps it. A second part (*why?*, *which spelling?*) keeps the help already given.
+
+**Correct answers say the word and why**, e.g. *"Hopping. Hop has a short vowel sound and ends in one consonant, p. We double it to keep the vowel short: hopping."* The reason stays on screen.
+
+### The sound audit (the PH map in levels 1–5)
+
+The first five levels have a sound dot under each tile and a Blend button. The `PH` map in `worlds/y2-english-phonics.js` gives the text Bonnie's voice reads for each sound. All of these lines already have recorded clips.
+
+| Sounds | Written as | Verdict |
+|---|---|---|
+| f, l, m, n, r, s, v, z, sh, th, sc | *fff, lll, mmm, nnn, rrr, sss, vvv, zzz, shh, thh, sss* | **Good.** Stretchy sounds can be held without a vowel, which is how phonics schemes teach them. *thh* doesn't show voiced (*this*) or unvoiced (*thin*). |
+| b, c, d, g, k, p, t, ck, h, j, w, y, ch, q | *buh, kuh, duh, guh, kuh, puh, tuh, kuh, huh, juh, wuh, yuh, chuh, kwuh* | **The schwa problem.** Each has an added *uh*. Phonics teaching asks for clipped sounds (*b*, not *buh*), because *buh-a-tuh* doesn't blend into *bat*. A recorded or synthetic voice can't say a stop consonant on its own, so the *uh* is there to make it sayable. |
+| a, e, i, u | *ah, eh, ih, uh* | **Mostly fine.** *ah* can be heard as the *a* in *car* rather than in *cat*. |
+| o | *o* | **Probably wrong.** A voice reading the letter *o* on its own says its name (*oh*), not the short sound in *hot*. Listen to the clip before relying on it. |
+| x, ng | *ks, ng* | *ng* may be read as the letters *N, G*. Listen to the clip. |
+| Long vowels and digraphs | *A, E, I, O, U* (ai, ay, ee, ea, igh, ie, oa, split digraphs) | **Fine** where the voice says the letter name, which is the right sound here. A lone capital *A* can be read as the word *a* (*uh*). Listen to the clip. |
+
+**Not changed, on purpose.** Rewriting these strings would not fix the problem, because no text makes a synthetic voice clip a *b*. It would also orphan the clips already recorded. The fix is human recordings of the pure sounds. A recording can be dropped into `audio/manifest.json` under the key of the existing string (the hash of *buh* and so on, from `BonnieVoice.pieceKey`). No code change is needed, and the website falls back to the device voice as now. The new levels 6–10 avoid the problem altogether, as described above.
+
+### Content audit (summary)
+
+`node tools/words-audit.mjs`: **no problems.** It checks:
+
+- the old ids still come first;
+- every bank has at least 6 questions;
+- every changed or suffixed word against the hand-typed answers, and every *drop the e / double / y to i / just add* label against the rule code;
+- every gap word against a hand-checked list of Year 2 words;
+- each gap word fits its pattern as taught (soft *c* before *e, i, y*; *-el* after *m, n, r, s, v, w*; *dge* straight after a short vowel; *or*, *ar* and *a* after *w*; and so on);
+- no wrong tile makes a real word;
+- every sentence has one gap;
+- no question repeats.
+
+[docs/review/WORDS_AUDIT.md](review/WORDS_AUDIT.md) lists every question with its tiles, the words the wrong tiles make, and Bonnie's reason.
+
+### Tests
+
+`node tools/run-test.mjs "tests/words-levels-test.html?world=phonics"`: **45 of 45 passed** (24 November 2026). Besides the save, unlock, star, bone and every-question checks, it checks that:
+
+- the pattern card appears the first time;
+- tiles are VoiceOver buttons that spell out their letters;
+- there are no sound dots or Blend button in the new levels;
+- a wrong tile gets a ✗, Bonnie's explanation, and is then taken away;
+- the right answer is spelt out with its reason;
+- a wrong change can't be tapped again;
+- the dropped *e* reads *"e, dropped"*;
+- the *why?* part, and the *happiness*/*happyness* part, work;
+- levels 1–5 still have sound dots and Blend.
+
+Phone fit: everything fits the iPhone SE width. When the pattern card is showing, the letter tray sits just below the screen on an iPhone SE and needs a short scroll. That is only on the first question of each pattern; later questions fit. Pictures: `phonics-*` in [docs/review/words-expansion/](review/words-expansion/index.html).
+
+### Audio
+
+**379 new clips** for Phonics Forest (about 12,000 characters). That makes **997 new clips** for the whole expansion (about 37,500 characters), to record with `npm run voice`.
+
+### Limitations
+
+- The new lines are not recorded yet. In the app, Bonnie is silent for a line with no clip; the website uses the device voice.
+- Spelt-out letters (*"k, n, o, c, k"*, *"a, l"*) should be listened to once recorded, to check the voice reads each as a letter name.
+- The PH map in levels 1–5 still adds *uh* to stop consonants (see the sound audit). The fix is human recordings, not code.
+- Not tested on a real device with VoiceOver; the names were checked in the page.
+
+## Final cross-world regression (24 November 2026)
+
+| Check | Result |
+|---|---|
+| `tests/words-levels-test.html?world=stories` | 31 of 31 passed |
+| `tests/words-levels-test.html?world=sentences` | 34 of 34 passed |
+| `tests/words-levels-test.html?world=phonics` | 45 of 45 passed |
+| `node tools/cross-page-check.mjs` | 36 of 36 passed |
+| `node tools/words-audit.mjs` | no problems |
+
+The cross-page check uses the App Store app with the full game. It sets stars on new levels in all three worlds, then opens Words, Maths, Grown-ups, the Clubhouse, the Walk, then Words again. On every page it finds the same player, bones, stars, purchase, and no errors. The Words shop opens. The Clubhouse journal shows all 10 Phonics Forest levels and counts their stars. With the purchase taken away, level 1 of every Words world is still free, every later level (old and new) needs the full game, and the stars are kept.
+
+The test page plays a level until every question in its bank has come up, with up to 30 runs. Each run draws 6 questions at random, so 12 runs sometimes missed one question in a 14- or 19-question bank.
