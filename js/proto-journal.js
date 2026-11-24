@@ -206,6 +206,24 @@
   .pj-day.walked.fresh svg{animation:pjThunk .5s cubic-bezier(.3,1.4,.5,1) .3s both}
   .pj-month{display:flex;justify-content:space-between;max-width:520px;margin:12px auto 0;font:600 17px Fredoka,system-ui,sans-serif;color:${C.ink}}
   .pj-walkgo{display:flex;justify-content:center;margin-top:16px}
+  /* Bonnie's Treasure Chest (the walks page) */
+  .pj-chest{max-width:520px;margin:18px auto 0;padding:12px 12px 14px;border-radius:16px;background:#FFF6E2;border:2px solid #E2C99A}
+  .pj-chest-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .pj-chest-top svg{width:52px;height:42px;flex:none}
+  .pj-chest h3{margin:0;font:700 20px Fredoka,system-ui,sans-serif;color:#6E3E1C}
+  .pj-chest-n{margin:0;font:600 17px Fredoka,system-ui,sans-serif;color:${C.ink}}
+  .pj-tr-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  @media (min-width:700px){.pj-tr-list{grid-template-columns:repeat(6,1fr)}}
+  .pj-tr{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 8px;border-radius:12px;background:#fff;border:2px solid #E8DCC2}
+  .pj-tr-art{position:relative;width:56px;height:56px}
+  .pj-tr-art svg{width:100%;height:100%;display:block}
+  .pj-tr.miss{background:transparent;border-style:dashed}
+  .pj-tr.miss svg *{fill:#D9CCB0!important;stroke:#C2B291!important}
+  .pj-tr-q{position:absolute;inset:0;display:grid;place-items:center;font:700 26px Fredoka,system-ui,sans-serif;color:#7E6A48}
+  .pj-tr-n{position:absolute;right:-8px;bottom:-4px;min-width:30px;padding:0 5px;border-radius:12px;background:${C.gold};border:2px solid ${C.goldDk};font:700 16px/22px Fredoka,system-ui,sans-serif;color:${C.ink};text-align:center}
+  .pj-tr-name{font:600 16px Fredoka,system-ui,sans-serif;color:${C.ink};text-align:center;line-height:1.15}
+  .pj-tr.miss .pj-tr-name{color:#7E6A48}
+  .pj-chest-tip{margin:10px 0 0;text-align:center;font:600 17px Fredoka,system-ui,sans-serif;color:${C.ink}}
   .pj .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   @media (max-width:360px){.pj-grid{grid-template-columns:repeat(2,1fr)}}
   @media (prefers-reduced-motion:reduce){.pj.opening,.pj-stamp.fresh .pj-art,.pj-stamp.fresh .pj-seal,.pj-day.walked.fresh svg{animation:none!important}.pj-rib:active,.pj-tag:active,.pj-btn:active{transform:none}}`;
@@ -366,7 +384,25 @@
       <div class="pj-cal" aria-hidden="true">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => `<div class="dh">${d}</div>`).join('')}
         ${days.map((d, i) => { const k = localDay(d), n = walked(d), later = k > t;
           return `<div class="pj-day${later ? ' later' : ''}${k === t ? ' today' : ''}${n ? ' walked' : ''}${n && k === t ? ' fresh' : ''}" data-day="${k}">${d.getDate()}${n ? pawStamp('#B5485A', (i * 37) % 30 - 15) : ''}</div>`; }).join('')}</div>
+      ${chest()}
       <div class="pj-walkgo"><button class="pj-btn go" id="pjWalkGo">Go for a walk${icons.go}</button></div>`;
+  }
+
+  /* Bonnie's Treasure Chest: the 6 treasures a surprise dig can find (the save's treasures: { id: count }).
+     A found one is drawn with how many; one still to find is a plain shape with a "?". A keepsake only: nothing to spend. */
+  const chestIcon = `<svg viewBox="0 0 60 48" aria-hidden="true"><path d="M6 20 Q6 6 30 6 Q54 6 54 20 Z" fill="#B0703A" stroke="#6E3E1C" stroke-width="2.4" stroke-linejoin="round"/><rect x="6" y="20" width="48" height="24" rx="3" fill="#C98445" stroke="#6E3E1C" stroke-width="2.4"/><path d="M6 27 H54" stroke="#6E3E1C" stroke-width="2"/><path d="M18 6.6 V44 M42 6.6 V44" stroke="${C.goldDk}" stroke-width="4"/><rect x="25" y="22" width="10" height="11" rx="2" fill="${C.gold}" stroke="${C.goldDk}" stroke-width="1.8"/><circle cx="30" cy="27" r="1.8" fill="#6E3E1C"/></svg>`;
+  function chest() {
+    const list = (M.walk && M.walk.treasures) || [], have = save().treasures || {};
+    const found = list.filter(t => have[t.id] > 0).length;
+    const say = found === list.length ? 'Every treasure found!' : found ? `${found} of ${list.length} treasures discovered` : `0 of ${list.length} treasures discovered`;
+    return `<section class="pj-chest" aria-labelledby="pjChestT">
+      <div class="pj-chest-top">${chestIcon}<div><h3 id="pjChestT">Bonnie's Treasure Chest</h3><p class="pj-chest-n">${found} of ${list.length} treasures discovered</p></div></div>
+      <ul class="pj-tr-list" aria-label="Bonnie's Treasure Chest: ${esc(say)}">${list.map(t => { const n = have[t.id] || 0;
+        return `<li class="pj-tr${n ? '' : ' miss'}" data-tr="${t.id}"><span class="sr">${n ? `${esc(t.name)}${n > 1 ? `, found ${n} times` : ', found once'}` : 'A treasure still to find'}</span>
+          <span class="pj-tr-art"><svg viewBox="0 0 60 60" aria-hidden="true">${A.FINDS[t.id] || ''}</svg>${n ? (n > 1 ? `<b class="pj-tr-n" aria-hidden="true">×${n}</b>` : '') : '<b class="pj-tr-q" aria-hidden="true">?</b>'}</span>
+          <span class="pj-tr-name" aria-hidden="true">${n ? esc(t.name) : '???'}</span></li>`; }).join('')}</ul>
+      ${found ? '' : '<p class="pj-chest-tip">Help Bonnie on a surprise dig to find treasure!</p>'}
+    </section>`;
   }
 
   /* ---------- opening straight away (#journal, journal=…) ---------- */
@@ -456,6 +492,13 @@
     const bad = cells.filter(c => !!((wk.days || {})[c.dataset.day]) !== c.classList.contains('walked'));
     ok('the walks page: five weeks, a paw print on every day with a walk, today ringed', cells.length === 35 && !bad.length && root.querySelectorAll('.pj-day.today').length === 1, `${cells.filter(c => c.classList.contains('walked')).length} walked`);
     ok('…the days in a row, as on the Clubhouse, and VoiceOver hears the walk days', (wk.streak >= 2) === !!root.querySelector('.pj-streak') && root.querySelector('.pj .sr').textContent.length > 10, root.querySelector('.pj-streak') ? root.querySelector('.pj-streak').textContent : 'no streak');
+    // Bonnie's Treasure Chest
+    const tr = save().treasures || {}, slots = [...root.querySelectorAll('.pj-tr')], foundN = Object.keys(tr).length;
+    ok('the Treasure Chest: 6 treasures, the found ones drawn with their count, the rest a "?", and "N of 6" matches the save',
+      slots.length === 6 && slots.every(el => (tr[el.dataset.tr] > 0) === !el.classList.contains('miss')) && slots.every(el => el.classList.contains('miss') ? !!el.querySelector('.pj-tr-q') : (tr[el.dataset.tr] > 1) === !!el.querySelector('.pj-tr-n'))
+      && root.querySelector('.pj-chest-n').textContent.startsWith(`${foundN} of 6`), `${foundN} found`);
+    ok('…VoiceOver hears the chest and each treasure (named once found, "still to find" before)', /Treasure Chest/.test(root.querySelector('.pj-tr-list').getAttribute('aria-label'))
+      && slots.every(el => { const t = el.querySelector('.sr').textContent; return el.classList.contains('miss') ? /still to find/.test(t) : /found/.test(t); }));
     ok('a stamp counts for each place visited, at the top', $('pjTotal').textContent.includes(`${total().n} of ${total().of}`), $('pjTotal').textContent);
     // motion
     const rm = matchMedia('(prefers-reduced-motion: reduce)').matches;

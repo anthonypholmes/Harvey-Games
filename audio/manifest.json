@@ -2682,7 +2682,10 @@
   "a870cb03": "clips/a870cb03-4crzui.mp3",
   "eff03a6e": "clips/eff03a6e-4crzui.mp3",
   "337582f0": "clips/337582f0-4crzui.mp3",
-  "a0a038d9": "clips/a0a038d9-4crzui.mp3"
+  "a0a038d9": "clips/a0a038d9-4crzui.mp3",
+  "8f4edb95": "clips/8f4edb95-4crzui.mp3",
+  "9517f2a7": "clips/9517f2a7-4crzui.mp3",
+  "339f19dc": "clips/339f19dc-4crzui.mp3"
  },
  "names": {
   "harvey": "names/harvey-4crzui.mp3",
@@ -5476,7 +5479,10 @@
   "a870cb03": "It tells us the hour.",
   "eff03a6e": "Which number is it pointing to?",
   "337582f0": "It has just gone past which number?",
-  "a0a038d9": "Which number is it nearly at?"
+  "a0a038d9": "Which number is it nearly at?",
+  "8f4edb95": "It’s new!",
+  "9517f2a7": "I’ll put it in my treasure chest!",
+  "339f19dc": "Another one for my treasure chest!"
  },
  "made": "2026-11-24T10:03:10.653Z",
  "said": {

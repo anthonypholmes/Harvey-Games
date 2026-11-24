@@ -100,20 +100,25 @@
     return [mx + 6, my + (my > 175 ? -36 : 34)];
   }
 
-  /* ---------- the drawn treasures (the dig's emoji, drawn) ---------- */
+  /* ---------- the drawn treasures (the dig's emoji, drawn: A.FINDS, shared with the journal's chest) ---------- */
   const FINDS = {
-    '🦴': ['bone', `<g transform="translate(30 30) rotate(-20)">${A.bone(0, 0, 1.15, '#FFF6E2', '#B88A1E')}</g>`],
-    '🎾': ['ball', `<circle cx="30" cy="30" r="17" fill="#C9E24A" stroke="#8FA52A" stroke-width="2"/><path d="M15 22 q15 8 0 18 M45 20 q-14 10 0 20" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>`],
-    '🧸': ['teddy', `<circle cx="18" cy="15" r="6" fill="#B07A45"/><circle cx="42" cy="15" r="6" fill="#B07A45"/><circle cx="30" cy="24" r="13" fill="#C68B52"/><ellipse cx="30" cy="45" rx="14" ry="12" fill="#C68B52"/><ellipse cx="30" cy="28" rx="5" ry="4" fill="#F0D2AA"/><circle cx="25" cy="21" r="1.8" fill="${C.ink}"/><circle cx="35" cy="21" r="1.8" fill="${C.ink}"/><circle cx="30" cy="27" r="1.6" fill="${C.ink}"/>`],
-    '💎': ['jewel', `<path d="M14 22 L22 12 H38 L46 22 L30 48 Z" fill="#6CC6E8" stroke="#2F86A8" stroke-width="2" stroke-linejoin="round"/><path d="M14 22 H46 M22 12 L30 22 L38 12 M30 22 V48" stroke="#2F86A8" stroke-width="1.4" fill="none"/><path d="M24 16 l4 4" stroke="#fff" stroke-width="2"/>`],
-    '🪙': ['coin', `<circle cx="30" cy="30" r="17" fill="${C.gold}" stroke="${C.goldDk}" stroke-width="2.4"/><circle cx="30" cy="30" r="11" fill="none" stroke="${C.goldDk}" stroke-width="1.4"/>${A.paw(30, 31, .55, C.goldDk)}`],
-    '👑': ['crown', `<path d="M12 42 L10 18 L21 28 L30 12 L39 28 L50 18 L48 42 Z" fill="${C.gold}" stroke="${C.goldDk}" stroke-width="2" stroke-linejoin="round"/><circle cx="30" cy="34" r="3.5" fill="${C.berry}"/><circle cx="19" cy="36" r="2.6" fill="#6CC6E8"/><circle cx="41" cy="36" r="2.6" fill="#6CC6E8"/>`],
-    '🧦': ['sock', `<path d="M24 10 H38 V34 Q38 46 26 48 Q14 50 12 42 Q11 36 20 34 L24 32 Z" fill="#F2F0EA" stroke="#B9B2A4" stroke-width="2" stroke-linejoin="round"/><path d="M24 14 H38" stroke="${C.berry}" stroke-width="4"/><circle cx="31" cy="28" r="2" fill="#B9B2A4"/>`],
-    '🥾': ['boot', `<path d="M20 10 H34 V34 L48 38 Q52 40 50 46 H16 Q14 30 20 10 Z" fill="#8A5A36" stroke="#5E3B20" stroke-width="2" stroke-linejoin="round"/><path d="M22 18 h10 M22 24 h10" stroke="#5E3B20" stroke-width="1.6"/><rect x="15" y="44" width="37" height="5" rx="2" fill="#4A2E1A"/>`],
-    '🪱': ['worm', `<path d="M10 40 q8 -16 16 -4 t16 -6 t10 -12" stroke="#E58FAE" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="50" cy="17" r="1.6" fill="${C.ink}"/>`],
-    '🍂': ['leaves', `<path d="M14 40 Q14 18 36 14 Q36 36 14 40 Z" fill="#E08A3C" stroke="#9E4A27" stroke-width="1.6"/><path d="M28 46 Q30 26 48 26 Q46 44 28 46 Z" fill="#C9662E" stroke="#9E4A27" stroke-width="1.6"/><path d="M14 40 L32 20 M28 46 L44 30" stroke="#9E4A27" stroke-width="1.2"/>`],
+    '🦴': ['bone', A.FINDS['golden-bone']],
+    '🎾': ['ball', A.FINDS['lost-ball']],
+    '🧸': ['teddy', A.FINDS['teddy-bear']],
+    '💎': ['jewel', A.FINDS['shiny-jewel']],
+    '🪙': ['coin', A.FINDS['gold-coin']],
+    '👑': ['crown', A.FINDS['tiny-crown']],
+    '🧦': ['sock', A.FINDS['sock']],
+    '🥾': ['boot', A.FINDS['boot']],
+    '🪱': ['worm', A.FINDS['worm']],
+    '🍂': ['leaves', A.FINDS['leaves']],
   };
   const findSVG = (key, cls = '') => FINDS[key] ? `<svg class="pw-find ${cls}" viewBox="0 0 60 60" aria-hidden="true" data-find="${FINDS[key][0]}">${FINDS[key][1]}</svg>` : '';
+  // a treasure found on the dig: the tip line gets its drawing (the engine has already written the words)
+  document.addEventListener('meadow:treasure', e => setTimeout(() => {
+    const tip = document.querySelector('.dig-tip.found'), key = Object.keys(FINDS).find(k => A.FINDS[e.detail.id] === FINDS[k][1]);
+    if (tip && key && !tip.querySelector('.pw-find')) tip.insertAdjacentHTML('afterbegin', findSVG(key));
+  }, 0));
   const sniffIcon = `<svg viewBox="0 0 40 30" aria-hidden="true">${A.paw(14, 17, .9, '#7E5430', 1, -15)}<path d="M28 8 q5 3 0 7 q-5 4 0 8" stroke="#7E5430" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M34 6 q5 4 0 8 q-5 4 0 9" stroke="#7E5430" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/></svg>`;
   const pawIcon = (k = INK_DK) => `<svg viewBox="-12 -13 24 24" aria-hidden="true">${A.paw(0, 0, 1, k)}</svg>`;
   const houseIcon = `<svg viewBox="-12 -12 24 24" aria-hidden="true"><path d="M-10 0 L0 -9 L10 0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M-7 -1 V9 H7 V-1" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><rect x="-2" y="3" width="4" height="6" fill="currentColor"/></svg>`;
@@ -170,6 +175,9 @@
   body.pw-on .dig-field{background:radial-gradient(ellipse 62% 26% at 50% 100%,#9A6A3A 0 70%,transparent 71%),radial-gradient(ellipse 30% 9% at 18% 46%,#9CCB7E 0 70%,transparent 71%),radial-gradient(ellipse 34% 10% at 80% 44%,#9CCB7E 0 70%,transparent 71%),linear-gradient(180deg,#CFEAF4 0,#E9F6EF 42%,#A8D485 43%,#8FC46B 100%)}
   body.pw-on .mound .find{font-size:0;width:clamp(56px,13vw,76px);height:clamp(56px,13vw,76px)}
   body.pw-on .mound .find svg{width:100%;height:100%;display:block}
+  /* a treasure found: the drawn treasure in the tip line, beside "New treasure!" (js/meadow-core.js keepTreasure) */
+  body.pw-on .dig-tip.found{font-family:Fredoka,system-ui,sans-serif;font-size:18px;background:${C.paper};border-color:#C9A16E;color:#5E3B20}
+  body.pw-on .dig-tip.found .pw-find{width:40px;height:40px;flex:none}
   body.pw-on .chip.extra svg{width:18px;height:18px;vertical-align:-3px;margin-right:4px}
 
   /* the finish */

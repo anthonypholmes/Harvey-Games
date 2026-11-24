@@ -254,6 +254,8 @@ const int = (v, lo = 0, hi = Infinity) => Math.min(hi, Math.max(lo, Math.floor(+
 let KEY = DEFAULT_KEY;
 let S = null; // the save, always re-read before a change
 
+// Bonnie's Treasure Chest: the 6 treasures a dig can find (stable ids, saved in s.treasures; see keepTreasure)
+const TREASURE_IDS = ['golden-bone', 'lost-ball', 'teddy-bear', 'shiny-jewel', 'gold-coin', 'tiny-crown'];
 function readJSON(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } }
 function blankSave() {
   return {
@@ -303,6 +305,8 @@ function normalise(raw) {
   if (isObj(wk.days)) Object.entries(wk.days).forEach(([k, v]) => { v = int(v, 0, 999); if (DAY_RE.test(k) && v) wdays[k] = v; });
   s.walks = { days: wdays, last: typeof wk.last === 'string' && DAY_RE.test(wk.last) ? wk.last : null, streak: int(wk.streak, 0, 9999),
     topic: typeof wk.topic === 'string' ? wk.topic : null };
+  // Bonnie's Treasure Chest: { id: how many found }, known ids only (an old save or backup without it has an empty chest)
+  s.treasures = Object.fromEntries(Object.entries(isObj(s.treasures) ? s.treasures : {}).map(([k, v]) => [k, int(v, 0, 9999)]).filter(([k, v]) => TREASURE_IDS.includes(k) && v > 0));
   s.tips = Object.fromEntries(Object.entries(isObj(s.tips) ? s.tips : {}).filter(([k, v]) => TIP_IDS.includes(k) && v === true));
   const st = isObj(s.settings) ? s.settings : {};
   s.settings = { ...st, unlockAll: isObj(st.unlockAll) ? st.unlockAll : {},
@@ -1269,9 +1273,9 @@ function correct(el, opts = {}) {
   const praise = opts.praise != null ? fmt(opts.praise) : wasHelped ? fmt(LINES.watched) : fmt(rand(G.w.praise || LINES.praise));
   bubble(esc(praise), false);
   say((opts.sayFirst ? opts.sayFirst + '! ' : '') + praise);
-  if (opts.auto !== false) { // move on once Bonnie has finished her well-done (and at least 1.6s)
+  if (opts.auto !== false) { // move on once Bonnie has finished her well-done (and at least 1.6s, or opts.hold: a dig's treasure stays a little longer)
     const round = G, i = G.i, t0 = Date.now();
-    whenQuiet(() => setTimeout(() => { if (G === round && G.i === i) next(); }, Math.max(500, 1600 - (Date.now() - t0))));
+    whenQuiet(() => setTimeout(() => { if (G === round && G.i === i) next(); }, Math.max(500, (opts.hold || 1600) - (Date.now() - t0))));
   }
   return true;
 }
@@ -1415,7 +1419,12 @@ const DIG = {
   intro: ["Sniff sniff! I can smell treasure, {N}! Which mound should I dig?", "Ooh, wait! Something's buried here! Let's go off the path!", "Woof! A secret dig spot! Help me pick the right mound, {N}!"],
   ask: 'Dig the mound with the answer!',
   rhymeAsk: w => `Which mound rhymes with ${w}?`,
-  treasure: [['🦴', 'a golden bone'], ['🎾', 'my lost ball'], ['🧸', 'a teddy bear'], ['💎', 'a shiny jewel'], ['🪙', 'a gold coin'], ['👑', 'a tiny crown']],
+  // [emoji (the plain look), what Bonnie calls it, its treasure id (Bonnie's Treasure Chest: never change an id), its name on the chest]
+  treasure: [['🦴', 'a golden bone', 'golden-bone', 'Golden bone'], ['🎾', 'my lost ball', 'lost-ball', 'Lost ball'], ['🧸', 'a teddy bear', 'teddy-bear', 'Teddy bear'],
+    ['💎', 'a shiny jewel', 'shiny-jewel', 'Shiny jewel'], ['🪙', 'a gold coin', 'gold-coin', 'Gold coin'], ['👑', 'a tiny crown', 'tiny-crown', 'Tiny crown']],
+  // said after "We found …!": a first find, or one already in the chest
+  newFind: 'It’s new! I’ll put it in my treasure chest!',
+  again: 'Another one for my treasure chest!',
   junk: [['🧦', 'an old sock'], ['🥾', 'a muddy boot'], ['🪱', 'a wiggly worm'], ['🍂', 'some soggy leaves']],
   found: name => `We found ${name}! Brilliant digging, {N}!`,
   oops: name => `Ha! Just ${name}!`,
@@ -1456,7 +1465,7 @@ function playDig(q) {
     <p class="dig-q">${q.text}</p>
     <div class="dig-field">${q.opts.map((v, i) => `<button class="mound" type="button" data-i="${i}" aria-label="Dig here: ${esc(String(v))}">
       <span class="heap" aria-hidden="true"></span><span class="find" aria-hidden="true"></span><span class="stake">${esc(String(v))}</span></button>`).join('')}</div>
-    <p class="dig-tip">Tap a mound to dig!</p>
+    <p class="dig-tip" role="status">Tap a mound to dig!</p>
   </div>`;
   const mounds = $$('.mound', area), rightAt = q.opts.indexOf(q.answer);
   function dig(m, right) {
@@ -1474,7 +1483,19 @@ function playDig(q) {
   mounds.forEach((m, i) => { m.onclick = () => {
     if (isBusy() || m.disabled) return;
     const right = i === rightAt, item = dig(m, right);
-    if (right) { mounds.forEach(x => x.classList.remove('glow')); correct(m, { praise: DIG.found(item[1]) }); }
+    if (right) {
+      mounds.forEach(x => x.classList.remove('glow'));
+      const find = keepTreasure(item[2]), extra = find.first ? DIG.newFind : DIG.again;
+      // the discovery: in the dig's own tip line, so it never covers anything or holds up the walk
+      const tip = $('.dig-tip', area), t = TREASURES.find(x => x.id === find.id);
+      if (tip && t) { tip.classList.add('found', find.first ? 'new' : 'again');
+        tip.innerHTML = find.first ? `<b>New treasure!</b> ${esc(t.name)} is in Bonnie's chest. <span class="dig-tally">${find.found} of ${TREASURES.length} found</span>`
+          : `<b>${esc(t.name)} again!</b> That's ${find.count} in Bonnie's chest.`;
+        try { tip.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
+      // the chest line joins the praise only where Bonnie can say all of it (in the app, a line with an unrecorded
+      // sentence would be silent, and the found line is recorded): the discovery card shows it either way
+      correct(m, { praise: DIG.found(item[1]) + (canSayAll(extra) ? ' ' + extra : ''), hold: 3200 });
+    }
     else wrong(null, { lead: DIG.oops(item[1]) });
   }; });
   ctx().hints([
@@ -1485,13 +1506,34 @@ function playDig(q) {
   bubble(esc(fmt(rand(DIG.intro))));
   later(() => say(q.ask), 200);
 }
+/* ---------- Bonnie's Treasure Chest ----------
+   Every treasure a dig finds is kept, per player, in the save as treasures: { id: count } (ids from DIG.treasure),
+   the moment it is found. The chest (on the journal's Walks page) shows which of the 6 have turned up and how many.
+   It's a keepsake only: no bones, no extra digs, and the dig itself (how often, its bones) is unchanged. Resetting
+   stars keeps it; deleting a player deletes it with their save; a backup has it because it's part of the save. */
+const TREASURES = DIG.treasure.map(([emoji, said, id, name]) => ({ id, name, said, emoji }));
+function keepTreasure(id) {
+  if (!TREASURE_IDS.includes(id)) return { id, first: false, count: 0 };
+  const before = (load().treasures || {})[id] || 0;
+  mutate(s => { s.treasures = { ...s.treasures, [id]: before + 1 }; });
+  const find = { id, first: !before, count: before + 1, found: TREASURE_IDS.filter(t => S.treasures[t]).length };
+  if (G && G.dig) G.dig.find = find;
+  try { document.dispatchEvent(new CustomEvent('meadow:treasure', { detail: find })); } catch (e) {}
+  return find;
+}
+// whether Bonnie can say a line out loud: always on the website (the device voice), in the app only with every sentence recorded
+function canSayAll(text) {
+  if (!inApp()) return true;
+  const V = window.BonnieVoice; if (!V || !V.pack || !V.pack.clips) return false;
+  return V.sentences(text).every(p => { const c = V.cleanPiece(p.raw); return !V.hasWords(c) || !!V.pack.clips[V.pieceKey(c)]; });
+}
 const DIG_WORLD = { id: 'walk-dig', subject: 'walk', name: 'Secret dig', icon: '🕳️', hintNames: DIG.names, praise: [], play: playDig };
 const DIG_LEVEL = { id: 'dig', name: 'Secret dig' };
 /* Every line the dig can say (for tools/make-voice.mjs) */
 function digLines() {
   // the help: a clue (1), digging up a wrong mound (2), the glow (3); "Name text" from Ask Bonnie, "Name. text" after a wrong mound
   const tiers = [Object.values(DIG.clue), [DIG.dug], [DIG.glow]];
-  return [...DIG.intro, DIG.ask, ...Object.keys(RHYMES).map(DIG.rhymeAsk), ...DIG.treasure.map(x => DIG.found(x[1])), ...DIG.junk.map(x => DIG.oops(x[1])),
+  return [...DIG.intro, DIG.ask, DIG.newFind, DIG.again, ...Object.keys(RHYMES).map(DIG.rhymeAsk), ...DIG.treasure.map(x => DIG.found(x[1])), ...DIG.junk.map(x => DIG.oops(x[1])),
     ...DIG.names.flatMap((n, i) => tiers[i].flatMap(c => [`${n} ${c}`, `${n}. ${c}`]))];
 }
 function startWalk() {
@@ -2055,7 +2097,7 @@ function parentScreen() {
         ${sworlds.some(w => w.warmUps) ? `<label class="tick"><input type="checkbox" id="pWarm" ${S.settings.warmUps ? 'checked' : ''}><span>Maths warm-ups: each level starts with 2 easy questions that don't count for stars</span></label>` : ''}
         <ul class="gu-worlds">${sworlds.map(w => `<li><span>${esc(w.name)} <small>Year ${w.year}</small></span><b>${worldStars(w)} / ${w.levels.length * 3} stars</b></li>`).join('')}</ul>
         <div class="row-btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small berry" data-reset="${subj}" id="resetProg-${subj}">Reset ${esc(t.title)} stars</button></div>
-        <p class="note">Resetting clears this game's stars only. Bones, hats, prizes and the other game are kept.</p></section>
+        <p class="note">Resetting clears this game's stars only. Bones, hats, prizes, Bonnie's treasures and the other game are kept.</p></section>
       <section>${fold('logs-' + subj, 'How each answer was reached', logs.length ? plural(logs.length, 'world') + ' played' : 'Nothing yet', `
         <p class="note">Counts from the last play of each level: how far Bonnie's help went on each question. <b>Made easier</b> counts questions the game quietly simplified after two answers in a row needed a lot of help.</p>
         ${logs.length ? logs.map(([w, tb]) => `<h4>${esc(w.name)}</h4>${tb}`).join('') : `<p class="note">Nothing yet. A world shows here once one of its levels has been finished.</p>`}`)}</section>
@@ -2450,6 +2492,9 @@ body[data-theme="pixel"] .walk-sky .h1{background:#63C74D}body[data-theme="pixel
 .mound.glow .heap{box-shadow:0 0 0 7px rgba(242,193,78,.75),inset 0 -8px 0 rgba(0,0,0,.12)}
 .mound .clod{position:absolute;left:50%;bottom:40%;width:10px;height:9px;border-radius:40%;background:#8A5D34;z-index:3;animation:clod .8s ease-out forwards}
 .dig-tip{margin:2px 0 0;color:var(--ink-soft);font-family:var(--font-read)}
+.dig-tip.found{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;margin-top:8px;padding:8px 14px;border-radius:14px;background:#FFF3C4;border:2px solid var(--gold);color:var(--ink);font-size:1.1rem;animation:snap .4s cubic-bezier(.3,1.6,.5,1)}
+.dig-tip .dig-tally{font-weight:700;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.dig-tip.found{animation:none}}
 @keyframes clod{0%{transform:translate(0,0) scale(1);opacity:1}60%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.6) rotate(90deg);opacity:0}}
 @keyframes treasure{from{transform:translate(-50%,0) rotate(-6deg)}to{transform:translate(-50%,-6px) rotate(6deg)}}
 .paw-stamp{font-size:3.2rem;line-height:1;margin:4px auto 0;width:84px;height:84px;display:grid;place-items:center;border-radius:50%;border:4px dashed var(--leaf);transform:rotate(-12deg);animation:stamp .5s ease-out}
@@ -2743,7 +2788,7 @@ window.Meadow = {
   weekReport, weekPanel: () => weekPanelHTML(), // the grown-ups "this week" numbers, and the panel
   startWalk, walkInfo, walk: { MIXES: WALK_MIXES, KEY: WALK_KEY, BONUS: WALK_BONUS, walkable, plan: () => { S = load(); return planWalk(); }, stop: stopWalk,
     skipHello: () => { if (G && G.walk && !G.done && !$('#area')) walkStep(); }, // tests: show the first question now
-    dig: DIG, makeDig, digLines }, // the surprise dig (tests set dig.chance)
+    dig: DIG, makeDig, digLines, treasures: TREASURES }, // the surprise dig (tests set dig.chance)
   // save
   save: { get key() { return KEY; }, load: () => (S = load()), get: () => S, mutate, migrate, readOld, normalise, catchUp, oldPrint },
   stars: (worldId, levelId) => { if (!S) S = load(); return S.stars[worldId + '/' + levelId] || 0; },
