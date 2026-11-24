@@ -408,12 +408,13 @@ const SP_CSS = `
 .slot{position:relative}
 .slot.bad::after{content:"✗";position:absolute;top:-10px;right:-8px;font:700 1.1rem var(--font-ui);color:var(--berry)}
 @media (max-width:520px){
-  .sp-teach{font-size:1rem;padding:10px 12px}
-  .sp-l{font-size:1.6rem;min-width:34px;height:50px;padding:0 4px}
-  .sp-row{gap:5px}
-  .sp-word{font-size:1.7rem}
-  .sp-choices{grid-template-columns:1fr 1fr;gap:8px}
-  .sp-choice{font-size:1.05rem;min-height:50px;padding:8px}
+  /* phones: the pattern card and the word tighten up, so the choices fit an iPhone SE without scrolling */
+  .sp-teach{font-size:.95rem;line-height:1.35;padding:8px 10px;margin-bottom:8px}
+  .sp-l{font-size:1.5rem;min-width:32px;height:46px;padding:0 4px;border-bottom-width:4px}
+  .sp-row{gap:5px;margin:6px 0}
+  .sp-word{font-size:1.5rem;min-height:36px}
+  .sp-choices{grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+  .sp-choice{font-size:1.05rem;min-height:46px;padding:6px 8px}
   .sp-why{font-size:1.05rem;padding:10px 12px}
 }
 `;

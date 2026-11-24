@@ -77,7 +77,7 @@ Every line in the new levels is fixed text, listed by the world's `lines()`, so 
 ### Limitations
 
 - The new lines are not recorded yet (see Audio).
-- On the iPhone SE and iPhone 17 the fact files and ordering questions scroll (see Tests).
+- On the iPhone SE and iPhone 17 the fact files and ordering questions scroll (see Tests). On an iPad in landscape, a long ordering question in Story Detective can also end about 70px below the screen.
 - Real-device VoiceOver and touch testing still has to be done on a phone and an iPad; the automated checks drive Chrome.
 
 ---
@@ -230,7 +230,7 @@ The first five levels have a sound dot under each tile and a Blend button. The `
 - the *why?* part, and the *happiness*/*happyness* part, work;
 - levels 1–5 still have sound dots and Blend.
 
-Phone fit: everything fits the iPhone SE width. When the pattern card is showing, the letter tray sits just below the screen on an iPhone SE and needs a short scroll. That is only on the first question of each pattern; later questions fit. Pictures: `phonics-*` in [docs/review/words-expansion/](review/words-expansion/index.html).
+Phone fit: everything fits the iPhone SE width. The final phone check (tools/level-check.mjs, 24 November 2026) has every Phonics Forest level on screen at every size, except Changing Words on an iPhone SE: with the pattern card showing on the first question, its last choice can end up to 16px below the screen. Later questions, without the card, fit. Four Kinds of Sentences now fits the iPhone SE too, with its choices two across on phones. Pictures: `phonics-*` in [docs/review/words-expansion/](review/words-expansion/index.html).
 
 ### Audio
 

@@ -349,6 +349,7 @@ const M2_CSS = `
   .m2-letters{gap:6px}
   .m2-short{font-size:1.9rem;min-height:48px}
   .m2-choice{font-size:1.15rem;padding:8px 10px;min-height:50px}
+  .m2-choices{grid-template-columns:1fr 1fr;gap:8px} /* two across, so the four kinds of sentence fit an iPhone SE */
   .m2-ideas{font-size:1.1rem}
   .m2-why{font-size:1.05rem;padding:10px 12px}
 }
