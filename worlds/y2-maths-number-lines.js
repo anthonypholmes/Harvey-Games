@@ -119,9 +119,14 @@ function lineClue(q) {
   }
   if (q.ask === 'between') return { say: `Look at the tens next to ${f(t)}.`, point: `tick-${q.answer[0]}` };
   if (q.ask === 'jump') return { say: `Count the jumps from 0 to ${f(q.jump.reach)}.`, point: `tick-${q.jump.reach}` };
-  if (q.interval) return q.ask === 'read'
-    ? { say: `Count ${q.back ? 'back' : 'on'} in ${f(q.interval)}s.`, point: `tick-${rd(q.back ? t + q.interval : t - q.interval)}` }
-    : { say: `Count on in ${f(q.interval)}s to ${f(t)}.`, point: `tick-${rd(q.line.min + q.interval)}` };
+  // Stepping Stones: the clue also writes the missing numbers on the stones (reveal). Reading Bonnie's stone: every
+  // stone but hers. Putting Bonnie on a number: the stones up to two before it, so the last two hops are still his.
+  if (q.interval) {
+    const s = q.interval, L = q.line, stones = range(L.min, L.max, s, q.dp);
+    return q.ask === 'read'
+      ? { say: `Count ${q.back ? 'back' : 'on'} in ${f(s)}s.`, point: `tick-${rd(q.back ? t + s : t - s)}`, reveal: stones.filter(v => v !== t) }
+      : { say: `Count on in ${f(s)}s to ${f(t)}.`, point: `tick-${rd(L.min + s)}`, reveal: stones.filter(v => v <= rd(t - 2 * s, q.dp)) };
+  }
   if (q.ask === 'read') return { say: `Count the ticks from ${f(B)}.`, point: `tick-${B}` };
   return { say: `Find ${f(B)} first. ${f(t)} is ${t > B ? 'greater' : 'less'}.`, point: `tick-${B}` };
 }

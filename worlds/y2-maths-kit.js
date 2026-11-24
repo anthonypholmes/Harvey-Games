@@ -304,6 +304,7 @@ function raise(source, lead) {
     setTier(1);
     const c = clueFor(q);
     S.cluePoint = c.point;
+    if (c.reveal && q.line) revealLabels(c.reveal);
     feedback('help', `<span><span class="big">${lead || pick(SCOUT_LEADS)}</span>${c.say}</span>`);
     say(c.say);
     renderControls();
@@ -456,6 +457,18 @@ function lineHTML(q) {
     <div class="nl-track"><div class="nl-bar"></div>
       <div class="nl-zone soft" id="nl-zone" hidden></div><div class="nl-zone guide" id="nl-guide" hidden></div>
       ${ticks}${start}${pawn}</div></div>`;
+}
+
+/* A clue that writes numbers on the line (clue.reveal: the values), e.g. the Stepping Stones' missing stones.
+   They're added to the question's labels, so they stay if the line is drawn again, and written into the ticks
+   already on the screen, so Bonnie stays where she was dragged. Never the "?" stone. */
+function revealLabels(vals) {
+  const q = S.q, L = q.line;
+  const add = vals.map(v => rd(v, q.dp)).filter(v => v >= L.min && v <= L.max && v !== L.mark && !L.labels.includes(v));
+  if (!add.length) return;
+  L.labels = [...L.labels, ...add];
+  add.forEach(v => { const t = inMM(`[data-t="tick-${v}"]`); if (t && !t.querySelector('.nl-lab')) { t.classList.add('major', 'revealed'); t.insertAdjacentHTML('beforeend', `<span class="nl-lab">${q.fmt(v)}</span>`); } });
+  const nl = inMM('#nl'); if (nl) nl.setAttribute('aria-label', `${nl.getAttribute('aria-label').replace(/\. Bonnie wrote .*$/, '')}. Bonnie wrote ${add.map(q.fmt).join(', ')} on the stones`);
 }
 
 // keep the pawn, the yellow "between" zone and the green guide zone in step with the state
@@ -1639,6 +1652,7 @@ const CSS = String.raw`
 .mm .nl-tick { position: absolute; top: 0; transform: translateX(-50%); display: grid; justify-items: center; pointer-events: none; }
 .mm .nl-tick i { display: block; width: 3px; height: 18px; margin-top: -9px; background: var(--ink); border-radius: 2px; }
 .mm .nl-tick.major i { width: 4px; height: 34px; margin-top: -17px; }
+.mm .nl-tick.revealed .nl-lab { color: #2F6F8F; } /* written in by Bonnie's clue (Stepping Stones) */
 .mm .nl-lab { margin-top: 6px; font-weight: 700; font-size: 21px; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .mm .nl-tick.q .nl-lab { background: var(--sun); border: 2px solid var(--ink); border-radius: 8px; padding: 0 9px; }
 .mm .nl.dense .nl-lab { font-size: 16px; }
