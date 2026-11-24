@@ -690,8 +690,8 @@ function clockFace(v, i = '') {
   return `<svg class="clock${v.count ? ' counting' : ''}" viewBox="${v.count ? '-26 -26 252 252' : '0 0 200 200'}" role="img" aria-label="${handsSay(v.t)}">
     <circle cx="100" cy="100" r="97" class="clk-rim"/><circle cx="100" cy="100" r="91" class="clk-face"/>
     <g class="clk-ticks">${ticks}</g>${nums}
-    <g class="clk-hand clk-hour" style="transform:rotate(${a.hour}deg)"><path d="M100 108 L95.5 100 L100 50 L104.5 100 Z"/></g>
-    <g class="clk-hand clk-min" style="transform:rotate(${a.minute}deg)"><path d="M100 112 L97.6 100 L100 22 L102.4 100 Z"/></g>
+    <g class="clk-hand clk-hour" data-t="clk-hour${i}" style="transform:rotate(${a.hour}deg)"><path d="M100 108 L95.5 100 L100 50 L104.5 100 Z"/></g>
+    <g class="clk-hand clk-min" data-t="clk-min${i}" style="transform:rotate(${a.minute}deg)"><path d="M100 112 L97.6 100 L100 22 L102.4 100 Z"/></g>
     <circle cx="100" cy="100" r="6.5" class="clk-pin"/></svg>`;
 }
 const clockOk = v => (((v.t - v.target) % 720) + 720) % 720 === 0;
@@ -702,7 +702,7 @@ function clockVis(v) {
   return `<div class="gv-clock${v.small ? ' is-small' : ''}" data-t="clock">${clockFace(v)}</div>
     ${v.set ? `<div class="gv-tools clk-set"><button class="mbtn" type="button" data-g="clk-minus" data-t="clk-minus" aria-label="Take the long hand back 5 minutes">−5 minutes</button><button class="mbtn" type="button" data-g="clk-plus" data-t="clk-plus" aria-label="Move the long hand on 5 minutes">+5 minutes</button></div>
       <span class="sr" role="status">The clock shows ${timeWords(v.t)}</span>` : ''}
-    ${v.key ? `<div class="clk-key"><span><svg viewBox="0 0 30 10" aria-hidden="true"><path d="M2 5 L6 2 L28 5 L6 8 Z" fill="#D2453B" stroke="#8E2019" stroke-width="1"/></svg>Long hand: minutes</span><span><svg viewBox="0 0 30 10" aria-hidden="true"><path d="M2 5 L6 1.5 L18 5 L6 8.5 Z" fill="#1C4893" stroke="#0F2A5A" stroke-width="1"/></svg>Short hand: hour</span></div>` : ''}
+    ${v.key ? `<div class="clk-key"><span class="k-min"><svg viewBox="0 0 30 10" aria-hidden="true"><path d="M2 5 L6 2 L28 5 L6 8 Z" fill="#D2453B" stroke="#8E2019" stroke-width="1"/></svg>Long hand: minutes</span><span class="k-hour"><svg viewBox="0 0 30 10" aria-hidden="true"><path d="M2 5 L6 1.5 L18 5 L6 8.5 Z" fill="#1C4893" stroke="#0F2A5A" stroke-width="1"/></svg>Short hand: hour</span></div>` : ''}
     ${v.count ? `<div class="gv-tools clk-count"><button class="mbtn small" type="button" data-g="clk-count" data-t="clk-count">Count in 5s</button></div>` : ''}`;
 }
 // move the hands without drawing the clock again, so they sweep round (or jump, with Reduce Motion)
@@ -1771,6 +1771,12 @@ const CSS = String.raw`
 .mm .clk-key svg { width: 30px; height: 10px; }
 .mm .clk-hour path { fill: #1C4893; stroke: #0F2A5A; stroke-width: 1.5; stroke-linejoin: round; }
 .mm .clk-min path { fill: #D2453B; stroke: #8E2019; stroke-width: 1.2; stroke-linejoin: round; }
+/* Bonnie pointing at one hand (point: 'clk-min' or 'clk-hour'): that hand gets a thick dark outline, the other hand
+   fades back, and its line in the key under the clock is boxed, so it never relies on colour alone. Nothing moves. */
+.mm .clk-hand.spot { outline: none !important; animation: none !important; }
+.mm .clk-hand.spot path { stroke: var(--ink); stroke-width: 4.5; paint-order: stroke; }
+.mm .clock:has(.clk-min.spot) .clk-hour, .mm .clock:has(.clk-hour.spot) .clk-min { opacity: .28; }
+.mm .gvis:has(.clk-min.spot) .clk-key .k-min, .mm .gvis:has(.clk-hour.spot) .clk-key .k-hour { outline: 3px solid var(--ink); outline-offset: 2px; border-radius: 8px; background: var(--sun); padding: 0 6px; }
 .mm .clk-pin { fill: var(--sun); stroke: var(--ink); stroke-width: 2; }
 .mm .clk-set .mbtn { min-width: 132px; min-height: 52px; font-size: 20px; }
 .mm .gv-clocks { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px; }

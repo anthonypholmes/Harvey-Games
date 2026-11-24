@@ -96,7 +96,7 @@
   const st = $$('.stone');
   check('VoiceOver: a level card says its name', /^Level 1: one\./.test(st[0].getAttribute('aria-label') || ''), st[0].getAttribute('aria-label'));
   check('VoiceOver: a locked level says so', /Locked/.test(st[1].getAttribute('aria-label') || ''), st[1].getAttribute('aria-label'));
-  check('VoiceOver: the frog is hidden', $('#frog').getAttribute('aria-hidden') === 'true');
+  check('No ambient frog or butterflies (removed 24 November 2026)', !$('#frog') && !$$('.butterfly').length);
   check('VoiceOver: the bones say "bones"', /86|\d+ bones/.test($('#boneChip').textContent) && $('#boneChip .sr').textContent.trim() === 'bones');
 
   check('Only the test save was used', Meadow.save.key === TEST_KEY, Meadow.save.key);

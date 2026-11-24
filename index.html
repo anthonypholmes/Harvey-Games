@@ -237,17 +237,17 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 .a2hs .x:active{background:var(--line)}
 @media (max-width:560px){.a2hs{flex-wrap:wrap}.a2hs .txt{flex-basis:calc(100% - 130px)}.a2hs .install{width:100%;order:3}}
 
-/* ---------- Meadow & critters ---------- */
+/* (24 November 2026) The theme's decorations (clouds, snow, stars, embers, bubbles, the strip of meadow along the
+   bottom) belong to the question screens, where they sit behind everything (#app is the layer above them). The
+   illustrated screens (Clubhouse, maps, level maps, shop, grown-ups) draw each theme into their own picture, so there
+   the decorations are off and can never lie over a sign, a button or Bonnie's words. */
+body.ph-on::before,body.ph-on::after,body.pm-on::before,body.pm-on::after,body.pl-on::before,body.pl-on::after,body.ps-on::before,body.ps-on::after,body.gu-page::before,body.gu-page::after{display:none!important}
+/* ---------- Meadow ---------- */
 .meadow{position:fixed;left:0;right:0;bottom:0;height:90px;z-index:1;pointer-events:none;
   background:radial-gradient(14px 10px at 8% 30%,#F7D96B 40%,transparent 42%),radial-gradient(12px 9px at 27% 45%,#fff 40%,transparent 42%),
    radial-gradient(14px 10px at 61% 35%,#F08A4B 40%,transparent 42%),radial-gradient(12px 9px at 83% 40%,#fff 40%,transparent 42%),
    radial-gradient(14px 10px at 94% 25%,#F7D96B 40%,transparent 42%),linear-gradient(180deg,transparent 0 20%,#9CCB7C 20% 100%);
   border-top-left-radius:50% 30px;border-top-right-radius:50% 30px}
-.butterfly{position:fixed;z-index:1;font-size:1.8rem;pointer-events:none;animation:flutter 18s linear infinite}
-.butterfly span{display:inline-block;animation:flap .35s ease-in-out infinite alternate}
-.frog{position:fixed;bottom:32px;left:-60px;z-index:3;font-size:2.4rem;cursor:pointer;animation:frogTrip 26s linear infinite}
-.frog span{display:inline-block;animation:hopY 1.3s ease-in-out infinite}
-.frog.boing span{animation:bigHop .7s}
 .heart{position:fixed;pointer-events:none;z-index:60;font-size:1.6rem;animation:floatUp 1.2s ease-out forwards}
 
 @keyframes bump{50%{transform:scale(1.25)}}
@@ -261,11 +261,6 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 @media (prefers-reduced-motion:reduce){.bonnie.bonnie-spin{animation:none}}
 @keyframes giggle{0%,100%{transform:rotate(0)}10%,50%{transform:rotate(-10deg) scale(1.05)}30%,70%{transform:rotate(10deg) scale(1.05)}}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(.8)}100%{opacity:0;transform:translateY(-90px) scale(1.2)}}
-@keyframes flutter{0%{transform:translate(-10vw,60vh)}25%{transform:translate(30vw,20vh)}50%{transform:translate(60vw,45vh)}75%{transform:translate(85vw,10vh)}100%{transform:translate(110vw,40vh)}}
-@keyframes flap{to{transform:scaleX(.55)}}
-@keyframes frogTrip{0%{left:-60px}100%{left:calc(100vw + 60px)}}
-@keyframes hopY{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
-@keyframes bigHop{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-70px) rotate(-20deg)}}
 @media (max-width:560px){
   .welcome{flex-direction:column;text-align:center}
   .bonnie{width:96px;height:96px}
@@ -311,15 +306,11 @@ a.btn{text-decoration:none;color:inherit;display:inline-block}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-  .butterfly,.frog{display:none}
 }
 </style>
 </head>
 <body data-theme="day">
 <div class="meadow" aria-hidden="true"></div>
-<div class="butterfly" style="animation-delay:-2s" aria-hidden="true"><span>🦋</span></div>
-<div class="butterfly" style="animation-delay:-11s;animation-duration:24s" aria-hidden="true"><span>🐝</span></div>
-<div class="frog" id="frog" aria-hidden="true"><span>🐸</span></div>
 
 <div class="wrap">
   <div class="top">
@@ -629,10 +620,6 @@ document.getElementById('bonnie').addEventListener('click', e => {
   if (egg) { [523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', .16, i * .12)); ['🦴', '🐾', '⭐', '💖'].forEach((h, i) => setTimeout(() => hearts(b, h), i * 150)); }
   else { giggle(); hearts(b); }
   const t = rand(egg ? Meadow.LINES.tickleEgg : Meadow.LINES.tickles).replace('{N}', S.childName); document.getElementById('say').textContent = t; say(t, 1.4);
-});
-document.getElementById('frog').addEventListener('click', e => {
-  const f = e.currentTarget; f.classList.remove('boing'); void f.offsetWidth; f.classList.add('boing');
-  tone(180, .08, 'sawtooth', .08); tone(160, .12, 'sawtooth', .08, .1); hearts(f, '💚', 2);
 });
 document.getElementById('walkBtn').addEventListener('click', e => { e.preventDefault(); goTo('bonnies-walk.html', rand(LINES.walk)); });
 document.getElementById('soundBtn').addEventListener('click', () => {

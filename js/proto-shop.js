@@ -188,7 +188,7 @@
   /* ---------- the screen ---------- */
   const ON = '#4E8F3E', ON_DK = '#356B2A', OWN = '#7E5BB5', OWN_DK = '#5B3F8C'; // Wearing (green) and Yours (purple)
   const STYLE = `
-  .ps-on #screen>.card.shop,.ps-on .hud,.ps-on .butterfly,.ps-on .frog,.ps-on .meadow{display:none!important}
+  .ps-on #screen>.card.shop,.ps-on .hud,.ps-on .meadow{display:none!important}
   .ps-on #app{max-width:none;padding:0;min-height:0}
   .ps-on{background:#F6E7C8!important;overflow:hidden}
   /* the dressing room is one fixed screen, inside the safe areas: the page under it never scrolls */

@@ -766,7 +766,6 @@ const sfx = {
   coin: () => { tone(988, .07, 'square', .07); tone(1319, .14, 'square', .07, 0, .06); },
   fanfare: () => [523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', .16, 0, i * .12)),
   giggle: () => [800, 1000, 850, 1100, 900].forEach((f, i) => tone(f, .07, 'sine', .12, 120, i * .08)),
-  ribbit: () => { tone(180, .08, 'sawtooth', .08, 60); tone(160, .12, 'sawtooth', .08, 80, .1); },
   streak: () => [659, 880, 1175, 1568].forEach((f, i) => tone(f, .12, 'square', .07, 0, i * .06)),
   woof: () => { tone(260, .07, 'sawtooth', .05, -70); tone(280, .07, 'sawtooth', .05, -80, .2); },
 };
@@ -1567,6 +1566,7 @@ function renderPath() {
 }
 /* Show the next stop's question in its own world's screen; the path stays put. */
 function walkStep() {
+  if (!$('#walkQ')) return; // the walk's screen has gone (a late move-on after leaving it)
   if (G.i >= G.count) return finishWalk();
   questionShown();
   G.inDig = !!(G.dig && !G.dig.done && G.i === G.dig.at);
@@ -2274,6 +2274,11 @@ body[data-theme="volcano"]::before{content:'';position:fixed;left:0;right:0;poin
 body[data-theme="volcano"] .meadow{background:radial-gradient(16px 6px at 20% 50%,#FF8A3D 40%,transparent 46%),radial-gradient(10px 5px at 55% 65%,#FFC14D 40%,transparent 46%),radial-gradient(18px 6px at 85% 45%,#FF8A3D 40%,transparent 46%),linear-gradient(180deg,transparent 0 20%,#4A2F28 20% 100%)}
 @media (prefers-reduced-motion:reduce){body[data-theme="pixel"]::before,body[data-theme="space"]::before,body[data-theme="volcano"]::before{animation:none}}
 @media (prefers-reduced-motion:reduce){body[data-theme="christmas"]::before{background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='48' ><path d='M0 5 Q40 29 80 5 Q120 29 160 5' fill='none' stroke='%23203026' stroke-width='2'/><circle cx='20' cy='26' r='11' fill='%23FF5A4E' opacity='.28'></circle><rect x='17' y='13' width='6' height='5' rx='1' fill='%233B4A40'/><ellipse cx='20' cy='25' rx='5' ry='7' fill='%23FF5A4E'/><ellipse cx='18.4' cy='22' rx='1.4' ry='2.4' fill='%23fff' opacity='.7'/><circle cx='60' cy='26' r='11' fill='%23FFD24A' opacity='.28'></circle><rect x='57' y='13' width='6' height='5' rx='1' fill='%233B4A40'/><ellipse cx='60' cy='25' rx='5' ry='7' fill='%23FFD24A'/><ellipse cx='58.4' cy='22' rx='1.4' ry='2.4' fill='%23fff' opacity='.7'/><circle cx='100' cy='26' r='11' fill='%236EDB7A' opacity='.28'></circle><rect x='97' y='13' width='6' height='5' rx='1' fill='%233B4A40'/><ellipse cx='100' cy='25' rx='5' ry='7' fill='%236EDB7A'/><ellipse cx='98.4' cy='22' rx='1.4' ry='2.4' fill='%23fff' opacity='.7'/><circle cx='140' cy='26' r='11' fill='%236AB8FF' opacity='.28'></circle><rect x='137' y='13' width='6' height='5' rx='1' fill='%233B4A40'/><ellipse cx='140' cy='25' rx='5' ry='7' fill='%236AB8FF'/><ellipse cx='138.4' cy='22' rx='1.4' ry='2.4' fill='%23fff' opacity='.7'/></svg>")}body[data-theme="christmas"]::after,body[data-theme="sea"]::before{animation:none}}
+/* (24 November 2026) The theme's decorations (clouds, snow, stars, embers, bubbles, the strip of meadow along the
+   bottom) belong to the question screens, where they sit behind everything (#app is the layer above them). The
+   illustrated screens (Clubhouse, maps, level maps, shop, grown-ups) draw each theme into their own picture, so there
+   the decorations are off and can never lie over a sign, a button or Bonnie's words. */
+body.ph-on::before,body.ph-on::after,body.pm-on::before,body.pm-on::after,body.pl-on::before,body.pl-on::after,body.ps-on::before,body.ps-on::after,body.gu-page::before,body.gu-page::after{display:none!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 /* never fake bold or italics: the fonts have their own bold, and Safari's fake one smudges the letters */
@@ -2513,7 +2518,7 @@ body[data-theme="pixel"] .walk-sky .h1{background:#63C74D}body[data-theme="pixel
 .parent input[type=text],.parent input[type=number],.parent select{font-family:inherit;font-size:1rem;padding:8px 10px;min-height:44px;border-radius:10px;border:2px solid var(--card-edge);background:#fff;color:var(--ink)}
 .parent .remind-when label{display:inline-flex;align-items:center;gap:8px;margin:0}
 /* the grown-ups area (24 November 2026): one page for the whole game, its sections behind wooden tabs, in the meadow look */
-.gu-page .hud,.gu-page .butterfly,.gu-page .frog,.gu-page .meadow{display:none!important}
+.gu-page .hud,.gu-page .meadow{display:none!important}
 .gu-page #app{max-width:820px;padding-top:10px} /* (the page itself already starts below the status bar) */
 @media (max-width:520px){.gu-page #app{padding-left:8px;padding-right:8px}.parent.gu{padding:14px 12px 24px}}
 .parent.gu{padding:16px 18px 26px;gap:14px}
@@ -2576,11 +2581,6 @@ ${TIP_CSS}
 .float-plus{position:fixed;z-index:92;pointer-events:none;font-weight:700;font-size:1.5rem;color:var(--leaf-dark);animation:floatUp 1s ease-out forwards;text-shadow:0 2px 0 #fff}
 .drag-ghost{position:fixed!important;z-index:100;pointer-events:none;transform:scale(1.12) rotate(-4deg);box-shadow:0 18px 30px rgba(0,0,0,.25)!important;margin:0!important}
 .meadow{position:fixed;left:0;right:0;bottom:0;height:90px;z-index:1;pointer-events:none;background:radial-gradient(14px 10px at 8% 30%,#F7D96B 40%,transparent 42%),radial-gradient(12px 9px at 27% 45%,#fff 40%,transparent 42%),radial-gradient(14px 10px at 61% 35%,#F08A4B 40%,transparent 42%),radial-gradient(12px 9px at 83% 40%,#fff 40%,transparent 42%),radial-gradient(14px 10px at 94% 25%,#F7D96B 40%,transparent 42%),linear-gradient(180deg,transparent 0 20%,#9CCB7C 20% 100%);border-top-left-radius:50% 30px;border-top-right-radius:50% 30px}
-.butterfly{position:fixed;z-index:1;font-size:1.8rem;pointer-events:none;animation:flutter 18s linear infinite}
-.butterfly span{display:inline-block;animation:flap .35s ease-in-out infinite alternate}
-.frog{position:fixed;bottom:32px;left:-60px;z-index:4;font-size:2.4rem;cursor:pointer;animation:frogTrip 26s linear infinite}
-.frog span{display:inline-block;animation:hopY 1.3s ease-in-out infinite}
-.frog.boing span{animation:bigHop .7s}
 @keyframes bump{50%{transform:scale(1.25)}}
 @keyframes pop{0%{transform:scale(.85);opacity:.4}70%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
 @keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
@@ -2598,11 +2598,6 @@ ${TIP_CSS}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 @keyframes bannerIn{0%{transform:translate(-50%,-30px) scale(.6);opacity:0}12%{transform:translate(-50%,0) scale(1.08);opacity:1}20%{transform:translate(-50%,0) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,-20px)}}
 @keyframes screenShake{0%,100%{transform:translate(0)}20%{transform:translate(-5px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,-2px)}80%{transform:translate(3px,2px)}}
-@keyframes flutter{0%{transform:translate(-10vw,60vh)}25%{transform:translate(30vw,20vh)}50%{transform:translate(60vw,45vh)}75%{transform:translate(85vw,10vh)}100%{transform:translate(110vw,40vh)}}
-@keyframes flap{to{transform:scaleX(.55)}}
-@keyframes frogTrip{0%{left:-60px}100%{left:calc(100vw + 60px)}}
-@keyframes hopY{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
-@keyframes bigHop{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-70px) rotate(-20deg)}}
 @media (hover:hover){.world-card:hover{transform:translateY(-3px) rotate(-.4deg)}.stone:not(.locked):hover{transform:scale(1.02)}}
 @media (max-width:820px){
   .game-main{grid-template-columns:minmax(0,1fr)}
@@ -2641,8 +2636,6 @@ ${TIP_CSS}
   .dock .bubble{grid-column:2 / span 2;grid-row:1;min-width:0;width:auto;min-height:0;padding:8px 12px;font-size:1.1rem}
   .dock #askBtn{grid-column:1 / span 2;grid-row:2;justify-self:start}
   .dock .ladder{grid-column:3;grid-row:2}
-  /* the hopping frog stays out of levels on a phone: there it would hop across the number keys and the tiles at the bottom */
-  body:has(.play-card) .frog{display:none}
   /* the Bone Shop: Bonnie beside her words, the three tabs on one row, and two things to a row */
   .card.shop{padding:14px!important}
   .shop-hello{flex-wrap:nowrap;gap:10px}
@@ -2677,7 +2670,6 @@ ${TIP_CSS}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-  .butterfly,.frog{display:none}
 }`;
 
 /* =========================================================
@@ -2708,9 +2700,6 @@ function startGame(opts = {}) {
   }
   document.body.insertAdjacentHTML('afterbegin', `
     <div class="meadow" aria-hidden="true"></div>
-    <div class="butterfly" style="animation-delay:-2s" aria-hidden="true"><span>🦋</span></div>
-    <div class="butterfly" style="animation-delay:-11s;animation-duration:24s" aria-hidden="true"><span>🐝</span></div>
-    <div class="frog" id="frog" title="Ribbit!" aria-hidden="true"><span>🐸</span></div>
     <div id="app">
       <header class="hud">
         <a class="icon-btn" href="${esc(GAME.homeHref)}" title="Back to the Clubhouse" aria-label="Clubhouse"><span aria-hidden="true">🏠</span><span class="lbl"> Clubhouse</span></a>
@@ -2729,7 +2718,6 @@ function startGame(opts = {}) {
     $('#homeLink').onclick = () => { shopFromClub = false; homeScreen(); };
     $('#shopBtn').onclick = () => { sfx.pop(); shopScreen({ welcome: true }); };
   }
-  $('#frog').addEventListener('click', e => { const f = e.currentTarget; animate(f, 'boing', 700); sfx.ribbit(); hearts(f, '💚', 2); });
   document.addEventListener('pointerdown', () => ac(), { once: true });
   if (GAME.walk) window.addEventListener('resize', () => { if (G && G.walk) renderPath(); });
   window.addEventListener('storage', e => { if (e.key === KEY || e.key === null) { S = load(); renderHud(); applyTheme(); } });
@@ -2737,7 +2725,7 @@ function startGame(opts = {}) {
   // game.html#shop opens the Bone Shop straight away (the Clubhouse links there)
   // game.html#grownups opens the grown-ups area (after the sum check): the Clubhouse links there
   if (GAME.walk) startWalk();
-  else if (GAME.grownUpsPage) parentGate(parentScreen); // nothing of the games here: no hello from Bonnie, no frog, no map
+  else if (GAME.grownUpsPage) parentGate(parentScreen); // nothing of the games here: no hello from Bonnie, no map
   else if (location.hash === '#shop') { shopFromClub = true; shopScreen({ welcome: true }); }
   else if (location.hash === '#grownups') { parentFromClub = true; homeScreen(); parentGate(); }
   else homeScreen();

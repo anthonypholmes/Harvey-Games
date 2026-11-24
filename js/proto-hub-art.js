@@ -13,6 +13,10 @@
 (function () {
 const { C, Scene, rng, tree, bush, tuft, flowers, path, cloud, butterfly, meadowFloor, scatter, bone, paw, shadow, tint } = window.ProtoArt;
 const W = 640, H = 1000;
+/* (24 November 2026) The meadow carries on SIDE drawing units past each side of the 640-wide drawing: sky, hills,
+   grass and woods, so a landscape iPad shows the Clubhouse in a whole meadow (it used to show flat green either side).
+   The places, Bonnie and the signs stay where they were; only the scenery is wider. */
+const SIDE = 320;
 // the size of the words on the signs, in drawing units: 16px or more on the smallest phone (an iPhone SE shows the drawing at about 0.82)
 const SIGN = 20, GATE_SIGN = 23;
 
@@ -125,14 +129,16 @@ function scene(theme) {
   const s = new Scene(W, H);
   const r0 = rng(17);
   s.g(`<defs><linearGradient id="hubSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs>
-    <rect width="${W}" height="250" fill="url(#hubSky)"/>
-    ${night ? Array.from({ length: 40 }, () => `<circle cx="${(r0() * W).toFixed(0)}" cy="${(r0() * 170).toFixed(0)}" r="${(.8 + r0() * 1.4).toFixed(1)}" fill="#fff" opacity="${(.4 + r0() * .5).toFixed(2)}"/>`).join('') : ''}
+    <rect x="${-SIDE}" width="${W + 2 * SIDE}" height="250" fill="url(#hubSky)"/>
+    ${night ? Array.from({ length: 80 }, () => `<circle cx="${(-SIDE + r0() * (W + 2 * SIDE)).toFixed(0)}" cy="${(r0() * 170).toFixed(0)}" r="${(.8 + r0() * 1.4).toFixed(1)}" fill="#fff" opacity="${(.4 + r0() * .5).toFixed(2)}"/>`).join('') : ''}
     <circle cx="530" cy="70" r="26" fill="${sky[4]}" opacity=".95"/><circle cx="530" cy="70" r="40" fill="${sky[4]}" opacity=".18"/>
-    ${night ? '' : cloud(150, 70, 1.1) + cloud(400, 50, .8) + cloud(610, 120, .7)}
-    <path d="M0 200 Q90 130 200 160 Q300 120 420 150 Q540 110 640 160 V260 H0Z" fill="${sky[2]}"/>
-    <path d="M0 220 Q120 170 250 200 Q380 160 500 196 Q580 176 640 200 V280 H0Z" fill="${sky[3]}"/>
-    ${[[60, 175], [96, 168], [470, 140], [500, 150], [560, 146]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="9" fill="#8DBF7E"/><rect x="${a - 1.5}" y="${b + 6}" width="3" height="8" fill="#8A6A4A"/>`).join('')}`);
+    ${night ? '' : cloud(150, 70, 1.1) + cloud(400, 50, .8) + cloud(610, 120, .7) + cloud(-170, 100, .9) + cloud(830, 60, 1)}
+    <path d="M${-SIDE} 180 Q-230 120 -130 150 Q-50 130 0 200 Q90 130 200 160 Q300 120 420 150 Q540 110 640 160 Q720 120 800 150 Q880 120 ${W + SIDE} 170 V260 H${-SIDE}Z" fill="${sky[2]}"/>
+    <path d="M${-SIDE} 214 Q-190 170 -90 196 Q-30 186 0 220 Q120 170 250 200 Q380 160 500 196 Q580 176 640 200 Q740 168 840 196 Q900 180 ${W + SIDE} 204 V280 H${-SIDE}Z" fill="${sky[3]}"/>
+    ${[[60, 175], [96, 168], [470, 140], [500, 150], [560, 146], [-180, 150], [-150, 158], [-40, 176], [720, 150], [760, 142], [880, 164]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="9" fill="#8DBF7E"/><rect x="${a - 1.5}" y="${b + 6}" width="3" height="8" fill="#8A6A4A"/>`).join('')}`);
+  s.bleed = SIDE;
   meadowFloor(s, 13, 230);
+  [-1, 1].forEach(side => { const r1 = rng(side > 0 ? 23 : 29); for (let i = 0; i < 10; i++) { const x = side < 0 ? -r1() * SIDE : W + r1() * SIDE, y = 240 + r1() * 760, rx = 40 + r1() * 80; s.g(`<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${rx.toFixed(0)}" ry="${(rx * .35).toFixed(0)}" fill="${r1() > .5 ? C.meadowLt : C.meadowDk}" opacity="${(.25 + r1() * .2).toFixed(2)}"/>`); } });
   // the paths: from the step to the Walk and the shop, and the main path down to the fork, one branch to each game
   path(s, 'M296 426 C250 444 210 456 150 472', 24);
   path(s, 'M344 426 C390 444 430 454 490 468', 24);
@@ -145,7 +151,7 @@ function scene(theme) {
   s.g(`<ellipse cx="${AT.bonnie[0]}" cy="${AT.bonnie[1] - 2}" rx="40" ry="11" fill="${C.meadowLt}"/>`);
   flowers(s, AT.bonnie[0] - 34, AT.bonnie[1] + 4, 3, 71, 8); flowers(s, AT.bonnie[0] + 34, AT.bonnie[1] + 2, 3, 72, 8);
   // one small glimpse beyond each gate: the maths river and stepping stones; the letter trees of Phonics Forest
-  s.g(`<path d="M0 932 C60 922 120 942 230 930" stroke="${C.waterDk}" stroke-width="22" fill="none" stroke-linecap="round"/><path d="M0 932 C60 922 120 942 230 930" stroke="${C.water}" stroke-width="17" fill="none" stroke-linecap="round"/>`);
+  s.g(`<path d="M${-SIDE - 20} 946 C-200 958 -80 926 0 932 C60 922 120 942 230 930" stroke="${C.waterDk}" stroke-width="22" fill="none" stroke-linecap="round"/><path d="M${-SIDE - 20} 946 C-200 958 -80 926 0 932 C60 922 120 942 230 930" stroke="${C.water}" stroke-width="17" fill="none" stroke-linecap="round"/>`);
   [[142, 926, 10], [172, 942, 20], [202, 926, 30]].forEach(([a, b, n]) => s.add(b, `<ellipse cx="${a}" cy="${b + 3}" rx="14" ry="7" fill="${C.stoneDk}"/><ellipse cx="${a}" cy="${b}" rx="14" ry="7" fill="${C.stoneLt}"/><text x="${a}" y="${b + 3.5}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="9" fill="#5E5547">${n}</text>`));
   [[404, 966, 'pine', 'a'], [532, 944, 'round', 'sh']].forEach(([tx, ty, kind, t], i) => {
     tree(s, tx, ty, .75, kind, 40 + i);
@@ -156,13 +162,22 @@ function scene(theme) {
   [[40, 300], [90, 270], [600, 290], [560, 262], [26, 450], [614, 440], [36, 640], [606, 650], [28, 820], [614, 830], [210, 286], [430, 276]]
     .forEach(([tx, ty], i) => tree(s, tx, ty, .85 + r() * .35, i % 4 === 0 ? 'pine' : (i % 5 === 2 ? 'blossom' : 'round'), 60 + i));
   bush(s, 320, 770, .8, undefined, C.berry);
+  // the woods beyond, either side (none on the brook)
+  const rs = rng(31), kinds = ['round', 'pine', 'round', 'blossom', 'pine'];
+  for (let y = 290; y < 1060; y += 92) [-1, 1].forEach(side => {
+    for (let x = 60 + rs() * 50; x < SIDE + 40; x += 100 + rs() * 40) {
+      const ty = y + rs() * 40; if (side < 0 && ty > 890 && ty < 1000) continue;
+      tree(s, side < 0 ? -x : W + x, ty, .8 + rs() * .35, kinds[Math.floor(rs() * kinds.length)], Math.floor(rs() * 1e5));
+    }
+  });
+  scatter(s, 41, 40, [-SIDE, 250, 0, 1000], [[-SIDE, 900, SIDE, 70]]); scatter(s, 42, 40, [W, 250, W + SIDE, 1000]);
   // flowers and grass only up top and round the edges, so the paths and gates stand out
   scatter(s, 9, 46, [0, 250, 640, 560], [[96, 340, 120, 170], [200, 200, 240, 240], [424, 330, 140, 170], [130, 500, 430, 150]]);
   scatter(s, 11, 14, [0, 560, 90, 1000]); scatter(s, 12, 14, [560, 560, 640, 1000]);
   butterfly(s, 255, 330, '#F07CA8'); butterfly(s, 420, 300, '#F7D24A');
-  return s.render() + tint(theme, W, H); // dark and seasonal themes wash over the meadow (not the places, Bonnie or the signs)
+  return s.render() + tint(theme, W + 2 * SIDE, H, -SIDE); // dark and seasonal themes wash over the meadow (not the places, Bonnie or the signs)
 }
 
 const cache = {};
-window.ProtoHubArt = { W, H, SIGN, GATE_SIGN, AT, GAMES, places, scene: theme => cache[theme] || (cache[theme] = scene(theme)) };
+window.ProtoHubArt = { W, H, SIDE, SIGN, GATE_SIGN, AT, GAMES, places, scene: theme => cache[theme] || (cache[theme] = scene(theme)) };
 })();

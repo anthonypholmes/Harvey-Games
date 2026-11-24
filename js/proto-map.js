@@ -38,8 +38,8 @@
     'y2-maths-number-bonds': { fin: true, hit: [966, 527, 234, 177], sign: [1092, 610], bonnie: [1080, 705], bub: [980, 706, 'below'] },
     'y2-maths-number-lines': { fin: true, hit: [586, 761, 394, 113], sign: [682, 770], bonnie: [812, 871], bub: [760, 876, 'below'] },
     'y2-maths-arrays': { fin: true, hit: [982, 994, 228, 259], sign: [1090, 1179], bonnie: [950, 1063], bub: [780, 998, 'above'] },
-    'y2-maths-sharing': { fin: true, hit: [420, 1190, 228, 170], sign: [530, 1291], bonnie: [720, 1264], bub: [655, 1268, 'below'] },
-    'y2-maths-money': { fin: true, hit: [402, 1412, 270, 244], sign: [560, 1566], bonnie: [742, 1548], bub: [722, 1428, 'above'] },
+    'y2-maths-sharing': { fin: true, hit: [360, 1136, 228, 170], sign: [470, 1237], bonnie: [712, 1222], bub: [647, 1226, 'below'] },
+    'y2-maths-money': { fin: true, hit: [402, 1452, 270, 244], sign: [560, 1606], bonnie: [759, 1588], bub: [739, 1468, 'above'] },
     'y2-maths-time': { fin: true, hit: [976, 1560, 226, 332], sign: [1094, 1798], bonnie: [950, 1826], bub: [914, 1762, 'above'] },
     'y2-maths-captains-cove': { fin: true, hit: [560, 1974, 420, 176], sign: [666, 1982], bonnie: [825, 1966], bub: [860, 1982, 'below'] },
   };
@@ -110,7 +110,7 @@
 
   /* ---------- the screen ---------- */
   const CSS = `
-  .pm-on .hud,.pm-on .butterfly,.pm-on .frog,.pm-on .meadow{display:none!important}
+  .pm-on .hud,.pm-on .meadow{display:none!important}
   .pm-on #app{max-width:none;padding:0;min-height:0}
   .pm-on{background:${C.meadow}!important}
   /* the map fills the screen and stays put: it moves inside itself, never the page (nothing below it to scroll to) */
@@ -135,7 +135,7 @@
   .pm-bar>.pm-title{flex:0 1 auto;min-width:0;white-space:normal!important;overflow-wrap:normal;line-height:1.1}
   .pm-title{margin:2px 0 0;padding:6px 16px 8px;border-radius:10px;background:${C.woodLt};box-shadow:0 3px 0 ${C.woodDk};font:700 clamp(17px,5vw,22px) Fredoka,system-ui,sans-serif;color:${C.woodInk};white-space:nowrap;text-align:center}
   /* the map's own viewport: only here do a pinch and a drag move the map (everywhere else in the game is untouched) */
-  .pm-view{position:absolute;inset:0;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  .pm-view{position:absolute;inset:0;overflow:hidden;overflow:clip;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   .pm-stage{position:absolute;left:0;top:0;transform-origin:0 0}
   .cam-moving .pm-stage,.cam-moving .pm-at{will-change:transform}
   .pm-stage,.pm-at{transition:none!important} /* the camera moves these itself, every frame (the game's Reduce Motion rule would otherwise give them a transition) */
@@ -143,7 +143,9 @@
   .pm-at{position:absolute;left:0;top:0;transform-origin:0 0}
   .pm-signs.compact .pm-sign .pg{display:none}
   @media (max-width:400px){.pm-bar{gap:4px;padding-left:6px;padding-right:6px}.pm-tags{gap:4px}.pm-title{font-size:16px;padding:6px 10px 8px}.pm-tag{font-size:17px}}
-  .pm-stage>svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+  .pm-stage>svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block;overflow:visible} /* (trees at the picture's edge are drawn whole, over the land beyond) */
+  .pm-back{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;transition:none!important}
+  .pm-back>svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
   .pm-hit{position:absolute;z-index:3;border:0;margin:0;padding:0;background:transparent;border-radius:28px;cursor:pointer;-webkit-tap-highlight-color:transparent}
   .pm-hit:focus-visible{outline:4px solid ${C.goldDk};outline-offset:-4px}
   .pm-hit.bonnie-hit{border-radius:50%;z-index:5}
@@ -271,6 +273,32 @@
     const c = (Math.min(allL, p.hit[0]) + Math.max(allR, p.hit[0] + p.hit[2])) / 2, lo = allR + pad - half, hi = allL - pad + half;
     return lo <= hi ? clampTo(c, lo, hi) : clampTo((lo + hi) / 2, mustR + pad - half, mustL - pad + half);
   }
+  /* The land beyond the map's picture (ProtoArt.surround), for when the whole map is narrower or shorter than the
+     screen: a plainer layer behind the map, drawn at the most it is ever enlarged, and moved with the map. */
+  let back = null;
+  function makeBack(theme) {
+    back = null;
+    const vp = ui.$('#pmView'), VW = vp.clientWidth, VH = vp.clientHeight, zLow = cam.zMin() * .9; // (a pinch can go a little past the smallest zoom)
+    const cover = Math.max(VW / WORLD_W, VH / WORLD_H);
+    if (zLow >= cover) return; // the picture always fills the screen
+    const step = v => Math.ceil(Math.max(0, v) / 100) * 100 + 100;
+    const X = step((VW / zLow - WORLD_W) / 2), Y = step((VH / zLow - WORLD_H) / 2), bk = Math.min(view.k, cover);
+    const key = R.subject + X + '/' + Y + theme;
+    if (!backArt[key]) backArt[key] = A.surround(R === ROUTES.words ? 'words' : 'maths', X, Y) + A.tint(theme, WORLD_W + 2 * X + 60, WORLD_H + 2 * Y + 60, -X - 30, -Y - 30);
+    const el = document.createElement('div');
+    el.className = 'pm-back'; el.id = 'pmBack'; el.setAttribute('aria-hidden', 'true');
+    el.style.width = ((WORLD_W + 2 * X) * bk).toFixed(1) + 'px'; el.style.height = ((WORLD_H + 2 * Y) * bk).toFixed(1) + 'px';
+    el.innerHTML = `<svg viewBox="${-X} ${-Y} ${WORLD_W + 2 * X} ${WORLD_H + 2 * Y}">${backArt[key]}</svg>`;
+    vp.insertBefore(el, ui.$('#pmStage'));
+    back = { el, X, Y, bk, cover };
+  }
+  function placeBack(c) {
+    if (!back) return;
+    const seen = c.zoom < back.cover * .999;
+    back.el.style.visibility = seen ? 'visible' : 'hidden';
+    if (seen) back.el.style.transform = `translate3d(${(c.x - back.X * c.zoom).toFixed(2)}px,${(c.y - back.Y * c.zoom).toFixed(2)}px,0) scale(${(c.zoom / back.bk).toFixed(5)})`;
+  }
+  const backArt = {};
   function bonnieView(animate) { if (at) { const [, y] = mid(at); cam.centreOn(R.wide ? wideX(at) : view.vx0 + view.vw / 2, y, view.k, animate); } }
 
   function draw() {
@@ -307,7 +335,7 @@
       </div>
       <div class="pm-view" id="pmView" role="group" aria-label="The meadow map. Pinch or use the zoom buttons to zoom; drag to look around.">
         <div class="pm-stage" id="pmStage" style="width:${(WORLD_W * view.k).toFixed(1)}px;height:${(WORLD_H * view.k).toFixed(1)}px">
-          <svg viewBox="${vb}" aria-hidden="true">${scene}${A.tint(theme, WORLD_W, WORLD_H)}${ws.map(haloSVG).join('')}</svg>
+          <svg viewBox="${vb}" aria-hidden="true">${scene}${A.tint(theme, WORLD_W + 400, WORLD_H + 400, -200, -200)}${ws.map(haloSVG).join('')}</svg>
           <svg viewBox="${vb}" aria-hidden="true" id="pmLive">
             ${at ? `<g id="pmBonnie" style="transform:translate(${bfx}px,${bfy}px)"><g>${A.bonnie(0, 0, .58)}</g></g><g id="pmBubble" class="pm-bub">${bubbleSVG(at, bonnieLine)}</g>` : ''}
           </svg>
@@ -334,14 +362,22 @@
     cam = window.MapCamera.create({
       viewport: ui.$('#pmView'), world: ui.$('#pmStage'), size: { w: WORLD_W, h: WORLD_H }, base: view.k, fit: R.fit,
       maxZoom: view.k * 2.4, floor: Math.min(view.k, innerWidth / WORLD_W) * .3, reduce, insets,
-      onChange: placeSigns,
+      onChange: c => { placeSigns(c); placeBack(c); },
       onSettle: c => { camMem[camKey()] = c.state(); },
       // a finger moving the map lets go of any place it pressed
       onGesture: () => { ui.$$('.pm-sign.pressed').forEach(s => s.classList.remove('pressed')); ui.$$('.pm-hit[data-w]:not(.chosen)').forEach(b => lightUp(b.dataset.w, false)); },
       isTarget: el => !!(el && el.closest && el.closest('[data-w], button, a')),
     });
+    // the camera moves the map, never the browser: focusing a place (VoiceOver, a keyboard) would otherwise scroll the
+    // frame to it (the land beyond the picture makes it bigger than the screen), and the map would then be off by that much
+    ui.$('#pmView').addEventListener('scroll', e => { const v = e.currentTarget; if (v.scrollTop || v.scrollLeft) { v.scrollTop = 0; v.scrollLeft = 0; } });
     const mem = camMem[camKey()];
     if (mem) cam.restore(mem); else bonnieView(false);
+    // the land beyond the picture: built straight away if the map opens zoomed out past the picture's edges, otherwise
+    // just after the map is on the screen (it's only seen zoomed right out, and building it first slowed opening the map)
+    const vpEl = ui.$('#pmView'), cover = Math.max(vpEl.clientWidth / WORLD_W, vpEl.clientHeight / WORLD_H), cam0 = cam;
+    if (cam.zoom < cover * .999) { makeBack(theme); placeBack(cam); }
+    else setTimeout(() => { if (cam === cam0 && on) { makeBack(theme); placeBack(cam); } }, 150);
     // the Bonnie button sits at her feet and moves with her: it's placed first among the places for VoiceOver
     const bb = document.getElementById('pmBonnieBtn'); if (bb) bb.parentNode.insertBefore(bb, bb.parentNode.querySelector('.pm-hit:not(.bonnie-hit)'));
     ui.$$('.pm-hit[data-w], .pm-sign[data-w]').forEach(b => {

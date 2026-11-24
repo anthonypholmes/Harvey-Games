@@ -34,14 +34,14 @@
   const LOOK = {
     'y2-maths-partitioning': { head: s => P.park(s, 320, 150), ground: 'path', trees: 'round' },
     'y2-maths-number-bonds': { head: s => P.burrow(s, 320, 140), ground: 'path', trees: 'round' },
-    'y2-maths-number-lines': { head: s => { A.river(s, 'M-20 178 C140 150 260 196 380 170 S560 150 680 176', 34); P.riverStones(s, 320, 170); }, ground: 'river', trees: 'round' },
+    'y2-maths-number-lines': { head: s => { A.river(s, 'M-470 196 C-300 204 -130 170 -20 178 C140 150 260 196 380 170 S560 150 680 176 S900 196 1090 184', 34); P.riverStones(s, 320, 170); }, ground: 'river', trees: 'round', water: [[-1, 120, 230], [1, 120, 230]] },
     'y2-maths-arrays': { head: s => P.orchard(s, 320, 112), ground: 'path', trees: 'apple' },
     'y2-maths-sharing': { head: s => P.pond(s, 320, 132), ground: 'river', trees: 'round' },
-    'y2-maths-money': { head: s => P.market(s, 330, 166), ground: 'path', trees: 'round' },
+    'y2-maths-money': { head: s => P.market(s, 330, 166), ground: 'path', trees: 'round', water: [[-1, -100, 260]] },
     'y2-maths-time': { head: s => { const t = new A.Scene(W, HEAD_H); P.clockTower(t, 0, 0); s.add(140, `<g transform="translate(320 140) scale(.6)">${t.render()}</g>`); }, ground: 'path', trees: 'round' }, // the tower, smaller, so it fits above its sign
     'y2-maths-captains-cove': { head: s => P.cove(s, 320, 122), ground: 'sea', trees: null },
     'y2-english-phonics': { head: s => P.forest(s, 320, 150), ground: 'path', trees: 'pine' },
-    'y2-english-tricky-words': { head: s => { A.river(s, 'M-20 150 C120 168 200 178 250 174 S520 150 680 162', 24); P.trickyTrail(s, 330, 112); }, ground: 'path', trees: 'round' },
+    'y2-english-tricky-words': { head: s => { A.river(s, 'M-470 140 C-300 128 -130 144 -20 150 C120 168 200 178 250 174 S520 150 680 162 S900 176 1090 158', 24); P.trickyTrail(s, 330, 112); }, ground: 'path', trees: 'round', water: [[-1, 100, 200], [1, 100, 200]] },
     'y2-english-sentences': { head: s => P.sentenceMeadow(s, 320, 160), ground: 'path', trees: 'round' },
     'y2-english-stories': { head: s => P.storyNook(s, 320, 228), ground: 'path', trees: 'blossom' },
   };
@@ -49,35 +49,58 @@
   const stonePos = i => [i % 2 ? 410 : 230, TOP + i * ROW];
   const bonnieX = i => stonePos(i)[0] + (i % 2 ? 68 : -72); // beside her stone, on the side away from its tag
   const stageH = n => TOP + (n - 1) * ROW + 120;
+  /* (24 November 2026) The scenery runs to the screen's edges: BLEED drawing units of meadow and woods either side of
+     the 640-wide drawing (seen on a wide iPad, where the trail stays in the middle at its usual size), and the stage
+     carries on to the bottom of the screen (and under the home bar), the trail running off the bottom edge as it runs
+     in at the top. Before, a wide screen showed the page's own colour either side and a short world showed it below
+     the last stone: a blue band with the 8-Bit theme, whose sky is the page's colour. */
+  const BLEED = 420;
 
   let on = false, busy = false, wid = null, view = null, cur = -1, back = null;
   const scenes = {}; // drawn once per world
 
   /* ---------- the drawings ---------- */
-  function headScene(id) {
+  // the woods either side of the drawing, out to the edge of the widest screen (never in the drawing itself)
+  // (water: [side, top, bottom] stretches of the head where a river or the harbour runs out to the edge: no trees on it)
+  function sideWoods(s, L, y0, y1, seed, water = []) {
+    const r = A.rng(seed), kinds = L.trees === 'apple' ? ['apple', 'round'] : L.trees === 'blossom' ? ['blossom', 'round'] : L.trees === 'pine' ? ['pine', 'pine', 'round'] : ['round', 'pine', 'round'];
+    for (let y = y0; y < y1; y += 95) [-1, 1].forEach(side => {
+      for (let x = 40 + r() * 40; x < BLEED; x += 95 + r() * 40) {
+        const tx = side < 0 ? -x : W + x, ty = y + r() * 50;
+        if (water.some(([sd, a, b]) => sd === side && ty > a - 10 && ty < b + 80)) continue;
+        A.tree(s, tx, ty, .8 + r() * .35, kinds[Math.floor(r() * kinds.length)], Math.floor(r() * 1e5));
+      }
+    });
+    // a light scatter (the trees carry the edges; the 2018 iPad budget is under 6,000 SVG elements per level map)
+    A.scatter(s, seed + 1, Math.round((y1 - y0) / 30), [-BLEED, y0, 0, y1]); A.scatter(s, seed + 2, Math.round((y1 - y0) / 30), [W, y0, W + BLEED, y1]);
+  }
+  function headScene(id, wide) {
     const s = new A.Scene(W, HEAD_H), L = look(id);
+    s.bleed = BLEED;
     A.meadowFloor(s, 31);
     if (L.ground !== 'sea') A.path(s, `M320 ${HEAD_H - 40} C320 ${HEAD_H - 20} 300 ${HEAD_H} 300 ${HEAD_H + 20}`, 30);
     L.head(s);
     [[40, 120], [600, 110], [80, 250], [570, 250]].forEach(([x, y], i) => { if (L.trees) A.tree(s, x, y, .9, L.trees === 'apple' ? 'apple' : L.trees, 300 + i); });
+    if (wide && L.ground !== 'sea') sideWoods(s, L, 30, HEAD_H + 30, id.length * 41, L.water);
     return s.render();
   }
-  function trailD(n) {
+  function trailD(n, H = stageH(n)) {
     let d = `M300 -20 C300 ${TOP / 2} ${stonePos(0)[0]} ${TOP / 2} ${stonePos(0)[0]} ${TOP}`;
     for (let i = 1; i < n; i++) { const [x0, y0] = stonePos(i - 1), [x1, y1] = stonePos(i); d += ` C${x0} ${y0 + ROW / 2} ${x1} ${y1 - ROW / 2} ${x1} ${y1}`; }
-    const [xl, yl] = stonePos(n - 1); return d + ` C${xl} ${yl + 60} 320 ${yl + 80} 320 ${yl + 140}`;
+    const [xl, yl] = stonePos(n - 1); return d + ` C${xl} ${yl + 60} 320 ${yl + 80} 320 ${yl + 140}` + (H + 30 > yl + 140 ? ` L320 ${H + 30}` : '');
   }
-  function stageScene(id, n) {
-    const H = stageH(n), s = new A.Scene(W, H), L = look(id), r = A.rng(id.length * 97);
+  function stageScene(id, n, H, wide) {
+    const s = new A.Scene(W, H), L = look(id), r = A.rng(id.length * 97);
+    s.bleed = BLEED;
     if (L.ground === 'sea') {
-      s.g(`<rect width="${W}" height="${H}" fill="#4E9FC9"/>`);
-      for (let i = 0; i < 18; i++) s.g(`<path d="M${(r() * W).toFixed(0)} ${(r() * H).toFixed(0)} q14 -6 28 0" stroke="#BFE3F5" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>`);
-      [[36, 0.2], [610, 0.45], [30, 0.75], [612, 0.95]].forEach(([x, f]) => { const y = H * f; s.g(`<ellipse cx="${x}" cy="${y}" rx="50" ry="24" fill="${C.sandDk}"/><ellipse cx="${x}" cy="${y - 3}" rx="45" ry="21" fill="${C.sand}"/>`); });
+      s.g(`<rect x="${-BLEED}" width="${W + 2 * BLEED}" height="${H}" fill="#4E9FC9"/>`);
+      for (let i = 0; i < 18 + Math.round(H / 60); i++) s.g(`<path d="M${(-BLEED + r() * (W + 2 * BLEED)).toFixed(0)} ${(r() * H).toFixed(0)} q14 -6 28 0" stroke="#BFE3F5" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>`);
+      [[36, 0.2], [610, 0.45], [30, 0.75], [612, 0.95], [-220, .1], [-300, .55], [-160, .85], [860, .3], [940, .7], [800, .92]].forEach(([x, f]) => { const y = H * f; s.g(`<ellipse cx="${x}" cy="${y}" rx="50" ry="24" fill="${C.sandDk}"/><ellipse cx="${x}" cy="${y - 3}" rx="45" ry="21" fill="${C.sand}"/>`); });
       // the boat route from rock to rock, so the order is clear without a path
-      s.g(`<path d="${trailD(n)}" fill="none" stroke="#E6F5FC" stroke-width="5" stroke-dasharray="1 15" stroke-linecap="round" opacity=".95"/>`);
+      s.g(`<path d="${trailD(n, H)}" fill="none" stroke="#E6F5FC" stroke-width="5" stroke-dasharray="1 15" stroke-linecap="round" opacity=".95"/>`);
     } else {
       A.meadowFloor(s, id.length * 13);
-      if (L.ground === 'river') A.river(s, trailD(n), 46); else A.path(s, trailD(n), 30);
+      if (L.ground === 'river') A.river(s, trailD(n, H), 46); else A.path(s, trailD(n, H), 30);
       // border trees down both sides (seen whole on an iPad, their edges on a phone)
       for (let y = 40; y < H; y += 130) {
         [[r() * 70 + 20, 0], [W - r() * 70 - 20, 1]].forEach(([x], j) => {
@@ -86,12 +109,16 @@
           if (L.trees === 'pine' && kind === 'pine') s.add(y + 41, `<g>${A.letterBadge(x, y + r() * 4 - 4, ['a', 'e', 'i', 'o', 'u', 'sh', 'th'][Math.floor(r() * 7)])}</g>`);
         });
       }
+      if (wide) sideWoods(s, L, 20, H + 40, id.length * 53); // only where the screen is wider than the drawing (a landscape iPad)
       A.scatter(s, id.length * 7, Math.round(H / 14), [0, 0, W, H], Array.from({ length: n }, (_, i) => { const [x, y] = stonePos(i); return [x - 70, y - 40, 140, 80]; }));
     }
-    // scenery stays quieter than the trail: a soft wash over the sides
-    const edge = L.ground === 'sea' ? '#4E9FC9' : C.meadow;
-    s.g(`<defs><linearGradient id="plEdge${id.length}" x1="0" x2="1"><stop offset="0" stop-color="${edge}" stop-opacity=".45"/><stop offset=".26" stop-color="${edge}" stop-opacity="0"/><stop offset=".74" stop-color="${edge}" stop-opacity="0"/><stop offset="1" stop-color="${edge}" stop-opacity=".45"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#plEdge${id.length})" pointer-events="none"/>`);
     return s.render();
+  }
+  // scenery stays quieter than the trail: a soft wash over the sides of the drawing, when they are the screen's edges
+  // (on a wide screen the woods beyond the drawing are the edge, and a wash there would show as a stripe)
+  function edgeWash(id, H) {
+    const edge = look(id).ground === 'sea' ? '#4E9FC9' : C.meadow;
+    return `<defs><linearGradient id="plEdge${id.length}" x1="0" x2="1"><stop offset="0" stop-color="${edge}" stop-opacity=".45"/><stop offset=".26" stop-color="${edge}" stop-opacity="0"/><stop offset=".74" stop-color="${edge}" stop-opacity="0"/><stop offset="1" stop-color="${edge}" stop-opacity=".45"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#plEdge${id.length})" pointer-events="none"/>`;
   }
   // the trail behind you: paw prints (dots in water) between levels already played
   function trodden(rows, ground) {
@@ -152,9 +179,9 @@
     lock: gold => `<svg viewBox="-8 -9 16 18" aria-hidden="true"><path d="M-4.5 0 v-4 a4.5 4.5 0 0 1 9 0 v4" stroke="${gold ? C.goldDk : '#6B655A'}" stroke-width="2.2" fill="none"/><rect x="-6.5" y="-.5" width="13" height="10" rx="2" fill="${gold ? C.gold : '#8B8478'}"/></svg>`,
   };
   const CSS = `
-  .pl-on #screen>.card.map,.pl-on .hud,.pl-on .butterfly,.pl-on .frog,.pl-on .meadow{display:none!important}
-  .pl-on #app{max-width:none;padding:0;min-height:0}
-  .pl-on{background:${C.meadow}!important}
+  .pl-on #screen>.card.map,.pl-on .hud,.pl-on .meadow{display:none!important}
+  .pl-on #app,html.in-app body.pl-on #app{max-width:none;padding:0;min-height:0}
+  html body.pl-on{background:${C.meadow}!important} /* (beats a theme's own page colour, e.g. the 8-Bit sky) */
   .pl{position:relative;margin:0 auto}
   .pl-head{position:relative;overflow:hidden}
   .pl-head>svg,.pl-stage>svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
@@ -195,21 +222,31 @@
   #plBonnie .tail{transform-box:fill-box;transform-origin:0% 100%;animation:wag 1.4s ease-in-out infinite}
   @keyframes plHop{50%{transform:translateY(-16px)}}
   @media (prefers-reduced-motion:reduce){#plBonnie,.pl-tag,.pl-halo{transition:none}#plBonnie>g,#plBonnie .eyes,#plBonnie .tail,.pl-ring,.pl-tag.bad{animation:none!important}.pl-tag.pressed{transform:translateY(-50%)}}
-  .pl-end{height:40px}`;
+  .pl-safe{position:absolute;visibility:hidden;padding-bottom:env(safe-area-inset-bottom)}`;
 
   function layout() {
-    const Wd = Math.min(document.documentElement.clientWidth || innerWidth, 900);
-    view = Wd < 600 ? { x0: PHONE_X, w: PHONE_W } : { x0: 0, w: W };
-    view.W = Wd; view.k = Wd / view.w;
+    // a phone: the middle of the drawing fills the width; bigger: the whole drawing, at most 900px wide, with the
+    // woods either side (BLEED) filling the rest of a wide screen
+    const Wd = document.documentElement.clientWidth || innerWidth;
+    if (Wd < 600) view = { x0: PHONE_X, w: PHONE_W, k: Wd / PHONE_W };
+    else { const k = Math.min(Wd, 900) / W, w = Math.min(Wd / k, W + 2 * BLEED); view = { x0: (W - w) / 2, w, k }; }
+    view.W = Wd;
   }
   const px = (x, y) => [(x - view.x0) * view.k, y * view.k];
+  // the height of the home bar at the bottom of the screen (0 without one)
+  function safeBottom() { const d = document.createElement('div'); d.className = 'pl-safe'; document.body.appendChild(d); const v = parseFloat(getComputedStyle(d).paddingBottom) || 0; d.remove(); return v; }
 
   function draw() {
     const w = M.world(wid); if (!w) return;
     on = true; busy = false; layout();
     document.body.classList.add('pl-on');
-    const rows = readEngine(w), n = rows.length, H = stageH(n), theme = document.body.dataset.theme || 'day';
-    if (!scenes[w.id]) scenes[w.id] = { head: headScene(w.id), stage: stageScene(w.id, n) };
+    const rows = readEngine(w), n = rows.length, theme = document.body.dataset.theme || 'day';
+    // the stage: the stones, then room below the last one (and the home bar); made taller below if the screen is
+    let H = Math.ceil(stageH(n) + (40 + safeBottom()) / view.k);
+    // the woods either side are drawn only when the screen shows past the drawing's edges (keeps phones and an upright iPad quick)
+    const wide = view.x0 < -1, sk = w.id + (wide ? ':wide' : '');
+    if (!scenes[sk]) scenes[sk] = { head: headScene(w.id, wide), stage: {} };
+    const stageArt = h => scenes[sk].stage[h] || (scenes[sk].stage[h] = stageScene(w.id, n, h, wide));
     cur = current(w, rows);
     const vb = h => `${view.x0} 0 ${view.w} ${h}`, earned = rows.reduce((t, r) => t + r.stars, 0), max = n * 3;
     const chip = r => r.st === 'paid' ? `${icons.lock(true)}Full game` : r.st === 'locked' ? `${icons.lock(false)}Locked` : r.played ? [1, 2, 3].map(j => icons.star(r.stars >= j)).join('') : `${icons.flag}New!`;
@@ -242,18 +279,22 @@
         <button class="pm-tag" id="plBones" aria-label="${bones} bones. Open the Bone Shop"><svg viewBox="-22 -14 44 28" aria-hidden="true">${A.bone(0, 0, 1)}</svg><span>${bones}</span></button>
       </div>
       <div class="pl-head" style="height:${(HEAD_H * view.k).toFixed(0)}px">
-        <svg viewBox="${vb(HEAD_H)}" preserveAspectRatio="xMidYMin meet" aria-hidden="true">${scenes[w.id].head}${A.tint(theme, W, HEAD_H)}</svg>
+        <svg viewBox="${vb(HEAD_H)}" preserveAspectRatio="xMidYMin meet" aria-hidden="true">${scenes[sk].head}${A.tint(theme, W + 2 * BLEED, HEAD_H, -BLEED)}</svg>
         <div class="pl-name"><h2>${ui.esc(w.name)}</h2><span class="pl-chip">${icons.star(true)}${earned} / ${max}</span></div>
       </div>
       ${intro}
       <div class="pl-stage" style="height:${(H * view.k).toFixed(0)}px">
-        <svg viewBox="${vb(H)}" preserveAspectRatio="xMidYMin meet" aria-hidden="true">${scenes[w.id].stage}${A.tint(theme, W, H)}${trodden(rows, look(w.id).ground)}${halos}${stones}
+        <svg viewBox="${vb(H)}" preserveAspectRatio="xMidYMin meet" aria-hidden="true"><g class="pl-art">${stageArt(H)}${view.x0 >= -1 ? edgeWash(w.id, H) : ''}${A.tint(theme, W + 2 * BLEED, H, -BLEED)}</g>${trodden(rows, look(w.id).ground)}${halos}${stones}
           ${cur >= 0 ? `<g id="plBonnie" style="transform:translate(${bonnieX(from)}px,${stonePos(from)[1] + 18}px)"><g>${A.bonnie(0, 0, .5)}</g></g>` : ''}</svg>
         <h3 class="sr">Levels. Tap a stone to play.</h3>
         ${tags}${hits}
-      </div><div class="pl-end"></div>`;
+      </div>`;
     const old = ui.$('#screen .pl'); if (old) old.remove();
     ui.$('#screen').appendChild(el);
+    { // a short world on a tall screen: the stage reaches the bottom of the screen
+      const st = el.querySelector('.pl-stage'), top = st.getBoundingClientRect().top + scrollY, need = Math.ceil((innerHeight - top) / view.k);
+      if (need > H) { H = need; st.style.height = (H * view.k).toFixed(0) + 'px'; const svg = st.querySelector('svg'); svg.setAttribute('viewBox', vb(H)); st.querySelector('.pl-art').innerHTML = stageArt(H) + (view.x0 >= -1 ? edgeWash(w.id, H) : '') + A.tint(theme, W + 2 * BLEED, H, -BLEED); }
+    }
     // keep every tag on the screen
     ui.$$('.pl-tag').forEach(t => { const r = t.getBoundingClientRect(); if (r.right > view.W - 6) t.style.maxWidth = Math.max(120, r.width - (r.right - view.W + 6)) + 'px'; if (r.left < 6) t.style.maxWidth = Math.max(120, r.width - (6 - r.left)) + 'px'; });
     ui.$$('.pl-hit').forEach(b => {

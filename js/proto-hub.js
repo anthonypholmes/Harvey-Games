@@ -80,13 +80,13 @@
 
   /* ---------- the screen ---------- */
   const CSS = `
-  body.ph-on .wrap>:not(.ph):not(#nameCard):not(#playerCard):not(#a2hs),body.ph-on .meadow,body.ph-on .butterfly,body.ph-on .frog{display:none!important}
+  body.ph-on .wrap>:not(.ph):not(#nameCard):not(#playerCard):not(#a2hs),body.ph-on .meadow{display:none!important}
   body.ph-on .wrap{max-width:none;padding:0;position:static}
   body.ph-on{overflow:hidden}
   body.ph-on #a2hs{position:fixed;z-index:8;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));margin:0 auto}
   body.ph-asking .ph{display:none}
   body.ph-asking .wrap{padding:16px}
-  .ph{position:fixed;inset:0;overflow:hidden;background:${C.meadow}}
+  .ph{position:fixed;inset:0;z-index:2;overflow:hidden;background:${C.meadow}} /* above the old page and its theme layer */
   .ph-stage{position:absolute;left:50%;top:0;transform:translateX(-50%)}
   .ph-stage>svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block;overflow:visible}
 
@@ -167,9 +167,10 @@
   function layout() {
     const W = document.documentElement.clientWidth || innerWidth, H = innerHeight, bar = 62;
     const k = Math.min(W / NEED[2], (H - bar) / NEED[3], 1.35);
-    const vw = Math.min(W / k, ART.W), vh = Math.min(H / k, ART.H);
+    // a wide screen sees the meadow either side of the drawing (ART.SIDE), so the whole screen is scenery
+    const vw = Math.min(W / k, ART.W + 2 * ART.SIDE), vh = Math.min(H / k, ART.H);
     let x0 = NEED[0] + NEED[2] / 2 - vw / 2, y0 = NEED[1] - bar / k - (vh - NEED[3] - bar / k) / 2;
-    x0 = Math.max(0, Math.min(x0, ART.W - vw)); y0 = Math.max(0, Math.min(y0, ART.H - vh));
+    x0 = Math.max(-ART.SIDE, Math.min(x0, ART.W + ART.SIDE - vw)); y0 = Math.max(0, Math.min(y0, ART.H - vh));
     view = { x0, y0, vw, vh, k, W: vw * k, H: vh * k, top: Math.max(0, (H - vh * k) / 2) };
   }
   const px = (x, y) => [(x - view.x0) * view.k, (y - view.y0) * view.k];

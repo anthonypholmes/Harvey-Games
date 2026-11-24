@@ -57,6 +57,7 @@ const CSS = `
 .wchip.dragging{opacity:.3}
 .aa{position:absolute;top:-14px;right:-10px;width:30px;height:30px;border-radius:50%;background:var(--gold);font-size:.8rem;font-weight:700;font-family:var(--font-ui);display:grid;place-items:center;box-shadow:0 2px 0 #C99A2E;color:var(--ink)}
 .p-slot{width:62px;height:72px;border-radius:50%;border:3px dashed var(--accent);display:grid;place-items:center;font-size:2.6rem;font-weight:700;font-family:var(--font-read);background:#FFF5EC}
+.p-end{align-self:flex-end;margin-left:-6px;padding-bottom:6px;font-size:2.2rem;line-height:1;font-weight:700;font-family:var(--font-read);color:var(--ink,#3A2A1E);pointer-events:none}
 .p-slot.filled{border-style:solid;background:#FFE6D2}
 .p-slot.drop-hover{transform:scale(1.15);background:#FFF2C9}
 .badges{display:flex;gap:14px;justify-content:center;margin-top:10px}
@@ -120,7 +121,10 @@ function playSentence(raw, ctx) {
       // With an Aa button inside (Super Sentences) the word is a group, so VoiceOver can still reach the Aa button.
       const said = show1(t.w, t.capped) + (mode === 'caps' ? (t.capped ? ', capital letter' : ', small letter') : '');
       return `<span class="wchip placed ${t.capped ? 'capped' : ''} ${id === snapId ? 'snap' : ''}" data-id="${id}" ${mode === 'all' ? 'role="group"' : 'role="button" tabindex="0"'} aria-label="${esc(said)}"><span class="first">${esc(show1(t.w, t.capped)[0])}</span>${esc(t.w.slice(1))}${mode === 'all' ? `<button class="aa" aria-label="Capital letter for ${esc(t.w)}">Aa</button>` : ''}</span>`; }).join('')
-      + `<span class="p-slot ${st.punct ? 'filled' : ''}" id="pslot">${st.punct || ''}</span>`;
+      // Capital Letters: the end mark is already there and isn't his job, so it's plain text after the last word,
+      // not a circle that looks like something to tap. In the other modes it's the drop slot for the mark he chooses.
+      + (mode === 'caps' ? `<span class="p-end" id="pslot">${esc(st.punct || '')}</span>`
+        : `<span class="p-slot ${st.punct ? 'filled' : ''}" id="pslot">${st.punct || ''}</span>`);
     const bank = $('#sbank');
     if (bank) bank.innerHTML = bankOrder.filter(id => !st.line.includes(id)).map(id => `<span class="wchip" data-id="${id}">${esc(show1(tokens[id].w, tokens[id].capped))}</span>`).join('');
     // interactions

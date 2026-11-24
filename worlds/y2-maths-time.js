@@ -31,6 +31,19 @@ function readQ({ t, kind, wrong, clue, steps, count }) {
     steps: q => [...steps(q), { say: 'So the time is…', choices: labels, answer: labels[ans], final: true, words: true }] });
 }
 
+/* ---------- the help for reading a clock (Levels 1 and 2) ----------
+   Three rungs, each about the clock on the screen now:
+     the clue: RECOGNISE. Bonnie points at the long hand and says what it tells us. It never says where it points.
+     the step card: INTERPRET where the long hand is ("at the 6 means half past"), then APPLY it: find the short
+       hand (Bonnie points at it) and read the hour, then choose the time.
+   A hand is pointed at with point: 'clk-min' or 'clk-hour' (an outline, the other hand faded, its key line boxed). */
+const LONG_CLUE = { say: 'Find the long hand first. The long hand tells us the minutes.', point: 'clk-min' };
+const longSteps = (num, means, others) => [
+  { say: 'Where is the long hand pointing?', point: 'clk-min', choices: handChoices(num), answer: at(num), words: true },
+  { say: `The long hand is at the ${num}. What does that mean?`, point: 'clk-min', choices: shuffle([means, ...others]), answer: means, words: true },
+];
+const shortStep = (h, words) => ({ say: `Now the short hand. It tells us the hour. ${words}`, point: 'clk-hour', choices: hourChoices(h), answer: h });
+
 /* ---------- Level 1: O'Clock and Half Past ---------- */
 const L1 = { name: 'O’Clock and Half Past', blurb: 'The long hand at 12 or at 6', eg: '4 o’clock · half past 7',
   seq: ['oclock', 'half', 'oclock', 'half', 'oclock', 'half', 'half', 'oclock', 'half'],
@@ -39,19 +52,13 @@ const L1 = { name: 'O’Clock and Half Past', blurb: 'The long hand at 12 or at 
     if (type === 'half' && !easy) {
       const t = h * 60 + 30;
       return readQ({ t, kind: 'half', wrong: [`${h} o’clock`, `half past ${h - 1 || 12}`, `${nextHour(h)} o’clock`, `half past ${nextHour(h)}`],
-        clue: { say: 'The long hand points down to 6. That’s half past!', point: 'visual' },
-        steps: () => [
-          { say: 'Where is the long hand?', point: 'visual', choices: handChoices(6), answer: at(6), words: true },
-          { say: 'The short hand has just gone past which number?', choices: hourChoices(h), answer: h },
-        ] });
+        clue: LONG_CLUE,
+        steps: () => [...longSteps(6, 'half past', ['o’clock']), shortStep(h, 'It has just gone past which number?')] });
     }
     const t = h * 60;
     return readQ({ t, kind: 'oclock', wrong: [`half past ${h}`, `half past ${h - 1 || 12}`, h === 12 ? `6 o’clock` : `12 o’clock`, `${nextHour(h)} o’clock`],
-      clue: { say: 'The long hand points straight up to 12. That means o’clock!', point: 'visual' },
-      steps: () => [
-        { say: 'Where is the long hand?', point: 'visual', choices: handChoices(12), answer: at(12), words: true },
-        { say: 'Where is the short hand?', choices: hourChoices(h), answer: h },
-      ] });
+      clue: LONG_CLUE,
+      steps: () => [...longSteps(12, 'o’clock', ['half past']), shortStep(h, 'Which number is it pointing to?')] });
   } };
 
 /* ---------- Level 2: Quarter Past and To ---------- */
@@ -62,19 +69,13 @@ const L2 = { name: 'Quarter Past and To', blurb: 'The long hand at 3 or at 9', e
     if (type === 'to' && !easy) {
       const t = h * 60 + 45;
       return readQ({ t, kind: 'to', wrong: [`quarter past ${h}`, `quarter to ${h}`, `quarter past ${n}`, `half past ${h}`],
-        clue: { say: 'The long hand is at the 9. There’s a quarter of an hour to go until the next o’clock.', point: 'visual' },
-        steps: () => [
-          { say: 'Where is the long hand?', point: 'visual', choices: handChoices(9), answer: at(9), words: true },
-          { say: 'Which hour is the short hand nearly at?', choices: hourChoices(n), answer: n },
-        ] });
+        clue: LONG_CLUE,
+        steps: () => [...longSteps(9, 'quarter to', ['quarter past', 'half past']), shortStep(n, 'Which number is it nearly at?')] });
     }
     const t = h * 60 + 15;
     return readQ({ t, kind: 'past', wrong: [`quarter to ${h}`, `half past ${h}`, `quarter past ${n}`, `quarter to ${n}`],
-      clue: { say: 'The long hand is at the 3. A quarter of the way round.', point: 'visual' },
-      steps: () => [
-        { say: 'Where is the long hand?', point: 'visual', choices: handChoices(3), answer: at(3), words: true },
-        { say: 'The short hand has just gone past which number?', choices: hourChoices(h), answer: h },
-      ] });
+      clue: LONG_CLUE,
+      steps: () => [...longSteps(3, 'quarter past', ['quarter to', 'half past']), shortStep(h, 'It has just gone past which number?')] });
   } };
 
 /* ---------- Level 3: Five-Minute Steps ---------- */
@@ -90,7 +91,7 @@ const L3 = { name: 'Five-Minute Steps', blurb: 'Count round the clock in 5s', eg
         steps: q => [
           countAct(q),
           { say: 'So how many minutes to?', choices: pick3(to, [to + 5, to - 5, m, to / 5].filter(x => x > 0)), answer: to },
-          { say: 'Which hour is the short hand nearly at?', choices: hourChoices(n), answer: n },
+          { say: 'Which hour is the short hand nearly at?', point: 'clk-hour', choices: hourChoices(n), answer: n },
         ] });
     }
     const m = pick([5, 10, 20, 25]), t = h * 60 + m;
@@ -99,7 +100,7 @@ const L3 = { name: 'Five-Minute Steps', blurb: 'Count round the clock in 5s', eg
       steps: q => [
         countAct(q),
         { say: 'So how many minutes past?', choices: pick3(m, [m + 5, m - 5, m / 5].filter(x => x > 0)), answer: m },
-        { say: 'The short hand has just gone past which number?', choices: hourChoices(h), answer: h },
+        { say: 'The short hand has just gone past which number?', point: 'clk-hour', choices: hourChoices(h), answer: h },
       ] });
   } };
 
