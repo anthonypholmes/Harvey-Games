@@ -3,6 +3,7 @@
      Google Chrome and saves each as a 2064 x 2752 picture in docs/screenshots/.
      With &size=phone (sh tools/make-screenshots.sh iphone) the page is 440 x 956 instead, saved at 3x as
      1320 x 2868 pictures in docs/screenshots/iphone/ (Apple's 6.9-inch iPhone size), with the game at phone width.
+     &pw=402&ph=874 (sh tools/make-screenshots.sh iphone63) makes it 402 x 874 for the 6.3-inch size (1206 x 2622).
      Each one is the real game page in a frame, with a caption above. The player is a made-up "Sam".
      It must be opened through a web server (the script starts one), not as a file. -->
 <html lang="en-GB">
@@ -74,6 +75,12 @@ function makeSam(w) {
 
 const PHONE = new URLSearchParams(location.search).get('size') === 'phone';
 if (PHONE) document.documentElement.classList.add('phone');
+{ // another iPhone size: the page, and the frame inside it, follow ?pw= and ?ph=
+  const q = new URLSearchParams(location.search), pw = +q.get('pw'), ph = +q.get('ph');
+  if (PHONE && pw && ph) {
+    document.head.insertAdjacentHTML('beforeend', `<style>html.phone, html.phone body { width: ${pw}px; height: ${ph}px; } html.phone #frame { width: ${pw - 28}px; }</style>`);
+  }
+}
 (async () => {
   const n = Math.max(1, Math.min(SHOTS.length, +(new URLSearchParams(location.search).get('shot')) || 1)), shot = SHOTS[n - 1];
   document.getElementById('capH').textContent = shot.h;

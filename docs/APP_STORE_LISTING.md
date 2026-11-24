@@ -161,14 +161,15 @@ PRIVACY: the app collects no data. It has no adverts, no analytics and no accoun
 
 ## Screenshots
 
-Two sets of six pictures, with the same captions in the same order. They are made from the real game pages, with a made-up player called Sam.
+Three sets of six pictures, with the same captions in the same order. They are made from the real game pages, with a made-up player called Sam.
 
 | Box in App Store Connect | Folder | Size | Made by |
 |---|---|---|---|
 | iPhone 6.9-inch Display | `docs/screenshots/iphone/` | 1320 × 2868 | `sh tools/make-screenshots.sh iphone` |
+| iPhone 6.3-inch Display (the 6.1" or 6.3" box) | `docs/screenshots/iphone-6.3/` | 1206 × 2622 | `sh tools/make-screenshots.sh iphone63` |
 | iPad 13-inch Display | `docs/screenshots/` | 2064 × 2752 | `sh tools/make-screenshots.sh` |
 
-The smaller iPhone and iPad sizes are filled in from these automatically.
+If App Store Connect asks for the 6.1" or 6.3" box as well, drag the 6.3-inch set into it. Any other smaller iPhone and iPad sizes are filled in automatically.
 
 | File | Caption on the picture |
 |---|---|

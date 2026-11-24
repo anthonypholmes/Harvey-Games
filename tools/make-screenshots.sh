@@ -3,6 +3,7 @@
 # Needs Google Chrome on the Mac. Run from the project folder:  sh tools/make-screenshots.sh
 # For the in-app purchase's review picture instead:  sh tools/make-screenshots.sh unlock
 # For the iPhone ones (6.9-inch, 1320 x 2868, saved in docs/screenshots/iphone/):  sh tools/make-screenshots.sh iphone
+# For the iPhone 6.3-inch ones (1206 x 2622, saved in docs/screenshots/iphone-6.3/):  sh tools/make-screenshots.sh iphone63
 # They are saved in docs/screenshots/. The App Store refuses see-through pictures, so each is flattened.
 set -e
 cd "$(dirname "$0")/.."
@@ -30,6 +31,12 @@ if [ "$1" = "iphone" ]; then
   SIZE="--force-device-scale-factor=3 --window-size=440,956"
   QUERY="&size=phone"
   OUT="docs/screenshots/iphone"
+  mkdir -p "$OUT"
+fi
+if [ "$1" = "iphone63" ]; then
+  SIZE="--force-device-scale-factor=3 --window-size=402,874"
+  QUERY="&size=phone&pw=402&ph=874"
+  OUT="docs/screenshots/iphone-6.3"
   mkdir -p "$OUT"
 fi
 i=1
