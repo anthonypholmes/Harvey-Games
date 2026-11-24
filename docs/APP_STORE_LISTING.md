@@ -1,42 +1,13 @@
 # Meadow Clubhouse: App Store listing
 
-Everything to paste into App Store Connect, in the order the site asks for it. Written 12 November 2026, and updated 17 November 2026 for 1.1 (iPhone).
+Everything to paste into App Store Connect for the first release, in the order the site asks for it. Last checked 24 November 2026.
 Text in `code` is for pasting exactly. Character limits are Apple's.
-
-## Version 1.1 (iPhone): what to change
-
-1.0 went in for the iPad only. For 1.1, on the new version's page in App Store Connect:
-
-1. **Promotional text, description, notes for the reviewer:** paste the new versions below (they replace the 1.0 text; the changes are listed under each).
-2. **What's New in This Version:** paste the text just below.
-3. **Screenshots:** add the six iPhone pictures to the "iPhone 6.9-inch Display" box (see Screenshots). Keep the iPad ones.
-4. **Version:** 1.1.
-5. **App Privacy:** check it still says Data Not Collected. Reminders are made on the device, so nothing changes.
-6. The name, subtitle, keywords, categories, age rating and in-app purchase stay as they are.
-
-**What's New in This Version (4,000)**
-
-```
-Meadow Clubhouse now plays on iPhone as well as iPad!
-
-• 13 new English levels: commas, apostrophes, the four kinds of sentence, joining words, word endings, suffixes, fact files and reading for evidence
-• Every game reshaped for a phone held upright, with Bonnie's own number keys so the keyboard never gets in the way
-• Bonnie shows new players where to start, how to ask her for help, and where to spend their bones
-• A gentle weekly reminder for grown-ups, made on the device only. Change the day and time, or turn it off, in the Grown-ups area
-• Works better with VoiceOver
-• Easier to change the real-life prizes
-• Send feedback and Rate the app, in the Grown-ups area
-• A new launch screen, dark and tinted app icons, and lots of small fixes
-
-Bought the full game on iPad? It's yours on iPhone too. If it isn't unlocked, tap Restore purchase on the unlock screen.
-```
-
 
 ## Before you start
 
 1. **Apple Developer Program** approved (about £79 a year).
 2. **Small Business Program:** enrol at developer.apple.com/app-store/small-business-program as soon as the developer account is active. Apple then keeps 15% instead of 30%. It only applies from the date you are accepted, so do it before launch.
-3. **Agreements, Tax and Banking** in App Store Connect: accept the Paid Apps agreement and add bank and tax details. In-app purchases can't be tested on a real iPad or sold until this is done.
+3. **Agreements, Tax and Banking** in App Store Connect: accept the Paid Apps agreement and add bank and tax details. In-app purchases can't be tested on a real device or sold until this is done.
 4. **Two web pages live on holmeshouse.co.uk:** `privacy.html` and `support.html`. Both are live (checked 12 November 2026).
 
 ## App information
@@ -46,7 +17,7 @@ Bought the full game on iPad? It's yours on iPhone too. If it isn't unlocked, ta
 | Name (30) | `Meadow Clubhouse` |
 | Subtitle (30) | `Year 2 Maths & English (KS1)` |
 | Bundle ID | `uk.co.holmeshouse.meadow` |
-| SKU | `meadow-clubhouse-ipad` |
+| SKU | `meadow-clubhouse-ipad` (already set, and it can't be changed; it is never shown to customers) |
 | Primary language | English (U.K.) |
 | Primary category | Education |
 | Secondary category | Games, then Educational (optional) |
@@ -60,13 +31,17 @@ If "Meadow Clubhouse" is taken, use `Meadow Clubhouse: KS1 Learning`.
 
 ## Version information
 
-**Promotional text (170).** This can be changed at any time without a new review. *1.1: "Now on iPhone too!" added at the start.*
+**Version number:** `1.1`, build 8. This has to match the build uploaded from Xcode (MARKETING_VERSION 1.1, CURRENT_PROJECT_VERSION 8). Nothing has been approved yet, so the version number on the App Store Connect page can still be edited: change it from 1.0 to 1.1 before attaching the build. Customers only ever see 1.1 as the first version, which is fine.
+
+**What's New in This Version:** leave it empty. Apple doesn't ask for it on a first release.
+
+**Promotional text (170).** This can be changed at any time without a new review.
 
 ```
-Now on iPhone too! Year 2 maths and English with Bonnie the dog. Try the first level of every world for free. No adverts, no subscription, and it works offline.
+Year 2 maths and English with Bonnie the dog, on iPhone and iPad. Try the first level of every world for free. No adverts, no subscription, and it works offline.
 ```
 
-**Description (4,000)** *1.1: three lines added under MADE FOR FAMILIES (iPhone and iPad, the weekly reminder, VoiceOver), and one under FREE TO TRY. Harbour Market and the Clock Tower added under MEADOW MATHS (8 worlds, 52 levels; 72 in all). *24 November 2026: Meadow Words grew to 33 levels (85 in all), and a line was added to What's New.*
+**Description (4,000)**
 
 ```
 Homework without the tears. Meadow Clubhouse turns Year 2 (KS1) maths and English into a game your child will ask to play, with Bonnie the chocolate-brown dog cheering them on every step of the way.
@@ -125,7 +100,7 @@ Bonnie's Walk and the first level of every world are free, so your child can fin
 Come and meet Bonnie. She's been waiting by the gate.
 ```
 
-**Keywords (100, commas, no spaces).** *1.1: "money" added (exactly 100).* Words already in the name and subtitle are left out, because Apple counts those anyway.
+**Keywords (100, commas, no spaces).** Words already in the name and subtitle are left out, because Apple counts those anyway.
 
 ```
 phonics,spelling,times tables,number bonds,sats,primary,age 6,age 7,homework,reading,fractions,money
@@ -137,7 +112,6 @@ phonics,spelling,times tables,number bonds,sats,primary,age 6,age 7,homework,rea
 | Marketing URL | `https://holmeshouse.co.uk` (optional) |
 | Privacy Policy URL | `https://holmeshouse.co.uk/privacy.html` |
 | Copyright | `2026 Anthony Holmes` |
-| Version | 1.0, then 1.1 for the iPhone release |
 
 ## App Privacy (the "nutrition label")
 
@@ -164,13 +138,10 @@ The first in-app purchase has to be submitted together with the app version: on 
 
 Sign-in required: **No.**
 
-**Notes for the reviewer** *1.1: the "NEW IN 1.1" part added, and the PRIVACY line changed (Send feedback and Rate the app leave the app, behind the grown-ups check).*
+**Notes for the reviewer**
 
 ```
-Meadow Clubhouse is a Year 2 (ages 6-7) maths and English practice app.
-
-NEW IN 1.1: the app now runs on iPhone (upright only) as well as iPad. It is the same app and the same in-app purchase.
-WEEKLY REMINDERS: optional local notifications, made on the device only (no server, no push). The iOS permission request only appears after a grown-up has answered the parental gate. The reminders contain no name or progress, and can be changed or turned off in the Grown-ups area under Reminders.
+Meadow Clubhouse is a Year 2 (ages 6-7) maths and English practice app for iPhone (upright only) and iPad.
 
 FREE CONTENT: Bonnie's Walk and level 1 of every world.
 
@@ -183,12 +154,21 @@ PARENTAL GATE: the Grown-ups area and the purchase screen are behind a multiplic
 
 PLAYERS: "Switch player" on the first page adds up to 4 child profiles. They are stored only on the device.
 
+WEEKLY REMINDERS: optional local notifications, made on the device only (no server, no push). The iOS permission request only appears after a grown-up has answered the parental gate. The reminders contain no name or progress, and can be changed or turned off in the Grown-ups area under Reminders.
+
 PRIVACY: the app collects no data. It has no adverts, no analytics and no accounts. The only links out of the app are "Send feedback" (opens Mail) and "Rate the app" (opens the App Store page), both inside the Grown-ups area, behind the parental gate. Purchases use StoreKit 2 directly. Bonnie's voice is pre-recorded audio bundled with the app.
 ```
 
 ## Screenshots
 
-Six pictures are ready in `docs/screenshots/`, at the iPad 13-inch size Apple asks for (2064 × 2752). Drag them into the "iPad 13-inch Display" box in this order. The 11-inch size is filled in from these automatically.
+Two sets of six pictures, with the same captions in the same order. They are made from the real game pages, with a made-up player called Sam.
+
+| Box in App Store Connect | Folder | Size | Made by |
+|---|---|---|---|
+| iPhone 6.9-inch Display | `docs/screenshots/iphone/` | 1320 × 2868 | `sh tools/make-screenshots.sh iphone` |
+| iPad 13-inch Display | `docs/screenshots/` | 2064 × 2752 | `sh tools/make-screenshots.sh` |
+
+The smaller iPhone and iPad sizes are filled in from these automatically.
 
 | File | Caption on the picture |
 |---|---|
@@ -196,18 +176,16 @@ Six pictures are ready in `docs/screenshots/`, at the iPad 13-inch size Apple as
 | `2-help.png` | Help that teaches: Bonnie gives a clue, then shows how |
 | `3-maths-worlds.png` | 8 maths worlds, 52 levels |
 | `4-words.png` | Phonics, spelling and stories: 4 English worlds, 33 levels |
-| `5-bone-shop.png` | Earn bones, unlock gear: helmets, jetpacks, themes and real prizes (changed 18 November 2026; it was "Earn bones for hats and prizes") |
+| `5-bone-shop.png` | Earn bones, unlock gear: helmets, jetpacks, themes and real prizes |
 | `6-walk.png` | A walk with Bonnie every day |
 
-**iPhone (from 1.1):** six more pictures are in `docs/screenshots/iphone/`, at the iPhone 6.9-inch size (1320 × 2868), with the same captions and the game at phone width. Drag them into the "iPhone 6.9-inch Display" box in the same order. The smaller iPhone sizes are filled in from these automatically. `sh tools/make-screenshots.sh iphone` makes them again. Bonnie's Walk picks its questions at random, so the walk picture can come out different each time: run it again if it looks too like the Words picture.
-
-They are made from the real game pages by `sh tools/make-screenshots.sh`, with a made-up player called Sam. Run it again after any change to how the game looks. Don't take screenshots in the Xcode simulator: it shows every emoji as a "?" box.
+Run the scripts again after any change to how the game looks. Bonnie's Walk picks its questions at random, so the walk picture can come out different each time: run it again if it looks too like the Words picture. Don't take screenshots in the Xcode simulator: it shows every emoji as a "?" box.
 
 For the in-app purchase's review screenshot, use `docs/screenshots/iap-unlock.png`: the "Unlock the full game" screen with the £3.99 button. `sh tools/make-screenshots.sh unlock` makes it again (the page is `tools/unlock-shot.html`). Only Apple's reviewer sees it; it is not shown in the App Store.
 
 ## Header and search results pictures (optional, iOS 27 and later)
 
-App Store Connect has two newer picture boxes under "Header and Search Results". Both are optional: without them the App Store shows the screenshots, as before.
+App Store Connect has two newer picture boxes under "Header and Search Results". Both are optional: without them the App Store shows the screenshots.
 
 | Box | File | Size |
 |---|---|---|
@@ -219,7 +197,7 @@ Both are drawn with the game's own Bonnie by `sh tools/make-store-art.sh` (the p
 ## Kids category rules to keep true
 
 - No adverts and no third-party analytics. (True.)
-- No links out of the app, and purchases only behind a parental gate. (True: the sum check. Send feedback and Rate the app, added in 1.1, are behind it too.)
+- No links out of the app, and purchases only behind a parental gate. (True: the sum check guards the purchase screen, Send feedback and Rate the app.)
 - A privacy policy URL is required. (Above.)
 - Don't describe the app as "for kids" in the name or subtitle in ways the Made for Kids setting already covers. Words like "Year 2" and "KS1" are fine.
 
